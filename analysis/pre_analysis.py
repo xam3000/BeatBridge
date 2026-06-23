@@ -12,13 +12,12 @@ logger = logging.getLogger(__name__)
 
 
 class PreAnalysis:
-    def __init__(self, song, analysis_location):
-        self.song_path = Path(song)
-        self.song = song
+    def __init__(self,analysis_location):
         self.analysis_location = analysis_location
         self.missing_beats = {"librosa": [], "auftakt": []}
 
-    def __call__(self, *args, **kwds):
+    def __call__(self,song_path):
+        self.song_path = Path(song_path)
         self.previous_analysis = self.find_previous_analysis()
         if self.previous_analysis and self.load_previous_analysis():
             return self.bpm, self.beat_frames
