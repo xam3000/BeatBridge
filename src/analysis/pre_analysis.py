@@ -66,7 +66,7 @@ class PreAnalysis:
             return False
 
         # output False for devolempent purposes to force re-analysis, can be removed later
-        return False
+        return True
 
     def save_previous_analysis(self):
         song_name = self.song_path.stem
