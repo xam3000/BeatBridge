@@ -1,6 +1,6 @@
 # CLI verwenden
 
-Die BeatBridge-CLI erzeugt einen taktgenauen Übergang zwischen zwei Audiodateien. Die Übergangspunkte werden aktuell noch manuell als Sample-Positionen angegeben und anschließend auf den nächsten erkannten Downbeat ausgerichtet.
+Die BeatBridge-CLI erzeugt einen taktgenauen Übergang zwischen zwei Audiodateien. Die Übergangspunkte werden aktuell noch manuell als Sample-Positionen angegeben und anschließend auf den nächstgelegenen erkannten Downbeat ausgerichtet.
 
 ## Voraussetzungen
 
@@ -63,7 +63,7 @@ Beim Standardwert von 44.100 Hz gilt beispielsweise:
 | 60 Sekunden | `2646000` |
 | 90 Sekunden | `3969000` |
 
-Die Werte müssen nicht exakt auf einem Beat liegen. BeatBridge sucht den nächsten erkannten Downbeat. Auch bei einer 48-kHz-Eingangsdatei beziehen sich Cutpoints standardmäßig auf das normalisierte 44,1-kHz-Raster. Wird `--target-sample-rate 48000` verwendet, muss entsprechend mit 48.000 multipliziert werden.
+Die Werte müssen nicht exakt auf einem Beat liegen. BeatBridge sucht den Downbeat mit dem geringsten Sample-Abstand; dieser kann vor oder nach dem angegebenen Cutpoint liegen. Auch bei einer 48-kHz-Eingangsdatei beziehen sich Cutpoints standardmäßig auf das normalisierte 44,1-kHz-Raster. Wird `--target-sample-rate 48000` verwendet, muss entsprechend mit 48.000 multipliziert werden.
 
 ## Renderer
 
