@@ -44,6 +44,23 @@ Schlanke, im Kern lauffähige CLI-Pipeline für **einen taktsynchronen Übergang
 - **Repo-Hygiene**: im Ordner `05 - HELP_LESS` liegt zusätzlich eine Kopie der `07 - BREATH_LESS.flac` (vermutlich versehentlich).
 - **Tippfehler**: `pipline.py` (statt `pipeline.py`) — kosmetisch.
 
+## GUI-Frage: jetzt oder später? (Entscheidung)
+
+**Empfehlung: noch kein echtes GUI.** Erst die Pipeline tragfähig machen und billig „sehen & hören" ermöglichen. Ein ausgebautes GUI lohnt sich erst, wenn Schritt 5–7 stehen und es einen Workflow gibt, den es einpackt (durch gerankte Kandidaten blättern, probehören, annehmen/verwerfen).
+
+Begründung:
+
+- Der Kern ist noch nicht als Bibliothek nutzbar (nur CLI mit manuellen Sample-Cutpoints), und der Tempo-Pfad ist kaputt. Ein GUI auf dieser API bedeutet doppelte Arbeit.
+- „Sehen & hören" ist Schritt 4 (Visualisierung) und fehlt komplett — der größte Hebel ist `matplotlib`, kein GUI.
+- In 2–3 Wochen ist ein ausgebautes GUI ein Zeitfresser, der den eigentlichen Beitrag (Metrik/Evaluation, Schritt 7) nicht voranbringt.
+
+**Empfohlene Reihenfolge (statt GUI zuerst):**
+
+1. Pipeline als aufrufbare Funktion (zwei Dateien + Parameter → Audio + Beats) und Tempo-Pfad reparieren.
+2. `matplotlib`-Visualisierung: Waveform/Spektrogramm + (Down)Beats + mögliche Übergangsfenster.
+3. Jupyter-Notebook (oder dünnes Streamlit/Gradio), das beides zusammenbringt: Plots inline, Audio inline (`IPython.display.Audio`), Parameter tweaken und neu rendern.
+4. Echtes GUI erst nach Schritt 5–7, wenn gerankte Kandidaten zum Durchblättern/Probehören da sind.
+
 ## Next Steps (priorisiert)
 
 1. **Tempo-Pfad reparieren & einbinden** — `target_bpm` sauber durchreichen, toten `adjust_tempo()`-Zweig fixen, Tempo-Anpassung optional vor den Cut hängen. Damit wird der „tempoangepasste Übergang" aus Schritt 6 überhaupt testbar.
