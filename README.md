@@ -6,6 +6,7 @@ Der aktuelle, verifizierte Projektstand und die weitere Dokumentation liegen unt
 
 - [Status und nächste Schritte](./docs/STATUS.md)
 - [Projekt-Gesamtübersicht und Forschungsrahmen](./docs/Projekt-Gesamtuebersicht.md)
+- [CLI verwenden](./docs/CLI.md)
 - [Laufende Bemerkungen](./docs/Bemerkungen.md)
 
 ## Entwicklungsumgebung
