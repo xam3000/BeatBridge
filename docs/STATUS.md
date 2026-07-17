@@ -12,8 +12,8 @@ Kurzfazit Prototyp: schlanke, im Kern lauffähige CLI-Pipeline für einen taktsy
 
 ## Aktueller Stand (implementiert)
 
-- **Projektstruktur / CLI**: `src/pipline.py` als Einstieg (argparse) — lädt zwei Songs, analysiert, schneidet, exportiert. Struktur `analysis/`, `cutting/`, `tempo/`.
-- **Audio-I/O**: Laden über `librosa.load`, Export über `soundfile.write`.
+- **Projektstruktur / API / CLI**: `src/pipline.py` bietet `render_transition()` als programmatischen Einstieg und argparse als CLI — lädt zwei Songs, analysiert, normalisiert, rendert und exportiert. Struktur `analysis/`, `cutting/`, `tempo/`.
+- **Audio-I/O**: Laden über `librosa.load`, Export über `soundfile.write`; intern standardmäßig 44,1 kHz Stereo. Abweichende Sample-Raten werden resampelt, Mono wird auf Stereo erweitert und Beat-Positionen werden mit skaliert.
 - **Beat-/Bar-Analyse** (`analysis/pre_analysis.py`):
   - librosa `beat_track` für BPM + Beats.
   - aufTAKT (`aufTAKTCl.exe`) für Taktposition; Nicht-WAV wird per ffmpeg konvertiert.
@@ -22,20 +22,31 @@ Kurzfazit Prototyp: schlanke, im Kern lauffähige CLI-Pipeline für einen taktsy
 - **Übergänge**:
   - `cutting/simple_cut.py`: Hard Cut, Snap auf Downbeat, Bar-Alignment zwischen beiden Songs.
   - `cutting/fade_cut.py`: linearer Crossfade über N Beats (Default 8), Bar-aligned.
-- **Tempo** (`tempo/`): Resample-basiert (`SimpleTempoAdjust`, verändert Tonhöhe) und Time-Stretch (`TimeStretch`, tonhöhen-erhaltend) — **vorhanden, aber nicht eingebunden und teils fehlerhaft** (siehe Bugs).
-- **Dataset**: zwei Testsongs (`05 - HELP_LESS`, `07 - BREATH_LESS`) als FLAC inkl. gecachter Analyse.
+  - `cutting/equal_power_fade_cut.py`: Equal-Power-Crossfade.
+  - `tempo_fade`: tonhöhenerhaltende Anpassung von Song B auf BPM von Song A, danach linearer Crossfade.
+- **Tempo** (`tempo/`): Resample-basierte Variante (`SimpleTempoAdjust`, verändert Tonhöhe) und reparierter, eingebundener `TimeStretch` (tonhöhenerhaltend).
+- **Tests**: `pytest`-Suite mit synthetischen Audiodaten prüft alle vier Renderer, Tempoanpassung, 48→44,1-kHz-Resampling, Mono→Stereo und den Fehlerpfad bei fehlenden Downbeat-Metadaten.
+- **Dataset**: 21 Audiodateien liegen im ignorierten Ordner `musik/`; für alle 21 existiert eine gecachte Analyse unter `output/pre_analysis/` (plus ein veralteter zusätzlicher Cache `HELP_LESS`). Kuratierte Track-Notizen, Lizenzstatus und reproduzierbare Dataset-Definition fehlen noch.
+
+### Verifiziert am 2026-07-17 (Codex, nach Rendering-Meilenstein)
+
+- `.venv\Scripts\python.exe -m pytest -q`: **8 Tests bestanden**; zwei nicht blockierende Deprecation-Warnungen aus `audioread` unter Python 3.14.
+- `.venv\Scripts\python.exe -m pip check`: keine defekten Abhängigkeiten; `pytest 9.1.1` ist installiert und in `requirements-dev.txt` festgehalten.
+- CLI und programmatischer Import laufen; verfügbare Renderer: `simple`, `fade`, `equal_power`, `tempo_fade`.
+- Reales Entwicklungsset gemessen: 20 Tracks mit 44,1 kHz Stereo, ein Track mit 48 kHz Stereo.
+- Bereits vorhanden: `output/combined_song.wav` (375,84 s) und `output/cut_song.wav` (214,70 s), beide 44,1 kHz Stereo. Das ist noch kein systematischer Batch-Vergleich.
 
 ## Fortschritt gegen die Startphase (Exposé Abschn. 13–14)
 
 | Baustein | Status | Kurz |
 |---|:--:|---|
-| Reproduzierbares Repository | 🟡 | Git + MD-Doku vorhanden; `requirements.txt`/`pyproject` fehlt, aufTAKT ist Windows-Binary |
-| Kleines Entwicklungsset (10–20 Tracks) | ❌ | erst 2 Testsongs |
+| Reproduzierbares Repository | 🟡 | Git, MD-Doku und Requirements-Dateien vorhanden; aufTAKT ist ein Windows-Binary und externe ffmpeg-Einrichtung ist noch nicht automatisiert |
+| Kleines Entwicklungsset (10–20 Tracks) | 🟡 | 21 lokale Audiodateien + Analyse-Caches vorhanden; Kuratierung, Track-Notizen, Rechte und reproduzierbare Definition fehlen |
 | Beat-/Bar-Analyse | ✅ | librosa + aufTAKT-Merge, mit Diskrepanz-Log |
-| Mehrere gerenderte Übergänge | 🟡 | Hard Cut + linearer Crossfade — aber **manuell**, nicht automatisch |
+| Mehrere gerenderte Übergänge | 🟡 | Vier Renderer implementiert und synthetisch getestet — Cutpoints aber noch manuell |
 | Automatische Kandidaten | ❌ | keine Ableitung aus Bar-/Phrasengrenzen (Exposé Abschn. 5) |
 | Systematischer Vergleich / Höranalyse | ❌ | kein Batch-Export, keine Vergleichsoberfläche |
-| Erste Baseline-Renderer (4 Stück) | 🟡 | 2 von 4 (Equal-Power & tempoangepasst fehlen) |
+| Erste Baseline-Renderer (4 Stück) | ✅ | Hard Cut, linearer Crossfade, Equal-Power und tempoangepasster Crossfade getestet |
 | Einfache Feature-Metrik | ❌ | offen (Monat 2) |
 | Erste Embedding-Tests | ❌ | offen (Monat 3) |
 | Liste typischer Fehlerfälle | 🟡 | nur punktuell (`Bemerkungen.md`) |
@@ -43,15 +54,11 @@ Kurzfazit Prototyp: schlanke, im Kern lauffähige CLI-Pipeline für einen taktsy
 
 ## Bekannte Bugs / Baustellen
 
-- **Tempo-Anbindung tot & fehlerhaft**
-  - `pipline.py → adjust_tempo()` referenziert `self.adjusted_song1` (nie gesetzt → `NameError`); die Methode wird im Ablauf nie aufgerufen.
-  - `time_stretch.py → adjust_tempo_to_bpm()` greift auf `self.target_bpm` zu (nie im `__init__` gesetzt → Crash); Signatur weicht von `SimpleTempoAdjust` ab.
-  - Alias `SimpleTempoAdjust = TimeStretch` am Dateiende ist irreführend.
-- **Tonhöhe**: `SimpleTempoAdjust` (Resample) verändert die Tonhöhe — als Baseline ok, aber bewusst behandeln; die gewollte tonhöhen-erhaltende Variante (`TimeStretch`) ist die kaputte.
-- **Downbeat-Fallback**: ohne aufTAKT-Daten (z. B. Nicht-WAV ohne ffmpeg) sind Beats reine Ints ohne Taktinfo → `is_downbeat` immer `False` → `snap_to_down_beat` fällt still auf „alle Beats" zurück.
+- **Tonhöhe**: `SimpleTempoAdjust` (Resample) verändert die Tonhöhe — als zusätzliche einfache Baseline bewusst behandeln; `tempo_fade` verwendet den tonhöhenerhaltenden `TimeStretch`.
+- **Downbeat-Metadaten erforderlich**: Fehlen aufTAKT-/Taktinformationen, bricht Downbeat-Snapping jetzt mit einer konkreten Fehlermeldung ab. Ein belastbarer plattformunabhängiger Fallback fehlt weiterhin.
 - **BPM-Divergenz** (dokumentiert in `Bemerkungen.md`): librosa vs. aufTAKT (HELP_LESS: 161 vs. 157) — Grid-Wahl noch ungeklärt.
 - **Phrasenlänge**: Raster 4 Beats, Phrasen aber meist 8 — relevant für plausible Übergangspositionen (Kandidatengenerierung).
-- **Repo-Hygiene**: im Ordner `05 - HELP_LESS` liegt zusätzlich eine Kopie der `07 - BREATH_LESS.flac` (vermutlich versehentlich).
+- **Repo-/Cache-Hygiene**: Die früheren Track-Ordner sind im Arbeitsbaum gelöscht; unter `output/pre_analysis/` bleibt ein zusätzlicher veralteter Cache `HELP_LESS` ohne gleichnamigen aktuellen Audio-Stem.
 - **Tippfehler**: `pipline.py` (statt `pipeline.py`) — kosmetisch.
 
 ## GUI-Frage: jetzt oder später? (Entscheidung)
@@ -64,11 +71,12 @@ Billiger Zwischenschritt statt GUI: `matplotlib`-Visualisierung (Waveform/Spektr
 
 Ziel: das Startphasen-Erfolgskriterium erfüllen — die Schleife **automatische Kandidaten → mehrere rendern → anhören/vergleichen** schließen.
 
-1. **Pipeline aufrufbar machen + 4 Rendering-Baselines vervollständigen** — Pipeline als Funktion (zwei Dateien + Parameter → Audio + Beats), damit sie in einer Schleife läuft; Tempo-Pfad reparieren (siehe Bugs) und **Equal-Power-Crossfade** ergänzen, sodass alle vier Baselines (Hard Cut, linearer/Equal-Power-Crossfade, tempoangepasst) existieren.
-2. **Kandidatengenerierung (Exposé Abschn. 5)** — aus Bar-Grenzen: letzte N Takte von A × erste N Takte von B, Längen 1/2/4 Takte; harte Filter (nur auf Beat-Grid, Tempo-Toleranz, instabile Bereiche ausschließen, optional Vocal-Overlap). **Kernbaustein, der aus dem manuellen Werkzeug ein automatisches macht.**
-3. **Batch-Rendering** — alle Kandidaten × Renderer-Typen × Längen in einen Ordner exportieren, sinnvoll benannt.
-4. **Anhören & Sehen** — Jupyter-Notebook mit Waveform/(Down)Beats-Plot + Inline-Playback; dabei die „Liste typischer Fehlerfälle" (Exposé Abschn. 14) sammeln.
-5. **Entwicklungsset erweitern (Exposé Abschn. 8)** — von 2 auf 10–20 Tracks mit Varianz; Lizenzfrage klären (parallel, eher Handarbeit).
+**Abgeschlossen am 2026-07-17:** programmatische Pipeline, Audio-Normalisierung, vier Rendering-Baselines, versionierter Rendering-Vertrag und automatisierte Tests.
+
+1. **Kandidatengenerierung (Exposé Abschn. 5)** — aus Bar-Grenzen: letzte N Takte von A × erste N Takte von B, Längen 1/2/4 Takte; harte Filter (nur auf Beat-Grid, Tempo-Toleranz, instabile Bereiche ausschließen, optional Vocal-Overlap). **Kernbaustein, der aus dem manuellen Werkzeug ein automatisches macht.**
+2. **Batch-Rendering** — alle Kandidaten × Renderer-Typen × Längen in einen Ordner exportieren, sinnvoll benannt.
+3. **Anhören & Sehen** — Jupyter-Notebook mit Waveform/(Down)Beats-Plot + Inline-Playback; dabei die „Liste typischer Fehlerfälle" (Exposé Abschn. 14) sammeln.
+4. **Entwicklungsset kuratieren (Exposé Abschn. 8)** — die vorhandenen 21 Tracks als reproduzierbares Set definieren, Varianz und Duplikate prüfen, Track-Notizen ergänzen und Lizenzfrage klären (parallel, eher Handarbeit).
 
 Danach (nicht jetzt): **Feature-Metrik & Ranking** (Monat 2) auf genau diesen Kandidaten; **vortrainierte Embeddings** vergleichen, eigenes SSL-Fine-Tuning optional (Monat 3; Priorisierung laut Exposé Risiko 15: Pipeline+Baselines+Metrik zuerst).
 

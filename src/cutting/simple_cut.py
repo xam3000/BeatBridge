@@ -28,6 +28,10 @@ class SimpleCut:
                 cut_sample1,
                 downbeat_only=self.snap_to_down_beat,
             )
+            if self.align_bar and beat1["count_in_bar"] is None:
+                raise ValueError(
+                    "Bar alignment requires beat frames with count_in_bar metadata"
+                )
             cut_sample1 = beat1["sample"]
 
         if beat_frames2 is not None and (self.snap_to_down_beat or self.align_bar):
@@ -112,8 +116,11 @@ class SimpleCut:
         candidates = parsed_beats
         if downbeat_only:
             downbeats = [beat for beat in candidates if beat["is_downbeat"]]
-            if downbeats:
-                candidates = downbeats
+            if not downbeats:
+                raise ValueError(
+                    "Downbeat snapping requires beat frames with count_in_bar metadata"
+                )
+            candidates = downbeats
 
         if count_in_bar is not None:
             aligned_beats = [
@@ -126,8 +133,9 @@ class SimpleCut:
                     or beat["beats_in_bar"] == beats_in_bar
                 )
             ]
-            if aligned_beats:
-                candidates = aligned_beats
+            if not aligned_beats:
+                raise ValueError("No beat position matches the requested bar alignment")
+            candidates = aligned_beats
 
         if not candidates:
             raise ValueError("No valid beat positions available for the requested cut")

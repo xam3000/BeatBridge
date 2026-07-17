@@ -11,15 +11,19 @@ class FadeCut(SimpleCut):
         fade_beats=8,
         fade_beats_before=None,
         fade_beats_after=0,
+        fade_curve="linear",
     ):
         super().__init__(align_bar=align_bar, snap_to_down_beat=snap_to_down_beat)
         self.fade_beats_before = int(fade_beats if fade_beats_before is None else fade_beats_before)
         self.fade_beats_after = int(fade_beats_after)
+        self.fade_curve = str(fade_curve)
 
         if self.fade_beats_before < 0 or self.fade_beats_after < 0:
             raise ValueError("fade beat counts must be greater than or equal to 0")
         if self.fade_beats_before == 0 and self.fade_beats_after == 0:
             raise ValueError("FadeCut needs at least one beat of transition")
+        if self.fade_curve not in {"linear", "equal_power"}:
+            raise ValueError("fade_curve must be 'linear' or 'equal_power'")
 
     def cut(self, song1, song2, song1_sample, song2_sample, beat_frames1, beat_frames2):
         audio1 = self._get_audio(song1)
@@ -69,8 +73,7 @@ class FadeCut(SimpleCut):
         if transition_length == 0:
             raise ValueError("Transition length must be greater than 0")
 
-        fade_out = np.linspace(1.0, 0.0, transition_length, endpoint=True, dtype=np.float32)
-        fade_in = np.linspace(0.0, 1.0, transition_length, endpoint=True, dtype=np.float32)
+        fade_out, fade_in = self._build_envelopes(transition_length)
 
         mixed_transition = (
             transition_segment1 * fade_out.reshape(self._envelope_shape(transition_segment1))
@@ -78,6 +81,21 @@ class FadeCut(SimpleCut):
         )
 
         return np.concatenate([prefix, mixed_transition, suffix], axis=-1)
+
+    def _build_envelopes(self, transition_length):
+        if self.fade_curve == "linear":
+            fade_out = np.linspace(1.0, 0.0, transition_length, endpoint=True, dtype=np.float32)
+            fade_in = np.linspace(0.0, 1.0, transition_length, endpoint=True, dtype=np.float32)
+            return fade_out, fade_in
+
+        angles = np.linspace(
+            0.0,
+            np.pi / 2.0,
+            transition_length,
+            endpoint=True,
+            dtype=np.float32,
+        )
+        return np.cos(angles), np.sin(angles)
 
     def _resolve_cut_samples(self, cut_sample1, cut_sample2, beat_frames1, beat_frames2):
         if self.snap_to_down_beat or self.align_bar:

@@ -30,16 +30,19 @@ class TimeStretch:
         audio = np.asarray(audio)
         return librosa.effects.time_stretch(audio, rate=float(tempo_factor))
 
-    def adjust_tempo_to_bpm(self, audio, sample_rate, original_bpm, res_type="soxr_hq"):
+    def adjust_tempo_to_bpm(
+        self,
+        audio,
+        sample_rate,
+        original_bpm,
+        target_bpm,
+        res_type="soxr_hq",
+    ):
         """Adjust audio from ``original_bpm`` to ``target_bpm``."""
         if original_bpm <= 0:
             raise ValueError("original_bpm must be greater than 0")
-        if self.target_bpm <= 0:
+        if target_bpm <= 0:
             raise ValueError("target_bpm must be greater than 0")
 
-        tempo_factor = float(self.target_bpm) / float(original_bpm)
+        tempo_factor = float(target_bpm) / float(original_bpm)
         return self.adjust_tempo_by_factor(audio, sample_rate, tempo_factor, res_type=res_type)
-
-
-# Alias for drop-in compatibility with the class name used by simple_tempo_adjust.py.
-SimpleTempoAdjust = TimeStretch
