@@ -7,7 +7,7 @@ Dieses Dokument beschreibt die stabile Grenze der programmatisch aufrufbaren Ren
 ## Einstiegspunkt
 
 ```python
-from src.pipline import render_transition
+from src.pipeline import render_transition
 
 result = render_transition(
     song1,

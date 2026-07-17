@@ -6,7 +6,7 @@ import soundfile as sf
 
 from src.cutting.equal_power_fade_cut import EqualPowerFadeCut
 from src.cutting.simple_cut import SimpleCut
-from src.pipline import (
+from src.pipeline import (
     BeatBridgePipeline,
     RENDER_RESULT_FORMAT_VERSION,
     render_transition,

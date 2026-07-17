@@ -12,7 +12,7 @@ Kurzfazit Prototyp: schlanke, im Kern lauffähige CLI-Pipeline für einen taktsy
 
 ## Aktueller Stand (implementiert)
 
-- **Projektstruktur / API / CLI**: `src/pipline.py` bietet `render_transition()` als programmatischen Einstieg und argparse als CLI — lädt zwei Songs, analysiert, normalisiert, rendert und exportiert. Struktur `analysis/`, `cutting/`, `tempo/`.
+- **Projektstruktur / API / CLI**: `src/pipeline.py` bietet `render_transition()` als programmatischen Einstieg und argparse als CLI — lädt zwei Songs, analysiert, normalisiert, rendert und exportiert. Struktur `analysis/`, `cutting/`, `tempo/`.
 - **Audio-I/O**: Laden über `librosa.load`, Export über `soundfile.write`; intern standardmäßig 44,1 kHz Stereo. Abweichende Sample-Raten werden resampelt, Mono wird auf Stereo erweitert und Beat-Positionen werden mit skaliert.
 - **Beat-/Bar-Analyse** (`analysis/pre_analysis.py`):
   - librosa `beat_track` für BPM + Beats.
@@ -59,7 +59,6 @@ Kurzfazit Prototyp: schlanke, im Kern lauffähige CLI-Pipeline für einen taktsy
 - **BPM-Divergenz** (dokumentiert in `Bemerkungen.md`): librosa vs. aufTAKT (HELP_LESS: 161 vs. 157) — Grid-Wahl noch ungeklärt.
 - **Phrasenlänge**: Raster 4 Beats, Phrasen aber meist 8 — relevant für plausible Übergangspositionen (Kandidatengenerierung).
 - **Repo-/Cache-Hygiene**: Die früheren Track-Ordner sind im Arbeitsbaum gelöscht; unter `output/pre_analysis/` bleibt ein zusätzlicher veralteter Cache `HELP_LESS` ohne gleichnamigen aktuellen Audio-Stem.
-- **Tippfehler**: `pipline.py` (statt `pipeline.py`) — kosmetisch.
 
 ## GUI-Frage: jetzt oder später? (Entscheidung)
 

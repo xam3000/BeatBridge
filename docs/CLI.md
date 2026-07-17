@@ -2,8 +2,6 @@
 
 Die BeatBridge-CLI erzeugt einen taktgenauen Übergang zwischen zwei Audiodateien. Die Übergangspunkte werden aktuell noch manuell als Sample-Positionen angegeben und anschließend auf den nächsten erkannten Downbeat ausgerichtet.
 
-> Die Datei heißt derzeit absichtlich `src/pipline.py`. Der Schreibfehler im Dateinamen ist bekannt, wurde aber noch nicht geändert.
-
 ## Voraussetzungen
 
 Alle Befehle werden in PowerShell aus dem Projektordner `BeatBridge` ausgeführt.
@@ -24,13 +22,13 @@ Alle Befehle werden in PowerShell aus dem Projektordner `BeatBridge` ausgeführt
 4. CLI-Hilfe anzeigen:
 
    ```powershell
-   .venv\Scripts\python.exe src\pipline.py --help
+   .venv\Scripts\python.exe src\pipeline.py --help
    ```
 
 ## Aufruf
 
 ```text
-pipline.py SONG1 SONG2 CUTPOINT1 CUTPOINT2 RENDERER [OPTIONEN]
+pipeline.py SONG1 SONG2 CUTPOINT1 CUTPOINT2 RENDERER [OPTIONEN]
 ```
 
 | Argument | Bedeutung |
@@ -74,7 +72,7 @@ Die Werte müssen nicht exakt auf einem Beat liegen. BeatBridge sucht den nächs
 `simple` schneidet Song 1 am ausgerichteten Downbeat ab und setzt Song 2 an seinem ausgerichteten Downbeat fort.
 
 ```powershell
-.venv\Scripts\python.exe src\pipline.py "musik\05 - HELP_LESS.flac" "musik\07 - BREATH_LESS.flac" 2646000 1323000 simple -o "output\help_to_breath_simple.wav"
+.venv\Scripts\python.exe src\pipeline.py "musik\05 - HELP_LESS.flac" "musik\07 - BREATH_LESS.flac" 2646000 1323000 simple -o "output\help_to_breath_simple.wav"
 ```
 
 ### Linearer Crossfade
@@ -82,7 +80,7 @@ Die Werte müssen nicht exakt auf einem Beat liegen. BeatBridge sucht den nächs
 `fade` blendet Song 1 linear aus und Song 2 linear ein. Der folgende Aufruf verwendet acht Beats:
 
 ```powershell
-.venv\Scripts\python.exe src\pipline.py "musik\05 - HELP_LESS.flac" "musik\07 - BREATH_LESS.flac" 2646000 1323000 fade --fade-beats 8 -o "output\help_to_breath_linear.wav"
+.venv\Scripts\python.exe src\pipeline.py "musik\05 - HELP_LESS.flac" "musik\07 - BREATH_LESS.flac" 2646000 1323000 fade --fade-beats 8 -o "output\help_to_breath_linear.wav"
 ```
 
 ### Equal-Power-Crossfade
@@ -90,7 +88,7 @@ Die Werte müssen nicht exakt auf einem Beat liegen. BeatBridge sucht den nächs
 `equal_power` verwendet Sinus-/Cosinus-Hüllkurven. Dadurch bleibt die kombinierte quadratische Verstärkung über den Fade konstant.
 
 ```powershell
-.venv\Scripts\python.exe src\pipline.py "musik\05 - HELP_LESS.flac" "musik\07 - BREATH_LESS.flac" 2646000 1323000 equal_power --fade-beats 8 -o "output\help_to_breath_equal_power.wav"
+.venv\Scripts\python.exe src\pipeline.py "musik\05 - HELP_LESS.flac" "musik\07 - BREATH_LESS.flac" 2646000 1323000 equal_power --fade-beats 8 -o "output\help_to_breath_equal_power.wav"
 ```
 
 ### Tempoangepasster Crossfade
@@ -98,7 +96,7 @@ Die Werte müssen nicht exakt auf einem Beat liegen. BeatBridge sucht den nächs
 `tempo_fade` passt Song 2 zunächst tonhöhenerhaltend an das BPM von Song 1 an und rendert danach einen linearen Crossfade. Die Berechnung dauert länger als bei den anderen Renderern.
 
 ```powershell
-.venv\Scripts\python.exe src\pipline.py "musik\05 - HELP_LESS.flac" "musik\07 - BREATH_LESS.flac" 2646000 1323000 tempo_fade --fade-beats 8 -o "output\help_to_breath_tempo.wav"
+.venv\Scripts\python.exe src\pipeline.py "musik\05 - HELP_LESS.flac" "musik\07 - BREATH_LESS.flac" 2646000 1323000 tempo_fade --fade-beats 8 -o "output\help_to_breath_tempo.wav"
 ```
 
 ## Analyse-Cache und Ausgaben

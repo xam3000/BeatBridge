@@ -9,7 +9,7 @@ import numpy as np
 import soundfile as sf
 
 
-# Support both `python src/pipline.py` and `from src.pipline import ...`.
+# Support both `python src/pipeline.py` and `from src.pipeline import ...`.
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -214,10 +214,6 @@ class BeatBridgePipeline:
             beat_frames2,
         )
         return self.cut_song
-
-
-# Backwards-compatible alias for the original misspelled class name.
-BeatBridePipeline = BeatBridgePipeline
 
 
 def build_cutter(cuttype, fade_beats=8):
