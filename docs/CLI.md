@@ -110,7 +110,7 @@ Der Batch-Befehl erzeugt zuerst taktbasierte Kandidaten und exportiert danach je
   --output-dir "output\batches\help_to_breath"
 ```
 
-Standardmäßig entstehen Varianten für `simple`, `fade`, `equal_power` und `tempo_fade` sowie Übergangslängen von 1, 2 und 4 Takten. Der Zielordner enthält WAV-Dateien unter `rendered\` und ein `manifest.json`, das jede Datei mit Kandidaten-ID, Cutpoints, Taktlänge und Renderer verknüpft.
+Standardmäßig entstehen Varianten für `simple`, `fade`, `equal_power` und `tempo_fade` sowie Übergangslängen von 1, 2 und 4 Takten. Alle Kandidaten werden vor dem Rendering über die Feature-Baseline gerankt. Der Zielordner enthält WAV-Dateien unter `rendered\` und ein `manifest.json`, das jede Datei mit Kandidaten-ID, Rang, Score, Cutpoints, Taktlänge und Renderer verknüpft.
 
 Ein kleinerer, schnellerer Vergleichslauf mit nur Equal-Power-Fades und zwei Taktlängen:
 
@@ -120,7 +120,8 @@ Ein kleinerer, schnellerer Vergleichslauf mit nur Equal-Power-Fades und zwei Tak
   "musik\07 - BREATH_LESS.flac" `
   --output-dir "output\batches\help_to_breath_equal_power" `
   --renderers equal_power `
-  --transition-bars 1 2
+  --transition-bars 1 2 4 `
+  --top-k 5
 ```
 
 Wichtige Batch-Optionen:
@@ -133,13 +134,16 @@ Wichtige Batch-Optionen:
 | `--source-boundaries N` | `4` | Zahl der letzten nutzbaren Taktgrenzen in Song A |
 | `--target-boundaries N` | `4` | Zahl der ersten nutzbaren Taktgrenzen mit ausreichend Pre-Roll in Song B |
 | `--max-tempo-difference X` | `0.15` | Maximale symmetrische relative BPM-Differenz (`0.15` = 15 %) |
+| `--top-k N` | alle | Rendert nur die N bestbewerteten Kandidaten; alle Scores bleiben im Manifest |
 | `--overwrite` | aus | Erlaubt ausschließlich auf expliziten Wunsch das Ersetzen gleichnamiger Exportdateien |
 
 Ein vorhandener Export wird standardmäßig nicht überschrieben. Für einen weiteren Versuch deshalb einen neuen Ordner wählen; `--overwrite` nur bewusst einsetzen. Der ausführliche Exportvertrag steht in [`BATCH_RENDERING_PROTOCOL.md`](./BATCH_RENDERING_PROTOCOL.md).
 
 ## Batch im Notebook anhören
 
-[`notebooks/listen_batch.ipynb`](../notebooks/listen_batch.ipynb) lädt ein Batch-Manifest, listet die Varianten auf und zeigt für jede gewählte WAV-Datei einen eingebetteten Audio-Player. Das Notebook startet mit dem ersten realen Lauf `output/batches/help_to_breath_first`. Für einen anderen Lauf in der ersten Codezelle nur `BATCH_DIR` ändern und die Zellen von oben nach unten ausführen.
+[`notebooks/listen_batch.ipynb`](../notebooks/listen_batch.ipynb) lädt ein Batch-Manifest, sortiert die Varianten nach Feature-Rang und zeigt für jede gewählte WAV-Datei einen eingebetteten Audio-Player. `rate(index, 1_bis_5, issues=(...), notes="...")` speichert Bewertungen atomar als `ratings.json` im Batch-Ordner; `show_ratings()` zeigt den aktuellen Stand. Das Notebook startet mit dem ersten realen Lauf `output/batches/help_to_breath_first`. Für einen anderen Lauf in der ersten Codezelle nur `BATCH_DIR` ändern und die Zellen von oben nach unten ausführen.
+
+Alternativ lässt sich eine Bewertung über `python -m src.evaluation.ratings` speichern. Das vollständige Format und ein Beispiel stehen in [`RATINGS_PROTOCOL.md`](./RATINGS_PROTOCOL.md); Score-Komponenten und Grenzen der Baseline beschreibt [`RANKING_PROTOCOL.md`](./RANKING_PROTOCOL.md).
 
 ## Analyse-Cache und Ausgaben
 

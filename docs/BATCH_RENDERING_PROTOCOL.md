@@ -9,6 +9,7 @@ Das Batch-Rendering ist die stabile Grenze zwischen Kandidatengenerierung und de
 ```text
 output/batches/help_to_breath/
 ├── manifest.json
+├── ratings.json                 # optional, nach menschlicher Bewertung
 └── rendered/
     ├── 0001__candidate-…__simple.wav
     ├── 0001__candidate-…__fade.wav
@@ -25,10 +26,12 @@ Das Manifest hat `format_version = 1` und enthält:
 |---|---|
 | `renderers` | In diesem Lauf angeforderte Renderer |
 | `candidate_generation` | Vollständiges Ergebnis nach `CANDIDATE_PROTOCOL.md`, einschließlich abgelehnter Kandidaten |
+| `candidate_ranking` | Feature-Ränge, Einzelkomponenten, Messwerte und Rankingfehler nach `RANKING_PROTOCOL.md` |
+| `render_selection` | Gerenderte Kandidaten-IDs und optionales `top_k` |
 | `rendered_variants` | Erfolgreiche Exporte: Kandidaten-ID, Renderer, relativer Dateipfad, Sample-Rate und Sample-Anzahl |
 | `failures` | Pro fehlgeschlagener Variante Fehlertyp, Meldung, Kandidaten-ID und Renderer |
 
-Ein Lauf ohne akzeptierte Kandidaten erzeugt trotzdem ein Manifest. So bleiben harte Filterentscheidungen nachvollziehbar. Einzelne fehlgeschlagene Varianten brechen die übrigen unabhängigen Exporte nicht ab, werden aber sichtbar im Manifest erfasst und führen in der CLI zu Exit-Code `1`.
+`rendered_variants` enthält additiv den Feature-Rang und Gesamtscore des Kandidaten. Ein Lauf ohne akzeptierte Kandidaten erzeugt trotzdem ein Manifest. So bleiben harte Filterentscheidungen nachvollziehbar. Einzelne fehlgeschlagene Varianten brechen die übrigen unabhängigen Exporte nicht ab, werden aber sichtbar im Manifest erfasst und führen in der CLI zu Exit-Code `1`.
 
 ## Schreib- und Überschreiberegeln
 
@@ -51,4 +54,4 @@ result = generate_and_render_batch(
 print(result.manifest_path)
 ```
 
-Die Funktion verwendet die Kandidatengenerierung und das normalisierte Sample-Raster der Pipeline. Für fortlaufende Experimente sollte jeder Lauf einen neuen Ausgabepfad erhalten.
+Die Funktion verwendet Kandidatengenerierung, Feature-Ranking und das normalisierte Sample-Raster der Pipeline. Mit `top_k=N` werden nur die N bestbewerteten Kandidaten gerendert; das Manifest enthält weiterhin alle erzeugten Kandidaten und Scores. Für fortlaufende Experimente sollte jeder Lauf einen neuen Ausgabepfad erhalten.

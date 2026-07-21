@@ -17,6 +17,7 @@ from src.pipeline import (
     generate_transition_candidates,
     render_transition,
 )
+from src.ranking import CandidateRankingResult, FeatureRankingConfig, rank_candidates
 
 
 BATCH_MANIFEST_FORMAT_VERSION = 1
@@ -30,6 +31,8 @@ class RenderedVariant:
     output_file: str
     sample_rate: int
     sample_count: int
+    candidate_rank: int | None
+    candidate_score: float | None
 
     def to_dict(self):
         return {
@@ -38,6 +41,8 @@ class RenderedVariant:
             "output_file": self.output_file,
             "sample_rate": self.sample_rate,
             "sample_count": self.sample_count,
+            "candidate_rank": self.candidate_rank,
+            "candidate_score": self.candidate_score,
             "status": "rendered",
         }
 
@@ -64,8 +69,10 @@ class BatchRenderResult:
     output_directory: Path
     manifest_path: Path
     candidate_generation: CandidateGenerationResult
+    candidate_ranking: CandidateRankingResult
     rendered_variants: tuple[RenderedVariant, ...]
     failures: tuple[RenderFailure, ...]
+    top_k: int | None
 
 
 def render_candidate_batch(
@@ -76,20 +83,48 @@ def render_candidate_batch(
     target_sample_rate=DEFAULT_SAMPLE_RATE,
     analysis=None,
     analysis_location=None,
+    ranking_config=None,
+    top_k=None,
     overwrite=False,
 ) -> BatchRenderResult:
-    """Render every accepted candidate with every requested baseline.
+    """Rank candidates and render all or the requested top K with each baseline.
 
     The function creates ``manifest.json`` even when no candidate was accepted,
     so hard-filter outcomes remain auditable. Existing output files are never
     overwritten unless ``overwrite=True`` is explicitly requested.
     """
     renderers = _validate_renderers(renderers)
+    if top_k is not None and int(top_k) <= 0:
+        raise ValueError("top_k must be greater than 0")
+    top_k = None if top_k is None else int(top_k)
+    if ranking_config is None:
+        ranking_config = FeatureRankingConfig()
+
+    candidate_ranking = rank_candidates(
+        candidate_generation.candidates,
+        target_sample_rate=target_sample_rate,
+        config=ranking_config,
+    )
+    rank_by_id = {score.candidate_id: score for score in candidate_ranking.scores}
+    candidate_by_id = {
+        candidate.candidate_id: candidate for candidate in candidate_generation.candidates
+    }
+    ranked_candidates = [
+        candidate_by_id[score.candidate_id] for score in candidate_ranking.scores
+    ]
+    ranked_ids = {candidate.candidate_id for candidate in ranked_candidates}
+    ranked_candidates.extend(
+        candidate
+        for candidate in candidate_generation.candidates
+        if candidate.candidate_id not in ranked_ids
+    )
+    selected_candidates = ranked_candidates if top_k is None else ranked_candidates[:top_k]
+
     output_directory = Path(output_directory)
     manifest_path = output_directory / "manifest.json"
     output_targets = [
         output_directory / "rendered" / _rendered_filename(index, candidate, renderer)
-        for index, candidate in enumerate(candidate_generation.candidates, start=1)
+        for index, candidate in enumerate(selected_candidates, start=1)
         for renderer in renderers
     ]
     _preflight_output_paths([manifest_path, *output_targets], overwrite=overwrite)
@@ -100,7 +135,8 @@ def render_candidate_batch(
 
     rendered_variants = []
     failures = []
-    for index, candidate in enumerate(candidate_generation.candidates, start=1):
+    for index, candidate in enumerate(selected_candidates, start=1):
+        candidate_score = rank_by_id.get(candidate.candidate_id)
         for renderer in renderers:
             output_path = rendered_directory / _rendered_filename(index, candidate, renderer)
             try:
@@ -123,6 +159,12 @@ def render_candidate_batch(
                         output_file=str(output_path.relative_to(output_directory)),
                         sample_rate=result.sample_rate,
                         sample_count=int(result.audio.shape[-1]),
+                        candidate_rank=(
+                            None if candidate_score is None else candidate_score.rank
+                        ),
+                        candidate_score=(
+                            None if candidate_score is None else candidate_score.total_score
+                        ),
                     )
                 )
             except Exception as error:  # Export all independent variants and record each failure.
@@ -139,8 +181,10 @@ def render_candidate_batch(
         output_directory=output_directory,
         manifest_path=manifest_path,
         candidate_generation=candidate_generation,
+        candidate_ranking=candidate_ranking,
         rendered_variants=tuple(rendered_variants),
         failures=tuple(failures),
+        top_k=top_k,
     )
     _write_json_atomic(manifest_path, _manifest_payload(batch_result, renderers))
     return batch_result
@@ -156,9 +200,11 @@ def generate_and_render_batch(
     target_sample_rate=DEFAULT_SAMPLE_RATE,
     analysis=None,
     analysis_location=None,
+    ranking_config=None,
+    top_k=None,
     overwrite=False,
 ) -> BatchRenderResult:
-    """Generate candidates and render every accepted renderer variant."""
+    """Generate, rank, and render accepted candidate variants."""
     if candidate_config is None:
         candidate_config = CandidateGenerationConfig()
     if analysis is None:
@@ -178,6 +224,8 @@ def generate_and_render_batch(
         renderers=renderers,
         target_sample_rate=target_sample_rate,
         analysis=analysis,
+        ranking_config=ranking_config,
+        top_k=top_k,
         overwrite=overwrite,
     )
 
@@ -240,6 +288,15 @@ def _manifest_payload(batch_result, renderers):
         "format_version": BATCH_MANIFEST_FORMAT_VERSION,
         "renderers": list(renderers),
         "candidate_generation": batch_result.candidate_generation.to_dict(),
+        "candidate_ranking": batch_result.candidate_ranking.to_dict(),
+        "render_selection": {
+            "top_k": batch_result.top_k,
+            "candidate_ids": list(
+                dict.fromkeys(
+                    variant.candidate_id for variant in batch_result.rendered_variants
+                )
+            ),
+        },
         "rendered_variants": [variant.to_dict() for variant in batch_result.rendered_variants],
         "failures": [failure.to_dict() for failure in batch_result.failures],
     }
@@ -289,6 +346,11 @@ def build_argument_parser():
         help="Maximum symmetric relative BPM difference, e.g. 0.15 for 15%% (default: 0.15).",
     )
     parser.add_argument(
+        "--top-k",
+        type=int,
+        help="Render only the top K feature-ranked candidates (default: render all).",
+    )
+    parser.add_argument(
         "--target-sample-rate",
         type=int,
         default=DEFAULT_SAMPLE_RATE,
@@ -322,6 +384,7 @@ def main():
         renderers=tuple(args.renderers),
         target_sample_rate=args.target_sample_rate,
         analysis_location=args.analysis_location,
+        top_k=args.top_k,
         overwrite=args.overwrite,
     )
     print(
@@ -330,6 +393,8 @@ def main():
         f"recorded {len(result.failures)} render failures."
     )
     print(f"Manifest: {result.manifest_path}")
+    for score in result.candidate_ranking.scores[:3]:
+        print(f"Rank {score.rank}: {score.candidate_id} (score={score.total_score:.3f})")
     if result.failures:
         return 1
     if not result.candidate_generation.candidates:
