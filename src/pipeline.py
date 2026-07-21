@@ -1,5 +1,6 @@
 import argparse
 from dataclasses import dataclass
+import hashlib
 import os
 from pathlib import Path
 import sys
@@ -15,6 +16,8 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.analysis.pre_analysis import PreAnalysis
+from src.candidates import CandidateGenerationConfig, TrackReference
+from src.candidates.generation import generate_candidates as generate_candidates_from_grids
 from src.cutting.equal_power_fade_cut import EqualPowerFadeCut
 from src.cutting.fade_cut import FadeCut
 from src.cutting.simple_cut import SimpleCut
@@ -277,6 +280,68 @@ def render_transition(
         sample_rate=pipeline.target_sample_rate,
         renderer=renderer,
     )
+
+
+def generate_transition_candidates(
+    song1,
+    song2,
+    *,
+    analysis=None,
+    analysis_location=None,
+    target_sample_rate=DEFAULT_SAMPLE_RATE,
+    config=None,
+):
+    """Generate bar-grid candidates on the same sample grid used by renderers.
+
+    This is deliberately separate from rendering: the result is an auditable
+    candidate set that the later batch-rendering and ranking stages consume.
+    """
+    if int(target_sample_rate) <= 0:
+        raise ValueError("target_sample_rate must be greater than 0")
+    if analysis is None:
+        cache_path = (
+            Path(output_folder) / "pre_analysis"
+            if analysis_location is None
+            else Path(analysis_location)
+        )
+        analysis = PreAnalysis(str(cache_path) + os.sep)
+    if config is None:
+        config = CandidateGenerationConfig()
+
+    song1_path = Path(song1)
+    song2_path = Path(song2)
+    bpm1, beat_frames1 = analysis(str(song1_path))
+    bpm2, beat_frames2 = analysis(str(song2_path))
+    sample_rate1 = librosa.get_samplerate(str(song1_path))
+    sample_rate2 = librosa.get_samplerate(str(song2_path))
+    if sample_rate1 is None or sample_rate2 is None:
+        raise ValueError("Could not determine an input track sample rate")
+
+    beat_frames1 = BeatBridgePipeline._scale_beat_frames(
+        beat_frames1,
+        int(target_sample_rate) / float(sample_rate1),
+    )
+    beat_frames2 = BeatBridgePipeline._scale_beat_frames(
+        beat_frames2,
+        int(target_sample_rate) / float(sample_rate2),
+    )
+    return generate_candidates_from_grids(
+        TrackReference(str(song1_path), _file_sha256(song1_path)),
+        bpm1,
+        beat_frames1,
+        TrackReference(str(song2_path), _file_sha256(song2_path)),
+        bpm2,
+        beat_frames2,
+        config=config,
+    )
+
+
+def _file_sha256(path):
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as audio_file:
+        for chunk in iter(lambda: audio_file.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def build_argument_parser():

@@ -1,6 +1,6 @@
 # BeatBridge – Stand & Next Steps
 
-_Stand: 2026-07-17_
+_Stand: 2026-07-21_
 
 **Maßgeblicher Kontext: [`Projekt-Gesamtuebersicht.md`](./Projekt-Gesamtuebersicht.md) (Exposé).** Diese Datei hält den *technischen Prototyp-Stand der Startphase* (Monat 1 / erste 2–3 Wochen) fest. Ziel, Scope, wissenschaftlicher Beitrag, Related Work, Datenstrategie, Evaluation, 6-Monats-Plan und Risiken stehen im Exposé.
 
@@ -12,7 +12,7 @@ Kurzfazit Prototyp: schlanke, im Kern lauffähige CLI-Pipeline für einen taktsy
 
 ## Aktueller Stand (implementiert)
 
-- **Projektstruktur / API / CLI**: `src/pipeline.py` bietet `render_transition()` als programmatischen Einstieg und argparse als CLI — lädt zwei Songs, analysiert, normalisiert, rendert und exportiert. Struktur `src/analysis/`, `src/cutting/`, `src/tempo/`.
+- **Projektstruktur / API / CLI**: `src/pipeline.py` bietet `render_transition()` sowie `generate_transition_candidates()` als programmatische Einstiege; argparse deckt weiterhin den einzelnen Render-Export ab. Struktur `src/analysis/`, `src/candidates/`, `src/cutting/`, `src/tempo/`.
 - **Audio-I/O**: Laden über `librosa.load`, Export über `soundfile.write`; intern standardmäßig 44,1 kHz Stereo. Abweichende Sample-Raten werden resampelt, Mono wird auf Stereo erweitert und Beat-Positionen werden mit skaliert.
 - **Beat-/Bar-Analyse** (`src/analysis/pre_analysis.py`):
   - librosa `beat_track` für BPM + Beats.
@@ -26,14 +26,16 @@ Kurzfazit Prototyp: schlanke, im Kern lauffähige CLI-Pipeline für einen taktsy
   - `tempo_fade`: tonhöhenerhaltende Anpassung von Song B auf BPM von Song A, danach linearer Crossfade.
 - **Tempo** (`src/tempo/`): Resample-basierte Variante (`SimpleTempoAdjust`, verändert Tonhöhe) und reparierter, eingebundener `TimeStretch` (tonhöhenerhaltend).
 - **Tests**: `pytest`-Suite mit synthetischen Audiodaten prüft alle vier Renderer, Tempoanpassung, 48→44,1-kHz-Resampling, Mono→Stereo und den Fehlerpfad bei fehlenden Downbeat-Metadaten.
+- **Kandidatengenerierung** (`src/candidates/`): versionierter Vertrag `CANDIDATE_PROTOCOL.md` und Generator `bar_grid_v1`. Er kombiniert die letzten nutzbaren Taktgrenzen von A mit den frühesten nutzbaren Taktgrenzen von B für 1/2/4 Takte; vollständige Downbeat-Metadaten, genügend Pre-Roll, kompatible Taktlänge und maximal 15 % Tempoabweichung sind harte Filter. Die Kandidaten enthalten deterministische IDs, Audio-Hashes, Cutpoints, Grid- und Filter-Provenienz.
 - **Dataset**: 21 Audiodateien liegen im ignorierten Ordner `musik/`; für alle 21 existiert eine gecachte Analyse unter `output/pre_analysis/` (plus ein veralteter zusätzlicher Cache `HELP_LESS`). Kuratierte Track-Notizen, Lizenzstatus und reproduzierbare Dataset-Definition fehlen noch.
 
-### Verifiziert am 2026-07-17 (Codex, nach Rendering-Meilenstein)
+### Verifiziert am 2026-07-21 (Codex, nach Kandidatenvertrags-Meilenstein)
 
 - Python-Version der Projektumgebung: **3.14.2**.
-- `.venv\Scripts\python.exe -m pytest -q`: **8 Tests bestanden**; zwei nicht blockierende Deprecation-Warnungen aus `audioread` unter Python 3.14.
+- `.venv\Scripts\python.exe -m pytest -q`: **13 Tests bestanden**; zwei nicht blockierende Deprecation-Warnungen aus `audioread` unter Python 3.14.
 - `.venv\Scripts\python.exe -m pip check`: keine defekten Abhängigkeiten; `pytest 9.1.1` ist installiert und in `requirements-dev.txt` festgehalten.
 - CLI und programmatischer Import laufen; verfügbare Renderer: `simple`, `fade`, `equal_power`, `tempo_fade`.
+- `generate_transition_candidates()` erzeugt Kandidaten auf demselben normalisierten 44,1-kHz-Sample-Raster wie die Renderer; ein Integrationstest deckt 48→44,1-kHz-Cutpoint-Skalierung ab.
 - `aufTAKTCl.exe` und `tmp/` sind lokal vorhanden. `ffmpeg 8.1` ist über `PATH` auflösbar und wurde mit `ffmpeg -version` erfolgreich ausgeführt. Eine vorherige Prüfung innerhalb der eingeschränkten Codex-Dateisandbox lieferte wegen fehlendem Zugriff auf das WinGet-Paketverzeichnis fälschlich „nicht gefunden“.
 - Reales Entwicklungsset gemessen: 20 Tracks mit 44,1 kHz Stereo, ein Track mit 48 kHz Stereo.
 - Bereits vorhanden: `output/combined_song.wav` (375,84 s) und `output/cut_song.wav` (214,70 s), beide 44,1 kHz Stereo. Das ist noch kein systematischer Batch-Vergleich.
@@ -44,7 +46,7 @@ Kurzfazit Prototyp: schlanke, im Kern lauffähige CLI-Pipeline für einen taktsy
 |---|:--:|---|
 | 1. Audioimport & Abschnittsauswahl | 🟡 | Zwei Audiodateien können verarbeitet werden; Abschnittsgrenzen sind manuelle Sample-Cutpoints. Mehrere Songs, Abschnittsobjekte und Reihenfolge-Constraints fehlen. |
 | 2. Musikanalyse | 🟡 | BPM, Beats, Downbeats und Taktpositionen sind vorhanden. Phrasen-/Segmentgrenzen, Strukturtypen, Vocal-Aktivität und eine plattformunabhängige Downbeat-Lösung fehlen. |
-| 3. Kandidatengenerierung | ❌ | Keine automatische Ableitung oder Filterung möglicher Übergangspunkte. |
+| 3. Kandidatengenerierung | 🟡 | Automatische bar-synchrone Kandidaten mit harten Grid-/Pre-Roll-/Tempo-Filtern und stabilem Vertrag vorhanden. Batch-Rendering, Phrasen/Struktur und Vocal-Filter fehlen noch. |
 | 4. Übergangsmetrik | ❌ | Weder Feature-Baseline noch Embedding-Metrik, Ranking oder Score-Komponenten implementiert. |
 | 5. Rendering | ✅ | Alle vier im Exposé verlangten Baseline-Renderer sind implementiert und synthetisch getestet. Erweiterungen wie EQ, Filter oder Stems sind bewusst späterer Scope. |
 | 6. Vorschau & Export | 🟡 | WAV-Export per CLI funktioniert. Batch-Export, Visualisierung, Inline-Playback, Auswahlworkflow und GUI fehlen. |
@@ -59,7 +61,7 @@ Damit ist die technische Grundlage aus Monat 1 weitgehend vorhanden. Das frühe 
 | Kleines Entwicklungsset (10–20 Tracks) | 🟡 | 21 lokale Audiodateien + Analyse-Caches vorhanden; Kuratierung, Track-Notizen, Rechte und reproduzierbare Definition fehlen |
 | Beat-/Bar-Analyse | ✅ | librosa + aufTAKT-Merge, mit Diskrepanz-Log |
 | Mehrere gerenderte Übergänge | 🟡 | Vier Renderer implementiert und synthetisch getestet — Cutpoints aber noch manuell |
-| Automatische Kandidaten | ❌ | keine Ableitung aus Bar-/Phrasengrenzen (Exposé Abschn. 5) |
+| Automatische Kandidaten | 🟡 | `bar_grid_v1` erzeugt Kandidaten aus nutzbaren Downbeats, einschließlich 1/2/4-Takt-Varianten und auditierbarer Rejections; keine Phrasen-/Strukturinformationen |
 | Systematischer Vergleich / Höranalyse | ❌ | kein Batch-Export, keine Vergleichsoberfläche |
 | Erste Baseline-Renderer (4 Stück) | ✅ | Hard Cut, linearer Crossfade, Equal-Power und tempoangepasster Crossfade getestet |
 | Einfache Feature-Metrik | ❌ | offen (Monat 2) |
@@ -87,18 +89,16 @@ Ziel: das Startphasen-Erfolgskriterium erfüllen — die Schleife **automatische
 
 **Abgeschlossen am 2026-07-17:** programmatische Pipeline, Audio-Normalisierung, vier Rendering-Baselines, versionierter Rendering-Vertrag und automatisierte Tests.
 
-1. **Kandidatenvertrag und Einheiten festlegen** — versioniertes, später additiv erweiterbares Kandidatenformat definieren; Beats, Takte und Phrasen eindeutig trennen. Mindestens Songreferenzen, Cutpoints, Übergangslänge, Grid-Metadaten, Filterstatus und Provenienz vorsehen.
-2. **Kandidatengenerierung (Exposé Abschn. 5)** — aus Bar-Grenzen: letzte N Takte von A × erste N Takte von B, Längen 1/2/4 Takte; zunächst harte, messbare Filter für Beat-Grid und Tempo-Toleranz. Instabilität und Vocal-Overlap erst filtern, sobald dafür ein belastbares Signal definiert ist. **Kernbaustein, der aus dem manuellen Werkzeug ein automatisches macht.**
-3. **Batch-Rendering** — alle Kandidaten × Renderer-Typen × Längen in einen Ordner exportieren, sinnvoll benannt und auf den Kandidaten zurückführbar.
-4. **Anhören & Sehen** — Jupyter-Notebook mit Waveform/(Down)Beats-Plot + Inline-Playback; dabei die „Liste typischer Fehlerfälle" (Exposé Abschn. 14) sammeln.
-5. **Entwicklungsset kuratieren (Exposé Abschn. 8)** — die vorhandenen 21 Tracks als reproduzierbares Set definieren, Varianz und Duplikate prüfen, Track-Notizen ergänzen und Lizenzfrage klären (parallel, eher Handarbeit).
+1. **Batch-Rendering** — alle akzeptierten Kandidaten × Renderer-Typen in einen Ordner exportieren, sinnvoll benannt und über ein JSON-Manifest auf Kandidaten-ID, Taktlänge und Renderer zurückführbar. Damit wird der jetzt vorhandene Kandidatenvertrag erstmals in hörbare, vergleichbare Artefakte überführt.
+2. **Anhören & Sehen** — Jupyter-Notebook mit Waveform/(Down)Beats-Plot + Inline-Playback; dabei die „Liste typischer Fehlerfälle" (Exposé Abschn. 14) sammeln.
+3. **Entwicklungsset kuratieren (Exposé Abschn. 8)** — die vorhandenen 21 Tracks als reproduzierbares Set definieren, Varianz und Duplikate prüfen, Track-Notizen ergänzen und Lizenzfrage klären (parallel, eher Handarbeit).
 
 Danach (nicht jetzt): **Feature-Metrik & Ranking** (Monat 2) auf genau diesen Kandidaten; **vortrainierte Embeddings** vergleichen, eigenes SSL-Fine-Tuning optional (Monat 3; Priorisierung laut Exposé Risiko 15: Pipeline+Baselines+Metrik zuerst).
 
 ## Offene Fragen / Entscheidungen (technisch)
 
 - BPM-/Beat-Grid: was ist maßgeblich, wenn librosa und aufTAKT abweichen (HELP_LESS 161 vs. 157)?
-- Übergangslänge intern in **Beats** oder **Takten** führen? (CLI erwartet aktuell Beats bei FadeCut.)
+- Übergangslänge: **entschieden am 2026-07-21** — Kandidaten führen sie kanonisch in Takten und leiten die für FadeCut benötigten Beats aus dem analysierten Fenster ab. Offene Folgefrage: Wie sollen spätere Renderer mit wechselndem Metrum umgehen?
 - Vocal-Overlap: eigene Vocal-Detektion oder als weiches Penalty in der Metrik? (Exposé: beides denkbar — harter Filter + Score-Penalty.)
 - **aufTAKT (Windows-Binary) vs. plattformunabhängiges Downbeat-Tracking** (z. B. madmom) — Reproduzierbarkeit vs. Aufwand.
 - Rechte an den Testtracks (HELP_LESS/BREATH_LESS) — eigene Produktion oder lizenzpflichtig? (Exposé Abschn. 8: rechtlich handhabbares Set nötig.)
