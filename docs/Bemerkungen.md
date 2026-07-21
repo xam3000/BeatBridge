@@ -4,6 +4,7 @@
 
 - **Beobachtung (übernommen am 2026-07-17):** Die BPM-Ergebnisse von librosa und aufTAKT weichen für `HELP_LESS` voneinander ab (librosa: 161 BPM, aufTAKT: 157 BPM). Ursache und maßgebliches Grid sind noch nicht entschieden.
 - **Beobachtung (übernommen am 2026-07-17):** Das erkannte Taktraster umfasst überwiegend vier Beats, musikalisch relevante Phrasen im Entwicklungsset häufig acht Beats. Kandidatengenerierung muss deshalb Beat, Takt und Phrase getrennt modellieren.
+- **Beobachtung (2026-07-21):** Der erste reale Batch `HELP_LESS → BREATH_LESS` erzeugte einen akzeptierten 2-Takt-Kandidaten und zwei WAV-Varianten (`fade`, `equal_power`) ohne Fehler. Die BPM-Werte der gecachten librosa-Analyse stimmen für dieses Paar mit 161,499 überein; eine menschliche Hörbewertung steht noch aus.
 
 ## Entscheidungen und Gelerntes
 

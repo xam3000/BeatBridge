@@ -8,7 +8,7 @@ _Stand: 2026-07-21_
 
 **Wichtigstes Erfolgskriterium der Startphase (Exposé Abschn. 14):** Nach spätestens drei Wochen sollen *mehrere automatisch erzeugte* Übergänge *hörbar* sein und *systematisch verglichen* werden können.
 
-Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automatisch erzeugt und mit allen vier Rendering-Baselines als nachvollziehbarer WAV-Batch exportiert werden. Damit sind mehrere automatisch erzeugte Übergänge technisch hörbar und über ein Manifest vergleichbar; ein Notebook für bequeme Wiedergabe/Visualisierung und die eigentliche Metrik fehlen noch.
+Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automatisch erzeugt, als nachvollziehbarer WAV-Batch exportiert und im Notebook direkt angehört werden. Ein erster realer Lauf für HELP_LESS → BREATH_LESS liegt vor; die systematische menschliche Hörbewertung und die eigentliche Metrik fehlen noch.
 
 ## Aktueller Stand (implementiert)
 
@@ -28,6 +28,7 @@ Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automa
 - **Tests**: `pytest`-Suite mit synthetischen Audiodaten prüft alle vier Renderer, Tempoanpassung, 48→44,1-kHz-Resampling, Mono→Stereo und den Fehlerpfad bei fehlenden Downbeat-Metadaten.
 - **Kandidatengenerierung** (`src/candidates/`): versionierter Vertrag `CANDIDATE_PROTOCOL.md` und Generator `bar_grid_v1`. Er kombiniert die letzten nutzbaren Taktgrenzen von A mit den frühesten nutzbaren Taktgrenzen von B für 1/2/4 Takte; vollständige Downbeat-Metadaten, genügend Pre-Roll, kompatible Taktlänge und maximal 15 % Tempoabweichung sind harte Filter. Die Kandidaten enthalten deterministische IDs, Audio-Hashes, Cutpoints, Grid- und Filter-Provenienz.
 - **Batch-Rendering** (`src/batch_render.py`): rendert akzeptierte Kandidaten × ausgewählte Renderer als WAV-Dateien und erzeugt `manifest.json`. Exporte werden atomar geschrieben; vorhandene Dateien werden ohne explizites `--overwrite` nicht ersetzt. Gescheiterte Einzelvarianten und Generator-Rejections bleiben im Manifest sichtbar.
+- **Hörnotebook** (`notebooks/listen_batch.ipynb`): lädt einen Batch über `manifest.json`, zeigt Kandidaten-/Renderer-Metadaten und bettet die WAV-Varianten über `IPython.display.Audio` ein. Der Startpfad verweist auf den ersten realen Batch-Lauf.
 - **Dataset**: 21 Audiodateien liegen im ignorierten Ordner `musik/`; für alle 21 existiert eine gecachte Analyse unter `output/pre_analysis/` (plus ein veralteter zusätzlicher Cache `HELP_LESS`). Kuratierte Track-Notizen, Lizenzstatus und reproduzierbare Dataset-Definition fehlen noch.
 
 ### Verifiziert am 2026-07-21 (Codex, nach Batch-Rendering-Meilenstein)
@@ -38,6 +39,7 @@ Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automa
 - CLI und programmatischer Import laufen; verfügbare Renderer: `simple`, `fade`, `equal_power`, `tempo_fade`.
 - `generate_transition_candidates()` erzeugt Kandidaten auf demselben normalisierten 44,1-kHz-Sample-Raster wie die Renderer; ein Integrationstest deckt 48→44,1-kHz-Cutpoint-Skalierung ab.
 - Batch-Export testet WAV-Dateien, Manifest-Inhalt, Renderer-/Kandidaten-Rückverfolgbarkeit und den Schutz vor unbeabsichtigtem Überschreiben.
+- Erster realer Batch: `output/batches/help_to_breath_first/`, Songpaar `05 - HELP_LESS.flac` → `07 - BREATH_LESS.flac`; ein 2-Takt-Kandidat (`candidate-6a5d9f74efd4ad1f`, beide 161,499 BPM) wurde als linearer und Equal-Power-Crossfade exportiert. Zwei 44,1-kHz-Stereo-WAVs à 63.102.084 Bytes, keine Rejections und keine Renderfehler.
 - `aufTAKTCl.exe` und `tmp/` sind lokal vorhanden. `ffmpeg 8.1` ist über `PATH` auflösbar und wurde mit `ffmpeg -version` erfolgreich ausgeführt. Eine vorherige Prüfung innerhalb der eingeschränkten Codex-Dateisandbox lieferte wegen fehlendem Zugriff auf das WinGet-Paketverzeichnis fälschlich „nicht gefunden“.
 - Reales Entwicklungsset gemessen: 20 Tracks mit 44,1 kHz Stereo, ein Track mit 48 kHz Stereo.
 - Bereits vorhanden: `output/combined_song.wav` (375,84 s) und `output/cut_song.wav` (214,70 s), beide 44,1 kHz Stereo. Das ist noch kein systematischer Batch-Vergleich.
@@ -51,7 +53,7 @@ Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automa
 | 3. Kandidatengenerierung | 🟡 | Automatische bar-synchrone Kandidaten mit harten Grid-/Pre-Roll-/Tempo-Filtern und stabilem Vertrag vorhanden. Phrasen/Struktur und Vocal-Filter fehlen noch. |
 | 4. Übergangsmetrik | ❌ | Weder Feature-Baseline noch Embedding-Metrik, Ranking oder Score-Komponenten implementiert. |
 | 5. Rendering | ✅ | Alle vier im Exposé verlangten Baseline-Renderer sind implementiert und synthetisch getestet. Erweiterungen wie EQ, Filter oder Stems sind bewusst späterer Scope. |
-| 6. Vorschau & Export | 🟡 | Batch-WAV-Export und auditierbares Manifest funktionieren. Visualisierung, Inline-Playback, Auswahlworkflow und GUI fehlen. |
+| 6. Vorschau & Export | 🟡 | Batch-WAV-Export, auditierbares Manifest und Notebook-Inline-Playback funktionieren. Visualisierung, Auswahlworkflow und GUI fehlen. |
 
 Damit ist die technische Grundlage aus Monat 1 weitgehend vorhanden. Das frühe Erfolgskriterium „automatisch erzeugt und systematisch vergleichbar“ ist auf Artefakt-Ebene erfüllt; der menschliche Hörvergleich und der wissenschaftliche Kern aus Monat 2–3 (Komponente 4) stehen noch aus.
 
@@ -62,9 +64,9 @@ Damit ist die technische Grundlage aus Monat 1 weitgehend vorhanden. Das frühe 
 | Reproduzierbares Repository | 🟡 | Git, MD-Doku und Requirements-Dateien vorhanden; aufTAKT und ffmpeg funktionieren lokal, sind aber externe Windows-Komponenten und ihre Einrichtung ist noch nicht automatisiert |
 | Kleines Entwicklungsset (10–20 Tracks) | 🟡 | 21 lokale Audiodateien + Analyse-Caches vorhanden; Kuratierung, Track-Notizen, Rechte und reproduzierbare Definition fehlen |
 | Beat-/Bar-Analyse | ✅ | librosa + aufTAKT-Merge, mit Diskrepanz-Log |
-| Mehrere gerenderte Übergänge | 🟡 | Automatischer Batch-Export für Kandidaten × Renderer vorhanden und synthetisch getestet; noch kein dokumentierter Lauf auf dem realen Entwicklungsset |
+| Mehrere gerenderte Übergänge | 🟡 | Automatischer Batch-Export vorhanden; erster realer 2-Varianten-Lauf HELP_LESS → BREATH_LESS ohne Fehler dokumentiert |
 | Automatische Kandidaten | 🟡 | `bar_grid_v1` erzeugt Kandidaten aus nutzbaren Downbeats, einschließlich 1/2/4-Takt-Varianten und auditierbarer Rejections; keine Phrasen-/Strukturinformationen |
-| Systematischer Vergleich / Höranalyse | 🟡 | Batch-Export plus Manifest ermöglichen die Nachverfolgung; Notebook/Inline-Playback und dokumentierte Höranalyse fehlen |
+| Systematischer Vergleich / Höranalyse | 🟡 | Batch-Export, Manifest und Inline-Playback-Notebook vorhanden; dokumentierte menschliche Höranalyse fehlt |
 | Erste Baseline-Renderer (4 Stück) | ✅ | Hard Cut, linearer Crossfade, Equal-Power und tempoangepasster Crossfade getestet |
 | Einfache Feature-Metrik | ❌ | offen (Monat 2) |
 | Erste Embedding-Tests | ❌ | offen (Monat 3) |
@@ -91,7 +93,7 @@ Ziel: das Startphasen-Erfolgskriterium erfüllen — die Schleife **automatische
 
 **Abgeschlossen am 2026-07-17:** programmatische Pipeline, Audio-Normalisierung, vier Rendering-Baselines, versionierter Rendering-Vertrag und automatisierte Tests.
 
-1. **Erster realer Batch-Lauf und Anhören & Sehen** — für zwei bis drei bewusst ausgewählte Trackpaare Batch-Ausgaben erzeugen; Jupyter-Notebook mit Waveform/(Down)Beats-Plot + Inline-Playback ergänzen und dabei die „Liste typischer Fehlerfälle" (Exposé Abschn. 14) sammeln.
+1. **Hörvergleich dokumentieren und erweitern** — die zwei Varianten aus `help_to_breath_first` im Notebook anhören, konkrete Fehlerfälle notieren und zwei weitere bewusst kontrastierende Trackpaare als kleine Vergleichsserie exportieren. Als nächste Notebook-Erweiterung Waveform/(Down)Beats plotten.
 2. **Entwicklungsset kuratieren (Exposé Abschn. 8)** — die vorhandenen 21 Tracks als reproduzierbares Set definieren, Varianz und Duplikate prüfen, Track-Notizen ergänzen und Lizenzfrage klären (parallel, eher Handarbeit).
 3. **Feature-Metrik & Ranking vorbereiten** — auf dem Batch-Manifest einfache BPM-, Chroma- und Energie-Baselines definieren; erst danach vortrainierte Embeddings vergleichen.
 

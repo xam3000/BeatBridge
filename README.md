@@ -9,6 +9,7 @@ Der aktuelle, verifizierte Projektstand und die weitere Dokumentation liegen unt
 - [CLI verwenden](./docs/CLI.md)
 - [Kandidatenvertrag](./docs/CANDIDATE_PROTOCOL.md)
 - [Batch-Rendering](./docs/BATCH_RENDERING_PROTOCOL.md)
+- [Batch anhören (Notebook)](./notebooks/listen_batch.ipynb)
 - [Laufende Bemerkungen](./docs/Bemerkungen.md)
 
 ## Entwicklungsumgebung

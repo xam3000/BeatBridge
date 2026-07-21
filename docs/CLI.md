@@ -137,6 +137,10 @@ Wichtige Batch-Optionen:
 
 Ein vorhandener Export wird standardmäßig nicht überschrieben. Für einen weiteren Versuch deshalb einen neuen Ordner wählen; `--overwrite` nur bewusst einsetzen. Der ausführliche Exportvertrag steht in [`BATCH_RENDERING_PROTOCOL.md`](./BATCH_RENDERING_PROTOCOL.md).
 
+## Batch im Notebook anhören
+
+[`notebooks/listen_batch.ipynb`](../notebooks/listen_batch.ipynb) lädt ein Batch-Manifest, listet die Varianten auf und zeigt für jede gewählte WAV-Datei einen eingebetteten Audio-Player. Das Notebook startet mit dem ersten realen Lauf `output/batches/help_to_breath_first`. Für einen anderen Lauf in der ersten Codezelle nur `BATCH_DIR` ändern und die Zellen von oben nach unten ausführen.
+
 ## Analyse-Cache und Ausgaben
 
 Beim ersten Lauf analysiert BeatBridge BPM, Beats und Taktpositionen. Ergebnisse werden anhand des Datei-Hashes zwischengespeichert:
