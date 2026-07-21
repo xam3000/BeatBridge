@@ -5,6 +5,7 @@ import pytest
 import soundfile as sf
 
 from src.cutting.equal_power_fade_cut import EqualPowerFadeCut
+from src.cutting.fade_cut import FadeCut
 from src.cutting.simple_cut import SimpleCut
 from src.pipeline import (
     BeatBridgePipeline,
@@ -109,6 +110,23 @@ def test_equal_power_envelopes_keep_constant_squared_gain():
     )
     assert float(fade_out[0]) == pytest.approx(1.0)
     assert float(fade_in[-1]) == pytest.approx(1.0)
+
+
+def test_bridge_fade_keeps_high_power_sections_outside_the_overlap():
+    song1 = np.concatenate(
+        [np.ones(400, dtype=np.float32), np.full(600, 0.1, dtype=np.float32)]
+    )
+    song2 = np.concatenate(
+        [np.full(400, 0.2, dtype=np.float32), np.full(600, 2.0, dtype=np.float32)]
+    )
+    beats = [(sample, index % 4 + 1, 4) for index, sample in enumerate(range(0, 1_000, 100))]
+
+    result = FadeCut(fade_beats=2).cut(song1, song2, 400, 400, beats, beats)
+
+    assert result.shape == (1_200,)
+    assert result[399] == pytest.approx(1.0)
+    assert float(np.max(result[400:600])) <= 0.200001
+    assert result[600] == pytest.approx(2.0)
 
 
 def test_time_stretch_uses_explicit_target_bpm():

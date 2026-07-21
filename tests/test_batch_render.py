@@ -61,10 +61,11 @@ def test_batch_render_exports_wavs_and_a_traceable_manifest(batch_inputs):
 
     manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
     assert manifest["format_version"] == 1
+    assert manifest["render_protocol_version"] == 2
     assert manifest["candidate_generation"]["candidates"][0]["candidate_id"] == candidates.candidates[0].candidate_id
-    assert manifest["candidate_ranking"]["ranker"] == "feature_baseline_v1"
+    assert manifest["candidate_ranking"]["ranker"] == "feature_baseline_v3"
     assert manifest["candidate_ranking"]["scores"][0]["rank"] == 1
-    assert manifest["render_selection"]["top_k"] is None
+    assert manifest["render_selection"]["top_k"] == 5
     assert [item["renderer"] for item in manifest["rendered_variants"]] == ["simple", "fade"]
     assert all(item["candidate_rank"] == 1 for item in manifest["rendered_variants"])
 

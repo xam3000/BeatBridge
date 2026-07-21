@@ -10,7 +10,7 @@ Dieses Dokument beschreibt die stabile Schnittstelle zwischen Analyse, Kandidate
 - **Takt**: eine Folge von `beats_in_bar` Beats; `bar_index` ist nullbasiert relativ zum ersten erkannten Downbeat eines Tracks.
 - **Phrase**: ist bewusst noch kein Kandidatenfeld. Sie wird erst ergänzt, sobald eine belastbare Segmentierungsquelle vorliegt.
 - **Sample**: Cutpoints liegen auf dem normalisierten Render-Raster (standardmäßig 44.100 Hz), nicht auf der originalen Eingangs-Sample-Rate.
-- **Übergangslänge**: ist kanonisch `transition_length_bars` (initial 1, 2 oder 4 Takte). `transition_length_beats` wird aus dem Taktfenster abgeleitet und an die aktuellen Fade-Renderer übergeben.
+- **Übergangslänge**: ist kanonisch `transition_length_bars`. Unterstützt bleiben positive Taktzahlen; der aktuelle High-Power-Workflow verwendet standardmäßig 2 oder 4 Takte. `transition_length_beats` wird aus dem Taktfenster abgeleitet und an die aktuellen Fade-Renderer übergeben.
 
 ## `TransitionCandidate`
 
@@ -32,18 +32,18 @@ Das Python-Datenmodell bietet `to_dict()` für ein späteres JSON-Manifest. Die 
 
 ## Generator `bar_grid_v1`
 
-Der erste Generator bildet die letzten konfigurierbaren, nutzbaren Taktgrenzen von Song A mit den ersten nutzbaren Taktgrenzen von Song B. Er erzeugt daraus Varianten mit 1, 2 und 4 Takten.
+Der Generator bildet standardmäßig **alle** nutzbaren Taktgrenzen von Song A mit allen nutzbaren Taktgrenzen von Song B. So kann das Ranking natürliche Drop-Enden in A und spätere Drop-/Refrain-Anfänge in B erreichen. `source_boundary_count` begrenzt optional auf die letzten N Source-Grenzen; `target_boundary_count` begrenzt optional auf die ersten N Target-Grenzen. Der aktuelle Default erzeugt Varianten mit 2 und 4 Takten.
 
-Die derzeitigen Fade-Renderer überblenden Audio **vor** einem Cutpoint. Deshalb ist ein Cutpoint nur nutzbar, wenn davor für die längste angeforderte Variante genügend vollständige Takte liegen. Auf Song B ist die Startgrenze bei Sample 0 daher kein gültiger Fade-Kandidat; der Generator wählt stattdessen die früheste nach ausreichendem Pre-Roll erreichbare Taktgrenze.
+Die Fade-Renderer ab Rendering-Vertrag Version 2 mischen Source-Audio **nach** dem Source-Cutpoint mit Target-Audio **vor** dem Target-Cutpoint. Deshalb müssen vor und nach beiden Grenzen genügend vollständige Takte liegen: vor A wird Drop A bewertet, nach A liegt der Source-Auslauf; vor B liegt der Target-Vorlauf, nach B wird Drop B bewertet.
 
 Harte Filter in Version 1:
 
 1. vollständige, steigende Beat-/Downbeat-Metadaten mit konsistenten Takten im Übergangsfenster,
-2. vollständiges Pre-Roll-Fenster für jede angeforderte Taktlänge,
+2. vollständige Pre- und Post-Roll-Fenster auf beiden Songs für jede angeforderte Taktlänge,
 3. identische abgeleitete Beatanzahl auf beiden Seiten,
 4. symmetrische relative Tempoabweichung höchstens 15 % (konfigurierbar).
 
-Vocal-Overlap, Energie, Harmonie, Phrasen- und Segmentinformationen bleiben bewusst spätere weiche Metrik-Komponenten und werden noch nicht vorgetäuscht gefiltert.
+Energie und Harmonie bleiben weiche Ranking-Komponenten; Vocal-Overlap, Phrasen- und Segmentinformationen fehlen weiterhin. „High Power“ wird daher nicht als harter Generatorfilter vorgetäuscht, sondern relativ zur Energieverteilung jedes Tracks im dokumentierten Ranking gemessen.
 
 ## Programmatic API
 

@@ -12,16 +12,22 @@ class FadeCut(SimpleCut):
         fade_beats_before=None,
         fade_beats_after=0,
         fade_curve="linear",
+        bridge_mode=True,
     ):
         super().__init__(align_bar=align_bar, snap_to_down_beat=snap_to_down_beat)
         self.fade_beats_before = int(fade_beats if fade_beats_before is None else fade_beats_before)
         self.fade_beats_after = int(fade_beats_after)
         self.fade_curve = str(fade_curve)
+        self.bridge_mode = bool(bridge_mode)
 
         if self.fade_beats_before < 0 or self.fade_beats_after < 0:
             raise ValueError("fade beat counts must be greater than or equal to 0")
         if self.fade_beats_before == 0 and self.fade_beats_after == 0:
             raise ValueError("FadeCut needs at least one beat of transition")
+        if self.bridge_mode and self.fade_beats_after != 0:
+            raise ValueError("fade_beats_after is only supported when bridge_mode=False")
+        if self.bridge_mode and self.fade_beats_before == 0:
+            raise ValueError("Bridge mode needs at least one transition beat")
         if self.fade_curve not in {"linear", "equal_power"}:
             raise ValueError("fade_curve must be 'linear' or 'equal_power'")
 
@@ -41,6 +47,16 @@ class FadeCut(SimpleCut):
             beat_frames1,
             beat_frames2,
         )
+
+        if self.bridge_mode:
+            return self._cut_bridge(
+                audio1,
+                audio2,
+                cut_sample1,
+                cut_sample2,
+                beat_frames1,
+                beat_frames2,
+            )
 
         transition_start1, transition_end1 = self._find_transition_bounds(
             beat_frames1,
@@ -81,6 +97,55 @@ class FadeCut(SimpleCut):
         )
 
         return np.concatenate([prefix, mixed_transition, suffix], axis=-1)
+
+    def _cut_bridge(
+        self,
+        audio1,
+        audio2,
+        cut_sample1,
+        cut_sample2,
+        beat_frames1,
+        beat_frames2,
+    ):
+        """Crossfade only the tail after Drop A with the lead-in before Drop B."""
+        source_transition_end = self._find_beat_offset_sample(
+            beat_frames1,
+            cut_sample1,
+            self.fade_beats_before,
+            audio1.shape[-1],
+        )
+        target_transition_start = self._find_beat_offset_sample(
+            beat_frames2,
+            cut_sample2,
+            -self.fade_beats_before,
+            audio2.shape[-1],
+        )
+
+        source_length = source_transition_end - cut_sample1
+        target_length = cut_sample2 - target_transition_start
+        transition_length = min(source_length, target_length)
+        if transition_length <= 0:
+            raise ValueError("Bridge transition needs audio after source and before target cutpoints")
+
+        source_transition_end = cut_sample1 + transition_length
+        target_transition_start = cut_sample2 - transition_length
+        transition_segment1 = audio1[..., cut_sample1:source_transition_end].astype(
+            np.float32,
+            copy=False,
+        )
+        transition_segment2 = audio2[..., target_transition_start:cut_sample2].astype(
+            np.float32,
+            copy=False,
+        )
+        fade_out, fade_in = self._build_envelopes(transition_length)
+        mixed_transition = (
+            transition_segment1 * fade_out.reshape(self._envelope_shape(transition_segment1))
+            + transition_segment2 * fade_in.reshape(self._envelope_shape(transition_segment2))
+        )
+        return np.concatenate(
+            [audio1[..., :cut_sample1], mixed_transition, audio2[..., cut_sample2:]],
+            axis=-1,
+        )
 
     def _build_envelopes(self, transition_length):
         if self.fade_curve == "linear":
@@ -146,6 +211,20 @@ class FadeCut(SimpleCut):
         transition_end = min(int(max_sample), int(transition_end))
         transition_start = max(0, int(transition_start))
         return transition_start, transition_end
+
+    def _find_beat_offset_sample(self, beat_frames, cut_sample, beat_offset, max_sample):
+        parsed_beats = [self._parse_beat_frame(frame) for frame in beat_frames]
+        beat_index = min(
+            range(len(parsed_beats)),
+            key=lambda idx: abs(parsed_beats[idx]["sample"] - int(cut_sample)),
+        )
+        target_index = beat_index + int(beat_offset)
+        if target_index < 0 or target_index >= len(parsed_beats):
+            direction = "after" if beat_offset > 0 else "before"
+            raise ValueError(
+                f"Bridge transition needs {abs(int(beat_offset))} complete beats {direction} the cutpoint"
+            )
+        return min(int(max_sample), max(0, parsed_beats[target_index]["sample"]))
 
     @staticmethod
     def _envelope_shape(audio):

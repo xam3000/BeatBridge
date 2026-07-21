@@ -25,10 +25,16 @@ def _candidate(candidate_id, source_path, target_path, target_cutpoint):
 
 def test_feature_ranking_prefers_matching_audio_window(tmp_path):
     sample_rate = 44_100
-    time = np.arange(sample_rate * 2) / sample_rate
-    source_audio = 0.25 * np.sin(2 * np.pi * 440.0 * time)
+    time = np.arange(sample_rate * 3) / sample_rate
+    source_audio = np.concatenate(
+        [
+            0.25 * np.sin(2 * np.pi * 440.0 * time[:sample_rate]),
+            0.02 * np.sin(2 * np.pi * 330.0 * time[: sample_rate * 2]),
+        ]
+    )
     target_audio = np.concatenate(
         [
+            0.02 * np.sin(2 * np.pi * 330.0 * time[:sample_rate]),
             0.25 * np.sin(2 * np.pi * 440.0 * time[:sample_rate]),
             0.05 * np.sin(2 * np.pi * 523.25 * time[:sample_rate]),
         ]
@@ -46,12 +52,14 @@ def test_feature_ranking_prefers_matching_audio_window(tmp_path):
     assert [score.candidate_id for score in result.scores] == ["matching", "mismatching"]
     assert result.scores[0].rank == 1
     assert result.scores[0].total_score > result.scores[1].total_score
-    assert result.to_dict()["ranker"] == "feature_baseline_v1"
+    assert result.scores[0].component_scores["high_power"] > result.scores[1].component_scores["high_power"]
+    assert result.scores[0].component_scores["non_overlap"] > result.scores[1].component_scores["non_overlap"]
+    assert result.to_dict()["ranker"] == "feature_baseline_v3"
 
 
 def test_feature_ranking_handles_silent_windows_without_nan(tmp_path):
     audio_path = tmp_path / "silence.wav"
-    sf.write(audio_path, np.zeros(44_100 * 2, dtype=np.float32), 44_100)
+    sf.write(audio_path, np.zeros(44_100 * 3, dtype=np.float32), 44_100)
     candidate = _candidate("silence", audio_path, audio_path, 44_100)
 
     result = rank_candidates((candidate,))

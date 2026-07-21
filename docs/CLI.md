@@ -35,15 +35,15 @@ pipeline.py SONG1 SONG2 CUTPOINT1 CUTPOINT2 RENDERER [OPTIONEN]
 |---|---|
 | `SONG1` | Erster Song; der Teil vor dem Übergang bleibt erhalten |
 | `SONG2` | Zweiter Song; der Teil nach dem Übergang bleibt erhalten |
-| `CUTPOINT1` | Ungefährer Übergangspunkt in Song 1, angegeben in Samples auf dem Ziel-Sample-Raster |
-| `CUTPOINT2` | Ungefährer Übergangspunkt in Song 2, angegeben in Samples auf dem Ziel-Sample-Raster |
+| `CUTPOINT1` | Ende von Drop A / Beginn des Source-Auslaufs, angegeben in Samples auf dem Ziel-Sample-Raster |
+| `CUTPOINT2` | Ende des Target-Vorlaufs / Beginn von Drop B, angegeben in Samples auf dem Ziel-Sample-Raster |
 | `RENDERER` | `simple`, `fade`, `equal_power` oder `tempo_fade` |
 
 Die wichtigsten Optionen:
 
 | Option | Standard | Bedeutung |
 |---|---:|---|
-| `--fade-beats N` | `8` | Länge eines Crossfades in Beats; der Fade endet aktuell am Cutpoint |
+| `--fade-beats N` | `8` | Länge der Bridge in Beats zwischen Source- und Target-Cutpoint |
 | `--target-sample-rate HZ` | `44100` | Internes Sample-Raster und Sample-Rate der Ausgabe |
 | `-o DATEI`, `--output DATEI` | `output/cut_song.wav` | Zielpfad der gerenderten WAV-Datei |
 
@@ -77,7 +77,7 @@ Die Werte müssen nicht exakt auf einem Beat liegen. BeatBridge sucht den Downbe
 
 ### Linearer Crossfade
 
-`fade` blendet Song 1 linear aus und Song 2 linear ein. Der folgende Aufruf verwendet acht Beats:
+`fade` erhält Drop A bis `CUTPOINT1`, blendet danach den Source-Auslauf mit dem Target-Vorlauf vor `CUTPOINT2` und startet dort Drop B. Der folgende Aufruf verwendet acht Beats:
 
 ```powershell
 .venv\Scripts\python.exe src\pipeline.py "musik\05 - HELP_LESS.flac" "musik\07 - BREATH_LESS.flac" 2646000 1323000 fade --fade-beats 8 -o "output\help_to_breath_linear.wav"
@@ -85,7 +85,7 @@ Die Werte müssen nicht exakt auf einem Beat liegen. BeatBridge sucht den Downbe
 
 ### Equal-Power-Crossfade
 
-`equal_power` verwendet Sinus-/Cosinus-Hüllkurven. Dadurch bleibt die kombinierte quadratische Verstärkung über den Fade konstant.
+`equal_power` verwendet dieselbe Drop-Bridge mit Sinus-/Cosinus-Hüllkurven. Dadurch bleibt die kombinierte quadratische Verstärkung über den Fade konstant.
 
 ```powershell
 .venv\Scripts\python.exe src\pipeline.py "musik\05 - HELP_LESS.flac" "musik\07 - BREATH_LESS.flac" 2646000 1323000 equal_power --fade-beats 8 -o "output\help_to_breath_equal_power.wav"
@@ -110,7 +110,7 @@ Der Batch-Befehl erzeugt zuerst taktbasierte Kandidaten und exportiert danach je
   --output-dir "output\batches\help_to_breath"
 ```
 
-Standardmäßig entstehen Varianten für `simple`, `fade`, `equal_power` und `tempo_fade` sowie Übergangslängen von 1, 2 und 4 Takten. Alle Kandidaten werden vor dem Rendering über die Feature-Baseline gerankt. Der Zielordner enthält WAV-Dateien unter `rendered\` und ein `manifest.json`, das jede Datei mit Kandidaten-ID, Rang, Score, Cutpoints, Taktlänge und Renderer verknüpft.
+Standardmäßig durchsucht BeatBridge alle nutzbaren Source- und Target-Grenzen und erzeugt Bridges mit 2 oder 4 Takten. `feature_baseline_v3` bevorzugt ein natürliches Drop-Ende in A, energiearme Übergangsfenster und einen Drop-Anfang in B. Wegen des größeren Suchraums werden standardmäßig nur die fünf bestbewerteten Kandidaten mit den gewählten Renderern exportiert. Der Zielordner enthält WAV-Dateien unter `rendered\` und ein `manifest.json` mit allen Kandidaten, Scores und Messwerten.
 
 Ein kleinerer, schnellerer Vergleichslauf mit nur Equal-Power-Fades und zwei Taktlängen:
 
@@ -120,7 +120,7 @@ Ein kleinerer, schnellerer Vergleichslauf mit nur Equal-Power-Fades und zwei Tak
   "musik\07 - BREATH_LESS.flac" `
   --output-dir "output\batches\help_to_breath_equal_power" `
   --renderers equal_power `
-  --transition-bars 1 2 4 `
+  --transition-bars 2 4 `
   --top-k 5
 ```
 
@@ -130,11 +130,11 @@ Wichtige Batch-Optionen:
 |---|---:|---|
 | `--output-dir ORDNER` | – | Erforderlicher Zielordner für Manifest und WAV-Dateien |
 | `--renderers ...` | alle vier Baselines | Eine oder mehrere Renderer-Varianten |
-| `--transition-bars ...` | `1 2 4` | Kandidatenlängen in Takten |
-| `--source-boundaries N` | `4` | Zahl der letzten nutzbaren Taktgrenzen in Song A |
-| `--target-boundaries N` | `4` | Zahl der ersten nutzbaren Taktgrenzen mit ausreichend Pre-Roll in Song B |
+| `--transition-bars ...` | `2 4` | Kandidatenlängen in Takten |
+| `--source-boundaries N` | alle | Optionales Limit auf die letzten N nutzbaren Source-Grenzen |
+| `--target-boundaries N` | alle | Optionales Limit auf die ersten N nutzbaren Zielgrenzen; ohne Option wird der ganze Song B durchsucht |
 | `--max-tempo-difference X` | `0.15` | Maximale symmetrische relative BPM-Differenz (`0.15` = 15 %) |
-| `--top-k N` | alle | Rendert nur die N bestbewerteten Kandidaten; alle Scores bleiben im Manifest |
+| `--top-k N` | `5` | Rendert nur die N bestbewerteten Kandidaten; alle Scores bleiben im Manifest |
 | `--overwrite` | aus | Erlaubt ausschließlich auf expliziten Wunsch das Ersetzen gleichnamiger Exportdateien |
 
 Ein vorhandener Export wird standardmäßig nicht überschrieben. Für einen weiteren Versuch deshalb einen neuen Ordner wählen; `--overwrite` nur bewusst einsetzen. Der ausführliche Exportvertrag steht in [`BATCH_RENDERING_PROTOCOL.md`](./BATCH_RENDERING_PROTOCOL.md).

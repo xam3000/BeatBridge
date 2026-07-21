@@ -11,6 +11,7 @@ class EqualPowerFadeCut(FadeCut):
         fade_beats=8,
         fade_beats_before=None,
         fade_beats_after=0,
+        bridge_mode=True,
     ):
         super().__init__(
             align_bar=align_bar,
@@ -19,4 +20,5 @@ class EqualPowerFadeCut(FadeCut):
             fade_beats_before=fade_beats_before,
             fade_beats_after=fade_beats_after,
             fade_curve="equal_power",
+            bridge_mode=bridge_mode,
         )

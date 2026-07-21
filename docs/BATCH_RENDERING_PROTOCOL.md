@@ -25,6 +25,7 @@ Das Manifest hat `format_version = 1` und enthält:
 | Feld | Bedeutung |
 |---|---|
 | `renderers` | In diesem Lauf angeforderte Renderer |
+| `render_protocol_version` | Semantik der gerenderten Audiodateien; aktuell Version 2 mit Bridge-Crossfade |
 | `candidate_generation` | Vollständiges Ergebnis nach `CANDIDATE_PROTOCOL.md`, einschließlich abgelehnter Kandidaten |
 | `candidate_ranking` | Feature-Ränge, Einzelkomponenten, Messwerte und Rankingfehler nach `RANKING_PROTOCOL.md` |
 | `render_selection` | Gerenderte Kandidaten-IDs und optionales `top_k` |
@@ -54,4 +55,4 @@ result = generate_and_render_batch(
 print(result.manifest_path)
 ```
 
-Die Funktion verwendet Kandidatengenerierung, Feature-Ranking und das normalisierte Sample-Raster der Pipeline. Mit `top_k=N` werden nur die N bestbewerteten Kandidaten gerendert; das Manifest enthält weiterhin alle erzeugten Kandidaten und Scores. Für fortlaufende Experimente sollte jeder Lauf einen neuen Ausgabepfad erhalten.
+Die Funktion verwendet Kandidatengenerierung, Feature-Ranking und das normalisierte Sample-Raster der Pipeline. Standardmäßig werden nur die fünf bestbewerteten Kandidaten gerendert; das Manifest enthält weiterhin alle erzeugten Kandidaten und Scores. `top_k=None` rendert über die programmatische API alle Kandidaten. Für fortlaufende Experimente sollte jeder Lauf einen neuen Ausgabepfad erhalten.

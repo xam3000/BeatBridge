@@ -17,6 +17,38 @@ def _track(name):
     return TrackReference(path=f"musik/{name}.wav", sha256=f"hash-{name}")
 
 
+def test_default_search_uses_two_or_four_bars_and_all_usable_target_boundaries():
+    result = generate_candidates(
+        _track("source"),
+        120.0,
+        _four_four_grid(bar_count=12),
+        _track("target"),
+        120.0,
+        _four_four_grid(bar_count=12),
+    )
+
+    assert len(result.candidates) == 32
+    assert {candidate.transition_length_bars for candidate in result.candidates} == {2, 4}
+    assert {candidate.target_cutpoint.bar_index for candidate in result.candidates} == {4, 5, 6, 7}
+
+
+def test_target_boundary_requires_complete_post_transition_bars():
+    result = generate_candidates(
+        _track("source"),
+        120.0,
+        _four_four_grid(bar_count=5),
+        _track("target"),
+        120.0,
+        _four_four_grid(bar_count=5),
+    )
+
+    assert not result.candidates
+    assert {rejection.code for rejection in result.rejections} == {
+        "insufficient_source_bars",
+        "insufficient_target_preroll",
+    }
+
+
 def test_generates_deterministic_candidates_from_last_and_first_usable_boundaries():
     config = CandidateGenerationConfig(
         transition_lengths_bars=(1, 2, 4),
@@ -38,11 +70,11 @@ def test_generates_deterministic_candidates_from_last_and_first_usable_boundarie
     assert not result.rejections
     assert {candidate.transition_length_bars for candidate in result.candidates} == {1, 2, 4}
     assert {candidate.transition_length_beats for candidate in result.candidates} == {4, 8, 16}
-    assert {candidate.source_cutpoint.bar_index for candidate in result.candidates} == {8, 9}
+    assert {candidate.source_cutpoint.bar_index for candidate in result.candidates} == {4, 5}
     assert {candidate.target_cutpoint.bar_index for candidate in result.candidates} == {4, 5}
     assert all(candidate.source_cutpoint.count_in_bar == 1 for candidate in result.candidates)
     assert all(candidate.filter_status == "accepted" for candidate in result.candidates)
-    assert result.candidates[0].candidate_id == "candidate-eadeee98c226335a"
+    assert result.candidates[0].candidate_id == "candidate-043845385ad1bc0a"
 
 
 def test_rejects_grid_without_downbeat_metadata():

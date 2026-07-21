@@ -14,6 +14,7 @@ from src.candidates import CandidateGenerationConfig, CandidateGenerationResult,
 from src.pipeline import (
     CUTTERS,
     DEFAULT_SAMPLE_RATE,
+    RENDER_RESULT_FORMAT_VERSION,
     generate_transition_candidates,
     render_transition,
 )
@@ -84,7 +85,7 @@ def render_candidate_batch(
     analysis=None,
     analysis_location=None,
     ranking_config=None,
-    top_k=None,
+    top_k=5,
     overwrite=False,
 ) -> BatchRenderResult:
     """Rank candidates and render all or the requested top K with each baseline.
@@ -201,7 +202,7 @@ def generate_and_render_batch(
     analysis=None,
     analysis_location=None,
     ranking_config=None,
-    top_k=None,
+    top_k=5,
     overwrite=False,
 ) -> BatchRenderResult:
     """Generate, rank, and render accepted candidate variants."""
@@ -286,6 +287,7 @@ def _temporary_path(path):
 def _manifest_payload(batch_result, renderers):
     return {
         "format_version": BATCH_MANIFEST_FORMAT_VERSION,
+        "render_protocol_version": RENDER_RESULT_FORMAT_VERSION,
         "renderers": list(renderers),
         "candidate_generation": batch_result.candidate_generation.to_dict(),
         "candidate_ranking": batch_result.candidate_ranking.to_dict(),
@@ -324,20 +326,18 @@ def build_argument_parser():
         "--transition-bars",
         nargs="+",
         type=int,
-        default=(1, 2, 4),
-        help="Candidate transition lengths in bars (default: 1 2 4).",
+        default=(2, 4),
+        help="Candidate transition lengths in bars (default: 2 4).",
     )
     parser.add_argument(
         "--source-boundaries",
         type=int,
-        default=4,
-        help="Number of latest usable source downbeats (default: 4).",
+        help="Limit the source search to the last N usable boundaries (default: all).",
     )
     parser.add_argument(
         "--target-boundaries",
         type=int,
-        default=4,
-        help="Number of earliest usable target downbeats (default: 4).",
+        help="Limit the target downbeat search to the first N usable boundaries (default: all).",
     )
     parser.add_argument(
         "--max-tempo-difference",
@@ -348,7 +348,8 @@ def build_argument_parser():
     parser.add_argument(
         "--top-k",
         type=int,
-        help="Render only the top K feature-ranked candidates (default: render all).",
+        default=5,
+        help="Render only the top K feature-ranked candidates (default: 5).",
     )
     parser.add_argument(
         "--target-sample-rate",

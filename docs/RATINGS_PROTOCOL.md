@@ -36,7 +36,7 @@ Dieselbe Bewertung kann ohne Notebook gespeichert werden:
 
 ```powershell
 .venv\Scripts\python.exe -m src.evaluation.ratings `
-  "output\batches\help_to_breath_ranked" `
+  "output\batches\help_to_breath_drop_bridge" `
   "candidate-..." `
   equal_power `
   2 `

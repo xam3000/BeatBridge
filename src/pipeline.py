@@ -29,7 +29,7 @@ MUSIK_FOLDER = PROJECT_ROOT / "musik"
 SUPPORTED_AUDIO_EXTENSIONS = {".mp3", ".wav", ".flac", ".ogg", ".m4a"}
 DEFAULT_SAMPLE_RATE = 44_100
 DEFAULT_CHANNELS = 2
-RENDER_RESULT_FORMAT_VERSION = 1
+RENDER_RESULT_FORMAT_VERSION = 2
 
 CUTTERS = {
     "simple": SimpleCut,
@@ -353,12 +353,12 @@ def build_argument_parser():
     parser.add_argument(
         "cutpoint1",
         type=int,
-        help="Sample position in the first song on the target sample-rate grid.",
+        help="End of Drop A / start of source transition on the target sample-rate grid.",
     )
     parser.add_argument(
         "cutpoint2",
         type=int,
-        help="Sample position in the second song on the target sample-rate grid.",
+        help="End of target transition / start of Drop B on the target sample-rate grid.",
     )
     parser.add_argument(
         "cuttype",

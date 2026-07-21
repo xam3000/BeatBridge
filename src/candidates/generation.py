@@ -21,9 +21,9 @@ GENERATOR_NAME = "bar_grid_v1"
 class CandidateGenerationConfig:
     """Hard constraints for the first bar-grid candidate baseline."""
 
-    transition_lengths_bars: tuple[int, ...] = (1, 2, 4)
-    source_boundary_count: int = 4
-    target_boundary_count: int = 4
+    transition_lengths_bars: tuple[int, ...] = (2, 4)
+    source_boundary_count: int | None = None
+    target_boundary_count: int | None = None
     max_tempo_relative_difference: float = 0.15
 
     def __post_init__(self):
@@ -32,8 +32,10 @@ class CandidateGenerationConfig:
             raise ValueError("transition_lengths_bars must contain positive bar counts")
         if len(set(lengths)) != len(lengths):
             raise ValueError("transition_lengths_bars must not contain duplicates")
-        if self.source_boundary_count <= 0 or self.target_boundary_count <= 0:
-            raise ValueError("boundary counts must be greater than 0")
+        if self.source_boundary_count is not None and self.source_boundary_count <= 0:
+            raise ValueError("source_boundary_count must be greater than 0 or None")
+        if self.target_boundary_count is not None and self.target_boundary_count <= 0:
+            raise ValueError("target_boundary_count must be greater than 0 or None")
         if not 0.0 <= self.max_tempo_relative_difference < 1.0:
             raise ValueError("max_tempo_relative_difference must be in [0, 1)")
         object.__setattr__(self, "transition_lengths_bars", tuple(sorted(lengths)))
@@ -77,9 +79,11 @@ def generate_candidates(
     """Return accepted candidates and auditable hard-filter outcomes.
 
     Beat samples must already be expressed on the rendering target sample-rate
-    grid. The current renderers crossfade the audio *before* a cutpoint, so a
-    target cutpoint needs enough complete bars of pre-roll for every requested
-    transition length.
+    grid. Bridge renderers use audio after the source cutpoint and before the
+    target cutpoint. Both cutpoints need complete bars before and after them:
+    source post-roll
+    and target pre-roll form the bridge transition, while source pre-roll and
+    target post-roll contain the two non-overlapping high-power sections.
     """
     config = CandidateGenerationConfig() if config is None else config
     rejections = []
@@ -116,23 +120,31 @@ def generate_candidates(
         )
         return CandidateGenerationResult((), tuple(rejections))
 
-    source_boundaries = _eligible_boundaries(source_grid, config.transition_lengths_bars)
-    target_boundaries = _eligible_boundaries(target_grid, config.transition_lengths_bars)
-    source_boundaries = source_boundaries[-config.source_boundary_count :]
-    target_boundaries = target_boundaries[: config.target_boundary_count]
+    source_boundaries = _eligible_bridge_boundaries(
+        source_grid,
+        config.transition_lengths_bars,
+    )
+    target_boundaries = _eligible_target_boundaries(
+        target_grid,
+        config.transition_lengths_bars,
+    )
+    if config.source_boundary_count is not None:
+        source_boundaries = source_boundaries[-config.source_boundary_count :]
+    if config.target_boundary_count is not None:
+        target_boundaries = target_boundaries[: config.target_boundary_count]
 
     if not source_boundaries:
         rejections.append(
             CandidateRejection(
                 "insufficient_source_bars",
-                "The source track has no downbeat with enough complete preceding bars.",
+                "The source track has no downbeat with enough complete bars before and after it.",
             )
         )
     if not target_boundaries:
         rejections.append(
             CandidateRejection(
                 "insufficient_target_preroll",
-                "The target track has no downbeat with enough complete preceding bars.",
+                "The target track has no downbeat with enough complete bars before and after it.",
             )
         )
     if rejections:
@@ -144,11 +156,28 @@ def generate_candidates(
             for length_bars in config.transition_lengths_bars:
                 source_fade_beats = _window_beats(source_grid, source_boundary.bar_index, length_bars)
                 target_fade_beats = _window_beats(target_grid, target_boundary.bar_index, length_bars)
-                if source_fade_beats != target_fade_beats:
+                source_transition_beats = _following_window_beats(
+                    source_grid,
+                    source_boundary.bar_index,
+                    length_bars,
+                )
+                target_high_power_beats = _following_window_beats(
+                    target_grid,
+                    target_boundary.bar_index,
+                    length_bars,
+                )
+                if len(
+                    {
+                        source_fade_beats,
+                        source_transition_beats,
+                        target_fade_beats,
+                        target_high_power_beats,
+                    }
+                ) != 1:
                     rejections.append(
                         CandidateRejection(
                             "incompatible_transition_meter",
-                            "Source and target require different beat counts for the same bar length.",
+                            "The four drop/transition windows require different beat counts for the same bar length.",
                         )
                     )
                     continue
@@ -235,6 +264,36 @@ def _eligible_boundaries(grid: _Grid, lengths_bars: tuple[int, ...]) -> list[_Bo
     ]
 
 
+def _eligible_target_boundaries(
+    grid: _Grid,
+    lengths_bars: tuple[int, ...],
+) -> list[_Boundary]:
+    return [
+        boundary
+        for boundary in grid.boundaries
+        if all(
+            _window_beats(grid, boundary.bar_index, length) is not None
+            and _following_window_beats(grid, boundary.bar_index, length) is not None
+            for length in lengths_bars
+        )
+    ]
+
+
+def _eligible_bridge_boundaries(
+    grid: _Grid,
+    lengths_bars: tuple[int, ...],
+) -> list[_Boundary]:
+    return [
+        boundary
+        for boundary in grid.boundaries
+        if all(
+            _window_beats(grid, boundary.bar_index, length) is not None
+            and _following_window_beats(grid, boundary.bar_index, length) is not None
+            for length in lengths_bars
+        )
+    ]
+
+
 def _window_beats(grid: _Grid, boundary_index: int, length_bars: int) -> int | None:
     start_index = boundary_index - length_bars
     if start_index < 0:
@@ -248,6 +307,22 @@ def _window_beats(grid: _Grid, boundary_index: int, length_bars: int) -> int | N
     if len(beats_per_bar) != 1:
         return None
     return sum(bar.beats_in_bar for bar in preceding_bars)
+
+
+def _following_window_beats(
+    grid: _Grid,
+    boundary_index: int,
+    length_bars: int,
+) -> int | None:
+    following_bars = grid.boundaries[boundary_index : boundary_index + length_bars]
+    if len(following_bars) != length_bars:
+        return None
+    if any(bar.bar_index not in grid.complete_bar_indices for bar in following_bars):
+        return None
+    beats_per_bar = {bar.beats_in_bar for bar in following_bars}
+    if len(beats_per_bar) != 1:
+        return None
+    return sum(bar.beats_in_bar for bar in following_bars)
 
 
 def _to_cutpoint(boundary: _Boundary) -> CutPoint:
