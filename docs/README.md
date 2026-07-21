@@ -10,6 +10,8 @@ Dieser Ordner ist das dauerhafte Projektgedächtnis. Verifizierte Erkenntnisse, 
 | [`Projekt-Gesamtuebersicht.md`](./Projekt-Gesamtuebersicht.md) | Maßgeblicher Forschungsrahmen, Scope und Zeitplanung | Nur bei bewussten Projektentscheidungen ändern |
 | [`CLI.md`](./CLI.md) | Installation, Kommandozeilen-Aufrufe, Renderer und Fehlerbehebung | Bei Änderungen an CLI-Argumenten oder Laufzeitvoraussetzungen aktualisieren |
 | [`RENDERING_PROTOCOL.md`](./RENDERING_PROTOCOL.md) | Versionierter Vertrag der programmatischen Rendering-Pipeline | Nur additiv ändern; inkompatible Änderungen benötigen eine neue Version |
+| [`CANDIDATE_PROTOCOL.md`](./CANDIDATE_PROTOCOL.md) | Versionierter Vertrag für automatische Übergangskandidaten | Nur additiv ändern; inkompatible Änderungen benötigen eine neue Version |
+| [`BATCH_RENDERING_PROTOCOL.md`](./BATCH_RENDERING_PROTOCOL.md) | Versionierter Vertrag für Batch-Exporte und Manifeste | Nur additiv ändern; inkompatible Änderungen benötigen eine neue Version |
 | [`Bemerkungen.md`](./Bemerkungen.md) | Laufende Beobachtungen, Entscheidungen und gelernte Lektionen | Neue Einträge mit Datum und Begründung ergänzen; bestehende Einträge nicht löschen |
 
 Projektweite Arbeitsregeln stehen in [`../AGENTS.md`](../AGENTS.md). Die kompakte Bedienungs- und Projektübersicht bleibt in [`../README.md`](../README.md).

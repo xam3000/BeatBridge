@@ -1,6 +1,6 @@
 # CLI verwenden
 
-Die BeatBridge-CLI erzeugt einen taktgenauen Übergang zwischen zwei Audiodateien. Die Übergangspunkte werden aktuell noch manuell als Sample-Positionen angegeben und anschließend auf den nächstgelegenen erkannten Downbeat ausgerichtet.
+`src/pipeline.py` erzeugt einen einzelnen taktgenauen Übergang zwischen zwei Audiodateien. Die Übergangspunkte werden dabei manuell als Sample-Positionen angegeben und anschließend auf den nächstgelegenen erkannten Downbeat ausgerichtet. Für automatische Kandidaten und den systematischen Export mehrerer Varianten steht zusätzlich `src/batch_render.py` bereit.
 
 ## Voraussetzungen
 
@@ -99,6 +99,44 @@ Die Werte müssen nicht exakt auf einem Beat liegen. BeatBridge sucht den Downbe
 .venv\Scripts\python.exe src\pipeline.py "musik\05 - HELP_LESS.flac" "musik\07 - BREATH_LESS.flac" 2646000 1323000 tempo_fade --fade-beats 8 -o "output\help_to_breath_tempo.wav"
 ```
 
+## Automatische Kandidaten als Batch rendern
+
+Der Batch-Befehl erzeugt zuerst taktbasierte Kandidaten und exportiert danach jede akzeptierte Kombination aus Kandidat und Renderer. Cutpoints müssen dabei **nicht** manuell angegeben werden.
+
+```powershell
+.venv\Scripts\python.exe -m src.batch_render `
+  "musik\05 - HELP_LESS.flac" `
+  "musik\07 - BREATH_LESS.flac" `
+  --output-dir "output\batches\help_to_breath"
+```
+
+Standardmäßig entstehen Varianten für `simple`, `fade`, `equal_power` und `tempo_fade` sowie Übergangslängen von 1, 2 und 4 Takten. Der Zielordner enthält WAV-Dateien unter `rendered\` und ein `manifest.json`, das jede Datei mit Kandidaten-ID, Cutpoints, Taktlänge und Renderer verknüpft.
+
+Ein kleinerer, schnellerer Vergleichslauf mit nur Equal-Power-Fades und zwei Taktlängen:
+
+```powershell
+.venv\Scripts\python.exe -m src.batch_render `
+  "musik\05 - HELP_LESS.flac" `
+  "musik\07 - BREATH_LESS.flac" `
+  --output-dir "output\batches\help_to_breath_equal_power" `
+  --renderers equal_power `
+  --transition-bars 1 2
+```
+
+Wichtige Batch-Optionen:
+
+| Option | Standard | Bedeutung |
+|---|---:|---|
+| `--output-dir ORDNER` | – | Erforderlicher Zielordner für Manifest und WAV-Dateien |
+| `--renderers ...` | alle vier Baselines | Eine oder mehrere Renderer-Varianten |
+| `--transition-bars ...` | `1 2 4` | Kandidatenlängen in Takten |
+| `--source-boundaries N` | `4` | Zahl der letzten nutzbaren Taktgrenzen in Song A |
+| `--target-boundaries N` | `4` | Zahl der ersten nutzbaren Taktgrenzen mit ausreichend Pre-Roll in Song B |
+| `--max-tempo-difference X` | `0.15` | Maximale symmetrische relative BPM-Differenz (`0.15` = 15 %) |
+| `--overwrite` | aus | Erlaubt ausschließlich auf expliziten Wunsch das Ersetzen gleichnamiger Exportdateien |
+
+Ein vorhandener Export wird standardmäßig nicht überschrieben. Für einen weiteren Versuch deshalb einen neuen Ordner wählen; `--overwrite` nur bewusst einsetzen. Der ausführliche Exportvertrag steht in [`BATCH_RENDERING_PROTOCOL.md`](./BATCH_RENDERING_PROTOCOL.md).
+
 ## Analyse-Cache und Ausgaben
 
 Beim ersten Lauf analysiert BeatBridge BPM, Beats und Taktpositionen. Ergebnisse werden anhand des Datei-Hashes zwischengespeichert:
@@ -127,9 +165,9 @@ BeatBridge bricht mit `Downbeat snapping requires beat frames with count_in_bar 
 
 Die angegebenen Cutpoints sind nur Ausgangspunkte für die Suche nach dem nächsten Downbeat. Prüfen, ob der berechnete Sample-Wert zur gewünschten Zeit und zur gewählten `--target-sample-rate` gehört. Abweichende librosa-/aufTAKT-Raster werden unter `output/pre_analysis/` protokolliert.
 
-### Übergänge automatisch auswählen
+### Der Batch erzeugt keine WAV-Dateien
 
-Das unterstützt die CLI noch nicht. Automatische Kandidatengenerierung aus Takt- und Phrasengrenzen ist der nächste geplante Entwicklungsschritt. Aktuell müssen beide Cutpoints angegeben werden.
+Prüfen Sie zuerst `manifest.json` im angegebenen Zielordner. Unter `candidate_generation.rejections` steht, welcher harte Filter die Kandidaten verhindert hat, etwa fehlende Downbeat-Metadaten, zu wenig Pre-Roll oder eine zu große BPM-Differenz. Der Befehl beendet sich in diesem Fall mit Exit-Code `2` und erzeugt bewusst keine stillen Ersatz-Cutpoints.
 
 ## Tests ausführen
 

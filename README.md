@@ -7,6 +7,8 @@ Der aktuelle, verifizierte Projektstand und die weitere Dokumentation liegen unt
 - [Status und nächste Schritte](./docs/STATUS.md)
 - [Projekt-Gesamtübersicht und Forschungsrahmen](./docs/Projekt-Gesamtuebersicht.md)
 - [CLI verwenden](./docs/CLI.md)
+- [Kandidatenvertrag](./docs/CANDIDATE_PROTOCOL.md)
+- [Batch-Rendering](./docs/BATCH_RENDERING_PROTOCOL.md)
 - [Laufende Bemerkungen](./docs/Bemerkungen.md)
 
 ## Entwicklungsumgebung
@@ -16,10 +18,10 @@ Der aktuelle, verifizierte Projektstand und die weitere Dokumentation liegen unt
 .venv\Scripts\python.exe -m pytest -q
 ```
 
-Der programmatische Rendering-Vertrag ist in [`docs/RENDERING_PROTOCOL.md`](./docs/RENDERING_PROTOCOL.md) beschrieben.
+Die programmatischen Verträge für Rendering, Kandidaten und Batch-Exporte stehen in [`docs/RENDERING_PROTOCOL.md`](./docs/RENDERING_PROTOCOL.md), [`docs/CANDIDATE_PROTOCOL.md`](./docs/CANDIDATE_PROTOCOL.md) und [`docs/BATCH_RENDERING_PROTOCOL.md`](./docs/BATCH_RENDERING_PROTOCOL.md).
 
 ## Projektstand
 
-Die technische Rendering-Basis ist vorhanden: Beat-/Bar-Analyse, Audio-Normalisierung, vier Übergangs-Renderer, CLI und automatisierte Tests. Übergangspunkte müssen noch manuell angegeben werden; automatische Kandidaten, Ranking und Hörvergleich fehlen.
+Die technische Basis ist vorhanden: Beat-/Bar-Analyse, Audio-Normalisierung, vier Übergangs-Renderer, automatische bar-synchrone Kandidaten und Batch-Export mit auditierbarem JSON-Manifest. Ranking und eine Hörvergleichsoberfläche fehlen noch.
 
 Der nächste Meilenstein ist die Schleife **Kandidaten erzeugen → Varianten batchweise rendern → anhören und vergleichen**. Der verbindliche, priorisierte Arbeitsstand wird ausschließlich in [`docs/STATUS.md`](./docs/STATUS.md) gepflegt, damit keine parallelen Aktionspläne auseinanderlaufen.

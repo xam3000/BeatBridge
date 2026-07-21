@@ -8,7 +8,7 @@ _Stand: 2026-07-21_
 
 **Wichtigstes Erfolgskriterium der Startphase (Exposé Abschn. 14):** Nach spätestens drei Wochen sollen *mehrere automatisch erzeugte* Übergänge *hörbar* sein und *systematisch verglichen* werden können.
 
-Kurzfazit Prototyp: schlanke, im Kern lauffähige CLI-Pipeline für einen taktsynchronen Übergang zwischen zwei Songs. Analyse (librosa + aufTAKT) und vier Rendering-Baselines (Hard Cut, linearer Crossfade, Equal-Power-Crossfade und tempoangepasster Crossfade) mit Downbeat-/Bar-Alignment stehen — aber **Cutpoints noch manuell**, also noch nicht „automatisch erzeugt". Der Sprung zu *automatisch + vergleichbar* fehlt noch.
+Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automatisch erzeugt und mit allen vier Rendering-Baselines als nachvollziehbarer WAV-Batch exportiert werden. Damit sind mehrere automatisch erzeugte Übergänge technisch hörbar und über ein Manifest vergleichbar; ein Notebook für bequeme Wiedergabe/Visualisierung und die eigentliche Metrik fehlen noch.
 
 ## Aktueller Stand (implementiert)
 
@@ -27,15 +27,17 @@ Kurzfazit Prototyp: schlanke, im Kern lauffähige CLI-Pipeline für einen taktsy
 - **Tempo** (`src/tempo/`): Resample-basierte Variante (`SimpleTempoAdjust`, verändert Tonhöhe) und reparierter, eingebundener `TimeStretch` (tonhöhenerhaltend).
 - **Tests**: `pytest`-Suite mit synthetischen Audiodaten prüft alle vier Renderer, Tempoanpassung, 48→44,1-kHz-Resampling, Mono→Stereo und den Fehlerpfad bei fehlenden Downbeat-Metadaten.
 - **Kandidatengenerierung** (`src/candidates/`): versionierter Vertrag `CANDIDATE_PROTOCOL.md` und Generator `bar_grid_v1`. Er kombiniert die letzten nutzbaren Taktgrenzen von A mit den frühesten nutzbaren Taktgrenzen von B für 1/2/4 Takte; vollständige Downbeat-Metadaten, genügend Pre-Roll, kompatible Taktlänge und maximal 15 % Tempoabweichung sind harte Filter. Die Kandidaten enthalten deterministische IDs, Audio-Hashes, Cutpoints, Grid- und Filter-Provenienz.
+- **Batch-Rendering** (`src/batch_render.py`): rendert akzeptierte Kandidaten × ausgewählte Renderer als WAV-Dateien und erzeugt `manifest.json`. Exporte werden atomar geschrieben; vorhandene Dateien werden ohne explizites `--overwrite` nicht ersetzt. Gescheiterte Einzelvarianten und Generator-Rejections bleiben im Manifest sichtbar.
 - **Dataset**: 21 Audiodateien liegen im ignorierten Ordner `musik/`; für alle 21 existiert eine gecachte Analyse unter `output/pre_analysis/` (plus ein veralteter zusätzlicher Cache `HELP_LESS`). Kuratierte Track-Notizen, Lizenzstatus und reproduzierbare Dataset-Definition fehlen noch.
 
-### Verifiziert am 2026-07-21 (Codex, nach Kandidatenvertrags-Meilenstein)
+### Verifiziert am 2026-07-21 (Codex, nach Batch-Rendering-Meilenstein)
 
 - Python-Version der Projektumgebung: **3.14.2**.
-- `.venv\Scripts\python.exe -m pytest -q`: **13 Tests bestanden**; zwei nicht blockierende Deprecation-Warnungen aus `audioread` unter Python 3.14.
+- `.venv\Scripts\python.exe -m pytest -q`: **15 Tests bestanden**; zwei nicht blockierende Deprecation-Warnungen aus `audioread` unter Python 3.14.
 - `.venv\Scripts\python.exe -m pip check`: keine defekten Abhängigkeiten; `pytest 9.1.1` ist installiert und in `requirements-dev.txt` festgehalten.
 - CLI und programmatischer Import laufen; verfügbare Renderer: `simple`, `fade`, `equal_power`, `tempo_fade`.
 - `generate_transition_candidates()` erzeugt Kandidaten auf demselben normalisierten 44,1-kHz-Sample-Raster wie die Renderer; ein Integrationstest deckt 48→44,1-kHz-Cutpoint-Skalierung ab.
+- Batch-Export testet WAV-Dateien, Manifest-Inhalt, Renderer-/Kandidaten-Rückverfolgbarkeit und den Schutz vor unbeabsichtigtem Überschreiben.
 - `aufTAKTCl.exe` und `tmp/` sind lokal vorhanden. `ffmpeg 8.1` ist über `PATH` auflösbar und wurde mit `ffmpeg -version` erfolgreich ausgeführt. Eine vorherige Prüfung innerhalb der eingeschränkten Codex-Dateisandbox lieferte wegen fehlendem Zugriff auf das WinGet-Paketverzeichnis fälschlich „nicht gefunden“.
 - Reales Entwicklungsset gemessen: 20 Tracks mit 44,1 kHz Stereo, ein Track mit 48 kHz Stereo.
 - Bereits vorhanden: `output/combined_song.wav` (375,84 s) und `output/cut_song.wav` (214,70 s), beide 44,1 kHz Stereo. Das ist noch kein systematischer Batch-Vergleich.
@@ -46,12 +48,12 @@ Kurzfazit Prototyp: schlanke, im Kern lauffähige CLI-Pipeline für einen taktsy
 |---|:--:|---|
 | 1. Audioimport & Abschnittsauswahl | 🟡 | Zwei Audiodateien können verarbeitet werden; Abschnittsgrenzen sind manuelle Sample-Cutpoints. Mehrere Songs, Abschnittsobjekte und Reihenfolge-Constraints fehlen. |
 | 2. Musikanalyse | 🟡 | BPM, Beats, Downbeats und Taktpositionen sind vorhanden. Phrasen-/Segmentgrenzen, Strukturtypen, Vocal-Aktivität und eine plattformunabhängige Downbeat-Lösung fehlen. |
-| 3. Kandidatengenerierung | 🟡 | Automatische bar-synchrone Kandidaten mit harten Grid-/Pre-Roll-/Tempo-Filtern und stabilem Vertrag vorhanden. Batch-Rendering, Phrasen/Struktur und Vocal-Filter fehlen noch. |
+| 3. Kandidatengenerierung | 🟡 | Automatische bar-synchrone Kandidaten mit harten Grid-/Pre-Roll-/Tempo-Filtern und stabilem Vertrag vorhanden. Phrasen/Struktur und Vocal-Filter fehlen noch. |
 | 4. Übergangsmetrik | ❌ | Weder Feature-Baseline noch Embedding-Metrik, Ranking oder Score-Komponenten implementiert. |
 | 5. Rendering | ✅ | Alle vier im Exposé verlangten Baseline-Renderer sind implementiert und synthetisch getestet. Erweiterungen wie EQ, Filter oder Stems sind bewusst späterer Scope. |
-| 6. Vorschau & Export | 🟡 | WAV-Export per CLI funktioniert. Batch-Export, Visualisierung, Inline-Playback, Auswahlworkflow und GUI fehlen. |
+| 6. Vorschau & Export | 🟡 | Batch-WAV-Export und auditierbares Manifest funktionieren. Visualisierung, Inline-Playback, Auswahlworkflow und GUI fehlen. |
 
-Damit ist die technische Grundlage aus Monat 1 weitgehend vorhanden. Das frühe Erfolgskriterium „automatisch erzeugt und systematisch vergleichbar“ ist noch nicht erfüllt, weil die Komponenten 3 und 6 fehlen. Der wissenschaftliche Kern aus Monat 2–3 (Komponente 4) wurde noch nicht begonnen.
+Damit ist die technische Grundlage aus Monat 1 weitgehend vorhanden. Das frühe Erfolgskriterium „automatisch erzeugt und systematisch vergleichbar“ ist auf Artefakt-Ebene erfüllt; der menschliche Hörvergleich und der wissenschaftliche Kern aus Monat 2–3 (Komponente 4) stehen noch aus.
 
 ## Fortschritt gegen die Startphase (Exposé Abschn. 13–14)
 
@@ -60,9 +62,9 @@ Damit ist die technische Grundlage aus Monat 1 weitgehend vorhanden. Das frühe 
 | Reproduzierbares Repository | 🟡 | Git, MD-Doku und Requirements-Dateien vorhanden; aufTAKT und ffmpeg funktionieren lokal, sind aber externe Windows-Komponenten und ihre Einrichtung ist noch nicht automatisiert |
 | Kleines Entwicklungsset (10–20 Tracks) | 🟡 | 21 lokale Audiodateien + Analyse-Caches vorhanden; Kuratierung, Track-Notizen, Rechte und reproduzierbare Definition fehlen |
 | Beat-/Bar-Analyse | ✅ | librosa + aufTAKT-Merge, mit Diskrepanz-Log |
-| Mehrere gerenderte Übergänge | 🟡 | Vier Renderer implementiert und synthetisch getestet — Cutpoints aber noch manuell |
+| Mehrere gerenderte Übergänge | 🟡 | Automatischer Batch-Export für Kandidaten × Renderer vorhanden und synthetisch getestet; noch kein dokumentierter Lauf auf dem realen Entwicklungsset |
 | Automatische Kandidaten | 🟡 | `bar_grid_v1` erzeugt Kandidaten aus nutzbaren Downbeats, einschließlich 1/2/4-Takt-Varianten und auditierbarer Rejections; keine Phrasen-/Strukturinformationen |
-| Systematischer Vergleich / Höranalyse | ❌ | kein Batch-Export, keine Vergleichsoberfläche |
+| Systematischer Vergleich / Höranalyse | 🟡 | Batch-Export plus Manifest ermöglichen die Nachverfolgung; Notebook/Inline-Playback und dokumentierte Höranalyse fehlen |
 | Erste Baseline-Renderer (4 Stück) | ✅ | Hard Cut, linearer Crossfade, Equal-Power und tempoangepasster Crossfade getestet |
 | Einfache Feature-Metrik | ❌ | offen (Monat 2) |
 | Erste Embedding-Tests | ❌ | offen (Monat 3) |
@@ -89,9 +91,9 @@ Ziel: das Startphasen-Erfolgskriterium erfüllen — die Schleife **automatische
 
 **Abgeschlossen am 2026-07-17:** programmatische Pipeline, Audio-Normalisierung, vier Rendering-Baselines, versionierter Rendering-Vertrag und automatisierte Tests.
 
-1. **Batch-Rendering** — alle akzeptierten Kandidaten × Renderer-Typen in einen Ordner exportieren, sinnvoll benannt und über ein JSON-Manifest auf Kandidaten-ID, Taktlänge und Renderer zurückführbar. Damit wird der jetzt vorhandene Kandidatenvertrag erstmals in hörbare, vergleichbare Artefakte überführt.
-2. **Anhören & Sehen** — Jupyter-Notebook mit Waveform/(Down)Beats-Plot + Inline-Playback; dabei die „Liste typischer Fehlerfälle" (Exposé Abschn. 14) sammeln.
-3. **Entwicklungsset kuratieren (Exposé Abschn. 8)** — die vorhandenen 21 Tracks als reproduzierbares Set definieren, Varianz und Duplikate prüfen, Track-Notizen ergänzen und Lizenzfrage klären (parallel, eher Handarbeit).
+1. **Erster realer Batch-Lauf und Anhören & Sehen** — für zwei bis drei bewusst ausgewählte Trackpaare Batch-Ausgaben erzeugen; Jupyter-Notebook mit Waveform/(Down)Beats-Plot + Inline-Playback ergänzen und dabei die „Liste typischer Fehlerfälle" (Exposé Abschn. 14) sammeln.
+2. **Entwicklungsset kuratieren (Exposé Abschn. 8)** — die vorhandenen 21 Tracks als reproduzierbares Set definieren, Varianz und Duplikate prüfen, Track-Notizen ergänzen und Lizenzfrage klären (parallel, eher Handarbeit).
+3. **Feature-Metrik & Ranking vorbereiten** — auf dem Batch-Manifest einfache BPM-, Chroma- und Energie-Baselines definieren; erst danach vortrainierte Embeddings vergleichen.
 
 Danach (nicht jetzt): **Feature-Metrik & Ranking** (Monat 2) auf genau diesen Kandidaten; **vortrainierte Embeddings** vergleichen, eigenes SSL-Fine-Tuning optional (Monat 3; Priorisierung laut Exposé Risiko 15: Pipeline+Baselines+Metrik zuerst).
 
