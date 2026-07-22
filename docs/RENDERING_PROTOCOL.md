@@ -1,6 +1,6 @@
 # Rendering-Protokoll
 
-_Vertragsversion: 2, eingeführt am 2026-07-21. Version 1 wurde am 2026-07-17 eingeführt._
+_Vertragsversion: 4, eingeführt am 2026-07-22. Version 3 wurde am 2026-07-22 eingeführt; Version 2 am 2026-07-21; Version 1 am 2026-07-17._
 
 Dieses Dokument beschreibt die stabile Grenze der programmatisch aufrufbaren Rendering-Pipeline. Änderungen an Version 1 erfolgen nur additiv; inkompatible Änderungen benötigen eine neue `format_version`.
 
@@ -22,7 +22,7 @@ result = render_transition(
 
 | Feld | Bedeutung |
 |---|---|
-| `format_version` | Aktuell `2` |
+| `format_version` | Aktuell `4` |
 | `audio` | NumPy-Array in der Form `(channels, samples)` |
 | `sample_rate` | Sample-Rate des Ergebnis-Audios |
 | `renderer` | Verwendete Rendering-Baseline |
@@ -32,17 +32,18 @@ result = render_transition(
 - Standard-Sample-Rate intern und im Ergebnis: **44.100 Hz**.
 - Standard-Kanalzahl: **Stereo**. Mono-Eingaben werden auf zwei Kanäle dupliziert.
 - Abweichende Eingangs-Sample-Raten werden vor dem Rendering resampelt; Beat-Positionen werden auf dasselbe Sample-Raster skaliert.
-- Cutpoints sind Sample-Positionen auf dem normalisierten Ziel-Sample-Raster, bevor eine optionale Tempoanpassung angewendet wird.
+- Cutpoints sind Sample-Positionen auf dem normalisierten Ziel-Sample-Raster, bevor Song B für jeden Renderer tonhöhenerhaltend auf das BPM von Song A angepasst wird. Cutpoint und Beat-Raster von Song B werden dabei mit skaliert.
 - Originaldateien werden ausschließlich gelesen und nicht verändert.
+- Renderer geben standardmäßig eine Vorschau mit fünf Sekunden vor und zwölf Sekunden nach dem ausgerichteten Source-Cutpoint zurück. Damit enthalten Batch-Dateien den Übergang samt Kontext statt vollständiger Songs. Die API akzeptiert `preview_seconds_before=None` und `preview_seconds_after=None` für einen vollständigen Render.
 
 ## Renderer-Namen
 
 | Name | Verhalten |
 |---|---|
-| `simple` | Harter Schnitt auf der ausgerichteten Taktgrenze |
-| `fade` | Linearer Bridge-Crossfade zwischen Source-Postroll und Target-Preroll |
-| `equal_power` | Equal-Power-Bridge-Crossfade mit konstantem quadrierten Gain |
-| `tempo_fade` | Tonhöhenerhaltende Tempoanpassung von Song B auf BPM von Song A, danach linearer Bridge-Crossfade |
+| `simple` | Tempoangepasster harter Schnitt auf der ausgerichteten Taktgrenze |
+| `fade` | Tempoangepasster linearer Bridge-Crossfade zwischen Source-Postroll und Target-Preroll |
+| `equal_power` | Tempoangepasster Equal-Power-Bridge-Crossfade mit konstantem quadrierten Gain |
+| `tempo_fade` | Kompatibilitätsalias für den tempoangepassten linearen Bridge-Crossfade (`fade`) |
 
 ## Bridge-Semantik ab Version 2
 

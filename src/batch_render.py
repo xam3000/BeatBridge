@@ -15,6 +15,8 @@ from src.pipeline import (
     CUTTERS,
     DEFAULT_SAMPLE_RATE,
     RENDER_RESULT_FORMAT_VERSION,
+    DEFAULT_PREVIEW_SECONDS_AFTER,
+    DEFAULT_PREVIEW_SECONDS_BEFORE,
     generate_transition_candidates,
     render_transition,
 )
@@ -74,6 +76,8 @@ class BatchRenderResult:
     rendered_variants: tuple[RenderedVariant, ...]
     failures: tuple[RenderFailure, ...]
     top_k: int | None
+    preview_seconds_before: float | None
+    preview_seconds_after: float | None
 
 
 def render_candidate_batch(
@@ -87,6 +91,8 @@ def render_candidate_batch(
     ranking_config=None,
     top_k=5,
     overwrite=False,
+    preview_seconds_before=DEFAULT_PREVIEW_SECONDS_BEFORE,
+    preview_seconds_after=DEFAULT_PREVIEW_SECONDS_AFTER,
 ) -> BatchRenderResult:
     """Rank candidates and render all or the requested top K with each baseline.
 
@@ -100,6 +106,7 @@ def render_candidate_batch(
     top_k = None if top_k is None else int(top_k)
     if ranking_config is None:
         ranking_config = FeatureRankingConfig()
+    _validate_preview_durations(preview_seconds_before, preview_seconds_after)
 
     candidate_ranking = rank_candidates(
         candidate_generation.candidates,
@@ -151,6 +158,10 @@ def render_candidate_batch(
                     target_sample_rate=target_sample_rate,
                     analysis=analysis,
                     analysis_location=analysis_location,
+                    source_bpm=candidate.source_bpm,
+                    target_bpm=candidate.target_bpm,
+                    preview_seconds_before=preview_seconds_before,
+                    preview_seconds_after=preview_seconds_after,
                 )
                 _write_audio_atomic(output_path, result.audio, result.sample_rate)
                 rendered_variants.append(
@@ -186,6 +197,8 @@ def render_candidate_batch(
         rendered_variants=tuple(rendered_variants),
         failures=tuple(failures),
         top_k=top_k,
+        preview_seconds_before=preview_seconds_before,
+        preview_seconds_after=preview_seconds_after,
     )
     _write_json_atomic(manifest_path, _manifest_payload(batch_result, renderers))
     return batch_result
@@ -204,6 +217,8 @@ def generate_and_render_batch(
     ranking_config=None,
     top_k=5,
     overwrite=False,
+    preview_seconds_before=DEFAULT_PREVIEW_SECONDS_BEFORE,
+    preview_seconds_after=DEFAULT_PREVIEW_SECONDS_AFTER,
 ) -> BatchRenderResult:
     """Generate, rank, and render accepted candidate variants."""
     if candidate_config is None:
@@ -228,6 +243,8 @@ def generate_and_render_batch(
         ranking_config=ranking_config,
         top_k=top_k,
         overwrite=overwrite,
+        preview_seconds_before=preview_seconds_before,
+        preview_seconds_after=preview_seconds_after,
     )
 
 
@@ -241,6 +258,19 @@ def _validate_renderers(renderers):
     if len(set(renderers)) != len(renderers):
         raise ValueError("Renderers must not contain duplicates")
     return renderers
+
+
+def _validate_preview_durations(seconds_before, seconds_after):
+    if seconds_before is None and seconds_after is None:
+        return
+    if seconds_before is None or seconds_after is None:
+        raise ValueError(
+            "preview_seconds_before and preview_seconds_after must both be set or both be None"
+        )
+    if seconds_before < 0 or seconds_after < 0:
+        raise ValueError("Preview durations must be greater than or equal to 0")
+    if seconds_before == 0 and seconds_after == 0:
+        raise ValueError("Preview needs audio before or after the cutpoint")
 
 
 def _rendered_filename(index, candidate: TransitionCandidate, renderer):
@@ -298,6 +328,10 @@ def _manifest_payload(batch_result, renderers):
                     variant.candidate_id for variant in batch_result.rendered_variants
                 )
             ),
+        },
+        "render_preview": {
+            "seconds_before_source_cutpoint": batch_result.preview_seconds_before,
+            "seconds_after_source_cutpoint": batch_result.preview_seconds_after,
         },
         "rendered_variants": [variant.to_dict() for variant in batch_result.rendered_variants],
         "failures": [failure.to_dict() for failure in batch_result.failures],
@@ -366,6 +400,18 @@ def build_argument_parser():
         action="store_true",
         help="Allow replacing same-named exported files in --output-dir.",
     )
+    parser.add_argument(
+        "--preview-before-seconds",
+        type=float,
+        default=DEFAULT_PREVIEW_SECONDS_BEFORE,
+        help=f"Seconds to retain before each source cutpoint (default: {DEFAULT_PREVIEW_SECONDS_BEFORE:g}).",
+    )
+    parser.add_argument(
+        "--preview-after-seconds",
+        type=float,
+        default=DEFAULT_PREVIEW_SECONDS_AFTER,
+        help=f"Seconds to retain after each source cutpoint (default: {DEFAULT_PREVIEW_SECONDS_AFTER:g}).",
+    )
     return parser
 
 
@@ -387,6 +433,8 @@ def main():
         analysis_location=args.analysis_location,
         top_k=args.top_k,
         overwrite=args.overwrite,
+        preview_seconds_before=args.preview_before_seconds,
+        preview_seconds_after=args.preview_after_seconds,
     )
     print(
         f"Generated {len(result.candidate_generation.candidates)} candidates; "

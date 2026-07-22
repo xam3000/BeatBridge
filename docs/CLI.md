@@ -91,9 +91,9 @@ Die Werte müssen nicht exakt auf einem Beat liegen. BeatBridge sucht den Downbe
 .venv\Scripts\python.exe src\pipeline.py "musik\05 - HELP_LESS.flac" "musik\07 - BREATH_LESS.flac" 2646000 1323000 equal_power --fade-beats 8 -o "output\help_to_breath_equal_power.wav"
 ```
 
-### Tempoangepasster Crossfade
+### Tempoangleichung
 
-`tempo_fade` passt Song 2 zunächst tonhöhenerhaltend an das BPM von Song 1 an und rendert danach einen linearen Crossfade. Die Berechnung dauert länger als bei den anderen Renderern.
+Alle Renderer passen Song 2 zunächst tonhöhenerhaltend an das BPM von Song 1 an. `tempo_fade` bleibt aus Kompatibilitätsgründen verfügbar, entspricht aber dem linearen `fade`-Renderer.
 
 ```powershell
 .venv\Scripts\python.exe src\pipeline.py "musik\05 - HELP_LESS.flac" "musik\07 - BREATH_LESS.flac" 2646000 1323000 tempo_fade --fade-beats 8 -o "output\help_to_breath_tempo.wav"
@@ -111,6 +111,8 @@ Der Batch-Befehl erzeugt zuerst taktbasierte Kandidaten und exportiert danach je
 ```
 
 Standardmäßig durchsucht BeatBridge alle nutzbaren Source- und Target-Grenzen und erzeugt Bridges mit 2 oder 4 Takten. `feature_baseline_v3` bevorzugt ein natürliches Drop-Ende in A, energiearme Übergangsfenster und einen Drop-Anfang in B. Wegen des größeren Suchraums werden standardmäßig nur die fünf bestbewerteten Kandidaten mit den gewählten Renderern exportiert. Der Zielordner enthält WAV-Dateien unter `rendered\` und ein `manifest.json` mit allen Kandidaten, Scores und Messwerten.
+
+Jede WAV ist standardmäßig eine kurze Vorschau: fünf Sekunden vor und zwölf Sekunden nach dem Source-Cutpoint. `--preview-before-seconds` und `--preview-after-seconds` passen den Kontext an.
 
 Ein kleinerer, schnellerer Vergleichslauf mit nur Equal-Power-Fades und zwei Taktlängen:
 

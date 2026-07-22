@@ -25,10 +25,11 @@ Das Manifest hat `format_version = 1` und enthält:
 | Feld | Bedeutung |
 |---|---|
 | `renderers` | In diesem Lauf angeforderte Renderer |
-| `render_protocol_version` | Semantik der gerenderten Audiodateien; aktuell Version 2 mit Bridge-Crossfade |
+| `render_protocol_version` | Semantik der gerenderten Audiodateien; aktuell Version 4 mit Bridge-Crossfade, verpflichtender Tempoanpassung und kurzer Vorschau |
 | `candidate_generation` | Vollständiges Ergebnis nach `CANDIDATE_PROTOCOL.md`, einschließlich abgelehnter Kandidaten |
 | `candidate_ranking` | Feature-Ränge, Einzelkomponenten, Messwerte und Rankingfehler nach `RANKING_PROTOCOL.md` |
 | `render_selection` | Gerenderte Kandidaten-IDs und optionales `top_k` |
+| `render_preview` | Vorschau-Kontext in Sekunden vor/nach dem Source-Cutpoint |
 | `rendered_variants` | Erfolgreiche Exporte: Kandidaten-ID, Renderer, relativer Dateipfad, Sample-Rate und Sample-Anzahl |
 | `failures` | Pro fehlgeschlagener Variante Fehlertyp, Meldung, Kandidaten-ID und Renderer |
 
@@ -55,4 +56,4 @@ result = generate_and_render_batch(
 print(result.manifest_path)
 ```
 
-Die Funktion verwendet Kandidatengenerierung, Feature-Ranking und das normalisierte Sample-Raster der Pipeline. Standardmäßig werden nur die fünf bestbewerteten Kandidaten gerendert; das Manifest enthält weiterhin alle erzeugten Kandidaten und Scores. `top_k=None` rendert über die programmatische API alle Kandidaten. Für fortlaufende Experimente sollte jeder Lauf einen neuen Ausgabepfad erhalten.
+Die Funktion verwendet Kandidatengenerierung, Feature-Ranking und das normalisierte Sample-Raster der Pipeline. Für jeden Renderer werden die im Kandidaten gespeicherten BPM verwendet und Song B tonhöhenerhaltend auf Song A angepasst. Standardmäßig enthält jede WAV fünf Sekunden vor und zwölf Sekunden nach dem Source-Cutpoint; die Werte stehen auditierbar im Manifest und sind über die API beziehungsweise CLI konfigurierbar. Standardmäßig werden nur die fünf bestbewerteten Kandidaten gerendert; das Manifest enthält weiterhin alle erzeugten Kandidaten und Scores. `top_k=None` rendert über die programmatische API alle Kandidaten. Für fortlaufende Experimente sollte jeder Lauf einen neuen Ausgabepfad erhalten.

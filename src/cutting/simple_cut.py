@@ -10,11 +10,36 @@ class SimpleCut:
         audio1 = self._get_audio(song1)
         audio2 = self._get_audio(song2)
 
+        cut_sample1, cut_sample2 = self.resolve_cut_samples(
+            audio1,
+            audio2,
+            song1_sample,
+            song2_sample,
+            beat_frames1,
+            beat_frames2,
+        )
+
+        return np.concatenate(
+            [audio1[..., :cut_sample1], audio2[..., cut_sample2:]],
+            axis=-1,
+        )
+
+    def resolve_cut_samples(
+        self,
+        song1,
+        song2,
+        song1_sample,
+        song2_sample,
+        beat_frames1,
+        beat_frames2,
+    ):
+        """Return the effective, beat-aligned cutpoints without rendering."""
+        audio1 = self._get_audio(song1)
+        audio2 = self._get_audio(song2)
+
         cut_sample1 = self._clamp_sample(song1_sample, audio1)
         cut_sample2 = self._clamp_sample(song2_sample, audio2)
 
-        beat_frames1 = beat_frames1
-        beat_frames2 = beat_frames2
         if self.snap_to_down_beat or self.align_bar:
             if beat_frames1 is None or beat_frames2 is None:
                 raise ValueError(
@@ -51,10 +76,7 @@ class SimpleCut:
                 )
             cut_sample2 = beat2["sample"]
 
-        return np.concatenate(
-            [audio1[..., :cut_sample1], audio2[..., cut_sample2:]],
-            axis=-1,
-        )
+        return cut_sample1, cut_sample2
 
     @staticmethod
     def _get_audio(song):

@@ -8,7 +8,66 @@ import librosa
 
 tmp_folder = Path("tmp/")
 MAX_BEAT_MATCH_DISTANCE_SECONDS = 0.2
+FALLBACK_BEATS_PER_BAR = 4
 logger = logging.getLogger(__name__)
+
+
+def ensure_bar_metadata(beat_frames, *, bpm=None, sample_count=None, sample_rate=None):
+    """Return a complete 4/4 bar grid when beat frames lack bar metadata.
+
+    The fallback preserves the detected beat positions and treats the first
+    beat as a downbeat. If no beats were detected at all, it builds an evenly
+    spaced grid from BPM. This is intentionally a usable fallback rather than
+    a claim that the inferred downbeats are ground truth.
+    """
+    frames = [] if beat_frames is None else list(beat_frames)
+    if _has_complete_bar_metadata(frames):
+        return [tuple(int(value) for value in frame) for frame in frames]
+
+    samples = []
+    for frame in frames:
+        sample = int(frame[0]) if isinstance(frame, (tuple, list)) else int(frame)
+        if sample < 0:
+            raise ValueError("Beat samples must be greater than or equal to 0")
+        if samples and sample <= samples[-1]:
+            raise ValueError("Beat samples must be strictly increasing")
+        samples.append(sample)
+
+    if not samples:
+        if bpm is None or float(bpm) <= 0:
+            raise ValueError("Fallback beat grid requires detected beats or a BPM value greater than 0")
+        if sample_count is None or sample_rate is None:
+            raise ValueError("Fallback beat grid without detected beats requires sample_count and sample_rate")
+        beat_samples = max(1, int(round(float(sample_rate) * 60.0 / float(bpm))))
+        samples = list(range(0, int(sample_count), beat_samples))
+
+    logger.warning(
+        "Using 4/4 fallback bar metadata for %d beat positions; inferred downbeats are approximate.",
+        len(samples),
+    )
+    return [
+        (sample, index % FALLBACK_BEATS_PER_BAR + 1, FALLBACK_BEATS_PER_BAR)
+        for index, sample in enumerate(samples)
+    ]
+
+
+def _has_complete_bar_metadata(beat_frames):
+    if not beat_frames:
+        return False
+    previous_sample = -1
+    for frame in beat_frames:
+        if not isinstance(frame, (tuple, list)) or len(frame) != 3:
+            return False
+        sample, count_in_bar, beats_in_bar = (int(value) for value in frame)
+        if (
+            sample <= previous_sample
+            or count_in_bar < 1
+            or beats_in_bar < 1
+            or count_in_bar > beats_in_bar
+        ):
+            return False
+        previous_sample = sample
+    return True
 
 
 class PreAnalysis:
@@ -20,11 +79,24 @@ class PreAnalysis:
         self.song_path = Path(song_path)
         self.previous_analysis = self.find_previous_analysis()
         if self.previous_analysis and self.load_previous_analysis():
-            return self.bpm, self.beat_frames
+            try:
+                self.beat_frames = ensure_bar_metadata(self.beat_frames, bpm=self.bpm)
+            except ValueError:
+                # An empty legacy cache has no usable beat positions; analyse again.
+                self.previous_analysis = None
+            else:
+                self.save_previous_analysis()
+                return self.bpm, self.beat_frames
         self.load_song()
         self.find_bpm()
 
         self.auftakt_analysis_comparison()
+        self.beat_frames = ensure_bar_metadata(
+            self.beat_frames,
+            bpm=self.bpm,
+            sample_count=self.song.size,
+            sample_rate=self.sr,
+        )
 
         self.save_previous_analysis()
         
@@ -110,85 +182,88 @@ class PreAnalysis:
         self.bpm = self.bpm[0] if isinstance(self.bpm, (list, np.ndarray)) else self.bpm
 
     def auftakt_analysis_comparison(self):
-        # run auftakt
-        if self.song_path.suffix.lower() != ".wav":
-            temp_wav_path = tmp_folder / f"{self.song_path.stem}.wav"
-            subprocess.run(["ffmpeg", "-i", str(self.song_path), str(temp_wav_path)], check=True)
-            song_to_analyze = temp_wav_path
-        else:
-            song_to_analyze = self.song_path
+        try:
+            # run auftakt
+            if self.song_path.suffix.lower() != ".wav":
+                temp_wav_path = tmp_folder / f"{self.song_path.stem}.wav"
+                subprocess.run(["ffmpeg", "-i", str(self.song_path), str(temp_wav_path)], check=True)
+                song_to_analyze = temp_wav_path
+            else:
+                song_to_analyze = self.song_path
 
-        command = ["aufTAKTCl.exe", "-i", str(song_to_analyze), "-r", str(tmp_folder)+"/aufTAKT_output"]
+            command = ["aufTAKTCl.exe", "-i", str(song_to_analyze), "-r", str(tmp_folder)+"/aufTAKT_output"]
+            subprocess.run(command, check=True)
 
-        print("Running command:")
-        print(" ".join(command))
-        
-        subprocess.run(command, check=True)
-
-        auftakt_output_path = tmp_folder / "aufTAKT_output"
-        auftakt_lines = auftakt_output_path.read_text().splitlines()[1:]
-        auftakt_beats = []
-        for line in auftakt_lines:
-            if not line.strip():
-                continue
-
-            time_seconds, count_in_bar, beats_in_bar = [part.strip() for part in line.split(",")]
-            auftakt_beats.append((float(time_seconds), int(count_in_bar), int(beats_in_bar)))
-
-        if auftakt_beats:
-            auftakt_times = np.array([beat[0] for beat in auftakt_beats], dtype=float)
-            librosa_times = librosa.samples_to_time(np.asarray(self.beat_frames), sr=self.sr)
-            combined_beats = []
-            matched_auftakt_indices = set()
-            self.missing_beats = {"librosa": [], "auftakt": []}
-
-            for sample, beat_time in zip(self.beat_frames, librosa_times):
-                closest_index, distance = self._find_closest_beat_index(auftakt_times, beat_time)
-                if distance > MAX_BEAT_MATCH_DISTANCE_SECONDS:
-                    logger.warning(
-                        "No matching aufTAKT beat for librosa beat at %.3fs (distance %.3fs)",
-                        beat_time,
-                        distance,
-                    )
-                    self.missing_beats["librosa"].append(
-                        {
-                            "sample": int(sample),
-                            "time_seconds": float(beat_time),
-                            "distance_seconds": float(distance),
-                        }
-                    )
-                    combined_beats.append(int(sample))
+            auftakt_output_path = tmp_folder / "aufTAKT_output"
+            auftakt_lines = auftakt_output_path.read_text().splitlines()[1:]
+            auftakt_beats = []
+            for line in auftakt_lines:
+                if not line.strip():
                     continue
 
-                matched_auftakt_indices.add(closest_index)
-                _, count_in_bar, beats_in_bar = auftakt_beats[closest_index]
-                combined_beats.append((int(sample), count_in_bar, beats_in_bar))
+                time_seconds, count_in_bar, beats_in_bar = [part.strip() for part in line.split(",")]
+                auftakt_beats.append((float(time_seconds), int(count_in_bar), int(beats_in_bar)))
 
-            for idx, auftakt_time in enumerate(auftakt_times):
-                closest_index, distance = self._find_closest_beat_index(librosa_times, auftakt_time)
-                if distance > MAX_BEAT_MATCH_DISTANCE_SECONDS or idx not in matched_auftakt_indices:
-                    logger.warning(
-                        "No matching librosa beat for aufTAKT beat at %.3fs (distance %.3fs, bar beat %s/%s)",
-                        auftakt_time,
-                        distance,
-                        auftakt_beats[idx][1],
-                        auftakt_beats[idx][2],
-                    )
-                    self.missing_beats["auftakt"].append(
-                        {
-                            "time_seconds": float(auftakt_time),
-                            "count_in_bar": int(auftakt_beats[idx][1]),
-                            "beats_in_bar": int(auftakt_beats[idx][2]),
-                            "distance_seconds": float(distance),
-                        }
-                    )
+            if auftakt_beats:
+                auftakt_times = np.array([beat[0] for beat in auftakt_beats], dtype=float)
+                librosa_times = librosa.samples_to_time(np.asarray(self.beat_frames), sr=self.sr)
+                combined_beats = []
+                matched_auftakt_indices = set()
+                self.missing_beats = {"librosa": [], "auftakt": []}
 
-            self.beat_frames = combined_beats
+                for sample, beat_time in zip(self.beat_frames, librosa_times):
+                    closest_index, distance = self._find_closest_beat_index(auftakt_times, beat_time)
+                    if distance > MAX_BEAT_MATCH_DISTANCE_SECONDS:
+                        logger.warning(
+                            "No matching aufTAKT beat for librosa beat at %.3fs (distance %.3fs)",
+                            beat_time,
+                            distance,
+                        )
+                        self.missing_beats["librosa"].append(
+                            {
+                                "sample": int(sample),
+                                "time_seconds": float(beat_time),
+                                "distance_seconds": float(distance),
+                            }
+                        )
+                        combined_beats.append(int(sample))
+                        continue
 
-        # clear out tmp folder
-        for file in tmp_folder.iterdir():
-            if file.is_file():
-                file.unlink()
+                    matched_auftakt_indices.add(closest_index)
+                    _, count_in_bar, beats_in_bar = auftakt_beats[closest_index]
+                    combined_beats.append((int(sample), count_in_bar, beats_in_bar))
+
+                for idx, auftakt_time in enumerate(auftakt_times):
+                    closest_index, distance = self._find_closest_beat_index(librosa_times, auftakt_time)
+                    if distance > MAX_BEAT_MATCH_DISTANCE_SECONDS or idx not in matched_auftakt_indices:
+                        logger.warning(
+                            "No matching librosa beat for aufTAKT beat at %.3fs (distance %.3fs, bar beat %s/%s)",
+                            auftakt_time,
+                            distance,
+                            auftakt_beats[idx][1],
+                            auftakt_beats[idx][2],
+                        )
+                        self.missing_beats["auftakt"].append(
+                            {
+                                "time_seconds": float(auftakt_time),
+                                "count_in_bar": int(auftakt_beats[idx][1]),
+                                "beats_in_bar": int(auftakt_beats[idx][2]),
+                                "distance_seconds": float(distance),
+                            }
+                        )
+
+                self.beat_frames = combined_beats
+        except (OSError, subprocess.SubprocessError, ValueError) as error:
+            logger.warning(
+                "aufTAKT analysis failed for %s; falling back to inferred 4/4 bar metadata: %s",
+                self.song_path,
+                error,
+            )
+        finally:
+            if tmp_folder.is_dir():
+                for file in tmp_folder.iterdir():
+                    if file.is_file():
+                        file.unlink()
 
     @staticmethod
     def _parse_saved_beat_line(line):

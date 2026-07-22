@@ -15,7 +15,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.analysis.pre_analysis import PreAnalysis
+from src.analysis.pre_analysis import PreAnalysis, ensure_bar_metadata
 from src.candidates import CandidateGenerationConfig, TrackReference
 from src.candidates.generation import generate_candidates as generate_candidates_from_grids
 from src.cutting.equal_power_fade_cut import EqualPowerFadeCut
@@ -29,7 +29,9 @@ MUSIK_FOLDER = PROJECT_ROOT / "musik"
 SUPPORTED_AUDIO_EXTENSIONS = {".mp3", ".wav", ".flac", ".ogg", ".m4a"}
 DEFAULT_SAMPLE_RATE = 44_100
 DEFAULT_CHANNELS = 2
-RENDER_RESULT_FORMAT_VERSION = 2
+RENDER_RESULT_FORMAT_VERSION = 4
+DEFAULT_PREVIEW_SECONDS_BEFORE = 5.0
+DEFAULT_PREVIEW_SECONDS_AFTER = 12.0
 
 CUTTERS = {
     "simple": SimpleCut,
@@ -61,6 +63,8 @@ class BeatBridgePipeline:
         cutter,
         target_sample_rate=DEFAULT_SAMPLE_RATE,
         target_channels=DEFAULT_CHANNELS,
+        bpm1=None,
+        bpm2=None,
     ):
         if int(target_sample_rate) <= 0:
             raise ValueError("target_sample_rate must be greater than 0")
@@ -74,6 +78,8 @@ class BeatBridgePipeline:
         self.cutter = cutter
         self.target_sample_rate = int(target_sample_rate)
         self.target_channels = int(target_channels)
+        self.bpm_override1 = None if bpm1 is None else float(bpm1)
+        self.bpm_override2 = None if bpm2 is None else float(bpm2)
 
         self.load_songs()
         self.run_analysis()
@@ -92,10 +98,24 @@ class BeatBridgePipeline:
         )
 
     def run_analysis(self):
-        self.bpm1, self.beat_frames1 = self.analysis(self.song1_name)
-        self.bpm2, self.beat_frames2 = self.analysis(self.song2_name)
+        analysed_bpm1, self.beat_frames1 = self.analysis(self.song1_name)
+        analysed_bpm2, self.beat_frames2 = self.analysis(self.song2_name)
+        self.bpm1 = analysed_bpm1 if self.bpm_override1 is None else self.bpm_override1
+        self.bpm2 = analysed_bpm2 if self.bpm_override2 is None else self.bpm_override2
         self.bpm1 = float(self.bpm1)
         self.bpm2 = float(self.bpm2)
+        self.beat_frames1 = ensure_bar_metadata(
+            self.beat_frames1,
+            bpm=self.bpm1,
+            sample_count=self.song1.shape[-1],
+            sample_rate=self.source_sr1,
+        )
+        self.beat_frames2 = ensure_bar_metadata(
+            self.beat_frames2,
+            bpm=self.bpm2,
+            sample_count=self.song2.shape[-1],
+            sample_rate=self.source_sr2,
+        )
 
     def normalise_tracks(self):
         self.song1, self.beat_frames1 = self._normalise_track(
@@ -185,6 +205,12 @@ class BeatBridgePipeline:
 
         tempo_factor = self.bpm1 / self.bpm2
         self.adjusted_song1 = self.song1
+        if np.isclose(tempo_factor, 1.0):
+            self.adjusted_song2 = self.song2
+            self.adjusted_sample_scale2 = 1.0
+            self.adjusted_beat_frames2 = self.beat_frames2
+            return self.adjusted_song1, self.adjusted_song2
+
         self.adjusted_song2 = self.tempo_adjuster.adjust_tempo_to_bpm(
             self.song2,
             self.target_sample_rate,
@@ -198,7 +224,7 @@ class BeatBridgePipeline:
         )
         return self.adjusted_song1, self.adjusted_song2
 
-    def cut(self, sample1, sample2, adjust_tempo=False):
+    def cut(self, sample1, sample2, adjust_tempo=True):
         song1 = self.song1
         song2 = self.song2
         beat_frames2 = self.beat_frames2
@@ -209,6 +235,14 @@ class BeatBridgePipeline:
             beat_frames2 = self.adjusted_beat_frames2
 
         self.cut_song = self.cutter.cut(
+            song1,
+            song2,
+            sample1,
+            sample2,
+            self.beat_frames1,
+            beat_frames2,
+        )
+        self.effective_source_cutpoint, self.effective_target_cutpoint = self.cutter.resolve_cut_samples(
             song1,
             song2,
             sample1,
@@ -244,11 +278,19 @@ def render_transition(
     analysis=None,
     analysis_location=None,
     tempo_adjuster=None,
+    source_bpm=None,
+    target_bpm=None,
+    preview_seconds_before=DEFAULT_PREVIEW_SECONDS_BEFORE,
+    preview_seconds_after=DEFAULT_PREVIEW_SECONDS_AFTER,
 ):
     """Render one transition and return audio plus stable metadata.
 
     Cutpoints are sample positions on the normalised target sample-rate grid.
-    The tempo baseline adjusts track two to track one's BPM before rendering.
+    Song two is adjusted tonality-preservingly to song one's BPM before every
+    renderer is applied. Optional BPM arguments make batch rendering use the
+    BPM values recorded with its candidate instead of a second analysis result.
+    By default the result is a short preview around the aligned source cutpoint.
+    Pass ``None`` for both preview values to render the complete transition.
     """
     if analysis is None:
         cache_path = (
@@ -269,11 +311,20 @@ def render_transition(
         cutter,
         target_sample_rate=target_sample_rate,
         target_channels=target_channels,
+        bpm1=source_bpm,
+        bpm2=target_bpm,
     )
     audio = pipeline.cut(
         cutpoint1,
         cutpoint2,
-        adjust_tempo=renderer == "tempo_fade",
+        adjust_tempo=True,
+    )
+    audio = _limit_to_preview(
+        audio,
+        pipeline.effective_source_cutpoint,
+        pipeline.target_sample_rate,
+        preview_seconds_before,
+        preview_seconds_after,
     )
     return RenderResult(
         audio=audio,
@@ -317,6 +368,20 @@ def generate_transition_candidates(
     if sample_rate1 is None or sample_rate2 is None:
         raise ValueError("Could not determine an input track sample rate")
 
+    info1 = sf.info(str(song1_path))
+    info2 = sf.info(str(song2_path))
+    beat_frames1 = ensure_bar_metadata(
+        beat_frames1,
+        bpm=bpm1,
+        sample_count=info1.frames,
+        sample_rate=sample_rate1,
+    )
+    beat_frames2 = ensure_bar_metadata(
+        beat_frames2,
+        bpm=bpm2,
+        sample_count=info2.frames,
+        sample_rate=sample_rate2,
+    )
     beat_frames1 = BeatBridgePipeline._scale_beat_frames(
         beat_frames1,
         int(target_sample_rate) / float(sample_rate1),
@@ -342,6 +407,22 @@ def _file_sha256(path):
         for chunk in iter(lambda: audio_file.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _limit_to_preview(audio, cutpoint, sample_rate, seconds_before, seconds_after):
+    if seconds_before is None and seconds_after is None:
+        return audio
+    if seconds_before is None or seconds_after is None:
+        raise ValueError("preview_seconds_before and preview_seconds_after must both be set or both be None")
+    if seconds_before < 0 or seconds_after < 0:
+        raise ValueError("Preview durations must be greater than or equal to 0")
+    if seconds_before == 0 and seconds_after == 0:
+        raise ValueError("Preview needs audio before or after the cutpoint")
+    start = max(0, int(round(cutpoint - float(seconds_before) * sample_rate)))
+    end = min(audio.shape[-1], int(round(cutpoint + float(seconds_after) * sample_rate)))
+    if end <= start:
+        raise ValueError("Preview window contains no rendered audio")
+    return audio[..., start:end]
 
 
 def build_argument_parser():
@@ -378,6 +459,18 @@ def build_argument_parser():
         help=f"Internal/output sample rate (default: {DEFAULT_SAMPLE_RATE}).",
     )
     parser.add_argument(
+        "--preview-before-seconds",
+        type=float,
+        default=DEFAULT_PREVIEW_SECONDS_BEFORE,
+        help=f"Seconds to retain before the source cutpoint (default: {DEFAULT_PREVIEW_SECONDS_BEFORE:g}).",
+    )
+    parser.add_argument(
+        "--preview-after-seconds",
+        type=float,
+        default=DEFAULT_PREVIEW_SECONDS_AFTER,
+        help=f"Seconds to retain after the source cutpoint (default: {DEFAULT_PREVIEW_SECONDS_AFTER:g}).",
+    )
+    parser.add_argument(
         "-o",
         "--output",
         default=str(Path(output_folder) / "cut_song.wav"),
@@ -396,6 +489,8 @@ def main():
         renderer=args.cuttype,
         fade_beats=args.fade_beats,
         target_sample_rate=args.target_sample_rate,
+        preview_seconds_before=args.preview_before_seconds,
+        preview_seconds_after=args.preview_after_seconds,
     )
 
     output_path = Path(args.output)

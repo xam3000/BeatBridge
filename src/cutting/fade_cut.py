@@ -41,7 +41,9 @@ class FadeCut(SimpleCut):
         if beat_frames1 is None or beat_frames2 is None:
             raise ValueError("beat_frames are required for FadeCut")
 
-        cut_sample1, cut_sample2 = self._resolve_cut_samples(
+        cut_sample1, cut_sample2 = self.resolve_cut_samples(
+            audio1,
+            audio2,
             cut_sample1,
             cut_sample2,
             beat_frames1,
@@ -161,36 +163,6 @@ class FadeCut(SimpleCut):
             dtype=np.float32,
         )
         return np.cos(angles), np.sin(angles)
-
-    def _resolve_cut_samples(self, cut_sample1, cut_sample2, beat_frames1, beat_frames2):
-        if self.snap_to_down_beat or self.align_bar:
-            beat1 = self._find_nearest_beat(
-                beat_frames1,
-                cut_sample1,
-                downbeat_only=self.snap_to_down_beat,
-            )
-            cut_sample1 = beat1["sample"]
-
-            if self.align_bar and beat1["count_in_bar"] is not None:
-                beat2 = self._find_nearest_beat(
-                    beat_frames2,
-                    cut_sample2,
-                    downbeat_only=self.snap_to_down_beat,
-                    count_in_bar=beat1["count_in_bar"],
-                    beats_in_bar=beat1["beats_in_bar"],
-                )
-            else:
-                beat2 = self._find_nearest_beat(
-                    beat_frames2,
-                    cut_sample2,
-                    downbeat_only=self.snap_to_down_beat,
-                )
-            cut_sample2 = beat2["sample"]
-            return cut_sample1, cut_sample2
-
-        beat1 = self._find_nearest_beat(beat_frames1, cut_sample1, downbeat_only=False)
-        beat2 = self._find_nearest_beat(beat_frames2, cut_sample2, downbeat_only=False)
-        return beat1["sample"], beat2["sample"]
 
     def _find_transition_bounds(self, beat_frames, cut_sample, max_sample):
         parsed_beats = [self._parse_beat_frame(frame) for frame in beat_frames]

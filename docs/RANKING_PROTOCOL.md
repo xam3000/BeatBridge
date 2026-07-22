@@ -78,3 +78,7 @@ Das bestehende Batch-Manifest Version 1 wird additiv um `candidate_ranking` erg�
 - Die Fensterl채nge wird aus BPM und Beatanzahl angen채hert; sie verwendet noch nicht die exakten Beat-Grenzen aus der Analyse.
 
 Damit ist die Baseline vor allem ein 체berpr체fbarer Vergleichspunkt f체r sp채tere Feature-, Embedding- und lernbasierte Metriken.
+
+## Songpaar-Vorfilter
+
+F체r die Auswahl der besten Target-Songs zu einem Source-Song existiert zus채tzlich `song_compatibility_v1`. Dieser Schritt liegt vor der Kandidatengenerierung und bewertet globale Harmonie-, Tempo-, Klang-, Energie- und Rhythmuskompatibilit채t. Vertrag und CLI stehen in [`SONG_COMPATIBILITY_PROTOCOL.md`](./SONG_COMPATIBILITY_PROTOCOL.md). Die Songpaar-Bewertung ersetzt nicht das Cutpoint-Ranking: Sie reduziert dessen Suchraum auf musikalisch plausiblere Paare.

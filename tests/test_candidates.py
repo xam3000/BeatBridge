@@ -1,6 +1,7 @@
 import numpy as np
 import soundfile as sf
 
+from src.analysis.pre_analysis import ensure_bar_metadata
 from src.candidates import CandidateGenerationConfig, TrackReference, generate_candidates
 from src.pipeline import generate_transition_candidates
 
@@ -151,3 +152,34 @@ def test_pipeline_api_scales_candidate_cutpoints_to_the_renderer_grid(tmp_path):
 
     assert len(result.candidates) == 1
     assert result.candidates[0].target_cutpoint.sample == 352_800
+
+
+def test_pipeline_falls_back_to_a_four_four_grid_when_analysis_lacks_bar_metadata(tmp_path):
+    song1 = tmp_path / "song1.wav"
+    song2 = tmp_path / "song2.wav"
+    sf.write(song1, np.zeros(44_100 * 20, dtype=np.float32), 44_100)
+    sf.write(song2, np.zeros(44_100 * 20, dtype=np.float32), 44_100)
+
+    class BareBeatAnalysis:
+        def __call__(self, song_path):
+            return 120.0, list(range(0, sf.info(song_path).frames, 22_050))
+
+    result = generate_transition_candidates(
+        song1,
+        song2,
+        analysis=BareBeatAnalysis(),
+        config=CandidateGenerationConfig(
+            transition_lengths_bars=(1,),
+            source_boundary_count=1,
+            target_boundary_count=1,
+        ),
+    )
+
+    assert len(result.candidates) == 1
+    assert result.candidates[0].source_cutpoint.count_in_bar == 1
+
+
+def test_fallback_builds_a_beat_grid_from_bpm_when_no_beats_are_detected():
+    grid = ensure_bar_metadata([], bpm=120.0, sample_count=1_000, sample_rate=100)
+
+    assert grid[:5] == [(0, 1, 4), (50, 2, 4), (100, 3, 4), (150, 4, 4), (200, 1, 4)]

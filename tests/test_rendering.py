@@ -99,6 +99,40 @@ def test_rendering_baseline_returns_finite_stereo(synthetic_tracks, renderer):
     assert np.isfinite(result.audio).all()
 
 
+@pytest.mark.parametrize(
+    "renderer",
+    ["simple", "fade", "equal_power", "tempo_fade"],
+)
+def test_every_renderer_aligns_target_tempo(synthetic_tracks, renderer):
+    class RecordingTimeStretch(TimeStretch):
+        def __init__(self):
+            self.calls = []
+
+        def adjust_tempo_to_bpm(self, audio, sample_rate, original_bpm, target_bpm, **kwargs):
+            self.calls.append((original_bpm, target_bpm))
+            return super().adjust_tempo_to_bpm(
+                audio,
+                sample_rate,
+                original_bpm,
+                target_bpm,
+                **kwargs,
+            )
+
+    tempo_adjuster = RecordingTimeStretch()
+    render_transition(
+        synthetic_tracks["song1"],
+        synthetic_tracks["song2"],
+        synthetic_tracks["cutpoint1"],
+        synthetic_tracks["cutpoint2"],
+        renderer=renderer,
+        fade_beats=2,
+        analysis=synthetic_tracks["analysis"],
+        tempo_adjuster=tempo_adjuster,
+    )
+
+    assert tempo_adjuster.calls == [(100.0, 120.0)]
+
+
 def test_equal_power_envelopes_keep_constant_squared_gain():
     cutter = EqualPowerFadeCut(fade_beats=2)
     fade_out, fade_in = cutter._build_envelopes(101)
@@ -139,6 +173,22 @@ def test_time_stretch_uses_explicit_target_bpm():
     )
 
     assert adjusted.shape == (2, 8_000)
+
+
+def test_render_transition_returns_a_short_preview_by_default(synthetic_tracks):
+    result = render_transition(
+        synthetic_tracks["song1"],
+        synthetic_tracks["song2"],
+        synthetic_tracks["cutpoint1"],
+        synthetic_tracks["cutpoint2"],
+        renderer="fade",
+        fade_beats=2,
+        analysis=synthetic_tracks["analysis"],
+        preview_seconds_before=0.5,
+        preview_seconds_after=0.75,
+    )
+
+    assert result.audio.shape[-1] <= int(1.25 * result.sample_rate)
 
 
 def test_downbeat_snapping_fails_clearly_without_bar_metadata():
