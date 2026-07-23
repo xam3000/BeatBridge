@@ -1,7 +1,7 @@
 """Batch rendering for accepted transition candidates."""
 
 import argparse
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import json
 import os
 from pathlib import Path
@@ -20,7 +20,15 @@ from src.pipeline import (
     generate_transition_candidates,
     render_transition,
 )
-from src.ranking import CandidateRankingResult, FeatureRankingConfig, rank_candidates
+from src.ranking import (
+    CandidateRankingResult,
+    FeatureRankingConfig,
+    RenderedTransitionInput,
+    RenderedTransitionMetricConfig,
+    RenderedTransitionRankingResult,
+    rank_candidates,
+    rank_rendered_transitions,
+)
 
 
 BATCH_MANIFEST_FORMAT_VERSION = 1
@@ -34,8 +42,12 @@ class RenderedVariant:
     output_file: str
     sample_rate: int
     sample_count: int
+    transition_start_sample: int
+    transition_end_sample: int
     candidate_rank: int | None
     candidate_score: float | None
+    transition_rank: int | None = None
+    transition_score: float | None = None
 
     def to_dict(self):
         return {
@@ -44,8 +56,12 @@ class RenderedVariant:
             "output_file": self.output_file,
             "sample_rate": self.sample_rate,
             "sample_count": self.sample_count,
+            "transition_start_sample": self.transition_start_sample,
+            "transition_end_sample": self.transition_end_sample,
             "candidate_rank": self.candidate_rank,
             "candidate_score": self.candidate_score,
+            "transition_rank": self.transition_rank,
+            "transition_score": self.transition_score,
             "status": "rendered",
         }
 
@@ -73,6 +89,7 @@ class BatchRenderResult:
     manifest_path: Path
     candidate_generation: CandidateGenerationResult
     candidate_ranking: CandidateRankingResult
+    rendered_transition_ranking: RenderedTransitionRankingResult
     rendered_variants: tuple[RenderedVariant, ...]
     failures: tuple[RenderFailure, ...]
     top_k: int | None
@@ -89,6 +106,7 @@ def render_candidate_batch(
     analysis=None,
     analysis_location=None,
     ranking_config=None,
+    transition_metric_config=None,
     top_k=5,
     overwrite=False,
     preview_seconds_before=DEFAULT_PREVIEW_SECONDS_BEFORE,
@@ -106,6 +124,8 @@ def render_candidate_batch(
     top_k = None if top_k is None else int(top_k)
     if ranking_config is None:
         ranking_config = FeatureRankingConfig()
+    if transition_metric_config is None:
+        transition_metric_config = RenderedTransitionMetricConfig()
     _validate_preview_durations(preview_seconds_before, preview_seconds_after)
 
     candidate_ranking = rank_candidates(
@@ -142,6 +162,7 @@ def render_candidate_batch(
     rendered_directory.mkdir(parents=True, exist_ok=True)
 
     rendered_variants = []
+    rendered_transition_inputs = []
     failures = []
     for index, candidate in enumerate(selected_candidates, start=1):
         candidate_score = rank_by_id.get(candidate.candidate_id)
@@ -171,12 +192,26 @@ def render_candidate_batch(
                         output_file=str(output_path.relative_to(output_directory)),
                         sample_rate=result.sample_rate,
                         sample_count=int(result.audio.shape[-1]),
+                        transition_start_sample=result.transition_start_sample,
+                        transition_end_sample=result.transition_end_sample,
                         candidate_rank=(
                             None if candidate_score is None else candidate_score.rank
                         ),
                         candidate_score=(
                             None if candidate_score is None else candidate_score.total_score
                         ),
+                    )
+                )
+                rendered_transition_inputs.append(
+                    RenderedTransitionInput(
+                        candidate_id=candidate.candidate_id,
+                        renderer=renderer,
+                        audio=result.audio,
+                        sample_rate=result.sample_rate,
+                        transition_start_sample=result.transition_start_sample,
+                        transition_end_sample=result.transition_end_sample,
+                        transition_length_beats=candidate.transition_length_beats,
+                        bpm=candidate.source_bpm,
                     )
                 )
             except Exception as error:  # Export all independent variants and record each failure.
@@ -189,11 +224,35 @@ def render_candidate_batch(
                     )
                 )
 
+    rendered_transition_ranking = rank_rendered_transitions(
+        rendered_transition_inputs,
+        config=transition_metric_config,
+    )
+    transition_score_by_variant = {
+        (score.candidate_id, score.renderer): score
+        for score in rendered_transition_ranking.scores
+    }
+    rendered_variants = [
+        replace(
+            variant,
+            transition_rank=transition_score_by_variant[
+                (variant.candidate_id, variant.renderer)
+            ].rank,
+            transition_score=transition_score_by_variant[
+                (variant.candidate_id, variant.renderer)
+            ].total_score,
+        )
+        if (variant.candidate_id, variant.renderer) in transition_score_by_variant
+        else variant
+        for variant in rendered_variants
+    ]
+
     batch_result = BatchRenderResult(
         output_directory=output_directory,
         manifest_path=manifest_path,
         candidate_generation=candidate_generation,
         candidate_ranking=candidate_ranking,
+        rendered_transition_ranking=rendered_transition_ranking,
         rendered_variants=tuple(rendered_variants),
         failures=tuple(failures),
         top_k=top_k,
@@ -215,6 +274,7 @@ def generate_and_render_batch(
     analysis=None,
     analysis_location=None,
     ranking_config=None,
+    transition_metric_config=None,
     top_k=5,
     overwrite=False,
     preview_seconds_before=DEFAULT_PREVIEW_SECONDS_BEFORE,
@@ -241,6 +301,7 @@ def generate_and_render_batch(
         target_sample_rate=target_sample_rate,
         analysis=analysis,
         ranking_config=ranking_config,
+        transition_metric_config=transition_metric_config,
         top_k=top_k,
         overwrite=overwrite,
         preview_seconds_before=preview_seconds_before,
@@ -321,6 +382,7 @@ def _manifest_payload(batch_result, renderers):
         "renderers": list(renderers),
         "candidate_generation": batch_result.candidate_generation.to_dict(),
         "candidate_ranking": batch_result.candidate_ranking.to_dict(),
+        "rendered_transition_ranking": batch_result.rendered_transition_ranking.to_dict(),
         "render_selection": {
             "top_k": batch_result.top_k,
             "candidate_ids": list(
@@ -439,12 +501,18 @@ def main():
     print(
         f"Generated {len(result.candidate_generation.candidates)} candidates; "
         f"rendered {len(result.rendered_variants)} WAV files; "
-        f"recorded {len(result.failures)} render failures."
+        f"recorded {len(result.failures)} render failures and "
+        f"{len(result.rendered_transition_ranking.failures)} transition-metric failures."
     )
     print(f"Manifest: {result.manifest_path}")
     for score in result.candidate_ranking.scores[:3]:
         print(f"Rank {score.rank}: {score.candidate_id} (score={score.total_score:.3f})")
-    if result.failures:
+    for score in result.rendered_transition_ranking.scores[:3]:
+        print(
+            f"Rendered rank {score.rank}: {score.variant_id} "
+            f"(score={score.total_score:.3f})"
+        )
+    if result.failures or result.rendered_transition_ranking.failures:
         return 1
     if not result.candidate_generation.candidates:
         return 2

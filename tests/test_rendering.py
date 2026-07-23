@@ -97,6 +97,12 @@ def test_rendering_baseline_returns_finite_stereo(synthetic_tracks, renderer):
     assert result.audio.shape[0] == 2
     assert result.audio.shape[-1] > 0
     assert np.isfinite(result.audio).all()
+    assert 0 <= result.transition_start_sample < result.audio.shape[-1]
+    assert result.transition_start_sample <= result.transition_end_sample <= result.audio.shape[-1]
+    if renderer == "simple":
+        assert result.transition_end_sample == result.transition_start_sample
+    else:
+        assert result.transition_end_sample > result.transition_start_sample
 
 
 @pytest.mark.parametrize(

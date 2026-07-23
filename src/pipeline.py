@@ -48,6 +48,8 @@ class RenderResult:
     audio: np.ndarray
     sample_rate: int
     renderer: str
+    transition_start_sample: int = 0
+    transition_end_sample: int = 0
     format_version: int = RENDER_RESULT_FORMAT_VERSION
 
 
@@ -319,7 +321,11 @@ def render_transition(
         cutpoint2,
         adjust_tempo=True,
     )
-    audio = _limit_to_preview(
+    transition_start_sample = pipeline.effective_source_cutpoint
+    transition_end_sample = transition_start_sample + int(
+        getattr(cutter, "effective_transition_samples", 0)
+    )
+    audio, preview_start = _limit_to_preview(
         audio,
         pipeline.effective_source_cutpoint,
         pipeline.target_sample_rate,
@@ -330,6 +336,8 @@ def render_transition(
         audio=audio,
         sample_rate=pipeline.target_sample_rate,
         renderer=renderer,
+        transition_start_sample=transition_start_sample - preview_start,
+        transition_end_sample=transition_end_sample - preview_start,
     )
 
 
@@ -411,7 +419,7 @@ def _file_sha256(path):
 
 def _limit_to_preview(audio, cutpoint, sample_rate, seconds_before, seconds_after):
     if seconds_before is None and seconds_after is None:
-        return audio
+        return audio, 0
     if seconds_before is None or seconds_after is None:
         raise ValueError("preview_seconds_before and preview_seconds_after must both be set or both be None")
     if seconds_before < 0 or seconds_after < 0:
@@ -422,7 +430,7 @@ def _limit_to_preview(audio, cutpoint, sample_rate, seconds_before, seconds_afte
     end = min(audio.shape[-1], int(round(cutpoint + float(seconds_after) * sample_rate)))
     if end <= start:
         raise ValueError("Preview window contains no rendered audio")
-    return audio[..., start:end]
+    return audio[..., start:end], start
 
 
 def build_argument_parser():

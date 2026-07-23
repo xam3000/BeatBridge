@@ -110,7 +110,15 @@ Der Batch-Befehl erzeugt zuerst taktbasierte Kandidaten und exportiert danach je
   --output-dir "output\batches\help_to_breath"
 ```
 
-Standardmäßig durchsucht BeatBridge alle nutzbaren Source- und Target-Grenzen und erzeugt Bridges mit 2 oder 4 Takten. `feature_baseline_v3` bevorzugt ein natürliches Drop-Ende in A, energiearme Übergangsfenster und einen Drop-Anfang in B. Wegen des größeren Suchraums werden standardmäßig nur die fünf bestbewerteten Kandidaten mit den gewählten Renderern exportiert. Der Zielordner enthält WAV-Dateien unter `rendered\` und ein `manifest.json` mit allen Kandidaten, Scores und Messwerten.
+Standardmäßig durchsucht BeatBridge alle nutzbaren Source- und Target-Grenzen
+und erzeugt Bridges mit 2 oder 4 Takten. `feature_baseline_v3` wählt vor dem
+Rendering vielversprechende Cutpoints aus. Wegen des größeren Suchraums werden
+standardmäßig nur die fünf bestbewerteten Kandidaten mit den gewählten
+Renderern exportiert. Anschließend bewertet
+`rendered_transition_baseline_v1` jede tatsächlich gerenderte Variante. Das
+Manifest enthält deshalb sowohl `candidate_rank`/`candidate_score` als auch
+`transition_rank`/`transition_score`; die vollständigen Teilwerte stehen unter
+`rendered_transition_ranking`.
 
 Jede WAV ist standardmäßig eine kurze Vorschau: fünf Sekunden vor und zwölf Sekunden nach dem Source-Cutpoint. `--preview-before-seconds` und `--preview-after-seconds` passen den Kontext an.
 
@@ -143,9 +151,22 @@ Ein vorhandener Export wird standardmäßig nicht überschrieben. Für einen wei
 
 ## Batch im Notebook anhören
 
-[`notebooks/listen_batch.ipynb`](../notebooks/listen_batch.ipynb) lädt ein Batch-Manifest, sortiert die Varianten nach Feature-Rang und zeigt für jede gewählte WAV-Datei einen eingebetteten Audio-Player. `rate(index, 1_bis_5, issues=(...), notes="...")` speichert Bewertungen atomar als `ratings.json` im Batch-Ordner; `show_ratings()` zeigt den aktuellen Stand. Das Notebook startet mit dem ersten realen Lauf `output/batches/help_to_breath_first`. Für einen anderen Lauf in der ersten Codezelle nur `BATCH_DIR` ändern und die Zellen von oben nach unten ausführen.
+[`notebooks/listen_batch.ipynb`](../notebooks/listen_batch.ipynb) lädt ein
+Batch-Manifest, sortiert neue Batches nach Render-Rang und zeigt Render- sowie
+Cutpoint-Score nebeneinander. Bei älteren Manifesten ohne Render-Metrik fällt
+es auf den Cutpoint-Rang zurück. Für jede gewählte WAV-Datei erscheint ein
+eingebetteter Audio-Player. `rate(index, 1_bis_5, issues=(...), notes="...")`
+speichert Bewertungen atomar als `ratings.json` im Batch-Ordner;
+`show_ratings()` zeigt den aktuellen Stand. Für einen anderen Lauf in der
+ersten Codezelle nur `BATCH_DIR` ändern und die Zellen von oben nach unten
+ausführen.
 
-Alternativ lässt sich eine Bewertung über `python -m src.evaluation.ratings` speichern. Das vollständige Format und ein Beispiel stehen in [`RATINGS_PROTOCOL.md`](./RATINGS_PROTOCOL.md); Score-Komponenten und Grenzen der Baseline beschreibt [`RANKING_PROTOCOL.md`](./RANKING_PROTOCOL.md).
+Alternativ lässt sich eine Bewertung über `python -m src.evaluation.ratings`
+speichern. Das vollständige Format und ein Beispiel stehen in
+[`RATINGS_PROTOCOL.md`](./RATINGS_PROTOCOL.md). Die Vorab-Auswahl beschreibt
+[`RANKING_PROTOCOL.md`](./RANKING_PROTOCOL.md); Komponenten und Grenzen der
+Metrik für fertige WAV-Varianten stehen in
+[`RENDERED_TRANSITION_METRIC_PROTOCOL.md`](./RENDERED_TRANSITION_METRIC_PROTOCOL.md).
 
 ## Multi-Song-Batch
 
@@ -163,6 +184,19 @@ regulären Paar-Manifeste und dokumentiert die vollständige Songauswahl.
 
 Das Wurzel-Manifest wird nach jedem Songpaar atomar aktualisiert. Bereits
 abgeschlossene Paare bleiben bei einer Unterbrechung nachvollziehbar.
+
+### Vorhandenen Multi-Song-Batch nachbewerten
+
+Ein älterer Batch kann mit der Render-Metrik bewertet werden, ohne WAVs oder
+historische Manifeste zu verändern:
+
+```powershell
+.venv\Scripts\python.exe -m src.evaluation.backfill_transition_metrics `
+  "output\batches\all_songs_top3_targets_top3_transitions_20260722"
+```
+
+Je Paar und im Wurzelordner entsteht ein separates
+`transition_metrics.json`. Das Notebook erkennt diese Sidecars automatisch.
 
 ## Analyse-Cache und Ausgaben
 

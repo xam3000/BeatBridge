@@ -9,6 +9,7 @@ Der aktuelle, verifizierte Projektstand und die weitere Dokumentation liegen unt
 - [CLI verwenden](./docs/CLI.md)
 - [Kandidatenvertrag](./docs/CANDIDATE_PROTOCOL.md)
 - [Batch-Rendering](./docs/BATCH_RENDERING_PROTOCOL.md)
+- [Metrik für gerenderte Übergänge](./docs/RENDERED_TRANSITION_METRIC_PROTOCOL.md)
 - [Batch anhören (Notebook)](./notebooks/listen_batch.ipynb)
 - [Laufende Bemerkungen](./docs/Bemerkungen.md)
 
@@ -19,10 +20,17 @@ Der aktuelle, verifizierte Projektstand und die weitere Dokumentation liegen unt
 .venv\Scripts\python.exe -m pytest -q
 ```
 
-Die programmatischen Verträge für Rendering, Kandidaten und Batch-Exporte stehen in [`docs/RENDERING_PROTOCOL.md`](./docs/RENDERING_PROTOCOL.md), [`docs/CANDIDATE_PROTOCOL.md`](./docs/CANDIDATE_PROTOCOL.md) und [`docs/BATCH_RENDERING_PROTOCOL.md`](./docs/BATCH_RENDERING_PROTOCOL.md).
+Die programmatischen Verträge für Rendering, Kandidaten, Batch-Exporte und die
+Metrik für gerenderte Varianten stehen unter [`docs/`](./docs/README.md).
 
 ## Projektstand
 
-Die technische Basis ist vorhanden: Beat-/Bar-Analyse, Audio-Normalisierung, vier Übergangs-Renderer, automatische bar-synchrone Kandidaten und Batch-Export mit auditierbarem JSON-Manifest. Ranking und eine Hörvergleichsoberfläche fehlen noch.
+Die technische Basis ist vorhanden: Beat-/Bar-Analyse, Audio-Normalisierung,
+vier Übergangs-Renderer, automatische bar-synchrone Kandidaten, Cutpoint-Ranking,
+eine Baseline-Metrik für gerenderte Varianten, Batch-Export und ein
+Notebook-Hörvergleich.
 
-Der nächste Meilenstein ist die Schleife **Kandidaten erzeugen → Varianten batchweise rendern → anhören und vergleichen**. Der verbindliche, priorisierte Arbeitsstand wird ausschließlich in [`docs/STATUS.md`](./docs/STATUS.md) gepflegt, damit keine parallelen Aktionspläne auseinanderlaufen.
+Der nächste Meilenstein ist die Validierung der beiden Rankings gegen
+menschliche Hörurteile. Der verbindliche, priorisierte Arbeitsstand wird
+ausschließlich in [`docs/STATUS.md`](./docs/STATUS.md) gepflegt, damit keine
+parallelen Aktionspläne auseinanderlaufen.

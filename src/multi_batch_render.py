@@ -110,6 +110,9 @@ def generate_multi_song_batch(
                             "ranked_candidate_count": len(result.candidate_ranking.scores),
                             "rendered_variant_count": len(result.rendered_variants),
                             "render_failure_count": len(result.failures),
+                            "transition_metric_failure_count": len(
+                                result.rendered_transition_ranking.failures
+                            ),
                         }
                     )
                 except Exception as error:  # Continue the independent song pairs.

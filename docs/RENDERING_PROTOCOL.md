@@ -26,6 +26,8 @@ result = render_transition(
 | `audio` | NumPy-Array in der Form `(channels, samples)` |
 | `sample_rate` | Sample-Rate des Ergebnis-Audios |
 | `renderer` | Verwendete Rendering-Baseline |
+| `transition_start_sample` | Beginn der tatsächlichen Transition relativ zum zurückgegebenen Audio |
+| `transition_end_sample` | Ende der tatsächlichen Transition relativ zum zurückgegebenen Audio; beim Hard Cut identisch zum Beginn |
 
 ## Audio-Invarianten
 

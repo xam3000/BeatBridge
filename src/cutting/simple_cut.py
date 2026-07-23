@@ -18,6 +18,7 @@ class SimpleCut:
             beat_frames1,
             beat_frames2,
         )
+        self.effective_transition_samples = 0
 
         return np.concatenate(
             [audio1[..., :cut_sample1], audio2[..., cut_sample2:]],

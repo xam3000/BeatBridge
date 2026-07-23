@@ -128,6 +128,7 @@ class FadeCut(SimpleCut):
         transition_length = min(source_length, target_length)
         if transition_length <= 0:
             raise ValueError("Bridge transition needs audio after source and before target cutpoints")
+        self.effective_transition_samples = int(transition_length)
 
         source_transition_end = cut_sample1 + transition_length
         target_transition_start = cut_sample2 - transition_length

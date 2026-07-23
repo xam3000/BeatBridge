@@ -66,9 +66,18 @@ def test_batch_render_exports_wavs_and_a_traceable_manifest(batch_inputs):
     assert manifest["candidate_generation"]["candidates"][0]["candidate_id"] == candidates.candidates[0].candidate_id
     assert manifest["candidate_ranking"]["ranker"] == "feature_baseline_v3"
     assert manifest["candidate_ranking"]["scores"][0]["rank"] == 1
+    assert manifest["rendered_transition_ranking"]["metric"] == "rendered_transition_baseline_v1"
+    assert len(manifest["rendered_transition_ranking"]["scores"]) == 2
+    assert not manifest["rendered_transition_ranking"]["failures"]
     assert manifest["render_selection"]["top_k"] == 5
     assert [item["renderer"] for item in manifest["rendered_variants"]] == ["simple", "fade"]
     assert all(item["candidate_rank"] == 1 for item in manifest["rendered_variants"])
+    assert all(item["transition_rank"] is not None for item in manifest["rendered_variants"])
+    assert all(0.0 <= item["transition_score"] <= 1.0 for item in manifest["rendered_variants"])
+    assert all(
+        item["transition_end_sample"] >= item["transition_start_sample"]
+        for item in manifest["rendered_variants"]
+    )
     assert manifest["render_preview"] == {
         "seconds_before_source_cutpoint": 5.0,
         "seconds_after_source_cutpoint": 12.0,

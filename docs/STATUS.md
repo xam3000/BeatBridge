@@ -8,7 +8,7 @@ _Stand: 2026-07-23_
 
 **Wichtigstes Erfolgskriterium der Startphase (Exposé Abschn. 14):** Nach spätestens drei Wochen sollen *mehrere automatisch erzeugte* Übergänge *hörbar* sein und *systematisch verglichen* werden können.
 
-Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automatisch erzeugt, als Drop-Ende-A→energiearme Bridge→Drop-Anfang-B gerankt, ohne Überlappung der High-Power-Abschnitte gerendert und im Notebook angehört sowie bewertet werden. Ein realer Drop-Bridge-Lauf für HELP_LESS → BREATH_LESS liegt vor; menschliche Urteile, Phrasen-/Vocal-Merkmale und gelernte Metriken fehlen noch.
+Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automatisch erzeugt, als Drop-Ende-A→energiearme Bridge→Drop-Anfang-B vorgerankt, ohne Überlappung der High-Power-Abschnitte gerendert und anschließend anhand des tatsächlichen Renderergebnisses erneut bewertet werden. Ein realer Drop-Bridge-Lauf für HELP_LESS → BREATH_LESS liegt vor; ein neuer realer Lauf mit der Render-Metrik, menschliche Urteile, Phrasen-/Vocal-Merkmale und gelernte Metriken fehlen noch.
 
 ## Aktueller Stand (implementiert)
 
@@ -30,16 +30,21 @@ Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automa
 - **Tests**: `pytest`-Suite mit synthetischen Audiodaten prüft alle vier Renderer, Tempoanpassung, 48→44,1-kHz-Resampling, Mono→Stereo und den Fehlerpfad bei fehlenden Downbeat-Metadaten.
 - **Kandidatengenerierung** (`src/candidates/`): versionierter Vertrag `CANDIDATE_PROTOCOL.md` und Generator `bar_grid_v1`. Er kombiniert standardmäßig alle nutzbaren Taktgrenzen beider Songs für 2/4 Takte; vollständige Downbeat-Metadaten, Pre-/Post-Roll auf beiden Seiten, kompatible Beatanzahl in allen vier Fenstern und maximal 15 % Tempoabweichung sind harte Filter.
 - **Feature-Ranking** (`src/ranking/`): `feature_baseline_v3` bewertet Drop A, Source-Auslauf, Target-Vorlauf und Drop B getrennt. Je 30 % entfallen auf High Power der Drops und Non-Overlap (Energieabfall nach A, niedrige Transition-Energie, Energieanstieg vor B); Chroma, RMS-Kontinuität, Spektrum und Tempo ergänzen den Score.
+- **Metrik für gerenderte Übergänge** (`src/ranking/rendered_transition.py`): `rendered_transition_baseline_v1` bewertet nach dem Rendering das tatsächliche Audio inklusive Time-Stretch und Crossfade. Energieform und Grenzglätte zählen je 30 %, harmonische Kontinuität und rhythmische Stabilität je 20 %. Score, Teilwerte, Messwerte, Rang und isolierte Fehler stehen additiv im Batch-Manifest.
+- **Historische Render-Metrik** (`src/evaluation/backfill_transition_metrics.py`): bewertet vorhandene Multi-Song-Batches ohne Änderung der WAVs oder ursprünglichen Manifeste. Samplegenaue Grenzen werden aus Kandidaten-Beat-Index, Read-only-Analyse-Cache und Tempoanpassung rekonstruiert; atomische `transition_metrics.json`-Sidecars dokumentieren Fortschritt und Ergebnisse.
 - **Songpaar-Kompatibilität** (`src/ranking/song_compatibility.py`): `rank_song_targets()` ordnet Target-Songs pro Source-Song vor der Cutpoint-Generierung nach Harmonie, Tempoanpassungsstärke, Klang, Energie und Rhythmus.
 - **Batch-Rendering** (`src/batch_render.py`): rankt akzeptierte Kandidaten und rendert standardmäßig die Top 5 × ausgewählte Renderer als kurze WAV-Vorschauen (5 s vor, 12 s nach Source-Cutpoint). Exporte werden atomar geschrieben; vorhandene Dateien werden ohne explizites `--overwrite` nicht ersetzt. Gescheiterte Einzelvarianten sowie Generator- und Ranking-Rejections bleiben im Manifest sichtbar. Seit 2026-07-22 übernehmen alle Renderer die Source-/Target-BPM explizit aus dem Kandidatenvertrag und passen Song B konsistent auf Song A an.
 - **Hörbewertung** (`src/evaluation/ratings.py`, `notebooks/listen_batch.ipynb`): das Notebook listet Varianten in Rangfolge und bettet WAVs über `IPython.display.Audio` ein. `rate()` speichert eine 1–5-Bewertung mit Fehler-Tags und Notiz atomar in einer getrennten `ratings.json`; dieselbe Funktionalität ist als CLI verfügbar. Der Startpfad verweist auf den realen Ranking-Lauf.
 - **Dataset**: 21 Audiodateien liegen im ignorierten Ordner `musik/`; für alle 21 existiert eine gecachte Analyse unter `output/pre_analysis/` (plus ein veralteter zusätzlicher Cache `HELP_LESS`). Kuratierte Track-Notizen, Lizenzstatus und reproduzierbare Dataset-Definition fehlen noch.
 
-### Verifiziert am 2026-07-22 (Codex, nach Ranking-/Hörbewertungs-Meilenstein)
+### Verifiziert am 2026-07-23 (Codex, nach Render-Metrik-Meilenstein)
 
 - Multi-Song-Batch: `output/batches/all_songs_top3_targets_top3_transitions_20260722/`; für alle 20 aktuellen Tracks wurden die drei global kompatibelsten Zieltracks ausgewählt und pro Songpaar bis zu drei Equal-Power-Übergänge gerendert. Ergebnis: 60 abgeschlossene Paar-Manifeste, 165 WAV-Vorschauen, keine Runner- oder Renderfehler. `src.multi_batch_render` schreibt das Auswahl- und Fortschrittsmanifest nach jedem Songpaar atomar fort; Wildcards wie `musik\*.flac` werden auf Windows intern aufgelöst.
+- Derselbe Multi-Song-Batch wurde am 2026-07-23 vollständig mit `rendered_transition_baseline_v1` nachbewertet: **165/165 Varianten aus 60/60 Paaren, 0 Fehler**. Scorebereich 0,569–0,943, Mittelwert 0,857, Median 0,883. Komponentenmittel: Energieform 0,817, Grenzglätte 0,900, harmonische Kontinuität 0,961, rhythmische Stabilität 0,749. Ergebnisse liegen als unveränderliche Sidecar-Auswertung unter `transition_metrics.json`.
 - Python-Version der Projektumgebung: **3.14.2**.
-- `.venv\Scripts\python.exe -m pytest -q`: **32 Tests bestanden**; zwei nicht blockierende Deprecation-Warnungen aus `audioread` unter Python 3.14.
+- `.venv\Scripts\python.exe -m pytest -q`: **35 Tests bestanden**; zwei nicht blockierende Deprecation-Warnungen aus `audioread` unter Python 3.14.
+- Synthetische Kontrolle: Die Render-Metrik bevorzugt eine glatte Bridge mit abgesenkter Energie gegenüber einem gleichförmig lauten Übergangsfenster; eine fehlerhafte Variante blockiert die übrigen Scores nicht. Reale Hörvalidierung und Gewichtsabstimmung stehen bewusst noch aus.
+- Read-only-Stichprobe auf dem vorhandenen Equal-Power-Rang-1 aus `help_to_breath_drop_bridge`: Gesamtscore 0,807; Energieform 0,516, Grenzglätte 0,929, harmonische Kontinuität 0,968 und rhythmische Stabilität 0,902; keine Metrikfehler. Das ist nur ein technischer Plausibilitätscheck, noch kein Qualitätsnachweis.
 - `.venv\Scripts\python.exe -m pip check`: keine defekten Abhängigkeiten; `pytest 9.1.1` ist installiert und in `requirements-dev.txt` festgehalten.
 - CLI und programmatischer Import laufen; verfügbare Renderer: `simple`, `fade`, `equal_power`, `tempo_fade`; alle gleichen dabei das Tempo an.
 - `generate_transition_candidates()` erzeugt Kandidaten auf demselben normalisierten 44,1-kHz-Sample-Raster wie die Renderer; ein Integrationstest deckt 48→44,1-kHz-Cutpoint-Skalierung ab.
@@ -60,7 +65,7 @@ Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automa
 | 1. Audioimport & Abschnittsauswahl | 🟡 | Zwei Audiodateien können verarbeitet werden; Abschnittsgrenzen sind manuelle Sample-Cutpoints. Mehrere Songs, Abschnittsobjekte und Reihenfolge-Constraints fehlen. |
 | 2. Musikanalyse | 🟡 | BPM, Beats, Downbeats und Taktpositionen sind vorhanden. Phrasen-/Segmentgrenzen, Strukturtypen, Vocal-Aktivität und eine plattformunabhängige Downbeat-Lösung fehlen. |
 | 3. Kandidatengenerierung | 🟡 | Bar-synchrone 2/4-Takt-Kandidaten über beide vollständigen Tracks mit vier vollständigen Drop-/Bridge-Fenstern vorhanden. Phrasen/Struktur und Vocal-Filter fehlen noch. |
-| 4. Übergangsmetrik | 🟡 | `feature_baseline_v3` rankt Drop-Ende, energiearme Non-Overlap-Bridge und Drop-Anfang anhand relativer Energie plus Compatibility-Merkmalen. Phrasen, Vocals, Embeddings und menschliche Evaluation fehlen. |
+| 4. Übergangsmetrik | 🟡 | `feature_baseline_v3` rankt Cutpoints vorab; `rendered_transition_baseline_v1` bewertet danach das tatsächliche Renderergebnis. Phrasen, Vocals, Embeddings und menschliche Evaluation fehlen. |
 | 5. Rendering | ✅ | Hard Cut sowie lineare und Equal-Power-Bridge-Renderer sind implementiert und gleichen das Tempo immer an; ein Test garantiert, dass Drop A/B außerhalb des Mischfensters bleiben. |
 | 6. Vorschau & Export | 🟡 | Batch-WAV-Export, auditierbares Manifest und Notebook-Inline-Playback funktionieren. Visualisierung, Auswahlworkflow und GUI fehlen. |
 
@@ -78,6 +83,7 @@ Damit ist die technische Grundlage aus Monat 1 weitgehend vorhanden. Das frühe 
 | Systematischer Vergleich / Höranalyse | 🟡 | Gerankter Batch, Inline-Playback und persistente 1–5-Bewertung mit Fehler-Tags vorhanden; tatsächliche menschliche Urteile fehlen |
 | Erste Baseline-Renderer (4 Stück) | ✅ | Tempoangepasster Hard Cut, linearer Crossfade, Equal-Power und Kompatibilitätsalias `tempo_fade` getestet |
 | Einfache Feature-Metrik | ✅ | `feature_baseline_v3` mit High-Power- und Non-Overlap-Komponente, auditierbaren Messwerten und Top-k-Rendering |
+| Render-Audio-Metrik | ✅ | `rendered_transition_baseline_v1` mit vier erklärbaren Komponenten, eigenem Ranking und Fehlerisolation im Batch-Manifest |
 | Erste Embedding-Tests | ❌ | offen (Monat 3) |
 | Liste typischer Fehlerfälle | 🟡 | nur punktuell (`Bemerkungen.md`) |
 | Entscheidung ML-Fokus | ❌ | offen; Exposé priorisiert vortrainierte Embeddings zuerst |
@@ -102,9 +108,9 @@ Ziel: das Startphasen-Erfolgskriterium erfüllen — die Schleife **automatische
 
 **Abgeschlossen am 2026-07-17:** programmatische Pipeline, Audio-Normalisierung, vier Rendering-Baselines, versionierter Rendering-Vertrag und automatisierte Tests.
 
-1. **Drop-Bridge-Hörvergleich durchführen** — die drei Varianten aus `help_to_breath_drop_bridge` im Notebook anhören und über `rate()` bewerten: Bleibt Drop A vollständig, wirkt die 4-Takt-Bridge energieärmer, und startet Drop B klar ohne High-Power-Überlappung? Danach zwei kontrastierende Trackpaare exportieren. Als nächste Notebook-Erweiterung die vier Analysefenster und den Energieverlauf plotten.
+1. **Nachbewerteten Multi-Song-Batch anhören** — kontrastierende Paare aus `all_songs_top3_targets_top3_transitions_20260722` im Notebook öffnen, `candidate_rank` gegen `transition_rank` vergleichen und die Varianten über `rate()` bewerten. Prüfen: Bevorzugt die neue Metrik hörbar glatte Grenzen, einen plausiblen Energieverlauf und rhythmisch stabile Übergänge? Gewichte erst nach mehreren Paaren verändern.
 2. **Entwicklungsset kuratieren (Exposé Abschn. 8)** — die vorhandenen 21 Tracks als reproduzierbares Set definieren, Varianz und Duplikate prüfen, Track-Notizen ergänzen und Lizenzfrage klären (parallel, eher Handarbeit).
-3. **Feature-Metrik evaluieren und erweitern** — menschliche Bewertungen gegen Score/Rang vergleichen, Gewichte nicht anhand eines Einzelbeispiels überoptimieren und als Nächstes Phrasen- sowie Vocal-Informationen ergänzen; danach vortrainierte Embeddings vergleichen.
+3. **Beide Metrikstufen evaluieren und erweitern** — menschliche Bewertungen getrennt gegen Cutpoint- und Render-Rang vergleichen, Gewichte nicht anhand eines Einzelbeispiels überoptimieren und als Nächstes Phrasen- sowie Vocal-Informationen ergänzen; danach vortrainierte Embeddings auf denselben gerenderten Varianten vergleichen.
 
 Danach: die **Feature-Metrik** auf mehreren bewerteten Trackpaaren validieren; **vortrainierte Embeddings** vergleichen, eigenes SSL-Fine-Tuning optional (Monat 3; Priorisierung laut Exposé Risiko 15: Pipeline+Baselines+Metrik zuerst).
 
