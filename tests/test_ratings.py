@@ -44,3 +44,15 @@ def test_rating_rejects_unknown_variant_and_invalid_score(batch_directory):
         save_rating(batch_directory, "missing", "fade", 3)
     with pytest.raises(ValueError, match="1 to 5"):
         save_rating(batch_directory, "candidate-1", "equal_power", 6)
+
+
+def test_rating_accepts_one_issue_tag_as_string(batch_directory):
+    save_rating(
+        batch_directory,
+        "candidate-1",
+        "equal_power",
+        3,
+        issues="phrasing",
+    )
+
+    assert load_ratings(batch_directory)["ratings"][0]["issues"] == ["phrasing"]

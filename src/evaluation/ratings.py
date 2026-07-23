@@ -60,6 +60,11 @@ def save_rating(
     overall = int(overall)
     if not 1 <= overall <= 5:
         raise ValueError("overall must be an integer from 1 to 5")
+    # A single tag is commonly passed as ``issues="phrasing"`` (or as the
+    # notebook equivalent ``issues=("phrasing")``).  Treat it as one tag;
+    # otherwise iterating over it would validate individual characters.
+    if isinstance(issues, str):
+        issues = (issues,)
     issues = tuple(dict.fromkeys(str(issue) for issue in issues))
     unknown_issues = [issue for issue in issues if issue not in ISSUE_TAGS]
     if unknown_issues:
