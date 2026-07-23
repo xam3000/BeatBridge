@@ -147,6 +147,23 @@ Ein vorhandener Export wird standardmäßig nicht überschrieben. Für einen wei
 
 Alternativ lässt sich eine Bewertung über `python -m src.evaluation.ratings` speichern. Das vollständige Format und ein Beispiel stehen in [`RATINGS_PROTOCOL.md`](./RATINGS_PROTOCOL.md); Score-Komponenten und Grenzen der Baseline beschreibt [`RANKING_PROTOCOL.md`](./RANKING_PROTOCOL.md).
 
+## Multi-Song-Batch
+
+`src.multi_batch_render` behandelt jeden angegebenen Track als Quelle, wählt
+pro Quelle die besten Zieltracks und exportiert pro ausgewähltem Paar die
+besten Übergänge. Standardmäßig sind das drei Zieltracks, drei Kandidaten je
+Songpaar und der `equal_power`-Renderer. Das Wurzel-Manifest verweist auf die
+regulären Paar-Manifeste und dokumentiert die vollständige Songauswahl.
+
+```powershell
+.venv\Scripts\python.exe -m src.multi_batch_render `
+  musik\*.flac `
+  --output-dir "output\batches\all_songs_top3_targets_top3_transitions_20260722"
+```
+
+Das Wurzel-Manifest wird nach jedem Songpaar atomar aktualisiert. Bereits
+abgeschlossene Paare bleiben bei einer Unterbrechung nachvollziehbar.
+
 ## Analyse-Cache und Ausgaben
 
 Beim ersten Lauf analysiert BeatBridge BPM, Beats und Taktpositionen. Ergebnisse werden anhand des Datei-Hashes zwischengespeichert:
