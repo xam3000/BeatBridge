@@ -154,8 +154,13 @@ Ein vorhandener Export wird standardmäßig nicht überschrieben. Für einen wei
 [`notebooks/listen_batch.ipynb`](../notebooks/listen_batch.ipynb) lädt ein
 Batch-Manifest, sortiert neue Batches nach Render-Rang und zeigt Render- sowie
 Cutpoint-Score nebeneinander. Bei älteren Manifesten ohne Render-Metrik fällt
-es auf den Cutpoint-Rang zurück. Für jede gewählte WAV-Datei erscheint ein
-eingebetteter Audio-Player. `rate(index, 1_bis_5, issues=(...), notes="...")`
+es auf den Cutpoint-Rang zurück. Eine Batch-Übersicht visualisiert die
+Render-Score-Verteilung und den Vergleich von Cutpoint- zu Render-Score; bei
+einem Paar aus einem nachbewerteten Multi-Song-Batch bezieht sie alle dortigen
+Varianten ein und hebt das aktuelle Paar hervor. Für
+jede gewählte WAV-Datei erscheinen die vier Metrikkomponenten samt Gesamtscore
+direkt vor dem eingebetteten Audio-Player.
+`rate(index, 1_bis_5, issues=(...), notes="...")`
 speichert Bewertungen atomar als `ratings.json` im Batch-Ordner;
 `show_ratings()` zeigt den aktuellen Stand. Für einen anderen Lauf in der
 ersten Codezelle nur `BATCH_DIR` ändern und die Zellen von oben nach unten
