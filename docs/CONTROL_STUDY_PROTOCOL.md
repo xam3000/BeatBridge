@@ -6,6 +6,15 @@ Dieses Dokument beschreibt Auswahl, Artefakte und Bewertungen der ersten
 blinden Hörvalidierung für `differentiable_control_v2`. Änderungen an Version 1
 erfolgen nur additiv; inkompatible Änderungen benötigen eine neue Version.
 
+Der zweite Hörsatz
+`blind_v4_control_v3_rubberband_top8_4bar_20260730` verwendet dieselben acht
+gerichteten Songpaare, Control-Protokoll 3 und Rendering-Protokoll 5. Alle
+Audios wurden neu erzeugt; bei notwendiger Tempoanpassung wird Rubber Band
+verwendet und das konkrete Backend im öffentlichen Manifest dokumentiert.
+Die abgeschlossene Bewertung ergab acht Gleichstände und identische
+Kriterienwerte für beide Methoden. `study_results.json` dokumentiert dieses
+Ergebnis nach der Entblindung.
+
 ## Zweck
 
 Vor dem Training eines Feature→Control-Modells wird geprüft, ob direkt gegen

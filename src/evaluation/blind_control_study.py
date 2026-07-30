@@ -10,6 +10,7 @@ import random
 import uuid
 
 from src.dataset import DEFAULT_TRACK_EXCLUSIONS_PATH
+from src.control import DEFAULT_INCREMENT_LOGIT_BOUND
 from src.evaluation.control_probe import export_control_comparisons
 from src.evaluation.control_study_ratings import create_control_study_ratings
 
@@ -29,6 +30,7 @@ def export_blind_control_study(
     optimization_steps=60,
     optimization_learning_rate=0.08,
     optimization_sample_rate=11_025,
+    increment_logit_bound=DEFAULT_INCREMENT_LOGIT_BOUND,
     prefix_seconds=5.0,
     suffix_seconds=8.0,
     track_exclusions_path=DEFAULT_TRACK_EXCLUSIONS_PATH,
@@ -47,6 +49,7 @@ def export_blind_control_study(
         optimization_steps=optimization_steps,
         optimization_learning_rate=optimization_learning_rate,
         optimization_sample_rate=optimization_sample_rate,
+        increment_logit_bound=increment_logit_bound,
         prefix_seconds=prefix_seconds,
         suffix_seconds=suffix_seconds,
         track_exclusions_path=track_exclusions_path,
@@ -87,6 +90,7 @@ def export_blind_control_study(
                 "transition_length_bars": int(
                     pair["candidate"]["transition_length_bars"]
                 ),
+                "tempo_backend": pair["geometry"]["tempo_backend"],
                 "files": {
                     label: files_by_label[label]
                     for label in ("A", "B")
@@ -120,6 +124,7 @@ def export_blind_control_study(
         "created_at_utc": full_manifest["created_at_utc"],
         "completed_at_utc": full_manifest["completed_at_utc"],
         "control_protocol_version": full_manifest["control_protocol_version"],
+        "rendering_protocol_version": full_manifest["rendering_protocol_version"],
         "source_batch": full_manifest["source_batch"],
         "selection_policy": full_manifest["selection_policy"],
         "track_exclusions_path": full_manifest["track_exclusions_path"],
@@ -199,6 +204,11 @@ def build_argument_parser():
     parser.add_argument("--optimization-steps", type=int, default=60)
     parser.add_argument("--learning-rate", type=float, default=0.08)
     parser.add_argument("--optimization-sample-rate", type=int, default=11_025)
+    parser.add_argument(
+        "--increment-logit-bound",
+        type=float,
+        default=DEFAULT_INCREMENT_LOGIT_BOUND,
+    )
     parser.add_argument("--prefix-seconds", type=float, default=5.0)
     parser.add_argument("--suffix-seconds", type=float, default=8.0)
     parser.add_argument("--track-exclusions", default=str(DEFAULT_TRACK_EXCLUSIONS_PATH))
@@ -219,6 +229,7 @@ def main():
         optimization_steps=args.optimization_steps,
         optimization_learning_rate=args.learning_rate,
         optimization_sample_rate=args.optimization_sample_rate,
+        increment_logit_bound=args.increment_logit_bound,
         prefix_seconds=args.prefix_seconds,
         suffix_seconds=args.suffix_seconds,
         track_exclusions_path=args.track_exclusions,

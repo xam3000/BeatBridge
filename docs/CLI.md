@@ -309,6 +309,31 @@ Erst nach `status = completed` den Antwortschlüssel methodisch zuordnen und
 Der versionierte Studienvertrag steht in
 [`CONTROL_STUDY_PROTOCOL.md`](./CONTROL_STUDY_PROTOCOL.md).
 
+Control-v3 mit begrenzten Kurvenschritten und dem aktuellen
+Rubber-Band-Time-Stretch-Backend als neuen blinden Satz rendern:
+
+```powershell
+.venv\Scripts\python.exe -m src.evaluation.blind_control_study `
+  output\batches\all_songs_top3_targets_top3_transitions_20260722 `
+  output\control_studies\blind_v4_control_v3_rubberband_top8_4bar_20260730 `
+  --pair-count 8 `
+  --transition-bars 4 `
+  --optimization-steps 60 `
+  --max-track-uses 2 `
+  --blind-seed 20260730
+```
+
+Der Ordner enthält dieselben acht Songpaare wie der vorherige v2-Hörsatz, aber
+vollständig neu gerenderte A/B-Dateien. `manifest.json` nennt pro Paar
+`tempo_backend`; `answer_key.json` bleibt bis 8/8 Ratings geschlossen.
+
+Nach vollständiger Bewertung den neuen Satz auswerten:
+
+```powershell
+.venv\Scripts\python.exe -m src.evaluation.analyze_control_study `
+  output\control_studies\blind_v4_control_v3_rubberband_top8_4bar_20260730
+```
+
 ## Analyse-Cache und Ausgaben
 
 Beim ersten Lauf analysiert BeatBridge BPM, Beats und Taktpositionen. Ergebnisse werden anhand des Datei-Hashes zwischengespeichert:

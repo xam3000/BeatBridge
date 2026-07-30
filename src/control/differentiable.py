@@ -10,8 +10,9 @@ from torch import nn
 from torch.nn import functional as F
 
 
-CONTROL_PROTOCOL_VERSION = 2
+CONTROL_PROTOCOL_VERSION = 3
 CONTROL_NAMES = ("mix_position", "low_end_position")
+DEFAULT_INCREMENT_LOGIT_BOUND = 0.6
 
 
 @dataclass(frozen=True)
@@ -34,7 +35,8 @@ class DifferentiableTransitionObjectiveConfig:
 
     energy_shape_weight: float = 1.0
     boundary_weight: float = 0.5
-    control_smoothness_weight: float = 0.05
+    control_smoothness_weight: float = 0.02
+    control_curvature_weight: float = 0.05
     monotonicity_weight: float = 0.1
     clipping_weight: float = 2.0
     valley_depth_db: float = 6.0
@@ -47,6 +49,7 @@ class DifferentiableTransitionObjectiveConfig:
             self.energy_shape_weight,
             self.boundary_weight,
             self.control_smoothness_weight,
+            self.control_curvature_weight,
             self.monotonicity_weight,
             self.clipping_weight,
         )
@@ -234,7 +237,17 @@ class DifferentiableTransitionObjective(nn.Module):
         )
         mix_delta = torch.diff(mix_control, dim=-1)
         low_delta = torch.diff(low_control, dim=-1)
-        control_smoothness = torch.mean(mix_delta**2 + low_delta**2)
+        uniform_delta = 1.0 / float(self.energy_frames - 1)
+        control_smoothness = torch.mean(
+            ((mix_delta - uniform_delta) / uniform_delta) ** 2
+            + ((low_delta - uniform_delta) / uniform_delta) ** 2
+        )
+        mix_curvature = torch.diff(mix_delta, dim=-1)
+        low_curvature = torch.diff(low_delta, dim=-1)
+        control_curvature = torch.mean(
+            (mix_curvature / uniform_delta) ** 2
+            + (low_curvature / uniform_delta) ** 2
+        )
         monotonicity = torch.mean(F.relu(-mix_delta) ** 2 + F.relu(-low_delta) ** 2)
         clipping = torch.mean(F.relu(torch.abs(rendered) - 1.0) ** 2)
 
@@ -242,6 +255,7 @@ class DifferentiableTransitionObjective(nn.Module):
             self.config.energy_shape_weight * energy_shape
             + self.config.boundary_weight * boundary
             + self.config.control_smoothness_weight * control_smoothness
+            + self.config.control_curvature_weight * control_curvature
             + self.config.monotonicity_weight * monotonicity
             + self.config.clipping_weight * clipping
         )
@@ -250,26 +264,43 @@ class DifferentiableTransitionObjective(nn.Module):
             "energy_shape": energy_shape,
             "boundary": boundary,
             "control_smoothness": control_smoothness,
+            "control_curvature": control_curvature,
             "monotonicity": monotonicity,
             "clipping": clipping,
         }
 
 
 class OptimizableControlCurves(nn.Module):
-    """Two strictly monotone curves parameterised by positive increments."""
+    """Strictly monotone curves with constructively bounded increments."""
 
-    def __init__(self, control_points: int = 32):
+    def __init__(
+        self,
+        control_points: int = 32,
+        increment_logit_bound: float = DEFAULT_INCREMENT_LOGIT_BOUND,
+    ):
         super().__init__()
         self.control_points = int(control_points)
         if self.control_points < 3:
             raise ValueError("control_points must be at least 3")
+        self.increment_logit_bound = float(increment_logit_bound)
+        if (
+            not math.isfinite(self.increment_logit_bound)
+            or self.increment_logit_bound <= 0
+        ):
+            raise ValueError("increment_logit_bound must be a finite value above 0")
         initial_increment_logits = torch.zeros(self.control_points - 1)
         self.mix_increment_logits = nn.Parameter(initial_increment_logits.clone())
         self.low_end_increment_logits = nn.Parameter(initial_increment_logits.clone())
 
     def forward(self) -> tuple[torch.Tensor, torch.Tensor]:
-        mix_position = _monotone_unit_curve(self.mix_increment_logits)
-        low_end_position = _monotone_unit_curve(self.low_end_increment_logits)
+        mix_position = _bounded_monotone_unit_curve(
+            self.mix_increment_logits,
+            self.increment_logit_bound,
+        )
+        low_end_position = _bounded_monotone_unit_curve(
+            self.low_end_increment_logits,
+            self.increment_logit_bound,
+        )
         return mix_position, low_end_position
 
 
@@ -284,6 +315,8 @@ class ControlOptimizationResult:
     initial_loss: float
     final_loss: float
     loss_history: tuple[float, ...]
+    increment_logit_bound: float
+    maximum_control_increment: float
 
 
 def optimize_control_curves(
@@ -295,6 +328,7 @@ def optimize_control_curves(
     control_points: int = 32,
     steps: int = 100,
     learning_rate: float = 0.05,
+    increment_logit_bound: float = DEFAULT_INCREMENT_LOGIT_BOUND,
 ) -> ControlOptimizationResult:
     """Directly optimize two curves without a feature-to-control model."""
     if steps < 1:
@@ -305,7 +339,10 @@ def optimize_control_curves(
         raise ValueError("source_audio and target_audio must share device and dtype")
 
     objective = objective or DifferentiableTransitionObjective(energy_frames=control_points)
-    curves = OptimizableControlCurves(control_points).to(
+    curves = OptimizableControlCurves(
+        control_points,
+        increment_logit_bound=increment_logit_bound,
+    ).to(
         device=source_audio.device,
         dtype=source_audio.dtype,
     )
@@ -346,6 +383,11 @@ def optimize_control_curves(
         initial_loss=loss_history[0],
         final_loss=final_loss,
         loss_history=tuple(loss_history),
+        increment_logit_bound=float(increment_logit_bound),
+        maximum_control_increment=maximum_control_increment(
+            control_points,
+            increment_logit_bound,
+        ),
     )
 
 
@@ -401,8 +443,29 @@ def _equal_power_pair(position: torch.Tensor) -> tuple[torch.Tensor, torch.Tenso
     return torch.cos(angle), torch.sin(angle)
 
 
-def _monotone_unit_curve(increment_logits: torch.Tensor) -> torch.Tensor:
-    increments = torch.softmax(increment_logits, dim=-1)
+def maximum_control_increment(
+    control_points: int,
+    increment_logit_bound: float = DEFAULT_INCREMENT_LOGIT_BOUND,
+) -> float:
+    """Return the constructive upper bound for one normalized curve step."""
+    increment_count = int(control_points) - 1
+    increment_logit_bound = float(increment_logit_bound)
+    if increment_count < 2:
+        raise ValueError("control_points must be at least 3")
+    if not math.isfinite(increment_logit_bound) or increment_logit_bound <= 0:
+        raise ValueError("increment_logit_bound must be a finite value above 0")
+    return 1.0 / (
+        1.0
+        + (increment_count - 1) * math.exp(-2.0 * increment_logit_bound)
+    )
+
+
+def _bounded_monotone_unit_curve(
+    increment_logits: torch.Tensor,
+    increment_logit_bound: float,
+) -> torch.Tensor:
+    bounded_logits = float(increment_logit_bound) * torch.tanh(increment_logits)
+    increments = torch.softmax(bounded_logits, dim=-1)
     zero = increment_logits.new_zeros(1)
     return torch.cat((zero, torch.cumsum(increments, dim=-1)))
 

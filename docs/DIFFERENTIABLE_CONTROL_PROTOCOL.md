@@ -1,12 +1,11 @@
 # Differenzierbare Mixing-Controls
 
-_Aktuelle Vertragsversion: 2, eingeführt am 2026-07-29. Version 1 wurde am
-2026-07-29 eingeführt._
+_Aktuelle Vertragsversion: 3, eingeführt am 2026-07-30. Version 2 und Version 1
+wurden am 2026-07-29 eingeführt._
 
-Dieses Dokument beschreibt den ersten lernbaren BeatBridge-Kern
-`differentiable_control_v1`. Änderungen an Version 1 erfolgen nur additiv;
-inkompatible Änderungen benötigen eine neue `format_version` und einen neuen
-Namen.
+Dieses Dokument beschreibt den lernbaren BeatBridge-Control-Kern. Änderungen
+innerhalb einer Vertragsversion erfolgen nur additiv; inkompatible Änderungen
+benötigen eine neue `format_version`.
 
 ## Ziel und Abgrenzung
 
@@ -76,6 +75,14 @@ bildet die Control-Kurve. Dadurch kann Song A nach einer Absenkung nicht kurz
 vor dem Ende erneut hörbar werden. Version 1 verwendete unabhängige innere
 Kontrollpunkte und erlaubte trotz weicher Monotoniestrafe hörbare Rückläufe.
 
+Version 3 begrenzt zusätzlich die Größe jedes Inkrements konstruktiv. Rohe
+Inkrement-Logits werden zuerst durch `0.6 · tanh(logit)` auf `[-0.6, 0.6]`
+beschränkt und anschließend per Softmax normalisiert. Bei 32 Kontrollpunkten
+ist damit jeder der 31 Halbbeat-Schritte kleiner als `0.099644` der gesamten
+Übergabe. Die im v2-Hörsatz beobachteten nahezu sofortigen Übergaben innerhalb
+eines Kontrollschritts sind so nicht mehr darstellbar. Der Grenzwert steht als
+`increment_logit_bound` im Vergleichsmanifest.
+
 ## Tensorformen und Einstiegspunkt
 
 ```python
@@ -97,20 +104,29 @@ Der Renderer interpoliert die Kontrollpunkte linear auf Sampleebene. Ein
 fester, linearphasiger FIR-Tiefpass trennt Low- und High-Band. Das High-Band
 folgt `mix_position`, das Low-Band `low_end_position`.
 
-## Objective Version 1
+## Objective Version 3
 
 `DifferentiableTransitionObjective` kombiniert ausschließlich
 differenzierbare Terme:
 
 - `energy_shape`: U-förmiger Energieverlauf zwischen beiden Drops,
 - `boundary`: RMS-Anschluss an Source A und Target B,
-- `control_smoothness`: kleine Änderungen zwischen Kontrollpunkten,
+- `control_smoothness`: normalisierte Abweichung der Inkremente von einer
+  gleichmäßigen Equal-Power-Übergabe,
+- `control_curvature`: normalisierte Änderung aufeinanderfolgender
+  Inkremente,
 - `monotonicity`: Strafe für rückwärts laufende Übergaben,
 - `clipping`: Strafe für Beträge oberhalb von 1.
 
 Die Objective-Komponenten sind eine technische Lernsonde, noch keine
 perzeptuell validierte Qualitätsmetrik. Vor einem Training auf größeren Daten
 müssen ihre Rangfolgen gegen menschliche Hörurteile geprüft werden.
+
+Version 3 ersetzt den skalenabhängigen v1/v2-Glättungsterm durch die beiden auf
+das uniforme Inkrement normierten Terme. Ihre Standardgewichte sind `0.02`
+für `control_smoothness` und `0.05` für `control_curvature`. Equal Power hat in
+beiden Termen den Wert null; nichtlineare Kurven bleiben möglich, müssen ihren
+zusätzlichen Verlauf aber durch eine bessere Audio-Zielfunktion rechtfertigen.
 
 ## Direkte Optimierung als Pflichtsonde
 
@@ -153,8 +169,9 @@ Peak-Absenkung exportiert:
 `manifest.json` hat `format_version = 1` und enthält Quellbatch,
 Kandidaten-ID, Track-Hashes, Cutpoints, vorhandenen Render-Score,
 Optimierungskonfiguration, Loss-Komponenten, Kontrollpunkte, technische
-WAV-Metadaten und das Ranking beider Exporte durch die historische
-Render-Metrik. Bestehende Batch-Artefakte werden ausschließlich gelesen.
+WAV-Metadaten, das tatsächlich verwendete Time-Stretch-Backend und das Ranking
+beider Exporte durch die historische Render-Metrik. Bestehende
+Batch-Artefakte werden ausschließlich gelesen.
 
 Für die perzeptuelle Validierung verpackt
 `src.evaluation.blind_control_study` diese Exporte als A/B-Dateien, trennt den
@@ -167,6 +184,6 @@ Ratings-Sidecar. Der vollständige Vertrag steht in
 - Der FIR-Crossover ist eine technische Baseline, kein produktionsreifer DJ-EQ.
 - Energie- und Grenzterme können musikalische Qualität nicht vollständig
   abbilden und sind anfällig für Metric Hacking.
-- Harmonie, Rhythmus, Vocals, Mid-/High-Ownership und gelernte
-  Repräsentationen fehlen in Version 1.
+- Phrasenposition, Vocals, Mid-/High-Ownership und gelernte Repräsentationen
+  fehlen weiterhin.
 - Vier Takte und 4/4-Metrum sind zunächst feste Forschungsannahmen.

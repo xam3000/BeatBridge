@@ -31,14 +31,48 @@ Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automa
 - **Kandidatengenerierung** (`src/candidates/`): versionierter Vertrag `CANDIDATE_PROTOCOL.md` und Generator `bar_grid_v1`. Er kombiniert standardmäßig alle nutzbaren Taktgrenzen beider Songs für 2/4 Takte; vollständige Downbeat-Metadaten, Pre-/Post-Roll auf beiden Seiten, kompatible Beatanzahl in allen vier Fenstern und maximal 15 % Tempoabweichung sind harte Filter.
 - **Feature-Ranking** (`src/ranking/`): `feature_baseline_v3` bewertet Drop A, Source-Auslauf, Target-Vorlauf und Drop B getrennt. Je 30 % entfallen auf High Power der Drops und Non-Overlap (Energieabfall nach A, niedrige Transition-Energie, Energieanstieg vor B); Chroma, RMS-Kontinuität, Spektrum und Tempo ergänzen den Score.
 - **Metrik für gerenderte Übergänge** (`src/ranking/rendered_transition.py`): `rendered_transition_baseline_v1` bewertet nach dem Rendering das tatsächliche Audio inklusive Time-Stretch und Crossfade. Energieform und Grenzglätte zählen je 30 %, harmonische Kontinuität und rhythmische Stabilität je 20 %. Score, Teilwerte, Messwerte, Rang und isolierte Fehler stehen additiv im Batch-Manifest.
-- **Differenzierbarer Control-Prototyp** (`src/control/`): `differentiable_control_v2` rendert vier Takte aus zwei komplementären, konstruktiv monotonen Kurven (`mix_position`, `low_end_position`) mit Equal-Power-Gains und festem FIR-Crossover. Ein vollständig differenzierbares Proxy-Objective bewertet Energieform, Grenzen, Kurvenglätte, Monotonie und Clipping. Frei parametrisierte 32-Punkt-Kurven können vor einem neuronalen Netz direkt optimiert werden; der Vertrag steht in `DIFFERENTIABLE_CONTROL_PROTOCOL.md`.
-- **Reale Control-Vergleiche** (`src/evaluation/control_probe.py`): wählt aus einem nachbewerteten Multi-Song-Batch hoch bewertete 4-Takt-Kandidaten ohne Track-Wiederholung, rekonstruiert Source-Postroll und Target-Preroll, optimiert die zwei Control-Kurven und exportiert pro Paar Baseline/Optimiert mit identischem Kontext, gemeinsamer Peak-Absenkung und versioniertem Manifest. Der aktuelle monotone Vergleich liegt unter `output/control_comparisons/batch_20260722_top4_4bar_v2_monotone/`; v1 bleibt als dokumentierter, hörend verworfener Versuch erhalten.
+- **Differenzierbarer Control-Prototyp** (`src/control/`): `differentiable_control_v3` rendert vier Takte aus zwei komplementären, konstruktiv monotonen Kurven (`mix_position`, `low_end_position`) mit Equal-Power-Gains und festem FIR-Crossover. Bei 32 Punkten ist jeder Halbbeat-Schritt konstruktiv kleiner als 0,099644; normalisierte Abweichungs- und Krümmungsterme bestrafen abrupte Übergaben. Frei parametrisierte Kurven können vor einem neuronalen Netz direkt optimiert werden; der Vertrag steht in `DIFFERENTIABLE_CONTROL_PROTOCOL.md`.
+- **Reale Control-Vergleiche** (`src/evaluation/control_probe.py`): wählt aus einem nachbewerteten Multi-Song-Batch hoch bewertete 4-Takt-Kandidaten, rekonstruiert Source-Postroll und Target-Preroll, optimiert die zwei Control-Kurven und exportiert pro Paar Baseline/Optimiert mit identischem Kontext, gemeinsamer Peak-Absenkung und versioniertem Manifest. Der aktuelle blinde v3-Control-Satz mit Rubber Band liegt unter `output/control_studies/blind_v4_control_v3_rubberband_top8_4bar_20260730/`; frühere v1/v2-Versuche bleiben unverändert.
 - **Blinde Control-Hörstudie** (`src/evaluation/blind_control_study.py`, `control_study_ratings.py`, `analyze_control_study.py`): erzeugt A/B-Dateien ohne Methodenlabel, trennt den unveränderlichen Antwortschlüssel vom öffentlichen Manifest, speichert Ratings atomisch und entblindet erst nach vollständiger Bewertung in ein reproduzierbares `study_results.json`. Vertrag: `CONTROL_STUDY_PROTOCOL.md`.
 - **Historische Render-Metrik** (`src/evaluation/backfill_transition_metrics.py`): bewertet vorhandene Multi-Song-Batches ohne Änderung der WAVs oder ursprünglichen Manifeste. Samplegenaue Grenzen werden aus Kandidaten-Beat-Index, Read-only-Analyse-Cache und Tempoanpassung rekonstruiert; atomische `transition_metrics.json`-Sidecars dokumentieren Fortschritt und Ergebnisse.
 - **Songpaar-Kompatibilität** (`src/ranking/song_compatibility.py`): `rank_song_targets()` ordnet Target-Songs pro Source-Song vor der Cutpoint-Generierung nach Harmonie, Tempoanpassungsstärke, Klang, Energie und Rhythmus.
 - **Batch-Rendering** (`src/batch_render.py`): rankt akzeptierte Kandidaten und rendert standardmäßig die Top 5 × ausgewählte Renderer als kurze WAV-Vorschauen (5 s vor, 12 s nach Source-Cutpoint). Exporte werden atomar geschrieben; vorhandene Dateien werden ohne explizites `--overwrite` nicht ersetzt. Gescheiterte Einzelvarianten sowie Generator- und Ranking-Rejections bleiben im Manifest sichtbar. Seit 2026-07-22 übernehmen alle Renderer die Source-/Target-BPM explizit aus dem Kandidatenvertrag und passen Song B konsistent auf Song A an.
 - **Hörbewertung und Visualisierung** (`src/evaluation/ratings.py`, `notebooks/listen_batch.ipynb`): das Notebook listet Varianten in Rangfolge, zeigt für den umgebenden Multi-Song-Batch die Render-Score-Verteilung sowie Cutpoint-gegen-Render-Score und hebt das aktuelle Songpaar hervor. Pro Hörprobe werden die Source- und Target-Waveform an ihren jeweiligen Cue Points bei `t = 0` ausgerichtet untereinander sowie Gesamtscore und vier Render-Metrikkomponenten visualisiert. WAVs werden über `IPython.display.Audio` eingebettet. `rate()` speichert eine 1–5-Bewertung mit Fehler-Tags und Notiz atomar in einer getrennten `ratings.json`; dieselbe Funktionalität ist als CLI verfügbar. Der Startpfad verweist auf ein nachbewertetes reales Songpaar.
 - **Dataset und Ausschlüsse**: 21 Audiodateien liegen im ignorierten Ordner `musik/`; für alle 21 existiert eine gecachte Analyse unter `output/pre_analysis/` (plus ein veralteter zusätzlicher Cache `HELP_LESS`). `config/track_exclusions.json` schließt `14 - STRUGGLING.flac` per Pfad und SHA-256 aus neuen Multi-Batches, Control-Vergleichen und Training aus; historische Artefakte bleiben unverändert. Kuratierte Track-Notizen, Lizenzstatus und eine vollständige reproduzierbare Dataset-Definition fehlen noch.
+
+### Verifiziert am 2026-07-30 (Codex, Control-/Objective-v3 und neuer Hörsatz)
+
+- Control-Protokoll 3 beschränkt die Inkrement-Logits konstruktiv auf
+  `0.6 · tanh(logit)`. Für 32 Kontrollpunkte beträgt die theoretische
+  Obergrenze eines Kurvenschritts **0,0996431**; Endpunkte 0/1 und strenge
+  Monotonie bleiben erhalten.
+- Das Objective bewertet die Abweichung vom gleichmäßigen Inkrement und die
+  Änderung aufeinanderfolgender Inkremente nun skalenunabhängig. Equal Power
+  hat für beide neuen Formterme den Wert null.
+- `output/control_studies/blind_v4_control_v3_rubberband_top8_4bar_20260730/`
+  enthält dieselben acht gerichteten Songpaare wie der bewertete v2-Satz,
+  vollständig neu als **16 Float32-WAVs**, 44,1 kHz Stereo, paarweise gleiche
+  Länge, endliche Samples und ohne Exportfehler.
+- `FALLING → Aversion` und `FALLING → HELP_LESS` wurden über
+  `ffmpeg_librubberband` tempoangepasst. Die sechs BPM-identischen Paare
+  dokumentieren `not_needed`; `STRUGGLING` kommt nicht vor.
+- Der öffentliche Satz enthält keine Methodenabbildung, `ratings.json` steht
+  nach der Hörbewertung auf **8/8**. Erst danach wurde `answer_key.json`
+  geöffnet und `study_results.json` erzeugt. Da dieselben acht früheren
+  Urteile v3 mitmotiviert haben, ist dieser Satz ein kontrollierter
+  Vorher-/Nachher-Vergleich, kein unabhängiger Testsatz.
+- Ergebnis: **8 Gleichstände**, keine Präferenz für Baseline oder Optimiert.
+  Beide Methoden erreichen denselben Gesamtmittelwert **4,45** und identische
+  Kriterienmittel: Sauberkeit 4,25; Energieform 4,50; Low-End 4,625;
+  Rhythmik 4,50; Artefaktfreiheit 4,375. Der Proxy-Loss sank je Paar trotzdem
+  um 2,39–36,43 %, ohne einen erkennbaren Methodenunterschied zu erzeugen.
+- Gemeinsame Fehler beider Methoden: unterbrochene Lyrics, zurückkehrende
+  Source-Melodie, Vocal-Clash und ein schlecht klingendes Target in Paar 5.
+  Dort wurde Aversion per `ffmpeg_librubberband` von 161,499 auf 156,605 BPM
+  verlangsamt (−3,03 % Tempo); beide A/B-Varianten verwenden dieselbe
+  gestretchte Waveform.
+- `.venv\Scripts\python.exe -m pytest -q`: **54 Tests bestanden**; zwei
+  bestehende, nicht blockierende Deprecation-Warnungen aus `audioread`.
 
 ### Verifiziert am 2026-07-30 (Codex, Rubber-Band-Time-Stretch)
 
@@ -69,7 +103,7 @@ Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automa
 ### Verifiziert am 2026-07-29 (Codex, blinder v3-Hörsatz)
 
 - `output/control_studies/blind_v3_top8_4bar_20260729/` enthält **8 unterschiedliche gerichtete Paare / 16 WAVs**, ausschließlich `A.wav`/`B.wav`, 44,1 kHz Stereo, paarweise identische Dauer, endliche Samples und keine Exportfehler.
-- `STRUGGLING` kommt nicht vor; kein Track wird häufiger als zweimal verwendet. Das öffentliche `manifest.json` enthält keine Methodenabbildung. `answer_key.json` liegt separat; `ratings.json` ist mit **0/8** Bewertungen unverändert initialisiert.
+- `STRUGGLING` kommt nicht vor; kein Track wird häufiger als zweimal verwendet. Das öffentliche `manifest.json` enthält keine Methodenabbildung. `answer_key.json` liegt separat; `ratings.json` war zum Exportzeitpunkt mit **0/8** Bewertungen initialisiert und wurde später vollständig ausgefüllt.
 - `.venv\Scripts\python.exe -m pytest -q`: **46 Tests bestanden**; zwei bestehende, nicht blockierende Deprecation-Warnungen aus `audioread`. `.venv\Scripts\python.exe -m pip check`: keine defekten Abhängigkeiten.
 
 ### Verifiziert am 2026-07-29 (Codex, monotone Controls v2)
@@ -156,7 +190,7 @@ Damit ist die technische Grundlage aus Monat 1 weitgehend vorhanden. Das frühe 
 ## Bekannte Bugs / Baustellen
 
 - **Tonhöhe**: `SimpleTempoAdjust` (Resample) verändert die Tonhöhe — als zusätzliche einfache Baseline bewusst behandeln; alle Renderer verwenden den tonhöhenerhaltenden Rubber-Band-`TimeStretch`.
-- **Time-Stretch-Hörvalidierung**: Der technisch ungeeignete Librosa-Phase-Vocoder wurde durch Rubber Band ersetzt. Ein realer blinder A/B-Hörvergleich auf den zuvor auffälligen Songpaaren steht noch aus; technische Backend- und Geometriechecks ersetzen dieses Urteil nicht.
+- **Time-Stretch-Hörvalidierung**: Rubber Band wurde im neuen Hörsatz real verwendet, aber Paar 5 klingt laut Nutzer in beiden Methoden schlecht. Noch offen ist die isolierte Diagnose Originalsegment versus gestretchtes Segment versus musikalisch ungeeignetes Target-Fenster.
 - **Downbeat-Fallback**: Bei fehlenden Taktinformationen wird ein approximatives 4/4-Raster aus den Beat-Positionen (oder BPM) erzeugt. Es hält die Pipeline lauffähig, ist aber keine verlässliche Downbeat-Erkennung und sollte im Hörvergleich geprüft werden.
 - **BPM-Divergenz** (dokumentiert in `Bemerkungen.md`): librosa vs. aufTAKT (HELP_LESS: 161 vs. 157) — Grid-Wahl noch ungeklärt.
 - **Phrasenlänge**: Raster 4 Beats, Phrasen aber meist 8 — relevant für plausible Übergangspositionen (Kandidatengenerierung).
@@ -180,9 +214,11 @@ auf realem Audio validieren.
 
 **Abgeschlossen am 2026-07-30:** acht geblendete v3-Paare vollständig bewertet und erst danach entblindet; v2 liegt nahe an Equal Power, zeigt aber noch keinen konsistenten Vorteil.
 
-1. **Rubber-Band-Time-Stretch blind gegen historische Librosa-Varianten prüfen** — zuvor auffällige Paare und mehrere Tempoabweichungen mit identischen Cutpoints/Controls neu rendern. Erst das menschliche Urteil entscheidet, ob das Upstream-Artefaktproblem ausreichend behoben ist.
-2. **Control-/Objective-v3 gezielt aus dem Hörbefund ableiten** — maximale lokale Steigung beziehungsweise Krümmung der monotonen Kurven begrenzen und Phrasenposition (4/4 versus 8/4), Vocal-Aktivität sowie robuste Artefaktindikatoren als versionierte Erweiterungen untersuchen.
-3. **Direktoptimierung erneut blind validieren** — neue beziehungsweise zurückgehaltene Paare verwenden, damit die acht v3-Urteile nicht zugleich Tuning- und Testsatz sind. Equal Power bleibt die starke Referenz; der Gate ist eine wiederholbare hörbare Verbesserung und nicht nur ein niedrigerer Proxy-Loss.
+**Abgeschlossen am 2026-07-30:** Control-/Objective-v3 begrenzt lokale Kurvensprünge konstruktiv; alle acht Vergleichspaare wurden mit Rendering-Protokoll 5 neu gerendert.
+
+1. **Time-Stretch und Target-Fenster von Paar 5 isolieren** — Original-Targetsegment und Rubber-Band-Variante mit identischem Ausschnitt separat exportieren und hören. So wird unterschieden, ob der schlechte Klang vom Backend, der Tempoänderung oder bereits vom gewählten Aversion-Fenster stammt.
+2. **Phrasen- und Vocal-Kontext als nächste versionierte Erweiterung untersuchen** — unterbrochene Lyrics, zurückkehrende Source-Melodie und Vocal-Clash treten methodenunabhängig auf. Mindestens 4/4-versus-8/4-Position und Vocal-Aktivität müssen deshalb vor beziehungsweise gemeinsam mit der Control-Optimierung berücksichtigt werden.
+3. **Direktoptimierung anschließend auf zurückgehaltenen Paaren validieren** — die bekannten acht Urteile nicht als finalen Testsatz verwenden. Equal Power bleibt die starke Referenz; der Gate ist eine wiederholbare hörbare Verbesserung und nicht nur ein niedrigerer Proxy-Loss.
 4. **Erst nach bestandenem Hör-Gate Featurevertrag und MLP-Baseline bauen** — vier Takte mit 32 Halbbeat-Schritten, benannte erweiterbare Featuregruppen, trackweise Train/Validation/Test-Trennung und zunächst ein kleines Feature→Control-MLP. TCN/BiLSTM erst nach erfolgreicher MLP-Sonde.
 5. **Entwicklungsset kuratieren** — die vorhandenen 21 Tracks als reproduzierbares Set definieren, Varianz und Duplikate prüfen, Track-Notizen ergänzen und Lizenzfrage klären (parallel, eher Handarbeit).
 

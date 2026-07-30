@@ -5,9 +5,12 @@ import torch
 
 from src.control import (
     CONTROL_PROTOCOL_VERSION,
+    DEFAULT_INCREMENT_LOGIT_BOUND,
     DifferentiableTransitionObjective,
+    DifferentiableTransitionObjectiveConfig,
     DifferentiableTwoBandRenderer,
     OptimizableControlCurves,
+    maximum_control_increment,
     optimize_control_curves,
 )
 
@@ -149,3 +152,51 @@ def test_optimizable_curves_are_strictly_monotone_by_construction():
     assert float(low_end_position[-1].detach()) == pytest.approx(1.0)
     assert torch.all(torch.diff(mix_position) > 0.0)
     assert torch.all(torch.diff(low_end_position) > 0.0)
+    maximum_increment = maximum_control_increment(
+        32,
+        DEFAULT_INCREMENT_LOGIT_BOUND,
+    )
+    assert (
+        float(torch.max(torch.diff(mix_position)).detach())
+        <= maximum_increment + 1e-6
+    )
+    assert (
+        float(torch.max(torch.diff(low_end_position)).detach())
+        <= maximum_increment + 1e-6
+    )
+
+
+def test_v3_objective_has_zero_shape_penalties_for_linear_controls():
+    source = torch.stack((_tone(220.0), _tone(330.0)))
+    target = torch.stack((_tone(550.0), _tone(660.0)))
+    control = torch.linspace(0.0, 1.0, 32)
+    renderer = DifferentiableTwoBandRenderer(
+        sample_rate=8_000,
+        lowpass_cutoff_hz=180.0,
+        lowpass_kernel_size=127,
+    )
+    objective = DifferentiableTransitionObjective(
+        DifferentiableTransitionObjectiveConfig(),
+        energy_frames=32,
+    )
+
+    terms = objective(
+        renderer(source, target, control, control),
+        source,
+        target,
+    )
+
+    assert float(terms["control_smoothness"]) == pytest.approx(0.0, abs=1e-10)
+    assert float(terms["control_curvature"]) == pytest.approx(0.0, abs=1e-10)
+
+
+def test_v3_increment_bound_stays_below_one_tenth_for_32_points():
+    curves = OptimizableControlCurves(control_points=32)
+    with torch.no_grad():
+        curves.mix_increment_logits.fill_(-100.0)
+        curves.mix_increment_logits[10] = 100.0
+
+    mix_position, _ = curves()
+
+    assert maximum_control_increment(32) < 0.1
+    assert float(torch.max(torch.diff(mix_position)).detach()) < 0.1

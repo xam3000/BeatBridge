@@ -17,6 +17,7 @@ import torch
 from src.analysis.pre_analysis import PreAnalysis
 from src.control import (
     CONTROL_PROTOCOL_VERSION,
+    DEFAULT_INCREMENT_LOGIT_BOUND,
     DifferentiableTransitionObjective,
     DifferentiableTwoBandRenderer,
     optimize_control_curves,
@@ -27,7 +28,11 @@ from src.dataset import (
     is_track_excluded,
     load_track_exclusions,
 )
-from src.pipeline import BeatBridgePipeline, DEFAULT_SAMPLE_RATE
+from src.pipeline import (
+    BeatBridgePipeline,
+    DEFAULT_SAMPLE_RATE,
+    RENDER_RESULT_FORMAT_VERSION,
+)
 from src.ranking import RenderedTransitionInput, rank_rendered_transitions
 from src.tempo.time_stretch import TimeStretch
 
@@ -149,6 +154,7 @@ def export_control_comparisons(
     optimization_steps=60,
     optimization_learning_rate=0.08,
     optimization_sample_rate=DEFAULT_OPTIMIZATION_SAMPLE_RATE,
+    increment_logit_bound=DEFAULT_INCREMENT_LOGIT_BOUND,
     prefix_seconds=DEFAULT_PREFIX_SECONDS,
     suffix_seconds=DEFAULT_SUFFIX_SECONDS,
     track_exclusions_path=DEFAULT_TRACK_EXCLUSIONS_PATH,
@@ -168,6 +174,8 @@ def export_control_comparisons(
         raise ValueError("optimization_steps must be at least 1")
     if optimization_sample_rate <= 0:
         raise ValueError("optimization_sample_rate must be greater than 0")
+    if not np.isfinite(increment_logit_bound) or increment_logit_bound <= 0:
+        raise ValueError("increment_logit_bound must be a finite value above 0")
     if prefix_seconds < 0 or suffix_seconds < 0:
         raise ValueError("Preview context durations must be greater than or equal to 0")
 
@@ -182,6 +190,7 @@ def export_control_comparisons(
     payload = {
         "format_version": CONTROL_COMPARISON_MANIFEST_FORMAT_VERSION,
         "control_protocol_version": CONTROL_PROTOCOL_VERSION,
+        "rendering_protocol_version": RENDER_RESULT_FORMAT_VERSION,
         "status": "running",
         "created_at_utc": _utc_now(),
         "completed_at_utc": None,
@@ -195,6 +204,7 @@ def export_control_comparisons(
             "optimization_steps": int(optimization_steps),
             "optimization_learning_rate": float(optimization_learning_rate),
             "optimization_sample_rate": int(optimization_sample_rate),
+            "increment_logit_bound": float(increment_logit_bound),
             "render_sample_rate": DEFAULT_SAMPLE_RATE,
             "prefix_seconds": float(prefix_seconds),
             "suffix_seconds": float(suffix_seconds),
@@ -221,6 +231,7 @@ def export_control_comparisons(
                 optimization_steps=optimization_steps,
                 optimization_learning_rate=optimization_learning_rate,
                 optimization_sample_rate=optimization_sample_rate,
+                increment_logit_bound=increment_logit_bound,
                 prefix_seconds=prefix_seconds,
                 suffix_seconds=suffix_seconds,
             )
@@ -265,6 +276,7 @@ def _render_comparison_pair(
     optimization_steps,
     optimization_learning_rate,
     optimization_sample_rate,
+    increment_logit_bound,
     prefix_seconds,
     suffix_seconds,
 ):
@@ -313,6 +325,7 @@ def _render_comparison_pair(
         control_points=control_points,
         steps=optimization_steps,
         learning_rate=optimization_learning_rate,
+        increment_logit_bound=increment_logit_bound,
     )
     with torch.no_grad():
         optimized_proxy_render = proxy_renderer(
@@ -430,6 +443,8 @@ def _render_comparison_pair(
                 - float(optimized_terms["loss"].cpu())
                 / max(float(baseline_terms["loss"].cpu()), 1e-12)
             ),
+            "increment_logit_bound": optimization.increment_logit_bound,
+            "maximum_control_increment": optimization.maximum_control_increment,
             "baseline_components": _tensor_terms_to_float(baseline_terms),
             "optimized_components": _tensor_terms_to_float(optimized_terms),
             "mix_position": [
@@ -462,11 +477,12 @@ def _render_comparison_pair(
 def _extract_aligned_bridge(candidate, analysis):
     transition_beats = int(candidate["transition_length_beats"])
     cutter = EqualPowerFadeCut(fade_beats=transition_beats)
+    tempo_adjuster = TimeStretch()
     pipeline = BeatBridgePipeline(
         candidate["source_track"]["path"],
         candidate["target_track"]["path"],
         analysis,
-        TimeStretch(),
+        tempo_adjuster,
         cutter,
         target_sample_rate=DEFAULT_SAMPLE_RATE,
         bpm1=candidate["source_bpm"],
@@ -513,6 +529,7 @@ def _extract_aligned_bridge(candidate, analysis):
             "target_cut_sample": int(target_cut),
             "transition_samples": int(transition_samples),
             "transition_seconds": float(transition_samples / DEFAULT_SAMPLE_RATE),
+            "tempo_backend": pipeline.tempo_backend,
             "source_audio": source_audio,
             "target_audio": target_audio,
         },
@@ -628,6 +645,15 @@ def build_argument_parser():
         type=int,
         default=DEFAULT_OPTIMIZATION_SAMPLE_RATE,
     )
+    parser.add_argument(
+        "--increment-logit-bound",
+        type=float,
+        default=DEFAULT_INCREMENT_LOGIT_BOUND,
+        help=(
+            "Symmetric tanh bound for v3 increment logits; the default limits "
+            "one of 31 curve increments to less than 0.1."
+        ),
+    )
     parser.add_argument("--prefix-seconds", type=float, default=DEFAULT_PREFIX_SECONDS)
     parser.add_argument("--suffix-seconds", type=float, default=DEFAULT_SUFFIX_SECONDS)
     parser.add_argument(
@@ -650,6 +676,7 @@ def main():
         optimization_steps=args.optimization_steps,
         optimization_learning_rate=args.learning_rate,
         optimization_sample_rate=args.optimization_sample_rate,
+        increment_logit_bound=args.increment_logit_bound,
         prefix_seconds=args.prefix_seconds,
         suffix_seconds=args.suffix_seconds,
         track_exclusions_path=args.track_exclusions,
