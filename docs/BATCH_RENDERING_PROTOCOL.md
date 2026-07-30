@@ -25,13 +25,13 @@ Das Manifest hat `format_version = 1` und enthält:
 | Feld | Bedeutung |
 |---|---|
 | `renderers` | In diesem Lauf angeforderte Renderer |
-| `render_protocol_version` | Semantik der gerenderten Audiodateien; aktuell Version 4 mit Bridge-Crossfade, verpflichtender Tempoanpassung und kurzer Vorschau |
+| `render_protocol_version` | Semantik der gerenderten Audiodateien; aktuell Version 5 mit Bridge-Crossfade, Rubber-Band-Tempoanpassung und kurzer Vorschau |
 | `candidate_generation` | Vollständiges Ergebnis nach `CANDIDATE_PROTOCOL.md`, einschließlich abgelehnter Kandidaten |
 | `candidate_ranking` | Feature-Ränge, Einzelkomponenten, Messwerte und Rankingfehler nach `RANKING_PROTOCOL.md` |
 | `rendered_transition_ranking` | Rangfolge der tatsächlich gerenderten Varianten samt Teilwerten und Fehlern nach `RENDERED_TRANSITION_METRIC_PROTOCOL.md` |
 | `render_selection` | Gerenderte Kandidaten-IDs und optionales `top_k` |
 | `render_preview` | Vorschau-Kontext in Sekunden vor/nach dem Source-Cutpoint |
-| `rendered_variants` | Erfolgreiche Exporte: Kandidaten-ID, Renderer, relativer Dateipfad, Sample-Rate, Sample-Anzahl, Rendergrenzen sowie beide Ranking-Ergebnisse |
+| `rendered_variants` | Erfolgreiche Exporte: Kandidaten-ID, Renderer, relativer Dateipfad, Sample-Rate, Sample-Anzahl, Rendergrenzen, tatsächlich verwendetes `tempo_backend` sowie beide Ranking-Ergebnisse |
 | `failures` | Pro fehlgeschlagener Variante Fehlertyp, Meldung, Kandidaten-ID und Renderer |
 
 `rendered_variants` enthält additiv `candidate_rank`/`candidate_score` für die
@@ -74,3 +74,9 @@ CLI konfigurierbar. Standardmäßig werden nur die fünf bestbewerteten Kandidat
 gerendert; das Manifest enthält weiterhin alle erzeugten Kandidaten und Scores.
 `top_k=None` rendert über die programmatische API alle Kandidaten. Für
 fortlaufende Experimente sollte jeder Lauf einen neuen Ausgabepfad erhalten.
+
+Seit Rendering-Protokoll 5 verwendet die Tempoanpassung zuerst FFmpeg mit
+`librubberband` und fällt bei einem Fehler auf das eigenständige
+`rubberband`-CLI mit R3-Engine zurück. Der tatsächlich genutzte Pfad steht pro
+Variante als `tempo_backend` im Manifest. Historische Manifeste vor Version 5
+besitzen dieses additive Feld nicht.

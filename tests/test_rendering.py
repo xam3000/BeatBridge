@@ -12,6 +12,7 @@ from src.pipeline import (
     RENDER_RESULT_FORMAT_VERSION,
     render_transition,
 )
+from src.tempo.simple_tempo_adjust import SimpleTempoAdjust
 from src.tempo.time_stretch import TimeStretch
 
 
@@ -88,6 +89,7 @@ def test_rendering_baseline_returns_finite_stereo(synthetic_tracks, renderer):
         renderer=renderer,
         fade_beats=2,
         analysis=synthetic_tracks["analysis"],
+        tempo_adjuster=SimpleTempoAdjust(),
     )
 
     assert result.format_version == RENDER_RESULT_FORMAT_VERSION
@@ -110,7 +112,7 @@ def test_rendering_baseline_returns_finite_stereo(synthetic_tracks, renderer):
     ["simple", "fade", "equal_power", "tempo_fade"],
 )
 def test_every_renderer_aligns_target_tempo(synthetic_tracks, renderer):
-    class RecordingTimeStretch(TimeStretch):
+    class RecordingTempoAdjust(SimpleTempoAdjust):
         def __init__(self):
             self.calls = []
 
@@ -124,7 +126,7 @@ def test_every_renderer_aligns_target_tempo(synthetic_tracks, renderer):
                 **kwargs,
             )
 
-    tempo_adjuster = RecordingTimeStretch()
+    tempo_adjuster = RecordingTempoAdjust()
     render_transition(
         synthetic_tracks["song1"],
         synthetic_tracks["song2"],
@@ -169,18 +171,6 @@ def test_bridge_fade_keeps_high_power_sections_outside_the_overlap():
     assert result[600] == pytest.approx(2.0)
 
 
-def test_time_stretch_uses_explicit_target_bpm():
-    audio = np.zeros((2, 10_000), dtype=np.float32)
-    adjusted = TimeStretch().adjust_tempo_to_bpm(
-        audio,
-        sample_rate=44_100,
-        original_bpm=100.0,
-        target_bpm=125.0,
-    )
-
-    assert adjusted.shape == (2, 8_000)
-
-
 def test_render_transition_returns_a_short_preview_by_default(synthetic_tracks):
     result = render_transition(
         synthetic_tracks["song1"],
@@ -190,6 +180,7 @@ def test_render_transition_returns_a_short_preview_by_default(synthetic_tracks):
         renderer="fade",
         fade_beats=2,
         analysis=synthetic_tracks["analysis"],
+        tempo_adjuster=SimpleTempoAdjust(),
         preview_seconds_before=0.5,
         preview_seconds_after=0.75,
     )

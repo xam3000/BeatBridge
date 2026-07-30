@@ -1,0 +1,16 @@
+{
+  "format_version": 1,
+  "tracks": [
+    {
+      "excluded_at": "2026-07-29",
+      "path": "musik\\14 - STRUGGLING.flac",
+      "reason": "Vom Nutzer nach realem Hörvergleich ausgeschlossen: 172,266 BPM wirken für die übrigen Vergleichstracks musikalisch zu schnell; das Problem liegt nicht an der Mixing-Metrik.",
+      "scopes": [
+        "multi_batch",
+        "control_probe",
+        "training"
+      ],
+      "sha256": "d08612b22d07bda20b87c38a697968105793ae5f167a1c1c3cff9a1d4c5f5c48"
+    }
+  ]
+}

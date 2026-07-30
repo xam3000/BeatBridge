@@ -13,6 +13,9 @@ Dieser Ordner ist das dauerhafte Projektgedächtnis. Verifizierte Erkenntnisse, 
 | [`CANDIDATE_PROTOCOL.md`](./CANDIDATE_PROTOCOL.md) | Versionierter Vertrag für automatische Übergangskandidaten | Nur additiv ändern; inkompatible Änderungen benötigen eine neue Version |
 | [`BATCH_RENDERING_PROTOCOL.md`](./BATCH_RENDERING_PROTOCOL.md) | Versionierter Vertrag für Batch-Exporte und Manifeste | Nur additiv ändern; inkompatible Änderungen benötigen eine neue Version |
 | [`RENDERED_TRANSITION_METRIC_PROTOCOL.md`](./RENDERED_TRANSITION_METRIC_PROTOCOL.md) | Versionierte Baseline-Metrik für bereits gerenderte Übergänge | Nur additiv ändern; inkompatible Änderungen benötigen eine neue Version |
+| [`DIFFERENTIABLE_CONTROL_PROTOCOL.md`](./DIFFERENTIABLE_CONTROL_PROTOCOL.md) | Versionierter Vertrag für lernbare Mixing-Controls, differenzierbaren Renderer und Proxy-Objective | Nur additiv ändern; inkompatible Änderungen benötigen eine neue Version |
+| [`CONTROL_STUDY_PROTOCOL.md`](./CONTROL_STUDY_PROTOCOL.md) | Versionierter Vertrag für blinde A/B-Control-Vergleiche, Antwortschlüssel und Ratings-Sidecar | Nur additiv ändern; inkompatible Änderungen benötigen eine neue Version |
 | [`Bemerkungen.md`](./Bemerkungen.md) | Laufende Beobachtungen, Entscheidungen und gelernte Lektionen | Neue Einträge mit Datum und Begründung ergänzen; bestehende Einträge nicht löschen |
+| [`../config/track_exclusions.json`](../config/track_exclusions.json) | Versionierte, maschinell angewendete Ausschlüsse aus neuen Batches, Vergleichen und Trainingsdaten | Nur mit Track-Hash, Datum und begründetem Nutzer-/Datenurteil ergänzen |
 
 Projektweite Arbeitsregeln stehen in [`../AGENTS.md`](../AGENTS.md). Die kompakte Bedienungs- und Projektübersicht bleibt in [`../README.md`](../README.md).

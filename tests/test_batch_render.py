@@ -8,6 +8,7 @@ import soundfile as sf
 from src.batch_render import render_candidate_batch
 from src.candidates import CandidateGenerationConfig, CandidateGenerationResult
 from src.pipeline import generate_transition_candidates
+from src.tempo.simple_tempo_adjust import SimpleTempoAdjust
 
 
 class StubAnalysis:
@@ -62,7 +63,7 @@ def test_batch_render_exports_wavs_and_a_traceable_manifest(batch_inputs):
 
     manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
     assert manifest["format_version"] == 1
-    assert manifest["render_protocol_version"] == 4
+    assert manifest["render_protocol_version"] == 5
     assert manifest["candidate_generation"]["candidates"][0]["candidate_id"] == candidates.candidates[0].candidate_id
     assert manifest["candidate_ranking"]["ranker"] == "feature_baseline_v3"
     assert manifest["candidate_ranking"]["scores"][0]["rank"] == 1
@@ -76,6 +77,10 @@ def test_batch_render_exports_wavs_and_a_traceable_manifest(batch_inputs):
     assert all(0.0 <= item["transition_score"] <= 1.0 for item in manifest["rendered_variants"])
     assert all(
         item["transition_end_sample"] >= item["transition_start_sample"]
+        for item in manifest["rendered_variants"]
+    )
+    assert all(
+        item["tempo_backend"] == "not_needed"
         for item in manifest["rendered_variants"]
     )
     assert manifest["render_preview"] == {
@@ -105,6 +110,7 @@ def test_batch_passes_candidate_bpms_to_every_renderer(batch_inputs, monkeypatch
 
     def record_render_transition(*args, **kwargs):
         recorded_bpms.append((kwargs["source_bpm"], kwargs["target_bpm"]))
+        kwargs["tempo_adjuster"] = SimpleTempoAdjust()
         return original_render_transition(*args, **kwargs)
 
     monkeypatch.setattr(batch_render, "render_transition", record_render_transition)

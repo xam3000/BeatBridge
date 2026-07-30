@@ -10,6 +10,11 @@ import uuid
 
 from src.analysis.pre_analysis import PreAnalysis
 from src.batch_render import DEFAULT_RENDERERS, generate_and_render_batch
+from src.dataset import (
+    DEFAULT_TRACK_EXCLUSIONS_PATH,
+    filter_excluded_tracks,
+    load_track_exclusions,
+)
 from src.ranking.song_compatibility import rank_song_targets
 
 
@@ -25,6 +30,7 @@ def generate_multi_song_batch(
     renderers=("equal_power",),
     target_sample_rate=44_100,
     analysis_location=None,
+    track_exclusions_path=DEFAULT_TRACK_EXCLUSIONS_PATH,
 ):
     """Rank targets per source, then render the best transition candidates.
 
@@ -32,7 +38,13 @@ def generate_multi_song_batch(
     The parent manifest records the song-level selection and keeps a stable
     index of all pair-level results.
     """
-    song_paths = _expand_song_paths(songs)
+    expanded_song_paths = _expand_song_paths(songs)
+    track_exclusions = load_track_exclusions(track_exclusions_path)
+    song_paths, excluded_tracks = filter_excluded_tracks(
+        expanded_song_paths,
+        scope="multi_batch",
+        exclusions=track_exclusions,
+    )
     _validate_request(song_paths, top_targets, top_transitions, renderers)
 
     output_directory = Path(output_directory)
@@ -49,6 +61,8 @@ def generate_multi_song_batch(
     manifest = {
         "format_version": MULTI_BATCH_MANIFEST_FORMAT_VERSION,
         "songs": list(song_paths),
+        "excluded_tracks": list(excluded_tracks),
+        "track_exclusions_path": str(track_exclusions_path),
         "top_targets_per_source": int(top_targets),
         "top_transitions_per_pair": int(top_transitions),
         "renderers": list(renderers),
@@ -212,6 +226,10 @@ def build_argument_parser():
     )
     parser.add_argument("--target-sample-rate", type=int, default=44_100)
     parser.add_argument("--analysis-location")
+    parser.add_argument(
+        "--track-exclusions",
+        default=str(DEFAULT_TRACK_EXCLUSIONS_PATH),
+    )
     return parser
 
 
@@ -225,6 +243,7 @@ def main():
         renderers=tuple(args.renderers),
         target_sample_rate=args.target_sample_rate,
         analysis_location=args.analysis_location,
+        track_exclusions_path=args.track_exclusions,
     )
     print(manifest_path)
     return 0

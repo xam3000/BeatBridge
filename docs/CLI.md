@@ -13,13 +13,27 @@ Alle Befehle werden in PowerShell aus dem Projektordner `BeatBridge` ausgeführt
    ```
 
 2. `aufTAKTCl.exe` muss im Projekt-Root liegen. Das ist im aktuellen Repository bereits der Fall.
-3. Für MP3-, FLAC- und andere Nicht-WAV-Eingaben muss `ffmpeg` über `PATH` aufrufbar sein:
+3. Für Tempoanpassung sowie MP3-, FLAC- und andere Nicht-WAV-Eingaben muss
+   `ffmpeg` über `PATH` aufrufbar und mit `librubberband` kompiliert sein:
 
    ```powershell
    ffmpeg -version
+   ffmpeg -hide_banner -filters | Select-String rubberband
    ```
 
-4. CLI-Hilfe anzeigen:
+   Die zweite Ausgabe muss den Audiofilter `rubberband` enthalten.
+
+4. Optional kann zusätzlich das eigenständige Rubber-Band-CLI installiert
+   werden. BeatBridge nutzt es automatisch als Fallback, wenn FFmpeg fehlt,
+   den Filter nicht enthält oder die Verarbeitung fehlschlägt:
+
+   ```powershell
+   rubberband --version
+   ```
+
+   Wenn der FFmpeg-Filter funktioniert, ist das separate CLI nicht erforderlich.
+
+5. CLI-Hilfe anzeigen:
 
    ```powershell
    .venv\Scripts\python.exe src\pipeline.py --help
@@ -93,7 +107,26 @@ Die Werte müssen nicht exakt auf einem Beat liegen. BeatBridge sucht den Downbe
 
 ### Tempoangleichung
 
-Alle Renderer passen Song 2 zunächst tonhöhenerhaltend an das BPM von Song 1 an. `tempo_fade` bleibt aus Kompatibilitätsgründen verfügbar, entspricht aber dem linearen `fade`-Renderer.
+Alle Renderer passen Song 2 zunächst tonhöhenerhaltend an das BPM von Song 1
+an. BeatBridge verwendet dafür zuerst FFmpegs `rubberband`-Filter mit gemeinsam
+verarbeitetem Stereo (`channels=together`). Falls dieser Schritt nicht
+verfügbar ist oder fehlschlägt, wird automatisch das eigenständige
+`rubberband`-CLI mit R3-Engine (`-3`) verwendet. Temporäre Backend-WAVs sind
+32-Bit-Float, damit die Tempoanpassung keine zusätzliche PCM16-Quantisierung
+verursacht.
+
+Im Batch-Manifest zeigt `rendered_variants[].tempo_backend` den tatsächlich
+verwendeten Pfad:
+
+- `ffmpeg_librubberband`
+- `rubberband_cli_r3`
+- `not_needed` bei praktisch identischem Tempo
+
+Schlagen beide Rubber-Band-Wege fehl, bricht die jeweilige Variante mit einer
+Fehlermeldung ab, die beide Ursachen enthält. Es gibt bewusst keinen stillen
+Fallback auf den früheren Librosa-Phase-Vocoder. `tempo_fade` bleibt aus
+Kompatibilitätsgründen verfügbar, entspricht aber dem linearen
+`fade`-Renderer.
 
 ```powershell
 .venv\Scripts\python.exe src\pipeline.py "musik\05 - HELP_LESS.flac" "musik\07 - BREATH_LESS.flac" 2646000 1323000 tempo_fade --fade-beats 8 -o "output\help_to_breath_tempo.wav"
@@ -158,7 +191,11 @@ es auf den Cutpoint-Rang zurück. Eine Batch-Übersicht visualisiert die
 Render-Score-Verteilung und den Vergleich von Cutpoint- zu Render-Score; bei
 einem Paar aus einem nachbewerteten Multi-Song-Batch bezieht sie alle dortigen
 Varianten ein und hebt das aktuelle Paar hervor. Für
-jede gewählte WAV-Datei erscheinen die vier Metrikkomponenten samt Gesamtscore
+jede gewählte WAV-Datei richtet `play(index)` außerdem die Source- und
+Target-Waveform an ihren jeweiligen Cue Points bei `t = 0` aus und zeigt sie
+untereinander. Das Zeitfenster kann separat mit
+`plot_cue_points(index, seconds_before=..., seconds_after=...)` angepasst
+werden. Anschließend erscheinen die vier Metrikkomponenten samt Gesamtscore
 direkt vor dem eingebetteten Audio-Player.
 `rate(index, 1_bis_5, issues=(...), notes="...")`
 speichert Bewertungen atomar als `ratings.json` im Batch-Ordner;
@@ -203,6 +240,75 @@ historische Manifeste zu verändern:
 Je Paar und im Wurzelordner entsteht ein separates
 `transition_metrics.json`. Das Notebook erkennt diese Sidecars automatisch.
 
+## Differenzierbare Controls auf realen Batch-Beispielen vergleichen
+
+Der folgende Befehl wählt vier unterschiedliche 4-Takt-Paare mit hohen
+Render-Scores aus dem Multi-Song-Batch vom 22.07 aus und exportiert pro Paar
+eine feste Equal-Power- sowie eine direkt optimierte Variante:
+
+```powershell
+.venv\Scripts\python.exe -m src.evaluation.control_probe `
+  output\batches\all_songs_top3_targets_top3_transitions_20260722 `
+  output\control_comparisons\batch_20260722_top4_4bar_v2_monotone `
+  --pair-count 4 `
+  --transition-bars 4 `
+  --optimization-steps 60
+```
+
+Der Zielordner muss neu sein. Bestehende Batch-WAVs und Manifeste werden nur
+gelesen. Jeder Paarordner enthält:
+
+```text
+01_baseline_equal_power.wav
+02_optimized_proxy.wav
+```
+
+`manifest.json` dokumentiert Auswahl, Cutpoints, Controls, Proxy-Loss,
+historische Render-Metrik und technische WAV-Daten. Beide WAVs eines Paars
+haben identischen Kontext und verwenden dieselbe Peak-Absenkung.
+
+Tracks aus `config/track_exclusions.json` werden bei neuen Control-Vergleichen
+und Multi-Song-Batches standardmäßig übersprungen und im neuen Batch-Manifest
+als Ausschluss dokumentiert. Aktuell betrifft das `14 - STRUGGLING.flac`,
+dessen Tempo im realen Hörvergleich nicht zum übrigen Vergleichsset passte.
+Historische Batches werden dadurch nicht verändert.
+
+## Blinden A/B-Hörsatz erzeugen und bewerten
+
+```powershell
+.venv\Scripts\python.exe -m src.evaluation.blind_control_study `
+  output\batches\all_songs_top3_targets_top3_transitions_20260722 `
+  output\control_studies\blind_v3_top8_4bar_20260729 `
+  --pair-count 8 `
+  --transition-bars 4 `
+  --optimization-steps 60 `
+  --max-track-uses 2 `
+  --blind-seed 20260729
+```
+
+Jeder Paarordner enthält nur `A.wav` und `B.wav`. `manifest.json` verrät die
+Zuordnung nicht. `answer_key.json` darf erst nach der Bewertung geöffnet
+werden. Die vorbereitete `ratings.json` speichert pro Variante fünf Kriterien
+von 1 bis 5, A/B/Tie-Präferenz, Fehler-Tags und Notizen.
+
+Aktuellen Bewertungsstand anzeigen:
+
+```powershell
+.venv\Scripts\python.exe -m src.evaluation.control_study_ratings show `
+  output\control_studies\blind_v3_top8_4bar_20260729
+```
+
+Erst nach `status = completed` den Antwortschlüssel methodisch zuordnen und
+`study_results.json` erzeugen:
+
+```powershell
+.venv\Scripts\python.exe -m src.evaluation.analyze_control_study `
+  output\control_studies\blind_v3_top8_4bar_20260729
+```
+
+Der versionierte Studienvertrag steht in
+[`CONTROL_STUDY_PROTOCOL.md`](./CONTROL_STUDY_PROTOCOL.md).
+
 ## Analyse-Cache und Ausgaben
 
 Beim ersten Lauf analysiert BeatBridge BPM, Beats und Taktpositionen. Ergebnisse werden anhand des Datei-Hashes zwischengespeichert:
@@ -222,6 +328,20 @@ output/pre_analysis/05 - HELP_LESS/01_missing_beats.txt
 ### `ffmpeg` wurde nicht gefunden
 
 Nicht-WAV-Dateien werden für aufTAKT temporär nach WAV konvertiert. Prüfen, ob `ffmpeg -version` in derselben PowerShell funktioniert.
+
+### Kein Rubber-Band-Backend war erfolgreich
+
+Die Meldung `[Time stretch] No Rubber Band backend succeeded` enthält getrennte
+Ursachen für FFmpeg und das eigenständige CLI. Prüfen Sie zuerst:
+
+```powershell
+ffmpeg -hide_banner -filters | Select-String rubberband
+```
+
+Falls kein `rubberband`-Filter erscheint, muss ein FFmpeg-Build mit
+`--enable-librubberband` verwendet oder alternativ das eigenständige
+`rubberband`-CLI installiert werden. Mit `rubberband --version` lässt sich der
+Fallback prüfen.
 
 ### Downbeat-Metadaten fehlen
 

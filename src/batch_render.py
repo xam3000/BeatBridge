@@ -44,6 +44,7 @@ class RenderedVariant:
     sample_count: int
     transition_start_sample: int
     transition_end_sample: int
+    tempo_backend: str
     candidate_rank: int | None
     candidate_score: float | None
     transition_rank: int | None = None
@@ -58,6 +59,7 @@ class RenderedVariant:
             "sample_count": self.sample_count,
             "transition_start_sample": self.transition_start_sample,
             "transition_end_sample": self.transition_end_sample,
+            "tempo_backend": self.tempo_backend,
             "candidate_rank": self.candidate_rank,
             "candidate_score": self.candidate_score,
             "transition_rank": self.transition_rank,
@@ -194,6 +196,7 @@ def render_candidate_batch(
                         sample_count=int(result.audio.shape[-1]),
                         transition_start_sample=result.transition_start_sample,
                         transition_end_sample=result.transition_end_sample,
+                        tempo_backend=result.tempo_backend,
                         candidate_rank=(
                             None if candidate_score is None else candidate_score.rank
                         ),

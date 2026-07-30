@@ -2,6 +2,16 @@
 
 _Quelle: frühere Ausarbeitung (ChatGPT-Diskussion), ins Projekt übernommen am 2026-07-17. Dies ist der maßgebliche Kontext für Ziel, Scope und Zeitplanung der Masterarbeit._
 
+> **Scope-Präzisierung vom 2026-07-29:** Wissenschaftlicher Kern ist das
+> selbstüberwachte Lernen zeitabhängiger Mixing-Kurven ohne
+> Ground-Truth-Kontrollkurven. Ein differenzierbarer Renderer wendet die
+> vorhergesagten Controls auf vier Takte zwischen einem nutzergegebenen
+> Drop-Ende A und Drop-Anfang B an; eine eingefrorene Übergangsmetrik liefert
+> das Lernsignal. Compatibility- und Render-Metriken bleiben notwendige
+> Baselines und Hilfskomponenten, sind aber nicht mehr der alleinige
+> Hauptbeitrag. Diese Präzisierung ersetzt entgegenstehende Priorisierungen in
+> der früheren Ausarbeitung.
+
 ## 1. Ausgangslage und Motivation
 
 Ziel der Masterarbeit ist ein System zur KI-gestützten Erstellung musikalischer Übergänge für **Tanz-Mashups**. Bei Tanzperformances werden häufig ausgewählte Abschnitte verschiedener Songs kombiniert (Intros/Outros, Build-ups/Drops, Breaks, Refrains, choreografisch relevante Abschnitte).
@@ -16,7 +26,13 @@ Im Mittelpunkt: ob sich übergangsrelevantes Wissen **ohne explizite Annotatione
 
 ## 3. Geplanter wissenschaftlicher Beitrag
 
-Schwerpunkt: eine **Übergangsmetrik bzw. ein Compatibility-Modell**. Es erhält zwei Songabschnitte / konkrete Übergangspunkte und bewertet die musikalische Passung. Klassische MIR-Merkmale und gelernte Audio-Repräsentationen werden verglichen/kombiniert.
+Schwerpunkt: ein **selbstüberwachtes Control-Modell für Mixing-Kurven**. Es
+erhält beat-synchrone Merkmale zweier ausgerichteter Songfenster und sagt
+zeitabhängige, komplementäre Mixing- und Frequenzübergaben voraus. Ein
+separater differenzierbarer Renderer erzeugt daraus Audio; eine eingefrorene
+Übergangsmetrik dient ohne annotierte Kontrollkurven als Proxy-Loss.
+Compatibility- und Render-Metriken bewerten weiterhin Songabschnitte,
+Kandidaten und Ergebnisse und bilden Baselines für das gelernte System.
 
 Mögliche Kriterien: rhythmische Kompatibilität, Tempo-/Beat-Kompatibilität, Takt-/Phrasenstruktur, Energieverlauf, Lautheit, spektrale/klangliche Ähnlichkeit, harmonische Verträglichkeit, Strukturtypen (Build-up/Drop/Outro), Vocal-Überlagerungen, benötigte Stärke von Time-Stretching/Pitch-Anpassung.
 

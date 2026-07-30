@@ -29,7 +29,7 @@ MUSIK_FOLDER = PROJECT_ROOT / "musik"
 SUPPORTED_AUDIO_EXTENSIONS = {".mp3", ".wav", ".flac", ".ogg", ".m4a"}
 DEFAULT_SAMPLE_RATE = 44_100
 DEFAULT_CHANNELS = 2
-RENDER_RESULT_FORMAT_VERSION = 4
+RENDER_RESULT_FORMAT_VERSION = 5
 DEFAULT_PREVIEW_SECONDS_BEFORE = 5.0
 DEFAULT_PREVIEW_SECONDS_AFTER = 12.0
 
@@ -48,6 +48,7 @@ class RenderResult:
     audio: np.ndarray
     sample_rate: int
     renderer: str
+    tempo_backend: str = "not_needed"
     transition_start_sample: int = 0
     transition_end_sample: int = 0
     format_version: int = RENDER_RESULT_FORMAT_VERSION
@@ -82,6 +83,7 @@ class BeatBridgePipeline:
         self.target_channels = int(target_channels)
         self.bpm_override1 = None if bpm1 is None else float(bpm1)
         self.bpm_override2 = None if bpm2 is None else float(bpm2)
+        self.tempo_backend = "not_needed"
 
         self.load_songs()
         self.run_analysis()
@@ -211,6 +213,7 @@ class BeatBridgePipeline:
             self.adjusted_song2 = self.song2
             self.adjusted_sample_scale2 = 1.0
             self.adjusted_beat_frames2 = self.beat_frames2
+            self.tempo_backend = "not_needed"
             return self.adjusted_song1, self.adjusted_song2
 
         self.adjusted_song2 = self.tempo_adjuster.adjust_tempo_to_bpm(
@@ -218,6 +221,10 @@ class BeatBridgePipeline:
             self.target_sample_rate,
             self.bpm2,
             self.bpm1,
+        )
+        self.tempo_backend = (
+            getattr(self.tempo_adjuster, "last_backend", None)
+            or type(self.tempo_adjuster).__name__
         )
         self.adjusted_sample_scale2 = 1.0 / tempo_factor
         self.adjusted_beat_frames2 = self._scale_beat_frames(
@@ -336,6 +343,7 @@ def render_transition(
         audio=audio,
         sample_rate=pipeline.target_sample_rate,
         renderer=renderer,
+        tempo_backend=pipeline.tempo_backend,
         transition_start_sample=transition_start_sample - preview_start,
         transition_end_sample=transition_end_sample - preview_start,
     )

@@ -1,6 +1,6 @@
 # Rendering-Protokoll
 
-_Vertragsversion: 4, eingeführt am 2026-07-22. Version 3 wurde am 2026-07-22 eingeführt; Version 2 am 2026-07-21; Version 1 am 2026-07-17._
+_Vertragsversion: 5, eingeführt am 2026-07-30. Version 4 und 3 wurden am 2026-07-22 eingeführt; Version 2 am 2026-07-21; Version 1 am 2026-07-17._
 
 Dieses Dokument beschreibt die stabile Grenze der programmatisch aufrufbaren Rendering-Pipeline. Änderungen an Version 1 erfolgen nur additiv; inkompatible Änderungen benötigen eine neue `format_version`.
 
@@ -22,10 +22,11 @@ result = render_transition(
 
 | Feld | Bedeutung |
 |---|---|
-| `format_version` | Aktuell `4` |
+| `format_version` | Aktuell `5` |
 | `audio` | NumPy-Array in der Form `(channels, samples)` |
 | `sample_rate` | Sample-Rate des Ergebnis-Audios |
 | `renderer` | Verwendete Rendering-Baseline |
+| `tempo_backend` | Tatsächlich verwendeter Tempo-Pfad: `ffmpeg_librubberband`, `rubberband_cli_r3`, `not_needed` oder bei einem explizit injizierten Fremd-Backend dessen Klassenname |
 | `transition_start_sample` | Beginn der tatsächlichen Transition relativ zum zurückgegebenen Audio |
 | `transition_end_sample` | Ende der tatsächlichen Transition relativ zum zurückgegebenen Audio; beim Hard Cut identisch zum Beginn |
 
@@ -37,6 +38,28 @@ result = render_transition(
 - Cutpoints sind Sample-Positionen auf dem normalisierten Ziel-Sample-Raster, bevor Song B für jeden Renderer tonhöhenerhaltend auf das BPM von Song A angepasst wird. Cutpoint und Beat-Raster von Song B werden dabei mit skaliert.
 - Originaldateien werden ausschließlich gelesen und nicht verändert.
 - Renderer geben standardmäßig eine Vorschau mit fünf Sekunden vor und zwölf Sekunden nach dem ausgerichteten Source-Cutpoint zurück. Damit enthalten Batch-Dateien den Übergang samt Kontext statt vollständiger Songs. Die API akzeptiert `preview_seconds_before=None` und `preview_seconds_after=None` für einen vollständigen Render.
+
+## Tempo-Backend ab Version 5
+
+Song B wird tonhöhenerhaltend mit Rubber Band auf das BPM von Song A
+angepasst. Die Backend-Reihenfolge ist fest:
+
+1. FFmpeg mit einkompiliertem `rubberband`-Filter,
+2. bei fehlendem Programm, fehlendem Filter oder Verarbeitungsfehler das
+   eigenständige `rubberband`-CLI mit der hochwertigen R3-Engine (`-3`),
+3. Fehler mit beiden Schrittursachen, wenn kein Backend erfolgreich ist.
+
+FFmpeg verarbeitet Stereo gemeinsam (`channels=together`). Ein- und Ausgabe
+der externen Backend-Grenze sind 32-Bit-Float-WAVs; erst der spätere
+Dateiexport bestimmt das endgültige WAV-Subtype. Die Pipeline passt das
+Backend-Ergebnis deterministisch an `round(input_samples / tempo_factor)` an,
+damit Cutpoints und das skalierte Beat-Raster auf derselben Sample-Geometrie
+bleiben. Bei praktisch identischem Tempo startet kein externer Prozess und
+`tempo_backend` ist `not_needed`.
+
+Version 4 und ältere Batches nutzten den vereinfachten
+`librosa.effects.time_stretch`-Phase-Vocoder. Historische WAVs und Manifeste
+bleiben unverändert.
 
 ## Renderer-Namen
 

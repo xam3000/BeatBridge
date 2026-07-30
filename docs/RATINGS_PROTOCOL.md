@@ -25,10 +25,17 @@ Jeder Eintrag enthält `candidate_id`, `renderer`, `output_file`, `overall`, `is
 `notebooks/listen_batch.ipynb` listet Varianten in Feature-Rangfolge und stellt bereit:
 
 ```python
+plot_cue_points(0, seconds_before=8, seconds_after=8)
 play(0)
 rate(0, 2, issues=("phrasing", "vocals"), notes="Einstieg wirkt zu früh.")
 show_ratings()
 ```
+
+`plot_cue_points(...)` lädt Source- und Target-Audio um die im Kandidaten
+gespeicherten Cue Points, richtet beide Grenzen auf der gemeinsamen relativen
+Zeitachse bei `t = 0` aus und zeichnet die Waveforms untereinander.
+`play(index)` zeigt diese Cue-Point-Ansicht automatisch vor Metrikkomponenten
+und Audio-Player an.
 
 ## CLI
 
