@@ -334,6 +334,57 @@ Nach vollständiger Bewertung den neuen Satz auswerten:
   output\control_studies\blind_v4_control_v3_rubberband_top8_4bar_20260730
 ```
 
+## Featurevertrag anzeigen
+
+Das aktive maschinenlesbare Schema für das spätere Feature→Control-Modell
+anzeigen:
+
+```powershell
+.venv\Scripts\python.exe -m src.features
+```
+
+Feature-Protokoll 1 definiert pro Track `(32, 54)` sowie 16 globale Features.
+Der vollständige Vertrag steht in
+[`FEATURE_PROTOCOL.md`](./FEATURE_PROTOCOL.md).
+
+Deterministische Volltrack-Features berechnen oder aus dem Hash-Cache laden:
+
+```powershell
+.venv\Scripts\python.exe -m src.features cache-track `
+  "musik\04 - GHOST.flac"
+```
+
+Der erste Aufruf schreibt `manifest.json` und `track_features.npz` unter
+`output/feature_cache/`. Weitere Aufrufe mit identischem Audio, Beat-Grid,
+Sample-Rate, Zieltempo und Extractorvertrag liefern `cache_hit: true`.
+
+Standardmäßig wird dabei `htdemucs` für Vocal-Features verwendet. Der erste
+Lauf lädt die offiziellen Gewichte und berechnet einen wiederverwendbaren
+Vocal-Stem; spätere Cue Points, Songpaare und Zieltempi desselben Songs nutzen
+dieses Stem-Artefakt erneut. Für schnelle technische Tests ohne Modell:
+
+```powershell
+.venv\Scripts\python.exe -m src.features cache-track `
+  "musik\04 - GHOST.flac" `
+  --vocal-backend disabled
+```
+
+Modellreferenz, BibTeX und die verifizierte Gewichtsrevision stehen in
+[`PRETRAINED_MODELS.md`](./PRETRAINED_MODELS.md) und
+[`REFERENCES.bib`](./REFERENCES.bib).
+
+Eine für ein bestimmtes Zieltempo ausgerichtete Trackvariante separat cachen:
+
+```powershell
+.venv\Scripts\python.exe -m src.features cache-track `
+  "musik\Aversion - Activation [Explicit].flac" `
+  --target-bpm 156.60511363636363
+```
+
+Der Vocal-Extractor ist implementiert. Phrasen-Extractor, globale
+Paarfeatures und Datasetexport fehlen noch; fehlende Phrasenwerte werden mit
+`phrase_valid = 0` als nicht verfügbar markiert.
+
 ## Analyse-Cache und Ausgaben
 
 Beim ersten Lauf analysiert BeatBridge BPM, Beats und Taktpositionen. Ergebnisse werden anhand des Datei-Hashes zwischengespeichert:

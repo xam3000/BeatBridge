@@ -12,6 +12,21 @@ _Quelle: frühere Ausarbeitung (ChatGPT-Diskussion), ins Projekt übernommen am 
 > Hauptbeitrag. Diese Präzisierung ersetzt entgegenstehende Priorisierungen in
 > der früheren Ausarbeitung.
 
+> **Feature-Präzisierung vom 2026-07-30:** Feature-Protokoll 1 verwendet pro
+> Track 32 Halbbeat-Schritte über die vier gerenderten Takte, 54 exakt benannte
+> Kanäle und 16 globale Merkmale. Ein acht Takte breiter Analysekontext um die
+> Cue Points liefert insbesondere 8-Takt-Phrasen- und Vocal-Phrasenmerkmale.
+> Die vollständige Definition und Missingness-Regeln stehen in
+> `FEATURE_PROTOCOL.md`.
+
+> **Modellprovenienz vom 2026-07-30:** Vortrainierte Analysemodelle sind
+> zulässig, sofern Paper, Software-/Modellversion, konkrete Gewichtsrevision
+> und Gewichts-Hash gespeichert werden. Der aktive Vocal-Pfad verwendet
+> `htdemucs`; Zitiernachweis und BibTeX stehen in `PRETRAINED_MODELS.md` und
+> `REFERENCES.bib`. Der wissenschaftliche Eigenbeitrag bleibt das
+> selbstüberwachte Lernen der Mixing-Kurven, nicht das erneute Trainieren einer
+> Vocal-Separation.
+
 ## 1. Ausgangslage und Motivation
 
 Ziel der Masterarbeit ist ein System zur KI-gestützten Erstellung musikalischer Übergänge für **Tanz-Mashups**. Bei Tanzperformances werden häufig ausgewählte Abschnitte verschiedener Songs kombiniert (Intros/Outros, Build-ups/Drops, Breaks, Refrains, choreografisch relevante Abschnitte).
