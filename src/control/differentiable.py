@@ -9,8 +9,11 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+from src.features.contract import feature_index
+
 
 CONTROL_PROTOCOL_VERSION = 3
+OBJECTIVE_VERSION = 4
 CONTROL_NAMES = ("mix_position", "low_end_position")
 DEFAULT_INCREMENT_LOGIT_BOUND = 0.6
 
@@ -31,7 +34,7 @@ class DifferentiableRenderResult:
 
 @dataclass(frozen=True)
 class DifferentiableTransitionObjectiveConfig:
-    """Weights and tolerances for the first differentiable training probe."""
+    """Weights and tolerances for the differentiable training objective."""
 
     energy_shape_weight: float = 1.0
     boundary_weight: float = 0.5
@@ -39,6 +42,9 @@ class DifferentiableTransitionObjectiveConfig:
     control_curvature_weight: float = 0.05
     monotonicity_weight: float = 0.1
     clipping_weight: float = 2.0
+    vocal_overlap_weight: float = 1.0
+    vocal_boundary_weight: float = 0.30
+    transient_artifact_weight: float = 0.08
     valley_depth_db: float = 6.0
     energy_tolerance_db: float = 12.0
     boundary_tolerance_db: float = 6.0
@@ -52,6 +58,9 @@ class DifferentiableTransitionObjectiveConfig:
             self.control_curvature_weight,
             self.monotonicity_weight,
             self.clipping_weight,
+            self.vocal_overlap_weight,
+            self.vocal_boundary_weight,
+            self.transient_artifact_weight,
         )
         if any(weight < 0 for weight in weights):
             raise ValueError("Objective weights must be greater than or equal to 0")
@@ -193,6 +202,8 @@ class DifferentiableTransitionObjective(nn.Module):
         render_result: DifferentiableRenderResult,
         source_audio: torch.Tensor,
         target_audio: torch.Tensor,
+        features_a: torch.Tensor | None = None,
+        features_b: torch.Tensor | None = None,
     ) -> dict[str, torch.Tensor]:
         rendered, _ = _normalise_audio(render_result.audio, "render_result.audio")
         source, _ = _normalise_audio(source_audio, "source_audio")
@@ -250,6 +261,12 @@ class DifferentiableTransitionObjective(nn.Module):
         )
         monotonicity = torch.mean(F.relu(-mix_delta) ** 2 + F.relu(-low_delta) ** 2)
         clipping = torch.mean(F.relu(torch.abs(rendered) - 1.0) ** 2)
+        conditioned = _conditioned_objective_terms(
+            mix_control,
+            low_control,
+            features_a,
+            features_b,
+        )
 
         total = (
             self.config.energy_shape_weight * energy_shape
@@ -258,6 +275,10 @@ class DifferentiableTransitionObjective(nn.Module):
             + self.config.control_curvature_weight * control_curvature
             + self.config.monotonicity_weight * monotonicity
             + self.config.clipping_weight * clipping
+            + self.config.vocal_overlap_weight * conditioned["vocal_overlap"]
+            + self.config.vocal_boundary_weight * conditioned["vocal_boundary"]
+            + self.config.transient_artifact_weight
+            * conditioned["transient_artifact"]
         )
         return {
             "loss": total,
@@ -267,6 +288,7 @@ class DifferentiableTransitionObjective(nn.Module):
             "control_curvature": control_curvature,
             "monotonicity": monotonicity,
             "clipping": clipping,
+            **conditioned,
         }
 
 
@@ -329,6 +351,8 @@ def optimize_control_curves(
     steps: int = 100,
     learning_rate: float = 0.05,
     increment_logit_bound: float = DEFAULT_INCREMENT_LOGIT_BOUND,
+    features_a: torch.Tensor | None = None,
+    features_b: torch.Tensor | None = None,
 ) -> ControlOptimizationResult:
     """Directly optimize two curves without a feature-to-control model."""
     if steps < 1:
@@ -358,7 +382,13 @@ def optimize_control_curves(
             mix_position,
             low_end_position,
         )
-        terms = objective(rendered, source_audio, target_audio)
+        terms = objective(
+            rendered,
+            source_audio,
+            target_audio,
+            features_a,
+            features_b,
+        )
         terms["loss"].backward()
         optimizer.step()
         loss_history.append(float(terms["loss"].detach().cpu()))
@@ -372,7 +402,13 @@ def optimize_control_curves(
             low_end_position,
         )
         final_loss = float(
-            objective(rendered, source_audio, target_audio)["loss"].detach().cpu()
+            objective(
+                rendered,
+                source_audio,
+                target_audio,
+                features_a,
+                features_b,
+            )["loss"].detach().cpu()
         )
 
     return ControlOptimizationResult(
@@ -507,3 +543,147 @@ def _u_shaped_energy_target(
     left = start + (valley - start) * (position * 2.0)
     right = valley + (end - valley) * ((position - 0.5) * 2.0)
     return torch.where(position <= 0.5, left, right)
+
+
+def _conditioned_objective_terms(
+    mix_control: torch.Tensor,
+    low_control: torch.Tensor,
+    features_a: torch.Tensor | None,
+    features_b: torch.Tensor | None,
+) -> dict[str, torch.Tensor]:
+    """Return feature-conditioned losses, or exact zeros without conditioning."""
+    zero = mix_control.sum() * 0.0
+    if features_a is None and features_b is None:
+        return {
+            "vocal_overlap": zero,
+            "vocal_boundary": zero,
+            "transient_artifact": zero,
+            "conditioning_valid_fraction": zero,
+        }
+    if features_a is None or features_b is None:
+        raise ValueError("features_a and features_b must either both be set or both be None")
+
+    source_features = _normalise_objective_features(
+        features_a,
+        mix_control,
+        "features_a",
+    )
+    target_features = _normalise_objective_features(
+        features_b,
+        mix_control,
+        "features_b",
+    )
+
+    vocal_valid = (
+        _channel(source_features, "vocal_valid")
+        * _channel(target_features, "vocal_valid")
+    )
+    source_vocal = _vocal_strength(source_features) * vocal_valid
+    target_vocal = _vocal_strength(target_features) * vocal_valid
+    gain_a, gain_b = _equal_power_pair(mix_control)
+    vocal_overlap = torch.mean(
+        source_vocal * target_vocal * (gain_a * gain_b) ** 2
+    )
+
+    uniform_delta = 1.0 / float(mix_control.shape[-1] - 1)
+    handover_rate = torch.diff(mix_control, dim=-1) / uniform_delta
+    source_cut_cost = source_vocal * (1.0 - _channel(source_features, "vocal_offset_probability"))
+    target_entry_cost = (
+        target_vocal
+        * (1.0 - _channel(target_features, "vocal_onset_probability"))
+        * (0.25 + 0.75 * _channel(target_features, "vocal_phrase_progress"))
+    )
+    vocal_boundary = torch.mean(
+        handover_rate
+        * 0.5
+        * (
+            _midpoint(source_cut_cost)
+            + _midpoint(target_entry_cost)
+        )
+    )
+
+    audio_valid = (
+        _channel(source_features, "audio_valid")
+        * _channel(target_features, "audio_valid")
+    )
+    source_transient = torch.maximum(
+        _channel(source_features, "spectral_flux"),
+        _channel(source_features, "onset_strength"),
+    )
+    target_transient = torch.maximum(
+        _channel(target_features, "spectral_flux"),
+        _channel(target_features, "onset_strength"),
+    )
+    transient_importance = _midpoint(
+        torch.maximum(source_transient, target_transient) * audio_valid
+    )
+    low_handover_rate = torch.diff(low_control, dim=-1) / uniform_delta
+    transient_artifact = torch.mean(
+        transient_importance
+        * (handover_rate + 0.5 * low_handover_rate)
+    )
+
+    valid_fraction = torch.mean(vocal_valid)
+    return {
+        "vocal_overlap": vocal_overlap,
+        "vocal_boundary": vocal_boundary,
+        "transient_artifact": transient_artifact,
+        "conditioning_valid_fraction": valid_fraction,
+    }
+
+
+def _normalise_objective_features(
+    features: torch.Tensor,
+    control: torch.Tensor,
+    name: str,
+) -> torch.Tensor:
+    if not isinstance(features, torch.Tensor):
+        raise TypeError(f"{name} must be a torch.Tensor")
+    features = features.to(device=control.device, dtype=control.dtype)
+    if features.ndim == 2:
+        features = features.unsqueeze(0)
+    if features.ndim != 3:
+        raise ValueError(f"{name} must have shape (T, F) or (B, T, F)")
+    if features.shape[0] == 1 and control.shape[0] > 1:
+        features = features.expand(control.shape[0], -1, -1)
+    if features.shape[:2] != control.shape:
+        raise ValueError(
+            f"{name} batch/time dimensions must match the restored control points"
+        )
+    required_channels = max(
+        feature_index(name)
+        for name in (
+            "audio_valid",
+            "spectral_flux",
+            "onset_strength",
+            "vocal_activity",
+            "vocal_prominence",
+            "vocal_onset_probability",
+            "vocal_offset_probability",
+            "vocal_phrase_progress",
+            "vocal_confidence",
+            "vocal_valid",
+        )
+    ) + 1
+    if features.shape[-1] < required_channels:
+        raise ValueError(f"{name} has fewer than {required_channels} feature channels")
+    if not torch.isfinite(features).all():
+        raise ValueError(f"{name} must contain only finite values")
+    return features
+
+
+def _channel(features: torch.Tensor, name: str) -> torch.Tensor:
+    return features[..., feature_index(name)].clamp(0.0, 1.0)
+
+
+def _vocal_strength(features: torch.Tensor) -> torch.Tensor:
+    confidence_weight = 0.5 + 0.5 * _channel(features, "vocal_confidence")
+    return (
+        _channel(features, "vocal_activity")
+        * _channel(features, "vocal_prominence")
+        * confidence_weight
+    )
+
+
+def _midpoint(values: torch.Tensor) -> torch.Tensor:
+    return 0.5 * (values[..., :-1] + values[..., 1:])

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import asdict
 from datetime import datetime, timezone
 import json
 import os
@@ -18,7 +19,9 @@ from src.analysis.pre_analysis import PreAnalysis
 from src.control import (
     CONTROL_PROTOCOL_VERSION,
     DEFAULT_INCREMENT_LOGIT_BOUND,
+    OBJECTIVE_VERSION,
     DifferentiableTransitionObjective,
+    DifferentiableTransitionObjectiveConfig,
     DifferentiableTwoBandRenderer,
     optimize_control_curves,
 )
@@ -190,6 +193,7 @@ def export_control_comparisons(
     payload = {
         "format_version": CONTROL_COMPARISON_MANIFEST_FORMAT_VERSION,
         "control_protocol_version": CONTROL_PROTOCOL_VERSION,
+        "objective_version": OBJECTIVE_VERSION,
         "rendering_protocol_version": RENDER_RESULT_FORMAT_VERSION,
         "status": "running",
         "created_at_utc": _utc_now(),
@@ -209,6 +213,7 @@ def export_control_comparisons(
             "prefix_seconds": float(prefix_seconds),
             "suffix_seconds": float(suffix_seconds),
             "max_track_uses": int(max_track_uses),
+            "objective": asdict(DifferentiableTransitionObjectiveConfig()),
         },
         "pairs": [],
         "failures": [],
@@ -279,6 +284,8 @@ def _render_comparison_pair(
     increment_logit_bound,
     prefix_seconds,
     suffix_seconds,
+    features_a=None,
+    features_b=None,
 ):
     source, target, geometry = _extract_aligned_bridge(candidate, analysis)
     proxy_source = librosa.resample(
@@ -303,6 +310,8 @@ def _render_comparison_pair(
         lowpass_kernel_size=127,
     )
     objective = DifferentiableTransitionObjective(energy_frames=control_points)
+    objective_features_a = _objective_feature_tensor(features_a, control_points, "features_a")
+    objective_features_b = _objective_feature_tensor(features_b, control_points, "features_b")
     baseline_control = torch.linspace(0.0, 1.0, control_points)
     with torch.no_grad():
         proxy_baseline = proxy_renderer(
@@ -315,6 +324,8 @@ def _render_comparison_pair(
             proxy_baseline,
             proxy_source_tensor,
             proxy_target_tensor,
+            objective_features_a,
+            objective_features_b,
         )
 
     optimization = optimize_control_curves(
@@ -326,6 +337,8 @@ def _render_comparison_pair(
         steps=optimization_steps,
         learning_rate=optimization_learning_rate,
         increment_logit_bound=increment_logit_bound,
+        features_a=objective_features_a,
+        features_b=objective_features_b,
     )
     with torch.no_grad():
         optimized_proxy_render = proxy_renderer(
@@ -338,6 +351,8 @@ def _render_comparison_pair(
             optimized_proxy_render,
             proxy_source_tensor,
             proxy_target_tensor,
+            objective_features_a,
+            objective_features_b,
         )
 
     full_renderer = DifferentiableTwoBandRenderer(
@@ -436,6 +451,8 @@ def _render_comparison_pair(
             if key not in {"source_audio", "target_audio"}
         },
         "optimization": {
+            "objective_version": OBJECTIVE_VERSION,
+            "feature_conditioning": objective_features_a is not None,
             "initial_loss": float(baseline_terms["loss"].cpu()),
             "final_loss": float(optimized_terms["loss"].cpu()),
             "relative_improvement": float(
@@ -552,6 +569,19 @@ def _tensor_terms_to_float(terms):
         key: float(value.detach().cpu())
         for key, value in terms.items()
     }
+
+
+def _objective_feature_tensor(features, control_points, name):
+    if features is None:
+        return None
+    tensor = torch.as_tensor(features, dtype=torch.float32)
+    if tensor.ndim != 2 or tensor.shape[0] != int(control_points):
+        raise ValueError(
+            f"{name} must have shape ({int(control_points)}, F), got {tuple(tensor.shape)}"
+        )
+    if not torch.isfinite(tensor).all():
+        raise ValueError(f"{name} must contain only finite values")
+    return tensor
 
 
 def _audio_metadata(path, audio, sample_rate):

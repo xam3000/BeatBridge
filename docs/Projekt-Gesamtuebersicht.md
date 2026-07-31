@@ -33,6 +33,12 @@ _Quelle: frühere Ausarbeitung (ChatGPT-Diskussion), ins Projekt übernommen am 
 > versionierte NPZ-/JSONL-Format und die reale 45/9/9-Erstinstanz stehen in
 > `DATASET_PROTOCOL.md` beziehungsweise im ignorierten `output/datasets/`.
 
+> **Objective-Präzisierung vom 2026-07-31:** Objective Version 4 verwendet
+> zusätzlich gültigkeitsmaskierte Vocal-Overlap-, Vocal-Grenz- und
+> Transientenartefakt-Terme aus Feature-Protokoll 1. Die Gewichte wurden nur
+> am track-getrennten Validation-Split gewählt; der neue geblendete Hörsatz
+> stammt vollständig aus dem unangetasteten Test-Split.
+
 ## 1. Ausgangslage und Motivation
 
 Ziel der Masterarbeit ist ein System zur KI-gestützten Erstellung musikalischer Übergänge für **Tanz-Mashups**. Bei Tanzperformances werden häufig ausgewählte Abschnitte verschiedener Songs kombiniert (Intros/Outros, Build-ups/Drops, Breaks, Refrains, choreografisch relevante Abschnitte).

@@ -55,7 +55,17 @@ def export_blind_control_study(
         track_exclusions_path=track_exclusions_path,
         max_track_uses=max_track_uses,
     )
-    full_manifest = _read_json(full_manifest_path)
+    return blind_existing_control_comparison(
+        full_manifest_path,
+        blind_seed=blind_seed,
+    )
+
+
+def blind_existing_control_comparison(manifest_path, *, blind_seed=DEFAULT_BLIND_SEED):
+    """Blind an already rendered comparison manifest in its own directory."""
+    manifest_path = Path(manifest_path)
+    output_directory = manifest_path.parent
+    full_manifest = _read_json(manifest_path)
     if full_manifest["status"] != "completed":
         raise RuntimeError("Cannot blind a comparison export with failures")
 
@@ -124,6 +134,7 @@ def export_blind_control_study(
         "created_at_utc": full_manifest["created_at_utc"],
         "completed_at_utc": full_manifest["completed_at_utc"],
         "control_protocol_version": full_manifest["control_protocol_version"],
+        "objective_version": full_manifest.get("objective_version"),
         "rendering_protocol_version": full_manifest["rendering_protocol_version"],
         "source_batch": full_manifest["source_batch"],
         "selection_policy": full_manifest["selection_policy"],
@@ -137,6 +148,9 @@ def export_blind_control_study(
         "pairs": public_pairs,
         "failures": [],
     }
+    for optional_name in ("source_dataset", "dataset_id", "dataset_split"):
+        if optional_name in full_manifest:
+            public_manifest[optional_name] = full_manifest[optional_name]
     _write_json_atomic(output_directory / "answer_key.json", answer_key)
     _write_json_atomic(output_directory / "manifest.json", public_manifest)
     create_control_study_ratings(output_directory)
@@ -158,6 +172,7 @@ def _write_blind_readme(output_directory, manifest):
         "- Energieverlauf",
         "- Low-End-Übergabe",
         "- rhythmische Stabilität",
+        "- Vocal-Klarheit (kein Clash, keine ungünstig angeschnittenen Lyrics)",
         "- Freiheit von Artefakten",
         "",
         "Notiere außerdem `A`, `B` oder `tie` als Präferenz. Die Bewertungen",

@@ -1,6 +1,6 @@
 # BeatBridge – Stand & Next Steps
 
-_Stand: 2026-07-30_
+_Stand: 2026-07-31_
 
 **Maßgeblicher Kontext: [`Projekt-Gesamtuebersicht.md`](./Projekt-Gesamtuebersicht.md) (Exposé).** Diese Datei hält den *technischen Prototyp-Stand der Startphase* (Monat 1 / erste 2–3 Wochen) fest. Ziel, Scope, wissenschaftlicher Beitrag, Related Work, Datenstrategie, Evaluation, 6-Monats-Plan und Risiken stehen im Exposé.
 
@@ -32,7 +32,7 @@ Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automa
 - **Feature-Ranking** (`src/ranking/`): `feature_baseline_v3` bewertet Drop A, Source-Auslauf, Target-Vorlauf und Drop B getrennt. Je 30 % entfallen auf High Power der Drops und Non-Overlap (Energieabfall nach A, niedrige Transition-Energie, Energieanstieg vor B); Chroma, RMS-Kontinuität, Spektrum und Tempo ergänzen den Score.
 - **Featurevertrag, globale Paarfeatures und Datasetexport** (`src/features/`): Feature-Protokoll 1 definiert `features_a/features_b` als `float32 (32, 54)` und 16 globale Merkmale. `extract_track.py` berechnet und cached Volltrackmerkmale, `vocal.py` trennt mit HT Demucs einmal pro Song einen wiederverwendbaren Vocal-Stem, `global_pair.py` erzeugt Tempo-, lokale Key-/Harmonie- und Kontextwerte. `dataset_export.py` wählt gerankte Vier-Takt-Kandidaten, wendet Trainingsausschlüsse an, bildet Audio-SHA-getrennte Splits, fitttet Flux-/Onset-Normalisierung nur auf Trainingsartefakten und exportiert atomar NPZ/JSONL mit vollständiger Provenienz. Phrasenkanäle bleiben mit `phrase_valid = 0` deaktiviert. Verträge: `FEATURE_PROTOCOL.md`, `DATASET_PROTOCOL.md`, `PRETRAINED_MODELS.md`.
 - **Metrik für gerenderte Übergänge** (`src/ranking/rendered_transition.py`): `rendered_transition_baseline_v1` bewertet nach dem Rendering das tatsächliche Audio inklusive Time-Stretch und Crossfade. Energieform und Grenzglätte zählen je 30 %, harmonische Kontinuität und rhythmische Stabilität je 20 %. Score, Teilwerte, Messwerte, Rang und isolierte Fehler stehen additiv im Batch-Manifest.
-- **Differenzierbarer Control-Prototyp** (`src/control/`): `differentiable_control_v3` rendert vier Takte aus zwei komplementären, konstruktiv monotonen Kurven (`mix_position`, `low_end_position`) mit Equal-Power-Gains und festem FIR-Crossover. Bei 32 Punkten ist jeder Halbbeat-Schritt konstruktiv kleiner als 0,099644; normalisierte Abweichungs- und Krümmungsterme bestrafen abrupte Übergaben. Frei parametrisierte Kurven können vor einem neuronalen Netz direkt optimiert werden; der Vertrag steht in `DIFFERENTIABLE_CONTROL_PROTOCOL.md`.
+- **Differenzierbarer Control-Prototyp** (`src/control/`): `differentiable_control_v3` rendert vier Takte aus zwei komplementären, konstruktiv monotonen Kurven (`mix_position`, `low_end_position`) mit Equal-Power-Gains und festem FIR-Crossover. Bei 32 Punkten ist jeder Halbbeat-Schritt konstruktiv kleiner als 0,099644; normalisierte Abweichungs- und Krümmungsterme bestrafen abrupte Übergaben. Objective Version 4 ergänzt gültigkeitsmaskierte Vocal-Overlap-, Vocal-Onset/-Offset-Grenz- und Transientenartefakt-Terme aus den gespeicherten Featurefenstern. Frei parametrisierte Kurven können vor einem neuronalen Netz direkt optimiert werden; der Vertrag steht in `DIFFERENTIABLE_CONTROL_PROTOCOL.md`.
 - **Reale Control-Vergleiche** (`src/evaluation/control_probe.py`): wählt aus einem nachbewerteten Multi-Song-Batch hoch bewertete 4-Takt-Kandidaten, rekonstruiert Source-Postroll und Target-Preroll, optimiert die zwei Control-Kurven und exportiert pro Paar Baseline/Optimiert mit identischem Kontext, gemeinsamer Peak-Absenkung und versioniertem Manifest. Der aktuelle blinde v3-Control-Satz mit Rubber Band liegt unter `output/control_studies/blind_v4_control_v3_rubberband_top8_4bar_20260730/`; frühere v1/v2-Versuche bleiben unverändert.
 - **Blinde Control-Hörstudie** (`src/evaluation/blind_control_study.py`, `control_study_ratings.py`, `analyze_control_study.py`): erzeugt A/B-Dateien ohne Methodenlabel, trennt den unveränderlichen Antwortschlüssel vom öffentlichen Manifest, speichert Ratings atomisch und entblindet erst nach vollständiger Bewertung in ein reproduzierbares `study_results.json`. Vertrag: `CONTROL_STUDY_PROTOCOL.md`.
 - **Historische Render-Metrik** (`src/evaluation/backfill_transition_metrics.py`): bewertet vorhandene Multi-Song-Batches ohne Änderung der WAVs oder ursprünglichen Manifeste. Samplegenaue Grenzen werden aus Kandidaten-Beat-Index, Read-only-Analyse-Cache und Tempoanpassung rekonstruiert; atomische `transition_metrics.json`-Sidecars dokumentieren Fortschritt und Ergebnisse.
@@ -126,6 +126,35 @@ Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automa
   Trainingsartefakten gefittet (`stats_id = train-d361f7da6414a9e6`). Die
   SHA-256-Werte aller fünf Datasetdateien wurden gegen das Manifest geprüft.
 - `.venv\Scripts\python.exe -m pytest -q`: **72 Tests bestanden**; zwei
+  bestehende, nicht blockierende Deprecation-Warnungen aus `audioread`.
+
+### Verifiziert am 2026-07-31 (Codex, Objective v4 und zurückgehaltener Hörsatz)
+
+- Objective v4 verwendet drei neue differenzierbare Terme:
+  gaingewichtetes `vocal_overlap`, onset-/offsetbewusstes `vocal_boundary`
+  und `transient_artifact` für Übergabebewegung auf starken
+  Onset-/Spectral-Flux-Bins. Ohne beide Featuretensoren sind die neuen Terme
+  exakt null; ein nur einseitig vorhandener Tensor wird abgelehnt.
+- Die Gewichte `1.0 / 0.30 / 0.08` wurden auf zwei inhaltlich eindeutigen
+  Validation-Paaren eingefroren. Der Loss sank dort von `0.2180 → 0.1916`
+  und `0.2906 → 0.2740`. Beim vocalreichen zweiten Paar sank
+  Vocal-Overlap `0.0168 → 0.0068` und Vocal-Grenze `0.4647 → 0.4078`.
+- `src.evaluation.heldout_control_study` rendert Datasetbeispiele direkt mit
+  ihren gespeicherten Featurefenstern und dokumentiert Dataset-ID, Split,
+  Objective-Version, Controls und Loss-Komponenten. Der Testsplit bleibt
+  strikt von Training und Validation getrennt.
+- Neuer geblendeter Testsatz:
+  `output/control_studies/blind_v5_objective_v4_heldout_test9_4bar_20260731_rerun/`.
+  Er enthält alle neun Testbeispiele als 18 Float32-WAVs, 44,1 kHz Stereo,
+  paarweise identische Länge und ausschließlich endliche Samples. Drei
+  Frontliner-Paare verwenden `ffmpeg_librubberband`, die übrigen sechs
+  benötigen keine Tempoanpassung. `STRUGGLING` kommt nicht vor.
+- Der Objective-Loss sank in allen neun Testbeispielen (je nach Paar rund
+  5,3–19,5 %). Der Satz ist noch geblendet und unbewertet; ein hörbarer
+  Vorteil gegenüber Equal Power ist daher ausdrücklich noch nicht belegt.
+- Ratings-Format 2 ergänzt `vocal_clarity` sowie `vocal_clash` und
+  `cut_lyrics`; alte Format-1-Ratings bleiben lesbar.
+- `.venv\Scripts\python.exe -m pytest -q`: **77 Tests bestanden**; zwei
   bestehende, nicht blockierende Deprecation-Warnungen aus `audioread`.
 
 ### Verifiziert am 2026-07-30 (Codex, Control-/Objective-v3 und neuer Hörsatz)
@@ -308,7 +337,7 @@ auf realem Audio validieren.
 
 1. **Time-Stretch und Target-Fenster von Paar 5 isolieren** — Original-Targetsegment und Rubber-Band-Variante mit identischem Ausschnitt separat exportieren und hören. So wird unterschieden, ob der schlechte Klang vom Backend, der Tempoänderung oder bereits vom gewählten Aversion-Fenster stammt.
 2. **Feature-Protokoll 1 auditieren** — globale Paarfeatures, Datasetexport und track-getrennte Splits sind implementiert. Als Nächstes die Vocal-Scores gegen gehörte Lyrics-/Clash-Fälle prüfen und ein semantisch passendes Phrasenverfahren validieren. Kein stilles 4/4→8-Takt-Fallback.
-3. **Direktoptimierung anschließend auf zurückgehaltenen Paaren validieren** — die bekannten acht Urteile nicht als finalen Testsatz verwenden. Equal Power bleibt die starke Referenz; der Gate ist eine wiederholbare hörbare Verbesserung und nicht nur ein niedrigerer Proxy-Loss.
+3. **Zurückgehaltenen Objective-v4-Hörsatz bewerten** — alle neun Testbeispiele liegen geblendet vor. Equal Power bleibt die starke Referenz; der Gate ist eine wiederholbare hörbare Verbesserung insbesondere bei Vocal-Klarheit und Artefaktfreiheit und nicht nur ein niedrigerer Proxy-Loss.
 4. **Erst nach bestandenem Hör-Gate MLP-Baseline bauen** — Feature-Protokoll 1, trackweise Train/Validation/Test-Trennung und zunächst ein kleines Feature→Control-MLP verwenden. TCN/BiLSTM erst nach erfolgreicher MLP-Sonde.
 5. **Entwicklungsset kuratieren** — die vorhandenen 21 Tracks als reproduzierbares Set definieren, Varianz und Duplikate prüfen, Track-Notizen ergänzen und Lizenzfrage klären (parallel, eher Handarbeit).
 

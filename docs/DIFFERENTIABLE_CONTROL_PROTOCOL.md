@@ -1,7 +1,7 @@
 # Differenzierbare Mixing-Controls
 
-_Aktuelle Vertragsversion: 3, eingeführt am 2026-07-30. Version 2 und Version 1
-wurden am 2026-07-29 eingeführt._
+_Aktuelle Control-Vertragsversion: 3, eingeführt am 2026-07-30. Aktuelle
+Objective-Version: 4, eingeführt am 2026-07-31._
 
 Dieses Dokument beschreibt den lernbaren BeatBridge-Control-Kern. Änderungen
 innerhalb einer Vertragsversion erfolgen nur additiv; inkompatible Änderungen
@@ -104,7 +104,7 @@ Der Renderer interpoliert die Kontrollpunkte linear auf Sampleebene. Ein
 fester, linearphasiger FIR-Tiefpass trennt Low- und High-Band. Das High-Band
 folgt `mix_position`, das Low-Band `low_end_position`.
 
-## Objective Version 3
+## Objective Version 4
 
 `DifferentiableTransitionObjective` kombiniert ausschließlich
 differenzierbare Terme:
@@ -117,6 +117,17 @@ differenzierbare Terme:
   Inkremente,
 - `monotonicity`: Strafe für rückwärts laufende Übergaben,
 - `clipping`: Strafe für Beträge oberhalb von 1.
+- `vocal_overlap`: gleichzeitige, gaingewichtete Sichtbarkeit zweier gültig
+  erkannter Vocal-Streams,
+- `vocal_boundary`: Übergabebewegung während aktiver Source-Vocals oder
+  mitten in einer bereits laufenden Target-Vocalphrase; Vocal-Offsets von A
+  und Vocal-Onsets von B reduzieren die jeweilige Strafe,
+- `transient_artifact`: Exposition der Mix- und Low-End-Übergabe gegenüber
+  starken Onset-/Spectral-Flux-Bins. Der Term kontrolliert gainbedingte
+  Transientenartefakte, nicht bereits im tempoangepassten Eingang enthaltene
+  Rubber-Band-Artefakte,
+- `conditioning_valid_fraction`: diagnostischer Anteil gültiger Vocalmasken,
+  ohne eigenes Loss-Gewicht.
 
 Die Objective-Komponenten sind eine technische Lernsonde, noch keine
 perzeptuell validierte Qualitätsmetrik. Vor einem Training auf größeren Daten
@@ -127,6 +138,16 @@ das uniforme Inkrement normierten Terme. Ihre Standardgewichte sind `0.02`
 für `control_smoothness` und `0.05` für `control_curvature`. Equal Power hat in
 beiden Termen den Wert null; nichtlineare Kurven bleiben möglich, müssen ihren
 zusätzlichen Verlauf aber durch eine bessere Audio-Zielfunktion rechtfertigen.
+
+Objective Version 4 erweitert Version 3 additiv um die drei
+feature-konditionierten Terme. Sie lesen ausschließlich die bereits
+gespeicherten Feature-Protokoll-1-Fenster; fehlen beide Featuretensoren,
+werden alle drei Terme exakt null und das v3-Verhalten bleibt erhalten. Ist
+nur ein Tensor vorhanden, wird der Lauf abgelehnt. `vocal_valid` und
+`audio_valid` verhindern, dass fehlende Analyse als Stille interpretiert wird.
+Die auf zwei inhaltlich eindeutigen Validation-Paaren eingefrorenen Gewichte
+sind `1.0` für `vocal_overlap`, `0.30` für `vocal_boundary` und `0.08` für
+`transient_artifact`. Der Test-Split wurde für diese Wahl nicht verwendet.
 
 ## Direkte Optimierung als Pflichtsonde
 
@@ -184,6 +205,7 @@ Ratings-Sidecar. Der vollständige Vertrag steht in
 - Der FIR-Crossover ist eine technische Baseline, kein produktionsreifer DJ-EQ.
 - Energie- und Grenzterme können musikalische Qualität nicht vollständig
   abbilden und sind anfällig für Metric Hacking.
-- Phrasenposition, Vocals, Mid-/High-Ownership und gelernte Repräsentationen
-  fehlen weiterhin.
+- Belastbare musikalische Phrasenposition, Mid-/High-Ownership und gelernte
+  Repräsentationen fehlen weiterhin. Vocal-Features sind ab Objective v4
+  enthalten, bleiben aber unkalibrierte Demucs-Ableitungen.
 - Vier Takte und 4/4-Metrum sind zunächst feste Forschungsannahmen.

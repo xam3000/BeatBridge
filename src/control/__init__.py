@@ -3,6 +3,7 @@
 from .differentiable import (
     CONTROL_NAMES,
     CONTROL_PROTOCOL_VERSION,
+    OBJECTIVE_VERSION,
     DEFAULT_INCREMENT_LOGIT_BOUND,
     ControlOptimizationResult,
     DifferentiableRenderResult,
@@ -17,6 +18,7 @@ from .differentiable import (
 __all__ = [
     "CONTROL_NAMES",
     "CONTROL_PROTOCOL_VERSION",
+    "OBJECTIVE_VERSION",
     "DEFAULT_INCREMENT_LOGIT_BOUND",
     "ControlOptimizationResult",
     "DifferentiableRenderResult",

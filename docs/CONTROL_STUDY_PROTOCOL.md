@@ -1,6 +1,7 @@
 # Blinder Control-A/B-Hörvergleich
 
-_Vertragsversion: 1, eingeführt am 2026-07-29._
+_Artefakt-Vertragsversion: 1, eingeführt am 2026-07-29. Ratings-Version 2
+mit Vocal-Kriterium: 2026-07-31._
 
 Dieses Dokument beschreibt Auswahl, Artefakte und Bewertungen der ersten
 blinden Hörvalidierung für `differentiable_control_v2`. Änderungen an Version 1
@@ -31,6 +32,13 @@ Methodenbezeichnung das Urteil beeinflusst.
 - Ausschlüsse aus `config/track_exclusions.json`; insbesondere kein
   `STRUGGLING`.
 
+Der Objective-v4-Hörsatz verwendet stattdessen den zuvor eingefrorenen,
+Audio-SHA-getrennten Dataset-Testsplit. Alle neun Testbeispiele werden
+exportiert; mehrere Cue-Kombinationen desselben gerichteten Songpaars sind
+bewusst keine unabhängigen Beobachtungen. Validation diente ausschließlich
+zur Gewichtswahl, der bekannte frühere Acht-Paar-Satz wird nicht als Test
+wiederverwendet.
+
 ## Artefakte
 
 ```text
@@ -45,7 +53,9 @@ study/
     └── B.wav
 ```
 
-Alle vier JSON-Formate starten mit `format_version = 1`.
+Manifest, Antwortschlüssel und Ergebnis starten mit `format_version = 1`.
+Neue Ratings verwenden `format_version = 2`; vorhandene Version-1-Ratings
+bleiben les- und auswertbar.
 
 - `manifest.json` ist der öffentliche, geblendete Vertrag. Er enthält Tracks,
   Paarindex, vier Takte und technische Metadaten der Dateien A/B, aber keine
@@ -69,11 +79,14 @@ Für A und B werden jeweils ganzzahlige Werte von 1 bis 5 gespeichert:
 - `energy_shape`,
 - `low_end_handover`,
 - `rhythmic_stability`,
+- `vocal_clarity`,
 - `artifact_freedom`.
 
 Zusätzlich werden `preferred = A | B | tie`, optionale Fehler-Tags und eine
 freie Notiz erfasst. Nach jeder Bewertung wird `ratings.json` atomisch
 ersetzt. `status = completed` gilt erst, wenn alle Paare bewertet sind.
+Ratings-Version 2 ergänzt außerdem die Fehler-Tags `vocal_clash` und
+`cut_lyrics`.
 
 ## Reproduzierbarer Export
 
@@ -90,6 +103,19 @@ ersetzt. `status = completed` gilt erst, wenn alle Paare bewertet sind.
 
 Der Zielordner muss neu sein. Historische Batch-Artefakte werden ausschließlich
 gelesen.
+
+Objective v4 aus dem track-getrennten Testsplit wird so exportiert:
+
+```powershell
+.venv\Scripts\python.exe -m src.evaluation.heldout_control_study `
+  output\datasets\feature_protocol_v1_top3_4bar_track_split_20260731 `
+  output\control_studies\blind_v5_objective_v4_heldout_test9_4bar_20260731 `
+  --split test `
+  --max-examples-per-pair 3 `
+  --optimization-steps 80 `
+  --learning-rate 0.06 `
+  --blind-seed 20260731
+```
 
 ## Ergebnis anzeigen
 

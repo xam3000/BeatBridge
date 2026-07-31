@@ -13,6 +13,7 @@ from src.control import (
     maximum_control_increment,
     optimize_control_curves,
 )
+from src.features.contract import FEATURE_DIMENSION, feature_index
 
 
 def _tone(frequency, *, sample_rate=8_000, seconds=1.0, amplitude=0.25):
@@ -21,6 +22,13 @@ def _tone(frequency, *, sample_rate=8_000, seconds=1.0, amplitude=0.25):
         dtype=torch.float32,
     ) / sample_rate
     return amplitude * torch.sin(2.0 * math.pi * frequency * time)
+
+
+def _features():
+    features = torch.zeros((32, FEATURE_DIMENSION), dtype=torch.float32)
+    features[:, feature_index("audio_valid")] = 1.0
+    features[:, feature_index("vocal_valid")] = 1.0
+    return features
 
 
 def test_renderer_returns_finite_audio_and_complementary_gains():
@@ -200,3 +208,112 @@ def test_v3_increment_bound_stays_below_one_tenth_for_32_points():
 
     assert maximum_control_increment(32) < 0.1
     assert float(torch.max(torch.diff(mix_position)).detach()) < 0.1
+
+
+def test_v4_conditioned_terms_are_zero_when_features_are_not_supplied():
+    source = torch.stack((_tone(220.0), _tone(330.0)))
+    target = torch.stack((_tone(550.0), _tone(660.0)))
+    control = torch.linspace(0.0, 1.0, 32)
+    renderer = DifferentiableTwoBandRenderer(
+        sample_rate=8_000,
+        lowpass_cutoff_hz=180.0,
+        lowpass_kernel_size=127,
+    )
+
+    terms = DifferentiableTransitionObjective(energy_frames=32)(
+        renderer(source, target, control, control),
+        source,
+        target,
+    )
+
+    assert float(terms["vocal_overlap"]) == 0.0
+    assert float(terms["vocal_boundary"]) == 0.0
+    assert float(terms["transient_artifact"]) == 0.0
+    assert float(terms["conditioning_valid_fraction"]) == 0.0
+
+
+def test_v4_vocal_and_transient_terms_reward_handover_in_a_quiet_gap():
+    source = torch.stack((_tone(220.0), _tone(330.0)))
+    target = torch.stack((_tone(550.0), _tone(660.0)))
+    source_features = _features()
+    target_features = _features()
+    for features in (source_features, target_features):
+        features[:, feature_index("vocal_confidence")] = 1.0
+    source_features[5:17, feature_index("vocal_activity")] = 1.0
+    source_features[5:17, feature_index("vocal_prominence")] = 1.0
+    target_features[15:27, feature_index("vocal_activity")] = 1.0
+    target_features[15:27, feature_index("vocal_prominence")] = 1.0
+    target_features[15:27, feature_index("vocal_phrase_progress")] = 0.8
+    source_features[15:18, feature_index("spectral_flux")] = 1.0
+    target_features[15:18, feature_index("onset_strength")] = 1.0
+
+    linear = torch.linspace(0.0, 1.0, 32)
+    quiet_gap = torch.cat(
+        (
+            torch.linspace(0.0, 0.08, 14),
+            torch.linspace(0.12, 0.88, 4),
+            torch.linspace(0.92, 1.0, 14),
+        )
+    )
+    move_on_transient = torch.cat(
+        (
+            torch.linspace(0.0, 0.12, 15),
+            torch.linspace(0.18, 0.82, 3),
+            torch.linspace(0.88, 1.0, 14),
+        )
+    )
+    renderer = DifferentiableTwoBandRenderer(
+        sample_rate=8_000,
+        lowpass_cutoff_hz=180.0,
+        lowpass_kernel_size=127,
+    )
+    objective = DifferentiableTransitionObjective(energy_frames=32)
+
+    linear_terms = objective(
+        renderer(source, target, linear, linear),
+        source,
+        target,
+        source_features,
+        target_features,
+    )
+    transient_terms = objective(
+        renderer(source, target, move_on_transient, move_on_transient),
+        source,
+        target,
+        source_features,
+        target_features,
+    )
+    gap_terms = objective(
+        renderer(source, target, quiet_gap, quiet_gap),
+        source,
+        target,
+        source_features,
+        target_features,
+    )
+
+    assert float(linear_terms["vocal_overlap"]) > 0.0
+    assert float(gap_terms["vocal_overlap"]) < float(linear_terms["vocal_overlap"])
+    assert float(transient_terms["transient_artifact"]) > float(
+        linear_terms["transient_artifact"]
+    )
+    assert float(gap_terms["conditioning_valid_fraction"]) == pytest.approx(1.0)
+
+
+def test_v4_rejects_only_one_feature_tensor():
+    source = torch.stack((_tone(220.0), _tone(330.0)))
+    target = torch.stack((_tone(550.0), _tone(660.0)))
+    control = torch.linspace(0.0, 1.0, 32)
+    renderer = DifferentiableTwoBandRenderer(
+        sample_rate=8_000,
+        lowpass_cutoff_hz=180.0,
+        lowpass_kernel_size=127,
+    )
+
+    with pytest.raises(ValueError, match="both be set"):
+        DifferentiableTransitionObjective(energy_frames=32)(
+            renderer(source, target, control, control),
+            source,
+            target,
+            _features(),
+            None,
+        )

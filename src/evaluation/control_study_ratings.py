@@ -10,12 +10,13 @@ from pathlib import Path
 import uuid
 
 
-CONTROL_STUDY_RATINGS_FORMAT_VERSION = 1
+CONTROL_STUDY_RATINGS_FORMAT_VERSION = 2
 RATING_CRITERIA = (
     "cleanliness",
     "energy_shape",
     "low_end_handover",
     "rhythmic_stability",
+    "vocal_clarity",
     "artifact_freedom",
 )
 PREFERENCES = ("A", "B", "tie")
@@ -26,6 +27,8 @@ ISSUE_TAGS = (
     "rhythm",
     "artifacts",
     "tempo_mismatch",
+    "vocal_clash",
+    "cut_lyrics",
     "other",
 )
 
@@ -98,14 +101,16 @@ def rate_control_study_pair(
     study_directory = Path(study_directory)
     ratings_path = study_directory / "ratings.json"
     payload = _read_json(ratings_path)
-    if int(payload.get("format_version", 0)) != CONTROL_STUDY_RATINGS_FORMAT_VERSION:
+    if int(payload.get("format_version", 0)) not in {1, 2}:
         raise ValueError("Unsupported control-study ratings format_version")
     if preferred not in PREFERENCES:
         raise ValueError(f"preferred must be one of: {', '.join(PREFERENCES)}")
-    scores_a = _validate_scores(scores_a, "scores_a")
-    scores_b = _validate_scores(scores_b, "scores_b")
-    issues_a = _validate_issues(issues_a, "issues_a")
-    issues_b = _validate_issues(issues_b, "issues_b")
+    criteria = tuple(payload["criteria"])
+    issue_tags = tuple(payload["issue_tags"])
+    scores_a = _validate_scores(scores_a, "scores_a", criteria)
+    scores_b = _validate_scores(scores_b, "scores_b", criteria)
+    issues_a = _validate_issues(issues_a, "issues_a", issue_tags)
+    issues_b = _validate_issues(issues_b, "issues_b", issue_tags)
 
     pair_index = int(pair_index)
     entry = next(
@@ -148,13 +153,13 @@ def ratings_summary(study_directory):
     }
 
 
-def _validate_scores(scores, name):
-    if set(scores) != set(RATING_CRITERIA):
+def _validate_scores(scores, name, criteria=RATING_CRITERIA):
+    if set(scores) != set(criteria):
         raise ValueError(
-            f"{name} must contain exactly these criteria: {', '.join(RATING_CRITERIA)}"
+            f"{name} must contain exactly these criteria: {', '.join(criteria)}"
         )
     validated = {}
-    for criterion in RATING_CRITERIA:
+    for criterion in criteria:
         value = int(scores[criterion])
         if not 1 <= value <= 5:
             raise ValueError(f"{name}.{criterion} must be between 1 and 5")
@@ -162,9 +167,9 @@ def _validate_scores(scores, name):
     return validated
 
 
-def _validate_issues(issues, name):
+def _validate_issues(issues, name, issue_tags=ISSUE_TAGS):
     issues = tuple(str(issue) for issue in issues)
-    unknown = sorted(set(issues).difference(ISSUE_TAGS))
+    unknown = sorted(set(issues).difference(issue_tags))
     if unknown:
         raise ValueError(f"Unknown {name}: {', '.join(unknown)}")
     if len(set(issues)) != len(issues):
