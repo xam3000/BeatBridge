@@ -381,9 +381,30 @@ Eine für ein bestimmtes Zieltempo ausgerichtete Trackvariante separat cachen:
   --target-bpm 156.60511363636363
 ```
 
-Der Vocal-Extractor ist implementiert. Phrasen-Extractor, globale
-Paarfeatures und Datasetexport fehlen noch; fehlende Phrasenwerte werden mit
+Der Vocal-Extractor und die globalen Paarfeatures sind implementiert.
+Belastbare musikalische Phrasenmerkmale fehlen noch; sie werden mit
 `phrase_valid = 0` als nicht verfügbar markiert.
+
+## Feature-Dataset exportieren
+
+Die drei bestgerankten Vier-Takt-Kandidaten je Songpaar als
+Feature→Control-Eingaben exportieren:
+
+```powershell
+.venv\Scripts\python.exe -m src.features export-dataset `
+  output\batches\all_songs_top3_targets_top3_transitions_20260722\manifest.json `
+  output\datasets\feature_protocol_v1_top3_4bar_track_split_20260731 `
+  --top-k-per-pair 3 `
+  --transition-bars 4 `
+  --split-seed 20260731 `
+  --vocal-backend demucs
+```
+
+Der Export erzeugt `train.npz`, `validation.npz`, `test.npz`,
+`examples.jsonl` und `manifest.json`. Splits werden über Audio-SHA statt
+Kandidaten gebildet; Source und Target eines exportierten Beispiels liegen
+immer im selben Split. Normalisierungsstatistiken stammen ausschließlich aus
+Trainings-Tracks. Details: [`DATASET_PROTOCOL.md`](./DATASET_PROTOCOL.md).
 
 ## Analyse-Cache und Ausgaben
 

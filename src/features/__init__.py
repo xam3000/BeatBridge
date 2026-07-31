@@ -33,6 +33,22 @@ from .vocal import (
     VocalStemArtifact,
     extract_or_load_vocal_stem,
 )
+from .global_pair import (
+    GLOBAL_PAIR_EXTRACTOR_VERSION,
+    KeyEstimate,
+    build_global_pair_features,
+    context_coverage,
+    estimate_key,
+    harmonic_compatibility,
+)
+from .dataset_export import (
+    DATASET_FORMAT_VERSION,
+    SPLIT_POLICY_VERSION,
+    DatasetExportResult,
+    SplitConfig,
+    assign_track_disjoint_splits,
+    export_feature_dataset,
+)
 
 __all__ = [
     "ANALYSIS_CONTEXT_BARS_AFTER",
@@ -53,6 +69,18 @@ __all__ = [
     "DEFAULT_DEMUCS_MODEL",
     "DEMUCS_PAPER",
     "VocalStemArtifact",
+    "GLOBAL_PAIR_EXTRACTOR_VERSION",
+    "KeyEstimate",
+    "build_global_pair_features",
+    "context_coverage",
+    "estimate_key",
+    "harmonic_compatibility",
+    "DATASET_FORMAT_VERSION",
+    "SPLIT_POLICY_VERSION",
+    "DatasetExportResult",
+    "SplitConfig",
+    "assign_track_disjoint_splits",
+    "export_feature_dataset",
     "extract_or_load_track_features",
     "extract_or_load_vocal_stem",
     "feature_index",

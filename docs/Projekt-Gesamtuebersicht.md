@@ -27,6 +27,12 @@ _Quelle: frühere Ausarbeitung (ChatGPT-Diskussion), ins Projekt übernommen am 
 > selbstüberwachte Lernen der Mixing-Kurven, nicht das erneute Trainieren einer
 > Vocal-Separation.
 
+> **Dataset-Präzisierung vom 2026-07-31:** Train, Validation und Test werden
+> strikt anhand des Audio-SHA getrennt; Paare über Splitgrenzen werden
+> verworfen. Normalisierung wird nur auf Trainings-Tracks gefittet. Das
+> versionierte NPZ-/JSONL-Format und die reale 45/9/9-Erstinstanz stehen in
+> `DATASET_PROTOCOL.md` beziehungsweise im ignorierten `output/datasets/`.
+
 ## 1. Ausgangslage und Motivation
 
 Ziel der Masterarbeit ist ein System zur KI-gestützten Erstellung musikalischer Übergänge für **Tanz-Mashups**. Bei Tanzperformances werden häufig ausgewählte Abschnitte verschiedener Songs kombiniert (Intros/Outros, Build-ups/Drops, Breaks, Refrains, choreografisch relevante Abschnitte).

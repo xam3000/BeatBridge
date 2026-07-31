@@ -209,6 +209,14 @@ Der Time-Stretch-Backendname ist Provenienz, kein numerischer Modellinput. Das
 Modell erhält stattdessen Richtung und Betrag der Tempoänderung. Experimente
 mit verschiedenen Backends benötigen getrennte Dataset-/Renderer-Versionen.
 
+Die globalen Werte werden durch `global_pair_v1` berechnet. Tonika und Modus
+stammen aus den lokalen 32-Schritt-Chromaprofilen und
+Krumhansl-Schmuckler-Templates; die Confidence ist der begrenzte Abstand der
+beiden besten Templates. `harmonic_compatibility` ist die Cosinusähnlichkeit
+der lokalen Chromaprofile und bei fehlender Evidenz neutral `0,5`.
+`context_coverage_a/b` zählt die tatsächlich vorhandenen Halbbeat-Bins relativ
+zu den angeforderten vier Takten vor plus vier Takten nach dem Cue.
+
 ## 6. Normalisierung und Datenlecks
 
 - Physikalisch begrenzte Größen verwenden die im Schema definierten festen
@@ -355,3 +363,7 @@ Hugging-Face-Revision und SHA-256-Hashes der verwendeten Gewichtsdateien.
 Diese Erweiterungen sind additiv nur möglich, solange Shape und Bedeutung der
 Version-1-Kanäle unverändert bleiben; andernfalls benötigen sie
 Feature-Protokoll 2.
+
+Der konkrete NPZ-/JSONL-Export sowie die strikt track-getrennte
+Train/Validation/Test-Regel stehen in
+[`DATASET_PROTOCOL.md`](./DATASET_PROTOCOL.md).
