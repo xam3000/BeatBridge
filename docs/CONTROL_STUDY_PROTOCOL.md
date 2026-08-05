@@ -1,7 +1,8 @@
 # Blinder Control-A/B-Hörvergleich
 
 _Artefakt-Vertragsversion: 1, eingeführt am 2026-07-29. Ratings-Version 2
-mit Vocal-Kriterium: 2026-07-31._
+mit Vocal-Kriterium: 2026-07-31. Ratings-Version 3 ohne Rhythmik als
+Control-Modell-Kriterium: 2026-08-05._
 
 Dieses Dokument beschreibt Auswahl, Artefakte und Bewertungen der ersten
 blinden Hörvalidierung für `differentiable_control_v2`. Änderungen an Version 1
@@ -15,6 +16,38 @@ verwendet und das konkrete Backend im öffentlichen Manifest dokumentiert.
 Die abgeschlossene Bewertung ergab acht Gleichstände und identische
 Kriterienwerte für beide Methoden. `study_results.json` dokumentiert dieses
 Ergebnis nach der Entblindung.
+
+Der dritte Hörsatz
+`blind_v5_objective_v4_heldout_test9_4bar_20260731_rerun` stammt aus dem
+Audio-SHA-getrennten Testsplit und verwendet Objective Version 4. Seine neun
+Ratings wurden am 2026-08-04 vollständig geblendet gespeichert und erst dann
+entblindet. Ergebnis: **9/9 Präferenzen für optimiert**, 0 für Equal Power,
+0 Gleichstände. Optimiert steigt im Sechs-Kriterien-Mittel von 4,7593 auf
+4,9259. Der Vorteil liegt ausschließlich bei `cleanliness` (4,0 auf 5,0);
+`vocal_clarity` ist mit 4,7778 identisch. Wegen drei Cue-Varianten pro
+gerichteter Paargruppe und nur drei Test-Audiohashes sind die neun Urteile
+nicht als unabhängige Stichprobe zu behandeln.
+
+Der vierte Hörsatz
+`blind_v6_mlp_v1_best_vs_equal_power_validation9_20260804_rerun`
+vergleicht den besten Checkpoint von `time_shared_mlp_v1` geblendet gegen
+Equal Power. Er umfasst alle neun Validation-Beispiele. Da derselbe Split
+für Early Stopping und Modellwahl verwendet wurde, ist dies ausdrücklich ein
+Entwicklungs-Gate und kein unabhängiger Generalisierungsnachweis. Sechs der
+neun Beispiele sind verschiedene Cues derselben gerichteten
+BREATH_LESS→BREATH_LESS-Kombination; die übrigen drei sind
+ASCENSION→BREATH_LESS. Die Ratings sind noch offen.
+
+Der fünfte Hörsatz
+`blind_v7_objective_v5_vocal_active6_20260805_rerun` vergleicht
+Objective-v4-Controls ohne Vocal-Ducking mit vollständig optimierten
+Objective-v5-Controls im selben stem-fähigen Renderer. Alle sechs Paare
+besitzen auf beiden Übergangsseiten gemessene Vocal-Aktivität. Nach der
+vollständigen geblendeten Bewertung gewinnt Objective v5 zwei Paare,
+Objective v4 eines; drei sind Gleichstände. Der Fünf-Kriterien-Mittelwert
+steigt von 4,2333 auf 4,3667. Ausschließlich `vocal_clarity` unterscheidet
+sich (4,3333 auf 5,0). Paar 2, 3 und 5 werden bei beiden Methoden durch
+hörbare Rubber-Band-Time-Stretch-Artefakte begrenzt.
 
 ## Zweck
 
@@ -53,9 +86,10 @@ study/
     └── B.wav
 ```
 
-Manifest, Antwortschlüssel und Ergebnis starten mit `format_version = 1`.
-Neue Ratings verwenden `format_version = 2`; vorhandene Version-1-Ratings
-bleiben les- und auswertbar.
+Manifest und Antwortschlüssel starten mit `format_version = 1`. Neue Ratings
+verwenden `format_version = 3`; vorhandene Version-1/2-Ratings bleiben les-
+und auswertbar. Ergebnisse verwenden Version 2, damit beliebige zwei
+Methodennamen als Referenz und Kandidat ausgewertet werden können.
 
 - `manifest.json` ist der öffentliche, geblendete Vertrag. Er enthält Tracks,
   Paarindex, vier Takte und technische Metadaten der Dateien A/B, aber keine
@@ -73,14 +107,19 @@ bleiben les- und auswertbar.
 
 ## Bewertung
 
-Für A und B werden jeweils ganzzahlige Werte von 1 bis 5 gespeichert:
+Für A und B werden in Ratings-Version 3 jeweils ganzzahlige Werte von 1 bis
+5 gespeichert:
 
 - `cleanliness`,
 - `energy_shape`,
 - `low_end_handover`,
-- `rhythmic_stability`,
 - `vocal_clarity`,
 - `artifact_freedom`.
+
+`rhythmic_stability` wurde am 2026-08-05 aus neuen Control-Modell-Ratings
+entfernt: Die verglichenen Kurven verändern weder Beat-Grid noch
+Time-Stretch-Backend. Rhythmik bleibt ein technisches Kandidaten-/Renderer-
+Kriterium. Historische Ratings-Versionen 1/2 behalten den Wert unverändert.
 
 Zusätzlich werden `preferred = A | B | tie`, optionale Fehler-Tags und eine
 freie Notiz erfasst. Nach jeder Bewertung wird `ratings.json` atomisch
@@ -116,6 +155,24 @@ Objective v4 aus dem track-getrennten Testsplit wird so exportiert:
   --learning-rate 0.06 `
   --blind-seed 20260731
 ```
+
+Der beste Feature→Control-Checkpoint wird so gegen Equal Power exportiert:
+
+```powershell
+.venv\Scripts\python.exe -m src.evaluation.ml_control_study `
+  output\datasets\feature_protocol_v1_top3_4bar_track_split_20260731 `
+  output\training_runs\time_shared_mlp_v1_objective_v4_seed20260804_20260804 `
+  output\control_studies\blind_v6_mlp_v1_best_vs_equal_power_validation9_20260804_rerun `
+  --split validation `
+  --max-examples-per-pair 9 `
+  --blind-seed 20260804
+```
+
+Der Export prüft Datasetdateien, Paarmanifest und Best-Checkpoint gegen ihre
+SHA-256-Werte. `answer_key.json` enthält zusätzlich Run-ID, Checkpoint-Epoche,
+Modellkonfiguration, vorhergesagte Controls und Objective-Komponenten. Im
+öffentlichen Manifest erscheinen weder die Methodenabbildung noch die
+Proxy-Losswerte.
 
 ## Ergebnis anzeigen
 

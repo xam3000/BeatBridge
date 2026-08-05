@@ -19,7 +19,14 @@ Die Filterreihenfolge ist:
 2. aufsteigender Rang aus `candidate_ranking`,
 3. höchstens `top_k_per_pair` unterschiedliche Kandidaten,
 4. Ausschlüsse mit Scope `training`, insbesondere `STRUGGLING`,
-5. Verwerfen von Paaren, deren Tracks verschiedenen Splits zugeordnet sind.
+5. optionale inklusive BPM-Grenzen für Source und Target,
+6. Verwerfen von Paaren, deren Tracks verschiedenen Splits zugeordnet sind.
+
+`--min-bpm` und `--max-bpm` werden als Konfiguration samt
+`bounds_inclusive = true` im Datasetmanifest gespeichert. Ein Kandidat wird
+verworfen, sobald Source oder Target außerhalb des Bereichs liegt. Wird schon
+der Multi-Song-Batch mit denselben Grenzen erzeugt, bleibt der Datasetfilter
+als vertraglich dokumentierte zweite Absicherung aktiv.
 
 Bereits gerenderte Varianten sind nicht die Auswahlquelle. Historische
 Top-Renderings können zwei Takte lang sein, während unter den nachfolgenden
@@ -124,7 +131,19 @@ nicht verändert.
   --top-k-per-pair 3 `
   --transition-bars 4 `
   --split-seed 20260731 `
+  --min-bpm 145 `
+  --max-bpm 165 `
   --vocal-backend demucs
+```
+
+Reale erweiterte Instanz vom 2026-08-05:
+
+```text
+dataset_id: 52bc9d1cebfd1b82d2ea
+Auswahl:    1.110 Kandidaten vor Splitfilterung
+Export:     480 Beispiele = 370 Train / 50 Validation / 60 Test
+Tracks:     43 Train / 5 Validation / 7 Test, keine SHA-Überschneidung
+BPM:        151,999 bis 161,499, kein Beispiel außerhalb 145 bis 165
 ```
 
 Ein technischer Ein-Split-Smoke-Test darf `--train-ratio 1

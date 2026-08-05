@@ -105,3 +105,23 @@ def test_incomplete_study_cannot_be_unblinded(tmp_path):
 
     with pytest.raises(ValueError, match="completed"):
         analyze_control_study(tmp_path)
+
+
+def test_custom_methods_are_resolved_from_the_answer_key(tmp_path):
+    _write_study(tmp_path)
+    answer_path = tmp_path / "answer_key.json"
+    answer = json.loads(answer_path.read_text(encoding="utf-8"))
+    answer["methods"] = ["objective_v4", "objective_v5"]
+    for pair in answer["pairs"]:
+        pair["mapping"] = {
+            label: ("objective_v4" if method == "baseline_equal_power" else "objective_v5")
+            for label, method in pair["mapping"].items()
+        }
+    answer_path.write_text(json.dumps(answer), encoding="utf-8")
+
+    result_path = analyze_control_study(tmp_path)
+    result = json.loads(result_path.read_text(encoding="utf-8"))
+
+    assert result["methods"] == ["objective_v4", "objective_v5"]
+    assert result["comparison"]["candidate_method"] == "objective_v5"
+    assert result["paired_delta_candidate_minus_reference"]["overall"]["mean"] == -1.0

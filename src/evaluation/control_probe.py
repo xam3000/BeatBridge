@@ -16,6 +16,7 @@ import soundfile as sf
 import torch
 
 from src.analysis.pre_analysis import PreAnalysis
+from src.bridge import extract_aligned_bridge
 from src.control import (
     CONTROL_PROTOCOL_VERSION,
     DEFAULT_INCREMENT_LOGIT_BOUND,
@@ -25,19 +26,13 @@ from src.control import (
     DifferentiableTwoBandRenderer,
     optimize_control_curves,
 )
-from src.cutting.equal_power_fade_cut import EqualPowerFadeCut
 from src.dataset import (
     DEFAULT_TRACK_EXCLUSIONS_PATH,
     is_track_excluded,
     load_track_exclusions,
 )
-from src.pipeline import (
-    BeatBridgePipeline,
-    DEFAULT_SAMPLE_RATE,
-    RENDER_RESULT_FORMAT_VERSION,
-)
+from src.pipeline import DEFAULT_SAMPLE_RATE, RENDER_RESULT_FORMAT_VERSION
 from src.ranking import RenderedTransitionInput, rank_rendered_transitions
-from src.tempo.time_stretch import TimeStretch
 
 
 CONTROL_COMPARISON_MANIFEST_FORMAT_VERSION = 1
@@ -492,64 +487,11 @@ def _render_comparison_pair(
 
 
 def _extract_aligned_bridge(candidate, analysis):
-    transition_beats = int(candidate["transition_length_beats"])
-    cutter = EqualPowerFadeCut(fade_beats=transition_beats)
-    tempo_adjuster = TimeStretch()
-    pipeline = BeatBridgePipeline(
-        candidate["source_track"]["path"],
-        candidate["target_track"]["path"],
+    return extract_aligned_bridge(
+        candidate,
         analysis,
-        tempo_adjuster,
-        cutter,
-        target_sample_rate=DEFAULT_SAMPLE_RATE,
-        bpm1=candidate["source_bpm"],
-        bpm2=candidate["target_bpm"],
-    )
-    source_audio, target_audio = pipeline.adjust_tempo()
-    source_cut = int(candidate["source_cutpoint"]["sample"])
-    target_cut = int(
-        round(
-            int(candidate["target_cutpoint"]["sample"])
-            * pipeline.adjusted_sample_scale2
-        )
-    )
-    source_cut, target_cut = cutter.resolve_cut_samples(
-        source_audio,
-        target_audio,
-        source_cut,
-        target_cut,
-        pipeline.beat_frames1,
-        pipeline.adjusted_beat_frames2,
-    )
-    source_end = cutter._find_beat_offset_sample(
-        pipeline.beat_frames1,
-        source_cut,
-        transition_beats,
-        source_audio.shape[-1],
-    )
-    target_start = cutter._find_beat_offset_sample(
-        pipeline.adjusted_beat_frames2,
-        target_cut,
-        -transition_beats,
-        target_audio.shape[-1],
-    )
-    transition_samples = min(source_end - source_cut, target_cut - target_start)
-    if transition_samples <= 0:
-        raise ValueError("Candidate has no complete aligned transition window")
-    source = source_audio[..., source_cut : source_cut + transition_samples]
-    target = target_audio[..., target_cut - transition_samples : target_cut]
-    return (
-        np.asarray(source, dtype=np.float32),
-        np.asarray(target, dtype=np.float32),
-        {
-            "source_cut_sample": int(source_cut),
-            "target_cut_sample": int(target_cut),
-            "transition_samples": int(transition_samples),
-            "transition_seconds": float(transition_samples / DEFAULT_SAMPLE_RATE),
-            "tempo_backend": pipeline.tempo_backend,
-            "source_audio": source_audio,
-            "target_audio": target_audio,
-        },
+        sample_rate=DEFAULT_SAMPLE_RATE,
+        include_context_audio=True,
     )
 
 

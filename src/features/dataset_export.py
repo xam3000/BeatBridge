@@ -186,6 +186,8 @@ def export_feature_dataset(
     vocal_backend="demucs",
     vocal_model=DEFAULT_DEMUCS_MODEL,
     track_exclusions_path=DEFAULT_TRACK_EXCLUSIONS_PATH,
+    minimum_bpm=None,
+    maximum_bpm=None,
     max_pairs=None,
     track_feature_loader=None,
 ):
@@ -202,6 +204,7 @@ def export_feature_dataset(
         raise ValueError("transition_bars must be greater than 0")
     if max_pairs is not None and int(max_pairs) <= 0:
         raise ValueError("max_pairs must be greater than 0")
+    _validate_bpm_bounds(minimum_bpm, maximum_bpm)
     split_config = split_config or SplitConfig()
     track_feature_loader = track_feature_loader or extract_or_load_track_features
 
@@ -214,9 +217,15 @@ def export_feature_dataset(
         transition_bars=int(transition_bars),
     )
     exclusions = load_track_exclusions(track_exclusions_path)
+    selected_before_exclusions = len(records)
     records, excluded_records = _apply_training_exclusions(records, exclusions)
+    records, bpm_excluded_records = _apply_bpm_filter(
+        records,
+        minimum_bpm=minimum_bpm,
+        maximum_bpm=maximum_bpm,
+    )
     if not records:
-        raise ValueError("No selected candidates remain after training exclusions")
+        raise ValueError("No selected candidates remain after training and BPM exclusions")
 
     tracks = _track_catalog(records)
     pair_weights = _pair_weights(records)
@@ -334,6 +343,11 @@ def export_feature_dataset(
         "sample_rate": int(sample_rate),
         "vocal_backend": str(vocal_backend),
         "vocal_model": str(vocal_model) if vocal_backend == "demucs" else None,
+        "bpm_filter": {
+            "minimum_bpm": None if minimum_bpm is None else float(minimum_bpm),
+            "maximum_bpm": None if maximum_bpm is None else float(maximum_bpm),
+            "bounds_inclusive": True,
+        },
         "split": split_config.to_dict(),
     }
     dataset_id = hashlib.sha256(
@@ -365,12 +379,13 @@ def export_feature_dataset(
             "onset_strength_log1p_p99": normalization.onset_strength_log1p_p99,
         },
         "selection": {
-            "selected_before_exclusions": len(records) + len(excluded_records),
+            "selected_before_exclusions": selected_before_exclusions,
             "excluded_by_training_policy": len(excluded_records),
+            "excluded_by_bpm_filter": len(bpm_excluded_records),
             "discarded_cross_split": len(records) - len(retained_records),
             "exported": len(retained_records),
         },
-        "excluded_examples": excluded_records,
+        "excluded_examples": excluded_records + bpm_excluded_records,
         "track_assignments": [
             {
                 "sha256": track_hash,
@@ -503,6 +518,46 @@ def _apply_training_exclusions(records, exclusions):
                 matches.append({"role": role, "policy": exclusion.to_dict()})
         if matches:
             rejected.append({"example_id": record.example_id, "matches": matches})
+        else:
+            allowed.append(record)
+    return allowed, rejected
+
+
+def _validate_bpm_bounds(minimum_bpm, maximum_bpm):
+    for name, value in (("minimum_bpm", minimum_bpm), ("maximum_bpm", maximum_bpm)):
+        if value is not None and (not math.isfinite(float(value)) or float(value) <= 0):
+            raise ValueError(f"{name} must be finite and greater than 0")
+    if (
+        minimum_bpm is not None
+        and maximum_bpm is not None
+        and float(minimum_bpm) > float(maximum_bpm)
+    ):
+        raise ValueError("minimum_bpm must be less than or equal to maximum_bpm")
+
+
+def _apply_bpm_filter(records, *, minimum_bpm=None, maximum_bpm=None):
+    allowed = []
+    rejected = []
+    for record in records:
+        source_bpm = float(record.candidate["source_bpm"])
+        target_bpm = float(record.candidate["target_bpm"])
+        matches = []
+        for role, bpm in (("source", source_bpm), ("target", target_bpm)):
+            reason = None
+            if minimum_bpm is not None and bpm < float(minimum_bpm):
+                reason = "below_minimum_bpm"
+            elif maximum_bpm is not None and bpm > float(maximum_bpm):
+                reason = "above_maximum_bpm"
+            if reason is not None:
+                matches.append({"role": role, "bpm": bpm, "reason": reason})
+        if matches:
+            rejected.append(
+                {
+                    "example_id": record.example_id,
+                    "exclusion_type": "bpm_filter",
+                    "matches": matches,
+                }
+            )
         else:
             allowed.append(record)
     return allowed, rejected
@@ -707,6 +762,8 @@ def build_argument_parser():
     parser.add_argument("--split-seed", type=int, default=DEFAULT_SPLIT_SEED)
     parser.add_argument("--split-search-attempts", type=int, default=4096)
     parser.add_argument("--max-pairs", type=int)
+    parser.add_argument("--min-bpm", type=float)
+    parser.add_argument("--max-bpm", type=float)
     parser.add_argument(
         "--vocal-backend",
         choices=("disabled", "demucs"),
@@ -740,6 +797,8 @@ def main():
         vocal_backend=args.vocal_backend,
         vocal_model=args.vocal_model,
         track_exclusions_path=args.track_exclusions,
+        minimum_bpm=args.min_bpm,
+        maximum_bpm=args.max_bpm,
         max_pairs=args.max_pairs,
     )
     print(

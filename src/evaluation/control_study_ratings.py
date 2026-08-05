@@ -10,12 +10,19 @@ from pathlib import Path
 import uuid
 
 
-CONTROL_STUDY_RATINGS_FORMAT_VERSION = 2
-RATING_CRITERIA = (
+CONTROL_STUDY_RATINGS_FORMAT_VERSION = 3
+LEGACY_RATING_CRITERIA = (
     "cleanliness",
     "energy_shape",
     "low_end_handover",
     "rhythmic_stability",
+    "vocal_clarity",
+    "artifact_freedom",
+)
+RATING_CRITERIA = (
+    "cleanliness",
+    "energy_shape",
+    "low_end_handover",
     "vocal_clarity",
     "artifact_freedom",
 )
@@ -74,6 +81,41 @@ def create_control_study_ratings(study_directory):
     return ratings_path
 
 
+def migrate_unrated_study_to_current_criteria(study_directory, reason):
+    """Remove legacy-only criteria from an unrated study without losing provenance."""
+    study_directory = Path(study_directory)
+    ratings_path = study_directory / "ratings.json"
+    payload = _read_json(ratings_path)
+    if payload.get("status") != "unrated" or any(
+        entry.get("status") != "unrated" for entry in payload["ratings"]
+    ):
+        raise ValueError("Only a completely unrated study can change rating criteria")
+    previous_criteria = tuple(payload["criteria"])
+    if not set(RATING_CRITERIA).issubset(previous_criteria):
+        raise ValueError("Existing study is missing current rating criteria")
+    removed = [name for name in previous_criteria if name not in RATING_CRITERIA]
+    payload["format_version"] = CONTROL_STUDY_RATINGS_FORMAT_VERSION
+    payload["criteria"] = list(RATING_CRITERIA)
+    for entry in payload["ratings"]:
+        for label in ("A", "B"):
+            entry["scores"][label] = {
+                criterion: entry["scores"][label].get(criterion)
+                for criterion in RATING_CRITERIA
+            }
+    payload.setdefault("criteria_history", []).append(
+        {
+            "changed_at_utc": _utc_now(),
+            "previous": list(previous_criteria),
+            "current": list(RATING_CRITERIA),
+            "removed": removed,
+            "reason": str(reason),
+        }
+    )
+    payload["updated_at_utc"] = _utc_now()
+    _write_json_atomic(ratings_path, payload)
+    return ratings_path
+
+
 def add_control_study_note(study_directory, note):
     """Append one timestamped note that applies to the complete study."""
     study_directory = Path(study_directory)
@@ -101,7 +143,7 @@ def rate_control_study_pair(
     study_directory = Path(study_directory)
     ratings_path = study_directory / "ratings.json"
     payload = _read_json(ratings_path)
-    if int(payload.get("format_version", 0)) not in {1, 2}:
+    if int(payload.get("format_version", 0)) not in {1, 2, 3}:
         raise ValueError("Unsupported control-study ratings format_version")
     if preferred not in PREFERENCES:
         raise ValueError(f"preferred must be one of: {', '.join(PREFERENCES)}")
@@ -177,10 +219,10 @@ def _validate_issues(issues, name, issue_tags=ISSUE_TAGS):
     return issues
 
 
-def _score_dict(args, prefix):
+def _score_dict(args, prefix, criteria=RATING_CRITERIA):
     return {
         criterion: getattr(args, f"{prefix}_{criterion}")
-        for criterion in RATING_CRITERIA
+        for criterion in criteria
     }
 
 
@@ -212,13 +254,13 @@ def build_argument_parser():
     rate_parser.add_argument("pair_index", type=int)
     rate_parser.add_argument("--preferred", choices=PREFERENCES, required=True)
     for variant in ("a", "b"):
-        for criterion in RATING_CRITERIA:
+        for criterion in LEGACY_RATING_CRITERIA:
             rate_parser.add_argument(
                 f"--{variant}-{criterion.replace('_', '-')}",
                 dest=f"{variant}_{criterion}",
                 type=int,
                 choices=range(1, 6),
-                required=True,
+                required=criterion in RATING_CRITERIA,
             )
     rate_parser.add_argument("--issues-a", nargs="*", choices=ISSUE_TAGS, default=())
     rate_parser.add_argument("--issues-b", nargs="*", choices=ISSUE_TAGS, default=())
@@ -234,12 +276,13 @@ def main():
     if args.command == "show":
         print(json.dumps(ratings_summary(args.study_directory), ensure_ascii=False, indent=2))
         return 0
+    criteria = tuple(_read_json(Path(args.study_directory) / "ratings.json")["criteria"])
     rate_control_study_pair(
         args.study_directory,
         args.pair_index,
         preferred=args.preferred,
-        scores_a=_score_dict(args, "a"),
-        scores_b=_score_dict(args, "b"),
+        scores_a=_score_dict(args, "a", criteria),
+        scores_b=_score_dict(args, "b", criteria),
         issues_a=args.issues_a,
         issues_b=args.issues_b,
         notes=args.notes,

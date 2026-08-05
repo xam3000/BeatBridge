@@ -209,3 +209,13 @@ Ratings-Sidecar. Der vollständige Vertrag steht in
   Repräsentationen fehlen weiterhin. Vocal-Features sind ab Objective v4
   enthalten, bleiben aber unkalibrierte Demucs-Ableitungen.
 - Vier Takte und 4/4-Metrum sind zunächst feste Forschungsannahmen.
+
+## Additive Vocal-Erweiterung: Control 4 / Objective 5
+
+Seit 2026-08-05 existiert zusätzlich ein stem-fähiger Renderer mit eigener
+monotoner Vocal-Übergabe und getrenntem Source-/Target-Ducking. Objective v5
+misst tatsächlichen Vocal-Stem-Overlap, bestraft unnötig leise aktive Vocals
+und Gain-Änderungen mitten in einer Vocalphrase. Control v3 und Objective v4
+bleiben für vorhandene Checkpoints und Hörstudien unverändert. Der
+vollständige neue Vertrag steht in
+[`VOCAL_CONTROL_MODEL_PROTOCOL.md`](./VOCAL_CONTROL_MODEL_PROTOCOL.md).

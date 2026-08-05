@@ -132,6 +132,7 @@ def rank_song_targets(
     analysis_location=None,
     target_sample_rate=44_100,
     config: SongCompatibilityConfig | None = None,
+    feature_cache=None,
 ) -> SongCompatibilityResult:
     """Rank complete target songs before generating individual cutpoint pairs.
 
@@ -153,7 +154,7 @@ def rank_song_targets(
         cache_path = Path("output") / "pre_analysis" if analysis_location is None else Path(analysis_location)
         analysis = PreAnalysis(str(cache_path) + os.sep)
 
-    feature_cache = {}
+    feature_cache = {} if feature_cache is None else feature_cache
     source_features = _track_features(source_path, analysis, target_sample_rate, feature_cache)
     unranked_scores = []
     failures = []
@@ -191,8 +192,9 @@ def rank_song_targets(
 
 
 def _track_features(path, analysis, sample_rate, cache):
-    if path in cache:
-        return cache[path]
+    cache_key = (path, int(sample_rate))
+    if cache_key in cache:
+        return cache[cache_key]
     bpm, _ = analysis(path)
     bpm = float(bpm)
     if bpm <= 0:
@@ -221,7 +223,7 @@ def _track_features(path, analysis, sample_rate, cache):
             ),
             rhythm_profile=_resample_profile(onset_strength, length=32),
         )
-    cache[path] = features
+    cache[cache_key] = features
     return features
 
 

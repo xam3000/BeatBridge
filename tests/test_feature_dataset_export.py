@@ -6,7 +6,9 @@ import soundfile as sf
 
 from src.features import FEATURE_DIMENSION, GLOBAL_FEATURE_DIMENSION, SEQUENCE_LENGTH
 from src.features.dataset_export import (
+    CandidateRecord,
     SplitConfig,
+    _apply_bpm_filter,
     assign_track_disjoint_splits,
     export_feature_dataset,
 )
@@ -165,3 +167,33 @@ def test_dataset_export_selects_four_bar_candidate_and_writes_tensors(tmp_path):
     assert {item["split"] for item in manifest["track_assignments"]} == {"train"}
     assert examples[0]["candidate_id"] == "candidate-four"
     assert examples[0]["transition_length_bars"] == 4
+
+
+def test_bpm_filter_is_inclusive_and_rejects_either_track_outside_range(tmp_path):
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text("{}", encoding="utf-8")
+
+    def record(example_id, source_bpm, target_bpm):
+        return CandidateRecord(
+            example_id=example_id,
+            candidate={"source_bpm": source_bpm, "target_bpm": target_bpm},
+            candidate_rank=1,
+            candidate_score=1.0,
+            pair_manifest_path=manifest,
+            pair_manifest_sha256="0" * 64,
+        )
+
+    allowed, rejected = _apply_bpm_filter(
+        (
+            record("inclusive", 145.0, 165.0),
+            record("source-low", 144.99, 155.0),
+            record("target-high", 155.0, 165.01),
+        ),
+        minimum_bpm=145.0,
+        maximum_bpm=165.0,
+    )
+
+    assert [item.example_id for item in allowed] == ["inclusive"]
+    assert [item["example_id"] for item in rejected] == ["source-low", "target-high"]
+    assert rejected[0]["matches"][0]["reason"] == "below_minimum_bpm"
+    assert rejected[1]["matches"][0]["reason"] == "above_maximum_bpm"

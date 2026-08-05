@@ -39,6 +39,73 @@ _Quelle: frühere Ausarbeitung (ChatGPT-Diskussion), ins Projekt übernommen am 
 > am track-getrennten Validation-Split gewählt; der neue geblendete Hörsatz
 > stammt vollständig aus dem unangetasteten Test-Split.
 
+> **Hör-Gate vom 2026-08-04:** Nach vollständiger geblendeter Bewertung
+> wurden die neun Testbeispiele entblindet: alle neun Präferenzen gelten der
+> Objective-v4-optimierten Kurve gegenüber Equal Power. Der Wertungsgewinn
+> liegt ausschließlich bei Sauberkeit; für Vocal-Klarheit besteht noch kein
+> Unterschied. Da nur drei Test-Audiohashes mit mehreren Cue-Varianten
+> vorliegen, ist dies ein bestandenes Entwicklungs-Gate und kein
+> populationsweiter Wirksamkeitsnachweis.
+
+> **ML-Baseline vom 2026-08-04:** Die erste Feature→Control-Baseline ist ein
+> kleines zeitgeteiltes MLP mit 10.394 Parametern. Es sagt keine unabhängigen
+> Gains, sondern die konstruktiv monotonen Control-v3-Inkremente voraus und
+> wird ohne Zielkurven über Renderer und Objective v4 trainiert. Ein
+> hashbasierter Bridge-Waveform-Cache verhindert wiederholtes Laden und
+> Time-Stretching pro Epoche. Der versionierte Trainingsrunner speichert
+> deterministische Train-/Validation-Verläufe, atomare Best-/Latest-
+> Checkpoints, Early Stopping und Resume. Im Erstlauf sank der
+> Validation-Proxy-Loss gegenüber Equal Power um 3,26 %. Der geblendete
+> Neuner-Entwicklungsvergleich des gelernten Modells gegen Equal Power wurde
+> qualitativ gehört; es zeigte sich kein klarer Gesamtvorteil und weiterhin
+> Vocal-Overlap beziehungsweise unnatürlich leise eingeblendete Vocals. Ein
+> neuer externer Modelltestsatz steht weiterhin aus.
+
+> **Vocal-Control-Erweiterung vom 2026-08-05:** Der erste gelernte
+> Zwei-Control-Hörvergleich zeigte nur geringe Unterschiede; auffällig
+> blieben überlappende und unnatürlich leise eingeblendete Vocals. Als
+> additive Version sind deshalb eine eigenständige monotone Vocal-Übergabe,
+> getrenntes Source-/Target-Ducking, ein stem-fähiger differenzierbarer
+> Renderer und Objective v5 implementiert. Der neue Audibility-Term bestraft
+> unnötig leise aktive Vocals. Diese kleine MLP-v2-Sonde ist noch nicht das
+> geplante TCN-/BiLSTM-Hauptmodell. Nach dem direkten Objective-v5-Hör-Gate
+> wurde sie mit einem separaten versionierten Runner trainiert.
+
+> **Vocal-Hör-Gate vom 2026-08-05:** Sechs Kandidaten wurden anhand der
+> tatsächlichen Vocal-Aktivität in beiden vier Takte langen
+> Übergangsfenstern ausgewählt und als geblendeter Objective-v4/v5-Vergleich
+> gerendert. Beide Varianten verwenden denselben stem-fähigen Renderer und
+> gemeinsamen Peak-Gain. Nach vollständiger geblendeter Bewertung gewinnt
+> Objective v5 zwei Paare, Objective v4 eines, drei sind Gleichstände. Nur
+> die Vocal-Klarheit verbessert sich; drei Paare werden durch gemeinsame
+> Time-Stretch-Artefakte begrenzt. Das Gate ist positiv, aber wegen eines
+> Raters und sechs Entwicklungsbeispielen kein populationsweiter Nachweis.
+
+> **Vocal-ML-Erstlauf vom 2026-08-05:** Ein eigener versionierter
+> `self_supervised_vocal_train_validation_v2`-Runner trainiert Modellformat 2
+> jetzt end-to-end über den stem-fähigen Renderer und Objective v5. Er bindet
+> alle tatsächlich verwendeten Vocal-Cachemanifeste per SHA-256, hält den
+> Testsplit unangetastet und speichert atomare Best-/Latest-Checkpoints sowie
+> exaktes Resume. Im realen 45/9-Train-/Validation-Lauf lag die beste
+> Validation in Epoche 16; der Gesamt-Proxy-Loss sank um 3,17 %, Vocal-
+> Overlap um 26,70 % und Vocal-Audibility um 25,27 %. Da zugleich der alte
+> Objective-v4-Anteil um 5,05 % anstieg, entscheidet als nächstes ein
+> geblendeter Hörvergleich des gelernten Best-Checkpoints gegen die
+> ungelernte Vocal-Baseline.
+
+> **Dataset- und Trainings-Erweiterung vom 2026-08-05:** Der rekursive
+> Musikimport umfasst 119 FLAC-Pfade. `STRUGGLING`, ein exaktes
+> Audio-Duplikat und sechs Tracks unter 145 BPM wurden vor Ranking und
+> Kandidatengenerierung ausgeschlossen; kein Track lag über 165 BPM. Aus 111
+> eindeutigen zulässigen Quellen entstand ein fehlerfreier Top-1-Paarbatch.
+> Bis zu zehn Vier-Takt-Cues pro Paar ergeben nach strikter Audio-SHA-
+> Trennung **370 Train / 50 Validation / 60 Test** über 43/5/7 verwendete
+> Trackhashes. Der zweite Vocal-v2-Lauf verbessert den Validation-Proxy-Loss
+> bis Epoche 22 um 6,14 %, den alten v4-Anteil um 4,83 %, Energieform um
+> 8,79 %, Vocal-Overlap um 44,39 % und Audibility um 10,04 %. Die
+> Mid-Phrase-Gain-Änderung steigt jedoch um 204,28 %; deshalb bleibt der
+> geblendete Modellhörvergleich das nächste Gate.
+
 ## 1. Ausgangslage und Motivation
 
 Ziel der Masterarbeit ist ein System zur KI-gestützten Erstellung musikalischer Übergänge für **Tanz-Mashups**. Bei Tanzperformances werden häufig ausgewählte Abschnitte verschiedener Songs kombiniert (Intros/Outros, Build-ups/Drops, Breaks, Refrains, choreografisch relevante Abschnitte).

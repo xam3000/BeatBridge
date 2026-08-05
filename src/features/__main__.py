@@ -42,6 +42,8 @@ def build_argument_parser():
     export_parser.add_argument("--split-seed", type=int, default=20260731)
     export_parser.add_argument("--split-search-attempts", type=int, default=4096)
     export_parser.add_argument("--max-pairs", type=int)
+    export_parser.add_argument("--min-bpm", type=float)
+    export_parser.add_argument("--max-bpm", type=float)
     export_parser.add_argument(
         "--vocal-backend",
         choices=("disabled", "demucs"),
@@ -82,6 +84,8 @@ def main():
             vocal_backend=args.vocal_backend,
             vocal_model=args.vocal_model,
             track_exclusions_path=args.track_exclusions,
+            minimum_bpm=args.min_bpm,
+            maximum_bpm=args.max_bpm,
             max_pairs=args.max_pairs,
         )
         print(

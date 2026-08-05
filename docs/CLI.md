@@ -224,6 +224,27 @@ regulären Paar-Manifeste und dokumentiert die vollständige Songauswahl.
   --output-dir "output\batches\all_songs_top3_targets_top3_transitions_20260722"
 ```
 
+Ein Verzeichnisargument wird rekursiv nach `.flac`, `.mp3`, `.ogg` und
+`.wav` durchsucht. Exakte Audio-Duplikate werden per SHA-256 nur einmal
+verwendet. Ein inklusiver BPM-Bereich kann bereits vor Songranking und
+Kandidatengenerierung erzwungen werden:
+
+```powershell
+.venv\Scripts\python.exe -m src.multi_batch_render `
+  musik `
+  --output-dir output\batches\all_music_recursive_bpm145_165_top1_20260805 `
+  --top-targets 1 `
+  --top-transitions 1 `
+  --renderers equal_power `
+  --min-bpm 145 `
+  --max-bpm 165 `
+  --analysis-workers 4
+```
+
+Das Root-Manifest dokumentiert Policy-Ausschlüsse, Audio-Duplikate,
+BPM-Ausschlüsse, Analysefehler und die Workerzahl getrennt. Die Worker teilen
+keine temporären aufTAKT-Dateien.
+
 Das Wurzel-Manifest wird nach jedem Songpaar atomar aktualisiert. Bereits
 abgeschlossene Paare bleiben bei einer Unterbrechung nachvollziehbar.
 
@@ -400,11 +421,153 @@ Feature→Control-Eingaben exportieren:
   --vocal-backend demucs
 ```
 
+Erweiterter 145–165-BPM-Export mit mehr Cue-Varianz je Paar:
+
+```powershell
+.venv\Scripts\python.exe -m src.features export-dataset `
+  output\batches\all_music_recursive_bpm145_165_top1_20260805\manifest.json `
+  output\datasets\feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 `
+  --top-k-per-pair 10 `
+  --transition-bars 4 `
+  --split-seed 20260805 `
+  --min-bpm 145 `
+  --max-bpm 165 `
+  --vocal-backend demucs
+```
+
 Der Export erzeugt `train.npz`, `validation.npz`, `test.npz`,
 `examples.jsonl` und `manifest.json`. Splits werden über Audio-SHA statt
 Kandidaten gebildet; Source und Target eines exportierten Beispiels liegen
 immer im selben Split. Normalisierungsstatistiken stammen ausschließlich aus
 Trainings-Tracks. Details: [`DATASET_PROTOCOL.md`](./DATASET_PROTOCOL.md).
+
+## Feature→Control-MLP trainieren
+
+Der Trainingslauf baut fehlende Bridge-Waveform-Caches einmalig auf, misst in
+Epoche 0 die Equal-Power-Initialisierung und trainiert anschließend nur auf
+`train`. `validation` steuert Best-Checkpoint und Early Stopping; `test` wird
+nicht geladen.
+
+```powershell
+.venv\Scripts\python.exe -m src.ml train `
+  output\datasets\feature_protocol_v1_top3_4bar_track_split_20260731 `
+  output\training_runs\time_shared_mlp_v1_objective_v4_seed20260804_20260804 `
+  --seed 20260804 `
+  --max-epochs 30 `
+  --batch-size 5 `
+  --patience 6
+```
+
+Ein unterbrochener Lauf kann bei identischem Vertrag mit höherem
+`--max-epochs` fortgesetzt werden:
+
+```powershell
+.venv\Scripts\python.exe -m src.ml train <dataset> <run-ordner> `
+  --max-epochs 60 `
+  --resume
+```
+
+Details zu Checkpoints, Hashes und Reproduzierbarkeit:
+[`ML_CONTROL_MODEL_PROTOCOL.md`](./ML_CONTROL_MODEL_PROTOCOL.md).
+
+## Gelerntes MLP blind gegen Equal Power hören
+
+```powershell
+.venv\Scripts\python.exe -m src.evaluation.ml_control_study `
+  output\datasets\feature_protocol_v1_top3_4bar_track_split_20260731 `
+  output\training_runs\time_shared_mlp_v1_objective_v4_seed20260804_20260804 `
+  output\control_studies\blind_v6_mlp_v1_best_vs_equal_power_validation9_20260804_rerun `
+  --split validation `
+  --max-examples-per-pair 9 `
+  --blind-seed 20260804
+```
+
+Der Validation-Split ist ein Entwicklungsvergleich, da er bereits für
+Early Stopping verwendet wurde. Während des Hörens nur `A.wav`, `B.wav`,
+`README.md` und `ratings.json` verwenden; `answer_key.json` bleibt bis zur
+vollständigen Bewertung geschlossen.
+
+## Vocal-Control-Modell v2 prüfen und Waveforms cachen
+
+Modellkonfiguration und Ausgaben anzeigen:
+
+```powershell
+.venv\Scripts\python.exe -m src.ml model-info-vocal
+```
+
+Mix und Demucs-Vocal-Stems für Objective v5 samplegleich cachen:
+
+```powershell
+.venv\Scripts\python.exe -m src.ml cache-vocal-waveforms `
+  output\datasets\feature_protocol_v1_top3_4bar_track_split_20260731 `
+  --split train `
+  --training-sample-rate 11025
+```
+
+Der neue Cache liegt getrennt unter
+`output/ml_cache/bridge_waveform_v2_vocal/`. Der bestehende `train`-Befehl
+trainiert weiterhin nur Modell v1 mit Objective v4.
+
+Das Vocal-Modell v2 mit Objective v5 trainieren:
+
+```powershell
+.venv\Scripts\python.exe -m src.ml train-vocal `
+  output\datasets\feature_protocol_v1_top3_4bar_track_split_20260731 `
+  output\training_runs\vocal_time_shared_mlp_v2_objective_v5_seed20260805_20260805 `
+  --seed 20260805 `
+  --max-epochs 30 `
+  --batch-size 5 `
+  --learning-rate 0.001 `
+  --patience 6 `
+  --min-delta 0.0001 `
+  --training-sample-rate 11025
+```
+
+Fehlende Vocal-Waveform-Caches für Train und Validation werden dabei einmalig
+aufgebaut; der Testsplit bleibt unangetastet. Resume verwendet den separaten
+Befehl und verlangt einen identischen Run-Vertrag:
+
+```powershell
+.venv\Scripts\python.exe -m src.ml train-vocal <dataset> <run-ordner> `
+  --max-epochs 60 `
+  --resume
+```
+
+Der reale Lauf auf dem erweiterten Datensatz:
+
+```powershell
+.venv\Scripts\python.exe -m src.ml train-vocal `
+  output\datasets\feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 `
+  output\training_runs\vocal_time_shared_mlp_v2_extended_bpm145_165_top10_seed20260805_20260805 `
+  --seed 20260805 `
+  --max-epochs 30 `
+  --batch-size 5 `
+  --learning-rate 0.001 `
+  --patience 6 `
+  --min-delta 0.0001 `
+  --training-sample-rate 11025
+```
+
+Details zu Vertrag, Checkpoints und aktuellem Trainingsstand:
+[`VOCAL_CONTROL_MODEL_PROTOCOL.md`](./VOCAL_CONTROL_MODEL_PROTOCOL.md).
+
+## Vocal-reiche Objective-v4/v5-Controls blind vergleichen
+
+```powershell
+.venv\Scripts\python.exe -m src.evaluation.vocal_objective_study `
+  output\datasets\feature_protocol_v1_top3_4bar_track_split_20260731 `
+  output\control_studies\blind_v7_objective_v5_vocal_active6_20260805_rerun `
+  --splits train validation `
+  --pair-count 6 `
+  --optimization-steps 80 `
+  --learning-rate 0.06
+```
+
+Die Auswahl verlangt Vocal-Aktivität in den tatsächlich gerenderten
+Source- und Targetfenstern, begrenzt Trackwiederholungen und schließt
+`STRUGGLING` explizit aus. Während der Bewertung nur `A.wav`, `B.wav`,
+`README.md` und `ratings.json` verwenden; `answer_key.json` bleibt bis zum
+Abschluss geschlossen.
 
 ## Analyse-Cache und Ausgaben
 

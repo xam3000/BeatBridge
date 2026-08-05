@@ -6,6 +6,7 @@ from src.evaluation.control_study_ratings import (
     RATING_CRITERIA,
     add_control_study_note,
     create_control_study_ratings,
+    migrate_unrated_study_to_current_criteria,
     rate_control_study_pair,
     ratings_summary,
 )
@@ -75,3 +76,24 @@ def test_study_wide_note_is_appended_without_changing_pair_ratings(tmp_path):
     payload = json.loads((study / "ratings.json").read_text(encoding="utf-8"))
     assert payload["study_notes"][0]["note"].startswith("A score of 5")
     assert all(entry["status"] == "unrated" for entry in payload["ratings"])
+
+
+def test_unrated_legacy_study_can_remove_rhythm_with_provenance(tmp_path):
+    study = _study(tmp_path)
+    payload = json.loads((study / "ratings.json").read_text(encoding="utf-8"))
+    payload["format_version"] = 2
+    payload["criteria"].insert(3, "rhythmic_stability")
+    for entry in payload["ratings"]:
+        for label in ("A", "B"):
+            entry["scores"][label]["rhythmic_stability"] = None
+    (study / "ratings.json").write_text(json.dumps(payload), encoding="utf-8")
+
+    migrate_unrated_study_to_current_criteria(
+        study,
+        "The evaluated model cannot affect rhythm.",
+    )
+
+    migrated = json.loads((study / "ratings.json").read_text(encoding="utf-8"))
+    assert migrated["format_version"] == 3
+    assert "rhythmic_stability" not in migrated["criteria"]
+    assert migrated["criteria_history"][0]["removed"] == ["rhythmic_stability"]

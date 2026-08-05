@@ -10,8 +10,8 @@ from pathlib import Path
 import uuid
 
 
-CONTROL_STUDY_RESULTS_FORMAT_VERSION = 1
-METHODS = ("baseline_equal_power", "optimized_proxy")
+CONTROL_STUDY_RESULTS_FORMAT_VERSION = 2
+LEGACY_METHODS = ("baseline_equal_power", "optimized_proxy")
 
 
 def analyze_control_study(study_directory, output_path=None):
@@ -32,12 +32,14 @@ def analyze_control_study(study_directory, output_path=None):
     if not (set(manifest_pairs) == set(rating_pairs) == set(answer_pairs)):
         raise ValueError("Pair indices differ between manifest, ratings, and answer key")
 
+    methods = _resolve_methods(answer_key)
+    reference_method, candidate_method = methods
     criteria = tuple(ratings["criteria"])
     values = {
         method: {criterion: [] for criterion in criteria}
-        for method in METHODS
+        for method in methods
     }
-    preference_counts = {method: 0 for method in METHODS}
+    preference_counts = {method: 0 for method in methods}
     preference_counts["tie"] = 0
     pair_results = []
 
@@ -47,7 +49,7 @@ def analyze_control_study(study_directory, output_path=None):
         answer = answer_pairs[pair_index]
         _validate_pair_identity(public_pair, rating, answer)
         mapping = answer["mapping"]
-        if set(mapping) != {"A", "B"} or set(mapping.values()) != set(METHODS):
+        if set(mapping) != {"A", "B"} or set(mapping.values()) != set(methods):
             raise ValueError(f"Invalid A/B method mapping for pair {pair_index}")
         if rating.get("status") != "rated":
             raise ValueError(f"Pair {pair_index} is not rated")
@@ -84,7 +86,7 @@ def analyze_control_study(study_directory, output_path=None):
         )
 
     criterion_summary = {}
-    for method in METHODS:
+    for method in methods:
         criterion_summary[method] = {
             criterion: _summary(values[method][criterion])
             for criterion in criteria
@@ -101,8 +103,8 @@ def analyze_control_study(study_directory, output_path=None):
         deltas = [
             optimized - baseline
             for optimized, baseline in zip(
-                values["optimized_proxy"][criterion],
-                values["baseline_equal_power"][criterion],
+                values[candidate_method][criterion],
+                values[reference_method][criterion],
                 strict=True,
             )
         ]
@@ -111,8 +113,8 @@ def analyze_control_study(study_directory, output_path=None):
         optimized - baseline
         for criterion in criteria
         for optimized, baseline in zip(
-            values["optimized_proxy"][criterion],
-            values["baseline_equal_power"][criterion],
+            values[candidate_method][criterion],
+            values[reference_method][criterion],
             strict=True,
         )
     ]
@@ -133,17 +135,22 @@ def analyze_control_study(study_directory, output_path=None):
             "completed_rating_sets": 1,
             "rater_count": 1,
         },
-        "methods": list(METHODS),
+        "methods": list(methods),
+        "comparison": {
+            "reference_method": reference_method,
+            "candidate_method": candidate_method,
+            "delta_definition": "candidate_minus_reference",
+        },
         "criteria": list(criteria),
         "preference_counts": preference_counts,
         "preference_rates_excluding_ties": {
             method: (
                 preference_counts[method] / decisive_count if decisive_count else None
             )
-            for method in METHODS
+            for method in methods
         },
         "criterion_summary": criterion_summary,
-        "paired_delta_optimized_minus_baseline": paired_deltas,
+        "paired_delta_candidate_minus_reference": paired_deltas,
         "pairs": pair_results,
         "study_notes": list(ratings.get("study_notes", [])),
         "interpretation_limits": [
@@ -152,11 +159,24 @@ def analyze_control_study(study_directory, output_path=None):
             "Scores of 5 mean that no negative issue was noticed, not perfection.",
         ],
     }
+    if methods == LEGACY_METHODS:
+        payload["paired_delta_optimized_minus_baseline"] = paired_deltas
     output_path = (
         Path(output_path) if output_path else study_directory / "study_results.json"
     )
     _write_json_atomic(output_path, payload)
     return output_path
+
+
+def _resolve_methods(answer_key):
+    declared = answer_key.get("methods")
+    if declared is not None:
+        methods = tuple(str(method) for method in declared)
+    else:
+        methods = LEGACY_METHODS
+    if len(methods) != 2 or len(set(methods)) != 2:
+        raise ValueError("A/B studies require exactly two distinct methods")
+    return methods
 
 
 def _index_pairs(pairs, source_name):
@@ -225,7 +245,7 @@ def main():
                 "preference_counts": result["preference_counts"],
                 "overall_means": {
                     method: result["criterion_summary"][method]["overall"]["mean"]
-                    for method in METHODS
+                    for method in result["methods"]
                 },
             },
             ensure_ascii=False,

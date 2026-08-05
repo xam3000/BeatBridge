@@ -14,6 +14,8 @@ from src.features.contract import feature_index
 
 CONTROL_PROTOCOL_VERSION = 3
 OBJECTIVE_VERSION = 4
+VOCAL_CONTROL_PROTOCOL_VERSION = 4
+VOCAL_OBJECTIVE_VERSION = 5
 CONTROL_NAMES = ("mix_position", "low_end_position")
 DEFAULT_INCREMENT_LOGIT_BOUND = 0.6
 
@@ -30,6 +32,25 @@ class DifferentiableRenderResult:
     gain_b: torch.Tensor
     low_gain_a: torch.Tensor
     low_gain_b: torch.Tensor
+
+
+@dataclass(frozen=True)
+class VocalAwareRenderResult:
+    """Rendered audio and sample-resolution mix, low-end, and vocal controls."""
+
+    format_version: int
+    audio: torch.Tensor
+    mix_position: torch.Tensor
+    low_end_position: torch.Tensor
+    vocal_position: torch.Tensor
+    gain_a: torch.Tensor
+    gain_b: torch.Tensor
+    low_gain_a: torch.Tensor
+    low_gain_b: torch.Tensor
+    vocal_gain_a: torch.Tensor
+    vocal_gain_b: torch.Tensor
+    vocal_duck_a: torch.Tensor
+    vocal_duck_b: torch.Tensor
 
 
 @dataclass(frozen=True)
@@ -70,6 +91,29 @@ class DifferentiableTransitionObjectiveConfig:
             raise ValueError("Objective tolerances must be greater than 0")
         if self.epsilon <= 0:
             raise ValueError("epsilon must be greater than 0")
+
+
+@dataclass(frozen=True)
+class VocalAwareTransitionObjectiveConfig(DifferentiableTransitionObjectiveConfig):
+    """Objective-v5 weights for stem overlap and audible active vocals."""
+
+    vocal_overlap_weight: float = 0.0
+    vocal_boundary_weight: float = 0.0
+    vocal_stem_overlap_weight: float = 1.0
+    vocal_audibility_weight: float = 0.5
+    vocal_mid_phrase_gain_change_weight: float = 0.2
+
+    def __post_init__(self):
+        super().__post_init__()
+        if any(
+            weight < 0
+            for weight in (
+                self.vocal_stem_overlap_weight,
+                self.vocal_audibility_weight,
+                self.vocal_mid_phrase_gain_change_weight,
+            )
+        ):
+            raise ValueError("Vocal-aware objective weights must be non-negative")
 
 
 class DifferentiableTwoBandRenderer(nn.Module):
@@ -183,6 +227,127 @@ class DifferentiableTwoBandRenderer(nn.Module):
         return filtered.reshape(batch_size, channels, sample_count)
 
 
+class DifferentiableVocalAwareRenderer(nn.Module):
+    """Render accompaniment in two bands and vocals with independent gains."""
+
+    def __init__(
+        self,
+        sample_rate: int = 44_100,
+        lowpass_cutoff_hz: float = 180.0,
+        lowpass_kernel_size: int = 255,
+    ):
+        super().__init__()
+        self.accompaniment_renderer = DifferentiableTwoBandRenderer(
+            sample_rate=sample_rate,
+            lowpass_cutoff_hz=lowpass_cutoff_hz,
+            lowpass_kernel_size=lowpass_kernel_size,
+        )
+
+    @property
+    def sample_rate(self):
+        return self.accompaniment_renderer.sample_rate
+
+    def forward(
+        self,
+        source_audio: torch.Tensor,
+        target_audio: torch.Tensor,
+        source_vocal_audio: torch.Tensor,
+        target_vocal_audio: torch.Tensor,
+        mix_position: torch.Tensor,
+        low_end_position: torch.Tensor,
+        vocal_position: torch.Tensor,
+        vocal_duck_a: torch.Tensor,
+        vocal_duck_b: torch.Tensor,
+    ) -> VocalAwareRenderResult:
+        source, squeezed = _normalise_audio(source_audio, "source_audio")
+        target, target_squeezed = _normalise_audio(target_audio, "target_audio")
+        source_vocal, source_vocal_squeezed = _normalise_audio(
+            source_vocal_audio,
+            "source_vocal_audio",
+        )
+        target_vocal, target_vocal_squeezed = _normalise_audio(
+            target_vocal_audio,
+            "target_vocal_audio",
+        )
+        if len({squeezed, target_squeezed, source_vocal_squeezed, target_vocal_squeezed}) != 1:
+            raise ValueError("Mix and vocal tensors must have the same rank")
+        if not (source.shape == target.shape == source_vocal.shape == target_vocal.shape):
+            raise ValueError("Mix and vocal tensors must have identical shapes")
+        if not (
+            source.device == target.device == source_vocal.device == target_vocal.device
+            and source.dtype == target.dtype == source_vocal.dtype == target_vocal.dtype
+        ):
+            raise ValueError("Mix and vocal tensors must share device and dtype")
+        if not all(
+            torch.isfinite(value).all()
+            for value in (source, target, source_vocal, target_vocal)
+        ):
+            raise ValueError("Mix and vocal tensors must contain only finite values")
+
+        accompaniment = self.accompaniment_renderer(
+            source - source_vocal,
+            target - target_vocal,
+            mix_position,
+            low_end_position,
+        )
+        batch_size, _, sample_count = source.shape
+        vocal_control = _normalise_control(
+            vocal_position,
+            batch_size,
+            source.device,
+            source.dtype,
+            "vocal_position",
+        )
+        duck_a_control = _normalise_control(
+            vocal_duck_a,
+            batch_size,
+            source.device,
+            source.dtype,
+            "vocal_duck_a",
+        )
+        duck_b_control = _normalise_control(
+            vocal_duck_b,
+            batch_size,
+            source.device,
+            source.dtype,
+            "vocal_duck_b",
+        )
+        if not (vocal_control.shape == duck_a_control.shape == duck_b_control.shape):
+            raise ValueError("Vocal position and ducking controls must have identical shapes")
+        vocal_samples = _interpolate_control(vocal_control, sample_count)
+        duck_a_samples = _interpolate_control(duck_a_control, sample_count)
+        duck_b_samples = _interpolate_control(duck_b_control, sample_count)
+        vocal_base_a, vocal_base_b = _equal_power_pair(vocal_samples)
+        vocal_gain_a = vocal_base_a * (1.0 - duck_a_samples)
+        vocal_gain_b = vocal_base_b * (1.0 - duck_b_samples)
+        accompaniment_audio, _ = _normalise_audio(
+            accompaniment.audio,
+            "accompaniment.audio",
+        )
+        audio = (
+            accompaniment_audio
+            + source_vocal * vocal_gain_a.unsqueeze(1)
+            + target_vocal * vocal_gain_b.unsqueeze(1)
+        )
+        if squeezed:
+            audio = audio.squeeze(0)
+        return VocalAwareRenderResult(
+            format_version=VOCAL_CONTROL_PROTOCOL_VERSION,
+            audio=audio,
+            mix_position=accompaniment.mix_position,
+            low_end_position=accompaniment.low_end_position,
+            vocal_position=vocal_samples,
+            gain_a=accompaniment.gain_a,
+            gain_b=accompaniment.gain_b,
+            low_gain_a=accompaniment.low_gain_a,
+            low_gain_b=accompaniment.low_gain_b,
+            vocal_gain_a=vocal_gain_a,
+            vocal_gain_b=vocal_gain_b,
+            vocal_duck_a=duck_a_samples,
+            vocal_duck_b=duck_b_samples,
+        )
+
+
 class DifferentiableTransitionObjective(nn.Module):
     """Differentiable proxy objective for the first control-learning probe."""
 
@@ -292,6 +457,117 @@ class DifferentiableTransitionObjective(nn.Module):
         }
 
 
+class VocalAwareTransitionObjective(DifferentiableTransitionObjective):
+    """Objective v5: prevent clashes without making active vocals needlessly quiet."""
+
+    def __init__(
+        self,
+        config: VocalAwareTransitionObjectiveConfig | None = None,
+        energy_frames: int = 32,
+    ):
+        config = config or VocalAwareTransitionObjectiveConfig()
+        super().__init__(config=config, energy_frames=energy_frames)
+        self.config = config
+
+    def forward(
+        self,
+        render_result: VocalAwareRenderResult,
+        source_audio: torch.Tensor,
+        target_audio: torch.Tensor,
+        source_vocal_audio: torch.Tensor,
+        target_vocal_audio: torch.Tensor,
+        features_a: torch.Tensor,
+        features_b: torch.Tensor,
+    ) -> dict[str, torch.Tensor]:
+        terms = super().forward(
+            render_result,
+            source_audio,
+            target_audio,
+            features_a,
+            features_b,
+        )
+        source_features = _normalise_objective_features(
+            features_a,
+            _restore_control_points(render_result.vocal_gain_a, self.energy_frames),
+            "features_a",
+        )
+        target_features = _normalise_objective_features(
+            features_b,
+            _restore_control_points(render_result.vocal_gain_b, self.energy_frames),
+            "features_b",
+        )
+        source_vocal, _ = _normalise_audio(source_vocal_audio, "source_vocal_audio")
+        target_vocal, _ = _normalise_audio(target_vocal_audio, "target_vocal_audio")
+        if source_vocal.shape != target_vocal.shape:
+            raise ValueError("Source and target vocal stems must have identical shapes")
+        vocal_gain_a = _restore_control_points(
+            render_result.vocal_gain_a,
+            self.energy_frames,
+        )
+        vocal_gain_b = _restore_control_points(
+            render_result.vocal_gain_b,
+            self.energy_frames,
+        )
+        source_strength = _vocal_strength(source_features) * _channel(
+            source_features,
+            "vocal_valid",
+        )
+        target_strength = _vocal_strength(target_features) * _channel(
+            target_features,
+            "vocal_valid",
+        )
+        source_stem_strength = _normalised_stem_strength(
+            source_vocal,
+            self.energy_frames,
+            self.config.epsilon,
+        )
+        target_stem_strength = _normalised_stem_strength(
+            target_vocal,
+            self.energy_frames,
+            self.config.epsilon,
+        )
+        source_strength = source_strength * source_stem_strength
+        target_strength = target_strength * target_stem_strength
+
+        vocal_stem_overlap = torch.mean(
+            source_strength
+            * target_strength
+            * (vocal_gain_a * vocal_gain_b) ** 2
+        )
+        source_audibility_weight = source_strength * (1.0 - 0.75 * target_strength)
+        target_audibility_weight = target_strength * (1.0 - 0.75 * source_strength)
+        vocal_audibility = torch.mean(
+            source_audibility_weight * (1.0 - vocal_gain_a) ** 2
+            + target_audibility_weight * (1.0 - vocal_gain_b) ** 2
+        )
+
+        source_mid_phrase = source_strength * (
+            1.0 - _channel(source_features, "vocal_offset_probability")
+        )
+        target_mid_phrase = target_strength * (
+            1.0 - _channel(target_features, "vocal_onset_probability")
+        )
+        vocal_mid_phrase_gain_change = torch.mean(
+            _midpoint(source_mid_phrase) * torch.diff(vocal_gain_a, dim=-1) ** 2
+            + _midpoint(target_mid_phrase) * torch.diff(vocal_gain_b, dim=-1) ** 2
+        )
+        total = (
+            terms["loss"]
+            + self.config.vocal_stem_overlap_weight * vocal_stem_overlap
+            + self.config.vocal_audibility_weight * vocal_audibility
+            + self.config.vocal_mid_phrase_gain_change_weight
+            * vocal_mid_phrase_gain_change
+        )
+        return {
+            **terms,
+            "loss_v4": terms["loss"],
+            "loss": total,
+            "vocal_stem_overlap": vocal_stem_overlap,
+            "vocal_audibility": vocal_audibility,
+            "vocal_mid_phrase_gain_change": vocal_mid_phrase_gain_change,
+        }
+
+
 class OptimizableControlCurves(nn.Module):
     """Strictly monotone curves with constructively bounded increments."""
 
@@ -315,15 +591,64 @@ class OptimizableControlCurves(nn.Module):
         self.low_end_increment_logits = nn.Parameter(initial_increment_logits.clone())
 
     def forward(self) -> tuple[torch.Tensor, torch.Tensor]:
-        mix_position = _bounded_monotone_unit_curve(
+        mix_position = bounded_monotone_unit_curve(
             self.mix_increment_logits,
             self.increment_logit_bound,
         )
-        low_end_position = _bounded_monotone_unit_curve(
+        low_end_position = bounded_monotone_unit_curve(
             self.low_end_increment_logits,
             self.increment_logit_bound,
         )
         return mix_position, low_end_position
+
+
+class OptimizableVocalControlCurves(nn.Module):
+    """Directly optimizable mix, low-end, vocal, and vocal-duck controls."""
+
+    def __init__(
+        self,
+        control_points: int = 32,
+        increment_logit_bound: float = DEFAULT_INCREMENT_LOGIT_BOUND,
+        maximum_vocal_ducking: float = 0.75,
+        initial_vocal_duck_logit: float = -4.0,
+    ):
+        super().__init__()
+        self.control_points = int(control_points)
+        self.increment_logit_bound = float(increment_logit_bound)
+        self.maximum_vocal_ducking = float(maximum_vocal_ducking)
+        if self.control_points < 3:
+            raise ValueError("control_points must be at least 3")
+        if not math.isfinite(self.increment_logit_bound) or self.increment_logit_bound <= 0:
+            raise ValueError("increment_logit_bound must be a finite value above 0")
+        if not 0.0 <= self.maximum_vocal_ducking < 1.0:
+            raise ValueError("maximum_vocal_ducking must be in [0, 1)")
+        if not math.isfinite(float(initial_vocal_duck_logit)):
+            raise ValueError("initial_vocal_duck_logit must be finite")
+        initial_increment_logits = torch.zeros(self.control_points - 1)
+        self.mix_increment_logits = nn.Parameter(initial_increment_logits.clone())
+        self.low_end_increment_logits = nn.Parameter(initial_increment_logits.clone())
+        self.vocal_increment_logits = nn.Parameter(initial_increment_logits.clone())
+        self.vocal_duck_logits = nn.Parameter(
+            torch.full((2, self.control_points), float(initial_vocal_duck_logit))
+        )
+
+    def forward(self):
+        positions = tuple(
+            bounded_monotone_unit_curve(logits, self.increment_logit_bound)
+            for logits in (
+                self.mix_increment_logits,
+                self.low_end_increment_logits,
+                self.vocal_increment_logits,
+            )
+        )
+        vocal_position = positions[2]
+        duck_window = 4.0 * vocal_position * (1.0 - vocal_position)
+        vocal_duck = (
+            self.maximum_vocal_ducking
+            * torch.sigmoid(self.vocal_duck_logits)
+            * duck_window.unsqueeze(0)
+        )
+        return (*positions, vocal_duck[0], vocal_duck[1])
 
 
 @dataclass(frozen=True)
@@ -339,6 +664,25 @@ class ControlOptimizationResult:
     loss_history: tuple[float, ...]
     increment_logit_bound: float
     maximum_control_increment: float
+
+
+@dataclass(frozen=True)
+class VocalControlOptimizationResult:
+    """Detached result of direct Objective-v5 control optimization."""
+
+    format_version: int
+    mix_position: torch.Tensor
+    low_end_position: torch.Tensor
+    vocal_position: torch.Tensor
+    vocal_duck_a: torch.Tensor
+    vocal_duck_b: torch.Tensor
+    audio: torch.Tensor
+    initial_loss: float
+    final_loss: float
+    loss_history: tuple[float, ...]
+    increment_logit_bound: float
+    maximum_control_increment: float
+    maximum_vocal_ducking: float
 
 
 def optimize_control_curves(
@@ -427,6 +771,76 @@ def optimize_control_curves(
     )
 
 
+def optimize_vocal_control_curves(
+    source_audio: torch.Tensor,
+    target_audio: torch.Tensor,
+    source_vocal_audio: torch.Tensor,
+    target_vocal_audio: torch.Tensor,
+    *,
+    renderer: DifferentiableVocalAwareRenderer,
+    objective: VocalAwareTransitionObjective | None = None,
+    control_points: int = 32,
+    steps: int = 100,
+    learning_rate: float = 0.05,
+    increment_logit_bound: float = DEFAULT_INCREMENT_LOGIT_BOUND,
+    maximum_vocal_ducking: float = 0.75,
+    features_a: torch.Tensor,
+    features_b: torch.Tensor,
+) -> VocalControlOptimizationResult:
+    """Directly optimize vocal-aware controls without a prediction model."""
+    if steps < 1:
+        raise ValueError("steps must be at least 1")
+    if learning_rate <= 0:
+        raise ValueError("learning_rate must be greater than 0")
+    audio = (source_audio, target_audio, source_vocal_audio, target_vocal_audio)
+    if len({(item.device, item.dtype) for item in audio}) != 1:
+        raise ValueError("Mix and vocal tensors must share device and dtype")
+
+    objective = objective or VocalAwareTransitionObjective(energy_frames=control_points)
+    curves = OptimizableVocalControlCurves(
+        control_points,
+        increment_logit_bound=increment_logit_bound,
+        maximum_vocal_ducking=maximum_vocal_ducking,
+    ).to(device=source_audio.device, dtype=source_audio.dtype)
+    optimizer = torch.optim.Adam(curves.parameters(), lr=learning_rate)
+    loss_history = []
+
+    for _ in range(steps):
+        optimizer.zero_grad()
+        controls = curves()
+        rendered = renderer(*audio, *controls)
+        terms = objective(rendered, *audio, features_a, features_b)
+        terms["loss"].backward()
+        optimizer.step()
+        loss_history.append(float(terms["loss"].detach().cpu()))
+
+    with torch.no_grad():
+        controls = curves()
+        rendered = renderer(*audio, *controls)
+        final_loss = float(
+            objective(rendered, *audio, features_a, features_b)["loss"].detach().cpu()
+        )
+
+    return VocalControlOptimizationResult(
+        format_version=VOCAL_CONTROL_PROTOCOL_VERSION,
+        mix_position=controls[0].detach(),
+        low_end_position=controls[1].detach(),
+        vocal_position=controls[2].detach(),
+        vocal_duck_a=controls[3].detach(),
+        vocal_duck_b=controls[4].detach(),
+        audio=rendered.audio.detach(),
+        initial_loss=loss_history[0],
+        final_loss=final_loss,
+        loss_history=tuple(loss_history),
+        increment_logit_bound=float(increment_logit_bound),
+        maximum_control_increment=maximum_control_increment(
+            control_points,
+            increment_logit_bound,
+        ),
+        maximum_vocal_ducking=float(maximum_vocal_ducking),
+    )
+
+
 def _normalise_audio(audio: torch.Tensor, name: str) -> tuple[torch.Tensor, bool]:
     if not isinstance(audio, torch.Tensor):
         raise TypeError(f"{name} must be a torch.Tensor")
@@ -496,14 +910,15 @@ def maximum_control_increment(
     )
 
 
-def _bounded_monotone_unit_curve(
+def bounded_monotone_unit_curve(
     increment_logits: torch.Tensor,
     increment_logit_bound: float,
 ) -> torch.Tensor:
+    """Map arbitrary logits to a strictly increasing unit curve."""
     bounded_logits = float(increment_logit_bound) * torch.tanh(increment_logits)
     increments = torch.softmax(bounded_logits, dim=-1)
-    zero = increment_logits.new_zeros(1)
-    return torch.cat((zero, torch.cumsum(increments, dim=-1)))
+    zero = increment_logits.new_zeros(*increment_logits.shape[:-1], 1)
+    return torch.cat((zero, torch.cumsum(increments, dim=-1)), dim=-1)
 
 
 def _windowed_sinc_lowpass(sample_rate, cutoff_hz, kernel_size):
@@ -522,6 +937,20 @@ def _frame_rms_db(audio: torch.Tensor, frames: int, epsilon: float) -> torch.Ten
     frame_power = F.adaptive_avg_pool1d(power, frames).squeeze(1)
     rms = torch.sqrt(frame_power + epsilon**2)
     return 20.0 * torch.log10(rms.clamp_min(epsilon))
+
+
+def _normalised_stem_strength(
+    audio: torch.Tensor,
+    frames: int,
+    epsilon: float,
+) -> torch.Tensor:
+    power = torch.mean(audio**2, dim=1, keepdim=True)
+    frame_rms = torch.sqrt(
+        F.adaptive_avg_pool1d(power, frames).squeeze(1) + epsilon**2
+    )
+    peak_rms = torch.amax(frame_rms, dim=-1, keepdim=True)
+    active = (peak_rms > 10.0 * epsilon).to(frame_rms.dtype)
+    return (frame_rms / peak_rms.clamp_min(epsilon)).clamp(0.0, 1.0) * active
 
 
 def _u_shaped_energy_target(

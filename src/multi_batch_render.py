@@ -1,8 +1,11 @@
 """Render the best transition batches for the best target songs per source."""
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 import glob
+import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -19,6 +22,7 @@ from src.ranking.song_compatibility import rank_song_targets
 
 
 MULTI_BATCH_MANIFEST_FORMAT_VERSION = 1
+AUDIO_EXTENSIONS = {".flac", ".mp3", ".ogg", ".wav"}
 
 
 def generate_multi_song_batch(
@@ -31,6 +35,9 @@ def generate_multi_song_batch(
     target_sample_rate=44_100,
     analysis_location=None,
     track_exclusions_path=DEFAULT_TRACK_EXCLUSIONS_PATH,
+    minimum_bpm=None,
+    maximum_bpm=None,
+    analysis_workers=1,
 ):
     """Rank targets per source, then render the best transition candidates.
 
@@ -45,11 +52,13 @@ def generate_multi_song_batch(
         scope="multi_batch",
         exclusions=track_exclusions,
     )
-    _validate_request(song_paths, top_targets, top_transitions, renderers)
+    song_paths, duplicate_tracks = _deduplicate_tracks_by_sha256(song_paths)
+    _validate_bpm_bounds(minimum_bpm, maximum_bpm)
+    if int(analysis_workers) <= 0:
+        raise ValueError("analysis_workers must be greater than 0")
 
     output_directory = Path(output_directory)
     _preflight_output_directory(output_directory)
-    output_directory.mkdir(parents=True, exist_ok=True)
 
     cache_path = (
         Path("output") / "pre_analysis"
@@ -57,11 +66,30 @@ def generate_multi_song_batch(
         else Path(analysis_location)
     )
     analysis = PreAnalysis(str(cache_path) + os.sep)
+    song_paths, bpm_excluded_tracks, bpm_analysis_failures = _filter_tracks_by_bpm(
+        song_paths,
+        analysis,
+        minimum_bpm=minimum_bpm,
+        maximum_bpm=maximum_bpm,
+        workers=int(analysis_workers),
+        analysis_location=cache_path,
+    )
+    _validate_request(song_paths, top_targets, top_transitions, renderers)
+    output_directory.mkdir(parents=True, exist_ok=True)
     manifest_path = output_directory / "manifest.json"
     manifest = {
         "format_version": MULTI_BATCH_MANIFEST_FORMAT_VERSION,
         "songs": list(song_paths),
         "excluded_tracks": list(excluded_tracks),
+        "duplicate_tracks": duplicate_tracks,
+        "bpm_filter": {
+            "minimum_bpm": None if minimum_bpm is None else float(minimum_bpm),
+            "maximum_bpm": None if maximum_bpm is None else float(maximum_bpm),
+            "bounds_inclusive": True,
+            "excluded_tracks": bpm_excluded_tracks,
+            "analysis_failures": bpm_analysis_failures,
+            "analysis_workers": int(analysis_workers),
+        },
         "track_exclusions_path": str(track_exclusions_path),
         "top_targets_per_source": int(top_targets),
         "top_transitions_per_pair": int(top_transitions),
@@ -70,6 +98,7 @@ def generate_multi_song_batch(
         "sources": [],
         "failures": [],
     }
+    compatibility_feature_cache = {}
 
     for source_index, source_song in enumerate(song_paths, start=1):
         source_entry = {"source_path": source_song, "status": "running", "pairs": []}
@@ -81,6 +110,7 @@ def generate_multi_song_batch(
                 target_songs,
                 analysis=analysis,
                 target_sample_rate=target_sample_rate,
+                feature_cache=compatibility_feature_cache,
             )
             selected_scores = song_ranking.scores[: int(top_targets)]
             source_entry["song_ranking"] = song_ranking.to_dict()
@@ -163,9 +193,117 @@ def _validate_request(song_paths, top_targets, top_transitions, renderers):
 def _expand_song_paths(songs):
     expanded_paths = []
     for song in songs:
+        song_path = Path(song)
+        if song_path.is_dir():
+            expanded_paths.extend(
+                str(path)
+                for path in sorted(song_path.rglob("*"))
+                if path.is_file() and path.suffix.lower() in AUDIO_EXTENSIONS
+            )
+            continue
         matches = sorted(glob.glob(str(song)))
         expanded_paths.extend(matches if matches else (song,))
     return tuple(str(Path(song)) for song in expanded_paths)
+
+
+def _deduplicate_tracks_by_sha256(song_paths):
+    unique = []
+    duplicates = []
+    first_path_by_hash = {}
+    for song_path in song_paths:
+        digest = _file_sha256(song_path)
+        first_path = first_path_by_hash.get(digest)
+        if first_path is None:
+            first_path_by_hash[digest] = str(song_path)
+            unique.append(song_path)
+        else:
+            duplicates.append(
+                {
+                    "path": str(song_path),
+                    "sha256": digest,
+                    "same_audio_as": first_path,
+                }
+            )
+    return tuple(unique), duplicates
+
+
+def _file_sha256(path):
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _validate_bpm_bounds(minimum_bpm, maximum_bpm):
+    for name, value in (("minimum_bpm", minimum_bpm), ("maximum_bpm", maximum_bpm)):
+        if value is not None and (not math.isfinite(float(value)) or float(value) <= 0):
+            raise ValueError(f"{name} must be finite and greater than 0")
+    if (
+        minimum_bpm is not None
+        and maximum_bpm is not None
+        and float(minimum_bpm) > float(maximum_bpm)
+    ):
+        raise ValueError("minimum_bpm must be less than or equal to maximum_bpm")
+
+
+def _filter_tracks_by_bpm(
+    song_paths,
+    analysis,
+    *,
+    minimum_bpm=None,
+    maximum_bpm=None,
+    workers=1,
+    analysis_location=None,
+):
+    included = []
+    excluded = []
+    failures = []
+    if int(workers) <= 1:
+        analysed = [(song_path, _analyse_bpm(analysis, song_path)) for song_path in song_paths]
+    else:
+        if analysis_location is None:
+            raise ValueError("analysis_location is required with multiple analysis workers")
+
+        def analyse_independently(song_path):
+            worker_analysis = PreAnalysis(str(Path(analysis_location)) + os.sep)
+            return song_path, _analyse_bpm(worker_analysis, song_path)
+
+        with ThreadPoolExecutor(max_workers=int(workers)) as executor:
+            analysed = list(executor.map(analyse_independently, song_paths))
+
+    for song_path, result in analysed:
+        if isinstance(result, Exception):
+            failures.append(
+                {
+                    "path": str(song_path),
+                    "error_type": type(result).__name__,
+                    "message": str(result),
+                }
+            )
+            continue
+        bpm = result
+        reason = None
+        if minimum_bpm is not None and bpm < float(minimum_bpm):
+            reason = "below_minimum_bpm"
+        elif maximum_bpm is not None and bpm > float(maximum_bpm):
+            reason = "above_maximum_bpm"
+        if reason is None:
+            included.append(song_path)
+        else:
+            excluded.append({"path": str(song_path), "bpm": bpm, "reason": reason})
+    return tuple(included), excluded, failures
+
+
+def _analyse_bpm(analysis, song_path):
+    try:
+        bpm, _ = analysis(song_path)
+        bpm = float(bpm)
+        if not math.isfinite(bpm) or bpm <= 0:
+            raise ValueError("analysed BPM must be finite and greater than 0")
+        return bpm
+    except Exception as error:
+        return error
 
 
 def _preflight_output_directory(output_directory):
@@ -226,6 +364,9 @@ def build_argument_parser():
     )
     parser.add_argument("--target-sample-rate", type=int, default=44_100)
     parser.add_argument("--analysis-location")
+    parser.add_argument("--min-bpm", type=float)
+    parser.add_argument("--max-bpm", type=float)
+    parser.add_argument("--analysis-workers", type=int, default=1)
     parser.add_argument(
         "--track-exclusions",
         default=str(DEFAULT_TRACK_EXCLUSIONS_PATH),
@@ -244,6 +385,9 @@ def main():
         target_sample_rate=args.target_sample_rate,
         analysis_location=args.analysis_location,
         track_exclusions_path=args.track_exclusions,
+        minimum_bpm=args.min_bpm,
+        maximum_bpm=args.max_bpm,
+        analysis_workers=args.analysis_workers,
     )
     print(manifest_path)
     return 0

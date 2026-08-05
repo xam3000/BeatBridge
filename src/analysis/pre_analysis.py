@@ -3,6 +3,7 @@ import hashlib
 import logging
 import numpy as np
 import subprocess
+import uuid
 
 import librosa
 
@@ -182,19 +183,31 @@ class PreAnalysis:
         self.bpm = self.bpm[0] if isinstance(self.bpm, (list, np.ndarray)) else self.bpm
 
     def auftakt_analysis_comparison(self):
+        tmp_folder.mkdir(parents=True, exist_ok=True)
+        token = uuid.uuid4().hex
+        temp_wav_path = None
+        auftakt_output_path = tmp_folder / f"auftakt-output-{token}.txt"
         try:
             # run auftakt
             if self.song_path.suffix.lower() != ".wav":
-                temp_wav_path = tmp_folder / f"{self.song_path.stem}.wav"
-                subprocess.run(["ffmpeg", "-i", str(self.song_path), str(temp_wav_path)], check=True)
+                temp_wav_path = tmp_folder / f"audio-{token}.wav"
+                subprocess.run(
+                    ["ffmpeg", "-y", "-i", str(self.song_path), str(temp_wav_path)],
+                    check=True,
+                )
                 song_to_analyze = temp_wav_path
             else:
                 song_to_analyze = self.song_path
 
-            command = ["aufTAKTCl.exe", "-i", str(song_to_analyze), "-r", str(tmp_folder)+"/aufTAKT_output"]
+            command = [
+                "aufTAKTCl.exe",
+                "-i",
+                str(song_to_analyze),
+                "-r",
+                str(auftakt_output_path),
+            ]
             subprocess.run(command, check=True)
 
-            auftakt_output_path = tmp_folder / "aufTAKT_output"
             auftakt_lines = auftakt_output_path.read_text().splitlines()[1:]
             auftakt_beats = []
             for line in auftakt_lines:
@@ -260,10 +273,9 @@ class PreAnalysis:
                 error,
             )
         finally:
-            if tmp_folder.is_dir():
-                for file in tmp_folder.iterdir():
-                    if file.is_file():
-                        file.unlink()
+            auftakt_output_path.unlink(missing_ok=True)
+            if temp_wav_path is not None:
+                temp_wav_path.unlink(missing_ok=True)
 
     @staticmethod
     def _parse_saved_beat_line(line):
