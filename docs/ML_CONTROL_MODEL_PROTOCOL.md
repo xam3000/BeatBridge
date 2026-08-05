@@ -149,8 +149,15 @@ Der Defaultlauf verwendet AdamW, Seed `20260804`, Batchgröße 5,
 Lernrate `1e-3`, Weight Decay `1e-4`, Gradient Clipping bei 1,0 und Early
 Stopping nach sechs Epochen ohne Verbesserung von mindestens `1e-4`.
 Die Reihenfolge der Trainingsbeispiele wird für jede Epoche aus
-`seed + epoch` deterministisch erzeugt. CPU-Operationen laufen mit
-aktivierten deterministischen PyTorch-Algorithmen.
+`seed + epoch` deterministisch erzeugt. PyTorch-Operationen laufen mit
+aktivierten deterministischen Algorithmen. Auf CUDA werden derzeit nicht
+deterministisch implementierte Backward-Kernel (aktuell lineares Upsampling
+und adaptives Average-Pooling) im Warnmodus zugelassen; CUDA-Läufe sind daher
+nicht bitgenau reproduzierbar.
+`--device auto` ist der Default
+und wird vor dem unveränderlichen Run-Vertrag auf `cuda:0` aufgelöst, wenn
+CUDA verfügbar ist, sonst auf `cpu`. `--device cpu` beziehungsweise
+`--device cuda:<index>` überschreibt die automatische Wahl explizit.
 
 ```text
 output/training_runs/<run-name>/
@@ -174,6 +181,14 @@ Early-Stopping-Zähler und History. Ihre SHA-256-Werte stehen im Manifest.
   output\datasets\feature_protocol_v1_top3_4bar_track_split_20260731 `
   output\training_runs\time_shared_mlp_v1_objective_v4_seed20260804_20260804
 ```
+
+Der Runner meldet zu Beginn `torch_device=cuda:0` beziehungsweise
+`torch_device=cpu`; damit ist die tatsächlich verwendete Hardware im Log
+sichtbar.
+
+Historische CPU-Läufe müssen wegen ihres eingefrorenen Run-Vertrags mit
+`--device cpu --resume` fortgesetzt werden. Ein neuer GPU-Lauf braucht einen
+neuen Ausgabeordner.
 
 ## 8. Verifizierter Erstlauf
 

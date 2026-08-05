@@ -54,6 +54,7 @@ def _config(max_epochs):
         min_delta=0.0,
         training_sample_rate=8_000,
         lowpass_kernel_size=31,
+        device="cpu",
     )
 
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -15,6 +15,12 @@ import uuid
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
+
+from src.torch_device import (
+    DEFAULT_TORCH_DEVICE,
+    resolve_torch_device,
+    validate_torch_device_spec,
+)
 
 from src.control import (
     CONTROL_PROTOCOL_VERSION,
@@ -53,7 +59,7 @@ class TrainingConfig:
     training_sample_rate: int = DEFAULT_TRAINING_SAMPLE_RATE
     lowpass_cutoff_hz: float = 180.0
     lowpass_kernel_size: int = 127
-    device: str = "cpu"
+    device: str = DEFAULT_TORCH_DEVICE
 
     def __post_init__(self):
         if int(self.max_epochs) < 1:
@@ -72,8 +78,7 @@ class TrainingConfig:
             raise ValueError("lowpass_cutoff_hz must be positive")
         if int(self.lowpass_kernel_size) < 3 or int(self.lowpass_kernel_size) % 2 == 0:
             raise ValueError("lowpass_kernel_size must be an odd integer of at least 3")
-        if str(self.device) != "cpu" and not str(self.device).startswith("cuda"):
-            raise ValueError("device must be cpu or a CUDA device")
+        validate_torch_device_spec(self.device)
 
     def to_dict(self):
         return asdict(self)
@@ -103,7 +108,7 @@ def run_feature_control_training(
     progress=print,
 ):
     """Materialize train/validation audio caches and run self-supervised training."""
-    config = config or TrainingConfig()
+    config = _resolve_training_device(config or TrainingConfig())
     dataset_directory = Path(dataset_directory).resolve()
     dataset_manifest_path = dataset_directory / "manifest.json"
     dataset_manifest = _read_json(dataset_manifest_path)
@@ -162,7 +167,7 @@ def train_feature_control_model(
     progress=print,
 ):
     """Train from pre-materialized examples and persist restartable artifacts."""
-    config = config or TrainingConfig()
+    config = _resolve_training_device(config or TrainingConfig())
     model_config = model_config or FeatureControlMLPConfig()
     objective_config = objective_config or DifferentiableTransitionObjectiveConfig()
     train_examples = tuple(train_examples)
@@ -195,8 +200,6 @@ def train_feature_control_model(
     ).hexdigest()[:20]
 
     device = torch.device(config.device)
-    if device.type == "cuda" and not torch.cuda.is_available():
-        raise RuntimeError(f"Requested device is unavailable: {config.device}")
     _seed_everything(config.seed)
     model = FeatureControlMLP(model_config).to(device=device, dtype=torch.float32)
     renderer = DifferentiableTwoBandRenderer(
@@ -208,6 +211,7 @@ def train_feature_control_model(
         objective_config,
         energy_frames=32,
     ).to(device=device)
+    progress(f"torch_device={device}")
     optimizer = torch.optim.AdamW(
         model.parameters(),
         lr=config.learning_rate,
@@ -246,7 +250,8 @@ def train_feature_control_model(
         created_at = _now_utc()
 
     previous_deterministic = torch.are_deterministic_algorithms_enabled()
-    torch.use_deterministic_algorithms(True)
+    previous_warn_only = torch.is_deterministic_algorithms_warn_only_enabled()
+    torch.use_deterministic_algorithms(True, warn_only=device.type == "cuda")
     try:
         if not history:
             initial_train = _run_epoch(
@@ -415,7 +420,10 @@ def train_feature_control_model(
             )
         raise
     finally:
-        torch.use_deterministic_algorithms(previous_deterministic)
+        torch.use_deterministic_algorithms(
+            previous_deterministic,
+            warn_only=previous_warn_only,
+        )
 
     return TrainingRunResult(
         output_directory=output_directory,
@@ -478,6 +486,10 @@ def _run_epoch(model, examples, config, renderer, objective, optimizer, epoch):
                     raise FloatingPointError(f"Non-finite objective term {name}")
                 totals[name] = totals.get(name, 0.0) + scalar * batch_size
     return {name: value / example_count for name, value in sorted(totals.items())}
+
+
+def _resolve_training_device(config):
+    return replace(config, device=str(resolve_torch_device(config.device)))
 
 
 def _move_feature_batch(batch, device):

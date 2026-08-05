@@ -8,7 +8,7 @@ _Stand: 2026-08-05_
 
 **Wichtigstes Erfolgskriterium der Startphase (Exposé Abschn. 14):** Nach spätestens drei Wochen sollen *mehrere automatisch erzeugte* Übergänge *hörbar* sein und *systematisch verglichen* werden können.
 
-Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automatisch erzeugt, als Drop-Ende-A→energiearme Bridge→Drop-Anfang-B vorgerankt, ohne Überlappung der High-Power-Abschnitte gerendert und anschließend anhand des tatsächlichen Renderergebnisses erneut bewertet werden. Objective-v4-optimierte Kurven gewannen den zurückgehaltenen Hörsatz 9/9 gegen Equal Power. Volltrack-Features einschließlich vortrainierter Vocal-Separation, persistente Trainings-Waveform-Caches und die erste kleine Feature→Control-MLP-Baseline samt versioniertem Trainingslauf sind implementiert. Der MLP-Hörvergleich zeigte qualitativ nur geringe Unterschiede und weiterhin Vocal-Overlap beziehungsweise unnatürlich leise eingeblendete Vocals. Deshalb wurden ein stem-fähiger Renderer, Vocal-Control-Modell v2 und Objective v5 mit explizitem Audibility-Loss ergänzt. Im gezielt Vocal-reichen Hörsatz gewinnt Objective v5 zwei Paare gegen einen v4-Sieg und drei Gleichstände; nur die Vocal-Klarheit verbessert sich. Nach dem ersten 45/9-Lauf wurde der Musikbestand auf 119 FLAC-Pfade erweitert und reproduzierbar auf 145–165 BPM gefiltert. Der neue SHA-getrennte Datensatz enthält 370/50/60 Train-/Validation-/Testbeispiele. Der zweite Vocal-v2-Lauf erreicht die beste Validation in Epoche 22 und verbessert den Gesamt-Proxy um 6,14 %, nun auch den alten v4- und Energieanteil. Die Mid-Phrase-Gain-Änderung wird jedoch deutlich schlechter; deshalb entscheidet als nächstes ein geblendeter Hörvergleich des neuen Best-Checkpoints.
+Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automatisch erzeugt, als Drop-Ende-A→energiearme Bridge→Drop-Anfang-B vorgerankt, ohne Überlappung der High-Power-Abschnitte gerendert und anschließend anhand des tatsächlichen Renderergebnisses erneut bewertet werden. Objective-v4-optimierte Kurven gewannen den zurückgehaltenen Hörsatz 9/9 gegen Equal Power. Volltrack-Features einschließlich vortrainierter Vocal-Separation, persistente Trainings-Waveform-Caches und die erste kleine Feature→Control-MLP-Baseline samt versioniertem Trainingslauf sind implementiert. Der MLP-Hörvergleich zeigte qualitativ nur geringe Unterschiede und weiterhin Vocal-Overlap beziehungsweise unnatürlich leise eingeblendete Vocals. Deshalb wurden ein stem-fähiger Renderer, Vocal-Control-Modell v2 und Objective v5 mit explizitem Audibility-Loss ergänzt. Im gezielt Vocal-reichen Hörsatz gewinnt Objective v5 zwei Paare gegen einen v4-Sieg und drei Gleichstände; nur die Vocal-Klarheit verbessert sich. Nach dem ersten 45/9-Lauf wurde der Musikbestand auf 119 FLAC-Pfade erweitert und reproduzierbar auf 145–165 BPM gefiltert. Der neue SHA-getrennte Datensatz enthält 370/50/60 Train-/Validation-/Testbeispiele. Der zweite Vocal-v2-Lauf erreicht die beste Validation in Epoche 22 und verbessert den Gesamt-Proxy um 6,14 %, nun auch den alten v4- und Energieanteil. Die Mid-Phrase-Gain-Änderung wird jedoch deutlich schlechter; deshalb entscheidet als nächstes ein geblendeter Hörvergleich des neuen Best-Checkpoints. Die lokale RTX 5070 Ti ist inzwischen über PyTorch 2.13.0+cu130 nutzbar; neue Trainings- und Demucs-Läufe wählen CUDA standardmäßig automatisch.
 
 ## Aktueller Stand (implementiert)
 
@@ -42,6 +42,7 @@ Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automa
 - **Dataset und Ausschlüsse**: 119 FLAC-Pfade liegen rekursiv im ignorierten Ordner `musik/`. `config/track_exclusions.json` schließt `14 - STRUGGLING.flac` aus neuen Multi-Batches, Control-Vergleichen und Training aus. Der neue Batch entfernt zusätzlich ein byteidentisches BREATH_LESS-Duplikat und sechs Tracks unter 145 BPM; keiner lag über 165 BPM. Der erweiterte SHA-getrennte Datensatz enthält 370/50/60 Beispiele über 43/5/7 verwendete Trackhashes. Der historische 45/9/9-Datensatz und frühere Läufe bleiben unverändert. Kuratierte Track-Notizen und Lizenzstatus fehlen weiterhin.
 - **ML-Baseline Version 1** (`src/ml/`): `FeatureControlDataset` verbindet die bestehenden Feature-Splits mit unveränderlichen, hashbasiert gecachten Source-/Target-Bridge-Waveforms. `time_shared_mlp_v1` hat 10.394 Parameter, wird auf alle 31 Halbbeat-Intervalle geteilt angewendet und erzeugt über dieselbe konstruktive Control-v3-Transformation zwei gültige Kurven. Die Nullinitialisierung startet exakt bei Equal Power; `self_supervised_batch_loss` rendert variable Audiolängen ohne Padding einzeln und mittelt Objective v4. `self_supervised_train_validation_v1` ergänzt deterministische Seeds, Equal-Power-Epoche 0, atomare Best-/Latest-Checkpoints mit SHA-256, vollständige Loss-History, Early Stopping und vertragsgeprüftes Resume. Vertrag: `ML_CONTROL_MODEL_PROTOCOL.md`.
 - **Vocal-Control-Erweiterung Version 2** (`src/control/`, `src/ml/`): `vocal_time_shared_mlp_v2` hat 20.821 Parameter und erzeugt zusätzlich eine monotone Vocal-Übergabe sowie getrenntes Source-/Target-Ducking. `DifferentiableVocalAwareRenderer` verarbeitet gecachte Demucs-Stems separat vom Zwei-Band-Accompaniment. Objective v5 ersetzt die alten mixgebundenen Vocal-Gewichte durch tatsächlichen Stem-Overlap, einen Audibility-Loss gegen unnötig leise aktive Vocals und eine Strafe für Gain-Änderungen mitten in Phrasen. Der Cache v2 speichert Mix und beide samplegleichen Vocal-Stems. `self_supervised_vocal_train_validation_v2` trainiert diese Kette reproduzierbar mit atomaren Checkpoints, Early Stopping, strengem Vertrags-/Hash-Resume und ohne Zugriff auf den Testsplit. Vertrag: `VOCAL_CONTROL_MODEL_PROTOCOL.md`.
+- **GPU-Ausführung** (`src/torch_device.py`): `auto` wählt für Training und neue Demucs-Separationen CUDA, wenn verfügbar, andernfalls CPU. Der aufgelöste Trainings-Device wird im unveränderlichen Run-Vertrag gespeichert; explizite Overrides bleiben mit `--device cpu` und `--device cuda:<index>` möglich. `requirements-cuda.txt` fixiert den offiziellen CUDA-13.0-Wheel zusätzlich zum plattformneutralen Basis-Requirement.
 
 ### Verifiziert am 2026-07-30 (Codex, Feature-Protokoll 1)
 
@@ -503,6 +504,31 @@ Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automa
   Top-1-Lauf wurde genau ein Prozess in einem neuen Ordner verwendet.
 - `.venv\Scripts\python.exe -m pytest -q`: **105 Tests bestanden**; zwei
   bestehende, nicht blockierende Deprecation-Warnungen aus `audioread`.
+
+### Verifiziert am 2026-08-05 (Codex, CUDA-Aktivierung)
+
+- Lokale GPU: **NVIDIA GeForce RTX 5070 Ti**, 16 GB VRAM, Compute Capability
+  12.0. NVIDIA-Treiber 610.74 meldet CUDA UMD 13.3.
+- Die Projekt-`.venv` verwendet jetzt **PyTorch 2.13.0+cu130** statt des
+  CPU-Wheels. `torch.cuda.is_available()` ist wahr; eine reale Tensor- und
+  Gradientenprobe lief auf `cuda:0` mit endlichen Gradienten.
+- Beide Trainingsrunner lösen den neuen Default `auto` vor Erstellung des
+  Run-Vertrags auf `cuda:0` oder `cpu` auf. Ein vollständiger synthetischer
+  Train-/Validation-Lauf auf `cuda:0` schrieb den erwarteten CUDA-Vertrag.
+- Neue Demucs-Separationen verwenden denselben Auto-Device-Pfad und schreiben
+  `compute_device` additiv ins Stemmanifest. Vorhandene gültige Stem-Caches
+  bleiben unverändert und werden nicht neu berechnet. Eine reale HT-Demucs-
+  Sonde auf einer synthetischen Sekunde Stereo-Audio lief auf `cuda:0`, gab
+  vier endliche Stems zurück und belegte maximal rund 793 MiB GPU-Speicher.
+- CUDA-Backward-Kernel für lineares Upsampling und adaptives Average-Pooling
+  sind in PyTorch 2.13 nicht strikt deterministisch. Sie laufen deshalb unter
+  CUDA mit Determinismuswarnung; für bitgenaue Wiederholung bleibt
+  `--device cpu` verfügbar. Historische CPU-Runs benötigen beim Resume
+  weiterhin ausdrücklich `--device cpu`.
+- `.venv\Scripts\python.exe -m pytest -q`: **109 Tests bestanden**; zwei
+  bestehende `audioread`-Deprecation-Warnungen und zwei erwartete
+  CUDA-Determinismuswarnungen. `.venv\Scripts\python.exe -m pip check`:
+  keine defekten Abhängigkeiten.
 
 ## Abgleich mit dem geplanten Systemablauf
 

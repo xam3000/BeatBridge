@@ -161,6 +161,18 @@ Epoche 0 misst die deterministische, nahe an Equal Power liegende
 Vocal-Modellinitialisierung ohne Update. Danach steuert ausschließlich
 `validation` den Best-Checkpoint und Early Stopping.
 
+Training und neu erforderliche Demucs-Separationen verwenden standardmäßig
+`cuda:0`, wenn CUDA verfügbar ist, und sonst `cpu`. Der Trainingsrunner
+akzeptiert `--device cpu` oder `--device cuda:<index>` als expliziten
+Override; der tatsächlich aufgelöste Device-Name wird im Run-Vertrag
+gespeichert. Bereits gecachte Demucs-Stems werden unverändert wiederverwendet.
+Wegen derzeit nicht strikt deterministisch implementierter CUDA-Backward-
+Kernel für lineares Upsampling und adaptives Average-Pooling läuft die
+Determinismusprüfung dort im Warnmodus; bitgenaue Reproduktion bleibt dem
+CPU-Override vorbehalten. Historische CPU-Läufe werden mit
+`--device cpu --resume` fortgesetzt; GPU-Training verwendet einen neuen
+Ausgabeordner.
+
 ## 7. CLI, Sonde und erster realer Trainingslauf
 
 ```powershell

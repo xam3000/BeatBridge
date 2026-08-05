@@ -16,9 +16,16 @@ Der aktuelle, verifizierte Projektstand und die weitere Dokumentation liegen unt
 ## Entwicklungsumgebung
 
 ```powershell
+.venv\Scripts\python.exe -m pip install -r requirements-cuda.txt
 .venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 .venv\Scripts\python.exe -m pytest -q
 ```
+
+`requirements-cuda.txt` installiert unter Windows den CUDA-13.0-Build von
+PyTorch. Training und neue Demucs-Separationen wählen standardmäßig
+`cuda:0`, wenn CUDA verfügbar ist, und fallen sonst auf CPU zurück. Für einen
+bewussten CPU-Lauf kann bei den Trainingsbefehlen `--device cpu` angegeben
+werden.
 
 Die programmatischen Verträge für Rendering, Kandidaten, Batch-Exporte und die
 Metrik für gerenderte Varianten stehen unter [`docs/`](./docs/README.md).

@@ -53,12 +53,14 @@ def test_demucs_vocal_stem_is_cached_with_model_provenance(tmp_path):
         song,
         cache_root=tmp_path / "cache",
         model_name="test-model",
+        device="cpu",
         separator_factory=_FakeSeparator,
     )
     second = extract_or_load_vocal_stem(
         song,
         cache_root=tmp_path / "cache",
         model_name="test-model",
+        device="cpu",
         separator_factory=lambda **_: (_ for _ in ()).throw(
             AssertionError("A stem cache hit must not load a model")
         ),
@@ -67,6 +69,7 @@ def test_demucs_vocal_stem_is_cached_with_model_provenance(tmp_path):
     assert first.cache_hit is False
     assert second.cache_hit is True
     assert len(calls) == 1
+    assert calls[0]["device"] == "cpu"
     assert np.array_equal(first.audio, second.audio)
     assert first.manifest["paper"]["citation_key"] == "rouard2023hybrid"
     assert first.manifest["artifact_sha256"] == second.manifest["artifact_sha256"]

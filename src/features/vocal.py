@@ -13,6 +13,8 @@ import uuid
 
 import numpy as np
 
+from src.torch_device import DEFAULT_TORCH_DEVICE, resolve_torch_device
+
 
 DEMUCS_BACKEND_VERSION = 1
 DEFAULT_DEMUCS_MODEL = "htdemucs"
@@ -46,6 +48,7 @@ def extract_or_load_vocal_stem(
     cache_root,
     source_sha256=None,
     model_name=DEFAULT_DEMUCS_MODEL,
+    device=DEFAULT_TORCH_DEVICE,
     separator_factory=None,
 ):
     """Separate vocals once per source/model and reuse the cached stem."""
@@ -80,9 +83,10 @@ def extract_or_load_vocal_stem(
         from demucs.api import Separator
 
         separator_factory = Separator
+    compute_device = resolve_torch_device(device)
     separator = separator_factory(
         model=model_name,
-        device="cpu",
+        device=str(compute_device),
         shifts=1,
         split=True,
         overlap=0.25,
@@ -120,6 +124,7 @@ def extract_or_load_vocal_stem(
         "weights": weights,
         "paper": DEMUCS_PAPER,
         "model_card_url": weights["model_card_url"],
+        "compute_device": str(compute_device),
     }
     _write_json_atomic(cache_directory / "manifest.json", manifest)
     return VocalStemArtifact(

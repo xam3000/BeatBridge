@@ -68,7 +68,11 @@ def build_argument_parser():
     train_parser.add_argument("--min-delta", type=float, default=TrainingConfig.min_delta)
     train_parser.add_argument("--gradient-clip-norm", type=float, default=TrainingConfig.gradient_clip_norm)
     train_parser.add_argument("--training-sample-rate", type=int, default=DEFAULT_TRAINING_SAMPLE_RATE)
-    train_parser.add_argument("--device", default=TrainingConfig.device)
+    train_parser.add_argument(
+        "--device",
+        default=TrainingConfig.device,
+        help="PyTorch device: auto (CUDA if available), cpu, cuda, or cuda:<index>",
+    )
     train_parser.add_argument("--resume", action="store_true")
 
     vocal_train_parser = subparsers.add_parser("train-vocal")
@@ -124,7 +128,11 @@ def build_argument_parser():
         type=int,
         default=DEFAULT_TRAINING_SAMPLE_RATE,
     )
-    vocal_train_parser.add_argument("--device", default=VocalTrainingConfig.device)
+    vocal_train_parser.add_argument(
+        "--device",
+        default=VocalTrainingConfig.device,
+        help="PyTorch device: auto (CUDA if available), cpu, cuda, or cuda:<index>",
+    )
     vocal_train_parser.add_argument("--resume", action="store_true")
     return parser
 

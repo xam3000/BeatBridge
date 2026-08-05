@@ -1,5 +1,6 @@
 import json
 
+import pytest
 import torch
 
 from src.features import FEATURE_DIMENSION, GLOBAL_FEATURE_DIMENSION, SEQUENCE_LENGTH
@@ -42,6 +43,7 @@ def _config(max_epochs):
         min_delta=0.0,
         training_sample_rate=8_000,
         lowpass_kernel_size=31,
+        device="cpu",
     )
 
 
@@ -97,3 +99,30 @@ def test_training_runner_refuses_to_overwrite_existing_run(tmp_path):
         pass
     else:
         raise AssertionError("Existing training output must not be overwritten")
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA is unavailable")
+def test_training_runner_uses_cuda_for_auto_device(tmp_path):
+    config = TrainingConfig(
+        seed=19,
+        max_epochs=1,
+        batch_size=1,
+        learning_rate=1e-3,
+        patience=2,
+        min_delta=0.0,
+        training_sample_rate=8_000,
+        lowpass_kernel_size=31,
+        device="auto",
+    )
+    output = tmp_path / "cuda-run"
+    result = train_feature_control_model(
+        _examples(1, 5),
+        _examples(1, 6),
+        output,
+        config=config,
+        progress=lambda message: None,
+    )
+
+    manifest = json.loads((output / "manifest.json").read_text(encoding="utf-8"))
+    assert result.status == "completed"
+    assert manifest["contract"]["training"]["device"] == "cuda:0"
