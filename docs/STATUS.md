@@ -1,6 +1,6 @@
 # BeatBridge – Stand & Next Steps
 
-_Stand: 2026-08-05_
+_Stand: 2026-08-06_
 
 **Maßgeblicher Kontext: [`Projekt-Gesamtuebersicht.md`](./Projekt-Gesamtuebersicht.md) (Exposé).** Diese Datei hält den *technischen Prototyp-Stand der Startphase* (Monat 1 / erste 2–3 Wochen) fest. Ziel, Scope, wissenschaftlicher Beitrag, Related Work, Datenstrategie, Evaluation, 6-Monats-Plan und Risiken stehen im Exposé.
 
@@ -8,7 +8,7 @@ _Stand: 2026-08-05_
 
 **Wichtigstes Erfolgskriterium der Startphase (Exposé Abschn. 14):** Nach spätestens drei Wochen sollen *mehrere automatisch erzeugte* Übergänge *hörbar* sein und *systematisch verglichen* werden können.
 
-Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automatisch erzeugt, als Drop-Ende-A→energiearme Bridge→Drop-Anfang-B vorgerankt, ohne Überlappung der High-Power-Abschnitte gerendert und anschließend anhand des tatsächlichen Renderergebnisses erneut bewertet werden. Objective-v4-optimierte Kurven gewannen den zurückgehaltenen Hörsatz 9/9 gegen Equal Power. Volltrack-Features einschließlich vortrainierter Vocal-Separation, persistente Trainings-Waveform-Caches und die erste kleine Feature→Control-MLP-Baseline samt versioniertem Trainingslauf sind implementiert. Der MLP-Hörvergleich zeigte qualitativ nur geringe Unterschiede und weiterhin Vocal-Overlap beziehungsweise unnatürlich leise eingeblendete Vocals. Deshalb wurden ein stem-fähiger Renderer, Vocal-Control-Modell v2 und Objective v5 mit explizitem Audibility-Loss ergänzt. Im gezielt Vocal-reichen Hörsatz gewinnt Objective v5 zwei Paare gegen einen v4-Sieg und drei Gleichstände; nur die Vocal-Klarheit verbessert sich. Nach dem ersten 45/9-Lauf wurde der Musikbestand auf 119 FLAC-Pfade erweitert und reproduzierbar auf 145–165 BPM gefiltert. Der neue SHA-getrennte Datensatz enthält 370/50/60 Train-/Validation-/Testbeispiele. Der zweite Vocal-v2-Lauf erreicht die beste Validation in Epoche 22 und verbessert den Gesamt-Proxy um 6,14 %, nun auch den alten v4- und Energieanteil. Die Mid-Phrase-Gain-Änderung wird jedoch deutlich schlechter; deshalb entscheidet als nächstes ein geblendeter Hörvergleich des neuen Best-Checkpoints. Die lokale RTX 5070 Ti ist inzwischen über PyTorch 2.13.0+cu130 nutzbar; neue Trainings- und Demucs-Läufe wählen CUDA standardmäßig automatisch.
+Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automatisch erzeugt, als Drop-Ende-A→energiearme Bridge→Drop-Anfang-B vorgerankt, ohne Überlappung der High-Power-Abschnitte gerendert und anschließend anhand des tatsächlichen Renderergebnisses erneut bewertet werden. Objective-v4-optimierte Kurven gewannen den zurückgehaltenen Hörsatz 9/9 gegen Equal Power. Volltrack-Features einschließlich vortrainierter Vocal-Separation, persistente Trainings-Waveform-Caches und die erste kleine Feature→Control-MLP-Baseline samt versioniertem Trainingslauf sind implementiert. Der MLP-Hörvergleich zeigte qualitativ nur geringe Unterschiede und weiterhin Vocal-Overlap beziehungsweise unnatürlich leise eingeblendete Vocals. Deshalb wurden ein stem-fähiger Renderer, Vocal-Control-Modell v2 und Objective v5 mit explizitem Audibility-Loss ergänzt. Im gezielt Vocal-reichen Hörsatz gewinnt Objective v5 zwei Paare gegen einen v4-Sieg und drei Gleichstände; nur die Vocal-Klarheit verbessert sich. Nach dem ersten 45/9-Lauf wurde der Musikbestand auf 119 FLAC-Pfade erweitert und reproduzierbar auf 145–165 BPM gefiltert. Der neue SHA-getrennte Datensatz enthält 370/50/60 Train-/Validation-/Testbeispiele. Der zweite Vocal-v2-Lauf erreicht die beste Validation in Epoche 22 und verbessert den Gesamt-Proxy um 6,14 %, nun auch den alten v4- und Energieanteil. Die Mid-Phrase-Gain-Änderung wird jedoch deutlich schlechter. Ein geblendeter Vergleich des Best-Checkpoints gegen die ungelernte Initialisierung liegt jetzt mit fünf vocal-aktiven Paaren ohne Time-Stretch bereit; die Bewertung ist offen. Die lokale RTX 5070 Ti ist inzwischen über PyTorch 2.13.0+cu130 nutzbar; neue Trainings- und Demucs-Läufe wählen CUDA standardmäßig automatisch.
 
 ## Aktueller Stand (implementiert)
 
@@ -530,6 +530,34 @@ Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automa
   CUDA-Determinismuswarnungen. `.venv\Scripts\python.exe -m pip check`:
   keine defekten Abhängigkeiten.
 
+### Verifiziert am 2026-08-06 (Codex, Vocal-v2-Modell-Hörsatz)
+
+- `src.evaluation.vocal_ml_control_study` prüft Runformat, Runnername,
+  Modellvertrag, Dataset-ID/-Manifesthash sowie SHA-256 und Epoche des
+  Best-Checkpoints. Verglichen werden die ungelernte Vocal-v2-Initialisierung
+  und der Best-Checkpoint aus Epoche 22 im identischen stem-fähigen Renderer.
+- Die Auswahl arbeitet ausschließlich auf `validation`, verlangt auf beiden
+  Seiten mittlere Vocal-Stärke mindestens `0,15`, verwendet höchstens einen
+  Cue pro gerichteter Paarung und begrenzt die Tempoanpassung auf `0,5 %`.
+  Der aktuelle Split liefert fünf unterschiedliche gerichtete Paarungen;
+  tatsächlich benötigen alle **0,0 %** Tempoanpassung (`tempo_backend =
+  not_needed`).
+- Vollständiger geblendeter, noch unbewerteter Satz:
+  `output/control_studies/blind_v8_vocal_mlp_v2_best_vs_initial_validation5_20260806/`
+  mit fünf Paaren / zehn Float32-WAVs bei 44,1 kHz. Source-Vocal-Stärke
+  `0,353–0,796`, Target `0,188–0,911`; 7 bis 32 von 32 Bins sind gleichzeitig
+  über `0,2` aktiv.
+- Alle öffentlichen WAV-Hashes stimmen; A/B sind je Paar samplegleich,
+  endlich und haben gemeinsame Peak-Absenkung auf höchstens 0,98.
+  `ratings.json` verwendet Format 3 und ist vollständig `unrated`.
+  `answer_key.json` wurde zur Wahrung der Blendung nicht geöffnet.
+- Der Objective-v5-Proxy verbessert sich pro Paar nicht einheitlich: zwei
+  Paare sinken, drei steigen. Damit darf der Trainingsmittelwert nicht als
+  Ersatz für die ausstehende Hörbewertung interpretiert werden.
+- `.venv\Scripts\python.exe -m pytest -q`: **111 Tests bestanden**; zwei
+  bestehende `audioread`-Deprecation-Warnungen und zwei erwartete
+  CUDA-Determinismuswarnungen.
+
 ## Abgleich mit dem geplanten Systemablauf
 
 | Komponente aus dem Exposé | Umsetzungsstand | Nachweis / Lücke |
@@ -541,7 +569,7 @@ Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automa
 | 5. Rendering | ✅ | Hard Cut sowie lineare, Equal-Power-, Zwei-Band- und stem-fähige Vocal-Control-Renderer sind implementiert; Tempoangleichung und Drop-Grenzen sind getestet. |
 | 6. Vorschau & Export | 🟡 | Batch-WAV-Export, auditierbares Manifest, Cue-Point-/Metrikvisualisierung und Notebook-Inline-Playback funktionieren. Auswahlworkflow und GUI fehlen. |
 
-Damit ist die technische Grundlage aus Monat 1 weitgehend vorhanden. Das frühe Erfolgskriterium „automatisch erzeugt und systematisch vergleichbar“ ist erfüllt; v1- und Vocal-v2-Training sowie die direkten Objective-Hör-Gates sind abgeschlossen. Offen sind der Hörvergleich des gelernten Vocal-v2-Modells, weitere Rater und der breitere wissenschaftliche Vergleich aus Monat 2–3.
+Damit ist die technische Grundlage aus Monat 1 weitgehend vorhanden. Das frühe Erfolgskriterium „automatisch erzeugt und systematisch vergleichbar“ ist erfüllt; v1- und Vocal-v2-Training sowie die direkten Objective-Hör-Gates sind abgeschlossen. Der Vocal-v2-Modell-Hörsatz ist gerendert, aber noch unbewertet. Offen sind dessen geblendete Bewertung, weitere Rater und der breitere wissenschaftliche Vergleich aus Monat 2–3.
 
 ## Fortschritt gegen die Startphase (Exposé Abschn. 13–14)
 
@@ -603,10 +631,12 @@ auf realem Audio validieren.
 
 **Abgeschlossen am 2026-08-05:** rekursiver 145–165-BPM-Datenlauf, fehlerfreier 111-Paar-Batch, erweiterter 370/50/60-Datensatz und Vocal-v2-Retraining; beste Validation in Epoche 22, Early Stopping in Epoche 28.
 
+**Abgeschlossen am 2026-08-06:** geblendeter Vocal-v2-Modell-Hörsatz mit fünf vocal-aktiven, gerichteten Validation-Paaren ohne Time-Stretch; Best-Checkpoint aus Epoche 22 gegen die ungelernte Initialisierung, Ratings noch offen.
+
 1. **Time-Stretch und Target-Fenster von Paar 5 isolieren** — Original-Targetsegment und Rubber-Band-Variante mit identischem Ausschnitt separat exportieren und hören. So wird unterschieden, ob der schlechte Klang vom Backend, der Tempoänderung oder bereits vom gewählten Aversion-Fenster stammt.
 2. **Feature-Protokoll 1 auditieren** — globale Paarfeatures, Datasetexport und track-getrennte Splits sind implementiert. Als Nächstes die Vocal-Scores gegen gehörte Lyrics-/Clash-Fälle prüfen und ein semantisch passendes Phrasenverfahren validieren. Kein stilles 4/4→8-Takt-Fallback.
 3. **Objective v5 direkt hörvalidieren** — Gate bestanden: 2 v5-Siege, 1 v4-Sieg, 3 Gleichstände; Vocal-Klarheit `4,3333→5,0`. Für endgültige Gewichte später mit mehr Ratenden und ohne Time-Stretch-dominierte Paare wiederholen.
-4. **Gelerntes Vocal-v2-Modell hörvalidieren** — neuen Best-Checkpoint aus Epoche 22 geblendet gegen die ungelernte Vocal-Modellinitialisierung rendern. Vocal-aktive Paare bevorzugen, das starke Target-Ducking gezielt prüfen und Time-Stretch-dominierte Fälle getrennt ausweisen; erst danach Objective-Gewichte oder Architektur ändern.
+4. **Gelerntes Vocal-v2-Modell hörvalidieren** — Hörsatz ist gerendert: fünf vocal-aktive gerichtete Paarungen, alle ohne Time-Stretch. Als Nächstes A/B vollständig bewerten, erst danach entblinden und auswerten; dabei starkes Target-Ducking und Mid-Phrase-Pegeländerungen gezielt notieren. Objective-Gewichte oder Architektur erst nach diesem Gate ändern.
 5. **Entwicklungsset kuratieren** — die 111 eindeutigen BPM-zugelassenen Tracks als reproduzierbares Set definieren, Varianz prüfen, Track-Notizen ergänzen und Lizenzfrage klären (parallel, eher Handarbeit).
 
 Danach: TCN-/BiLSTM-Hauptmodell und Mid-/High-Controls als neue Modellversion untersuchen sowie vortrainierte Embeddings auf demselben trackgetrennten Evaluationssatz vergleichen.

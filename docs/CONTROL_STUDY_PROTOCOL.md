@@ -49,6 +49,17 @@ steigt von 4,2333 auf 4,3667. Ausschließlich `vocal_clarity` unterscheidet
 sich (4,3333 auf 5,0). Paar 2, 3 und 5 werden bei beiden Methoden durch
 hörbare Rubber-Band-Time-Stretch-Artefakte begrenzt.
 
+Der sechste Hörsatz
+`blind_v8_vocal_mlp_v2_best_vs_initial_validation5_20260806` vergleicht den
+Best-Checkpoint aus Epoche 22 des erweiterten `vocal_time_shared_mlp_v2`-
+Laufs geblendet gegen seine ungelernte Initialisierung. Er enthält fünf
+vocal-aktive, unterschiedliche gerichtete Paarungen aus dem Validation-Split.
+Alle liegen bei exakt gleicher Source-/Target-BPM und verwenden deshalb kein
+Time-Stretch. Damit prüft der Satz gezielt die gelernten Mix-, Low-End-,
+Vocal- und Ducking-Kurven. Die Ratings sind noch offen; der Satz ist ein
+Entwicklungs-Gate auf dem Modellwahl-Split, kein unabhängiger
+Generalisierungsnachweis.
+
 ## Zweck
 
 Vor dem Training eines Feature→Control-Modells wird geprüft, ob direkt gegen
@@ -173,6 +184,27 @@ SHA-256-Werte. `answer_key.json` enthält zusätzlich Run-ID, Checkpoint-Epoche,
 Modellkonfiguration, vorhergesagte Controls und Objective-Komponenten. Im
 öffentlichen Manifest erscheinen weder die Methodenabbildung noch die
 Proxy-Losswerte.
+
+Der beste Vocal-v2-Checkpoint wird so gegen seine ungelernte Initialisierung
+exportiert:
+
+```powershell
+.venv\Scripts\python.exe -m src.evaluation.vocal_ml_control_study `
+  output\datasets\feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 `
+  output\training_runs\vocal_time_shared_mlp_v2_extended_bpm145_165_top10_seed20260805_20260805 `
+  output\control_studies\blind_v8_vocal_mlp_v2_best_vs_initial_validation5_20260806 `
+  --split validation `
+  --pair-count 5 `
+  --max-track-uses 3 `
+  --maximum-tempo-adjustment-fraction 0.005 `
+  --blind-seed 20260806
+```
+
+Dieser Export verlangt auf beiden Seiten mittlere Vocal-Stärke mindestens
+`0,15`, höchstens einen Cue pro gerichteter Paarung und höchstens `0,5 %`
+Tempoanpassung. Er prüft zusätzlich Run-/Modellvertrag, Dataset-ID und
+-Manifesthash sowie Best-Checkpoint-Epoche und -SHA-256. Der öffentliche
+Vertrag enthält Vocal-/Tempodaten, aber weder A/B-Zuordnung noch Proxy-Loss.
 
 ## Ergebnis anzeigen
 

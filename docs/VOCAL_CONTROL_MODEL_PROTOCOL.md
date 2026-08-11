@@ -269,7 +269,33 @@ eines, drei sind Gleichstände**. Im Fünf-Kriterien-Mittel steigt v4→v5 von
 Paar 2, 3 und 5 klingen in beiden Varianten wegen Rubber-Band-Time-Stretch
 schlecht und begrenzen die Aussagekraft.
 
-## 9. Grenzen und nächstes Gate
+## 9. Geblendeter Modell-Hörsatz
+
+`src.evaluation.vocal_ml_control_study` vergleicht die aus demselben
+Modellvertrag rekonstruierte, ungelernte Vocal-v2-Initialisierung gegen den
+SHA-geprüften Best-Checkpoint. Beide Varianten verwenden dieselben vier
+Waveforms, denselben stem-fähigen Renderer, Kontext und gemeinsamen Peak-Gain.
+Runformat, Runnername, Modellformat, Dataset-ID/-Manifesthash sowie
+Checkpoint-Epoche und -Hash werden vor dem Export geprüft.
+
+Der noch unbewertete Satz
+`output/control_studies/blind_v8_vocal_mlp_v2_best_vs_initial_validation5_20260806/`
+enthält fünf unterschiedliche gerichtete Paarungen aus `validation`. Beide
+Übergangsseiten besitzen mittlere Vocal-Stärke mindestens `0,15`; pro
+Paarung wird nur der vocal-stärkste tempozulässige Cue verwendet. Die
+zulässige Tempoänderung ist auf `0,5 %` begrenzt, alle fünf gewählten Paare
+liegen tatsächlich bei `0,0 %` und umgehen damit die bekannte
+Time-Stretch-Konfundierung.
+
+Source-Vocal-Stärken reichen von `0,353` bis `0,796`, Target von `0,188` bis
+`0,911`; 7 bis 32 der 32 Halbbeat-Bins sind gleichzeitig über `0,2` aktiv.
+Der Objective-v5-Loss des Best-Checkpoints ist gegenüber der Initialisierung
+auf zwei Paaren kleiner und auf drei größer. Der aggregierte Trainingsgewinn
+darf deshalb nicht als Paar-für-Paar- oder Hörqualitätsnachweis gelesen
+werden. `ratings.json` ist vollständig `unrated`; erst nach der geblendeten
+Bewertung darf `answer_key.json` ausgewertet werden.
+
+## 10. Grenzen und nächstes Gate
 
 - Ein ungünstiger Cue mitten in einem Satz kann durch Gains nicht vollständig
   repariert werden; die Kandidatenauswahl muss später ebenfalls vocal-aware
@@ -277,9 +303,7 @@ schlecht und begrenzen die Aussagekraft.
 - `vocal_phrase_progress`, Onset und Offset sind heuristisch aus
   Demucs-Energie abgeleitet und nicht sprachlich beziehungsweise phonemisch.
 - Das kleine MLP besitzt weiterhin kein TCN-/BiLSTM-Rezeptionsfeld.
-- Der erweiterte versionierte v2-Trainingslauf ist abgeschlossen. Als
-  nächstes muss der Best-Checkpoint aus Epoche 22 geblendet gegen die
-  ungelernte Vocal-Baseline auf
-  Vocal-aktiven, möglichst nicht Time-Stretch-dominierten Paaren gehört
-  werden. Die Objective-Gewichte erst nach diesem Modell-Gate und später mit
-  mehr Ratenden endgültig einfrieren.
+- Der erweiterte versionierte v2-Trainingslauf und der tempo-konfundierungsfreie
+  geblendete Export sind abgeschlossen. Als Nächstes müssen alle fünf Paare
+  bewertet und erst danach entblindet werden. Die Objective-Gewichte erst
+  nach diesem Modell-Gate und später mit mehr Ratenden endgültig einfrieren.
