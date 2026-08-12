@@ -7,9 +7,31 @@ welche Gewichte tatsächlich ausgeführt wurden und welche Publikation in der
 Masterarbeit zitiert werden soll. Kopierbare BibTeX-Einträge stehen in
 [`REFERENCES.bib`](./REFERENCES.bib).
 
-## Aktiv: HT Demucs für Vocal-Features
+## Aktiv: BS-RoFormer für Vocal-Features
 
-BeatBridge verwendet `htdemucs` aus Demucs `4.1.0`, um pro Song einmalig
+BeatBridge verwendet standardmäßig BS-RoFormer über das inference-only Paket
+`bs-roformer-infer==0.1.1`. Das Modell wird beim ersten Bedarf automatisch in
+`output/.../model_artifacts/roformer_models/` geladen und per SHA-256 im
+Vocal-Stem-Manifest identifiziert. Der aktive Default ist
+`roformer-model-bs-roformer-sw-by-jarredou`; er liefert einen Vocal-Stem, der
+für Featureextraktion und den stem-fähigen Renderer weiterverwendet wird.
+
+Zu zitieren:
+
+- Wei-Tsung Lu, Ju-Chiang Wang, Qiuqiang Kong und Yun-Ning Hung:
+  *Music Source Separation with Band-Split RoPE Transformer*, ICASSP 2024,
+  DOI `10.1109/ICASSP48485.2024.10446843`.
+- Paper: <https://arxiv.org/abs/2309.02612>
+- Inferenzpaket: <https://github.com/openmirlab/bs-roformer-infer>
+- Modell-Assets: <https://huggingface.co/jarredou/BS-ROFO-SW-Fixed>
+
+Der exakte Checkpoint- und Config-Hash wird erst beim ersten lokalen Lauf
+bekannt und im Manifest gespeichert; die Gewichtsbytes werden nicht in Git
+eingecheckt. `demucs` bleibt als explizites Vergleichsbackend verfügbar.
+
+## Vergleichsbackend: HT Demucs für Vocal-Features
+
+BeatBridge kann `htdemucs` aus Demucs `4.1.0` explizit anfordern, um pro Song einmalig
 einen Vocal-Stem zu erzeugen. Daraus werden anschließend beat-synchrone
 Vocal-Aktivität, Prominenz, Onset, Offset, Phrasenfortschritt und eine
 Margin-Confidence abgeleitet. Es wird kein Demucs-Modell nachtrainiert.

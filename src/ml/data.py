@@ -29,7 +29,11 @@ from src.features import (
     validate_feature_array,
     validate_global_feature_array,
 )
-from src.features.vocal import DEFAULT_DEMUCS_MODEL, extract_or_load_vocal_stem
+from src.features.vocal import (
+    DEFAULT_ROFORMER_MODEL,
+    DEFAULT_VOCAL_BACKEND,
+    extract_or_load_vocal_stem_with_backend,
+)
 from src.pipeline import DEFAULT_SAMPLE_RATE, PROJECT_ROOT, RENDER_RESULT_FORMAT_VERSION
 
 
@@ -201,8 +205,9 @@ def load_or_create_vocal_bridge_waveforms(
     analysis=None,
     analysis_root=Path("output") / "pre_analysis",
     bridge_extractor=extract_aligned_vocal_bridge,
-    vocal_stem_loader=extract_or_load_vocal_stem,
-    vocal_model=DEFAULT_DEMUCS_MODEL,
+    vocal_stem_loader=None,
+    vocal_backend=DEFAULT_VOCAL_BACKEND,
+    vocal_model=DEFAULT_ROFORMER_MODEL,
     build_missing=True,
     verify_audio_hashes=True,
 ):
@@ -214,24 +219,29 @@ def load_or_create_vocal_bridge_waveforms(
     _validate_example_candidate_identity(example, candidate)
     if verify_audio_hashes:
         _verify_candidate_audio_hashes(candidate)
+    if vocal_stem_loader is None:
+        vocal_stem_loader = extract_or_load_vocal_stem_with_backend
     vocal_artifacts = {}
     for role in ("source", "target"):
         track = candidate[f"{role}_track"]
         path = Path(track["path"])
         if not path.is_absolute():
             path = PROJECT_ROOT / path
-        vocal_artifacts[role] = vocal_stem_loader(
-            path,
-            cache_root=feature_cache_root,
-            source_sha256=track["sha256"],
-            model_name=vocal_model,
-        )
+        loader_kwargs = {
+            "cache_root": feature_cache_root,
+            "source_sha256": track["sha256"],
+            "model_name": vocal_model,
+        }
+        if vocal_stem_loader is extract_or_load_vocal_stem_with_backend:
+            loader_kwargs["backend"] = vocal_backend
+        vocal_artifacts[role] = vocal_stem_loader(path, **loader_kwargs)
     cache_config = _vocal_bridge_cache_config(
         example,
         candidate,
         vocal_artifacts,
         training_sample_rate=training_sample_rate,
         render_sample_rate=render_sample_rate,
+        vocal_backend=vocal_backend,
         vocal_model=vocal_model,
     )
     cache_id = hashlib.sha256(
@@ -253,6 +263,7 @@ def load_or_create_vocal_bridge_waveforms(
         sample_rate=render_sample_rate,
         include_context_audio=False,
         feature_cache_root=feature_cache_root,
+        vocal_backend=vocal_backend,
         vocal_model=vocal_model,
         source_vocal_artifact=vocal_artifacts["source"],
         target_vocal_artifact=vocal_artifacts["target"],
@@ -448,7 +459,7 @@ class FeatureControlDataset(Dataset):
 
 
 class VocalFeatureControlDataset(FeatureControlDataset):
-    """Feature split joined with aligned mix and Demucs-vocal waveforms."""
+    """Feature split joined with aligned mix and RoFormer-vocal waveforms."""
 
     def __init__(
         self,
@@ -462,8 +473,9 @@ class VocalFeatureControlDataset(FeatureControlDataset):
         build_missing_waveforms=False,
         analysis=None,
         bridge_extractor=extract_aligned_vocal_bridge,
-        vocal_stem_loader=extract_or_load_vocal_stem,
-        vocal_model=DEFAULT_DEMUCS_MODEL,
+        vocal_stem_loader=None,
+        vocal_backend=DEFAULT_VOCAL_BACKEND,
+        vocal_model=DEFAULT_ROFORMER_MODEL,
         verify_audio_hashes=True,
     ):
         super().__init__(
@@ -479,6 +491,7 @@ class VocalFeatureControlDataset(FeatureControlDataset):
         )
         self.feature_cache_root = Path(feature_cache_root)
         self.vocal_stem_loader = vocal_stem_loader
+        self.vocal_backend = str(vocal_backend)
         self.vocal_model = str(vocal_model)
 
     def __getitem__(self, index):
@@ -495,6 +508,7 @@ class VocalFeatureControlDataset(FeatureControlDataset):
             analysis=self.analysis,
             bridge_extractor=self.bridge_extractor,
             vocal_stem_loader=self.vocal_stem_loader,
+            vocal_backend=self.vocal_backend,
             vocal_model=self.vocal_model,
             build_missing=self.build_missing_waveforms,
             verify_audio_hashes=self.verify_audio_hashes,
@@ -572,6 +586,7 @@ def _vocal_bridge_cache_config(
     *,
     training_sample_rate,
     render_sample_rate,
+    vocal_backend,
     vocal_model,
 ):
     base = _bridge_cache_config(
@@ -584,6 +599,7 @@ def _vocal_bridge_cache_config(
         **base,
         "format_version": VOCAL_BRIDGE_WAVEFORM_CACHE_FORMAT_VERSION,
         "extractor_version": VOCAL_BRIDGE_WAVEFORM_EXTRACTOR_VERSION,
+        "vocal_backend": str(vocal_backend),
         "vocal_model": str(vocal_model),
         "source_vocal_artifact_sha256": vocal_artifacts["source"].manifest["artifact_sha256"],
         "target_vocal_artifact_sha256": vocal_artifacts["target"].manifest["artifact_sha256"],

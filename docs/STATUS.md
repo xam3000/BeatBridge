@@ -2,6 +2,20 @@
 
 _Stand: 2026-08-12_
 
+**Verifiziert am 2026-08-12 (BS-RoFormer als Vocal-Default):** Die bisherige
+HT-Demucs-Vocaltrennung wurde um ein RoFormer-Backend ergänzt. Standardmäßig
+verwendet Featureextraktion, Vocal-Bridge-Cache und Vocal-ML-Pipeline jetzt
+`bs-roformer-infer==0.1.1` mit
+`roformer-model-bs-roformer-sw-by-jarredou`. Modell- und Config-Assets werden
+beim ersten Bedarf in einem getrennten Cache geladen; Stem-Manifest und
+Featurecache speichern Backend-, Software-, Modell- und SHA-Provenienz.
+`--vocal-backend demucs` bleibt als expliziter Vergleichspfad erhalten.
+Die RoFormer-Cachetests bestehen; `pip check` meldet keine defekten
+Abhängigkeiten. Die breitere Suite bleibt auf dieser Windows/Python-3.14-
+Umgebung bei Librosa/Numba-JIT-Initialisierung beziehungsweise einem bekannten
+Numba-Fehler in `librosa.resample` hängen; das ist separat von der RoFormer-
+Integration zu behandeln.
+
 **Rolle dieser Datei:** Einstieg, verifizierter aktueller Stand und priorisierte
 nächste Schritte. Der ausführliche chronologische Experimentlog gehört in
 [`Bemerkungen.md`](./Bemerkungen.md); die älteren Verifizierungsblöcke hier

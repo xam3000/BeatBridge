@@ -387,8 +387,9 @@ Der erste Aufruf schreibt `manifest.json` und `track_features.npz` unter
 `output/feature_cache/`. Weitere Aufrufe mit identischem Audio, Beat-Grid,
 Sample-Rate, Zieltempo und Extractorvertrag liefern `cache_hit: true`.
 
-Standardmäßig wird dabei `htdemucs` für Vocal-Features verwendet. Der erste
-Lauf lädt die offiziellen Gewichte und berechnet einen wiederverwendbaren
+Standardmäßig wird dabei BS-RoFormer (`roformer-model-bs-roformer-sw-by-jarredou`)
+für Vocal-Features verwendet. Der erste Lauf lädt Modell und Konfiguration und
+berechnet einen wiederverwendbaren
 Vocal-Stem; spätere Cue Points, Songpaare und Zieltempi desselben Songs nutzen
 dieses Stem-Artefakt erneut. Für schnelle technische Tests ohne Modell:
 

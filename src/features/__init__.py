@@ -28,10 +28,15 @@ from .extract_track import (
     normalization_stats_from_training_artifacts,
 )
 from .vocal import (
+    DEFAULT_ROFORMER_MODEL,
+    DEFAULT_VOCAL_BACKEND,
     DEFAULT_DEMUCS_MODEL,
     DEMUCS_PAPER,
+    ROFORMER_PAPER,
     VocalStemArtifact,
+    extract_or_load_roformer_vocal_stem,
     extract_or_load_vocal_stem,
+    extract_or_load_vocal_stem_with_backend,
 )
 from .global_pair import (
     GLOBAL_PAIR_EXTRACTOR_VERSION,
@@ -67,7 +72,10 @@ __all__ = [
     "TrackFeatureArtifact",
     "DEFAULT_FEATURE_CACHE_ROOT",
     "DEFAULT_DEMUCS_MODEL",
+    "DEFAULT_ROFORMER_MODEL",
+    "DEFAULT_VOCAL_BACKEND",
     "DEMUCS_PAPER",
+    "ROFORMER_PAPER",
     "VocalStemArtifact",
     "GLOBAL_PAIR_EXTRACTOR_VERSION",
     "KeyEstimate",
@@ -83,6 +91,8 @@ __all__ = [
     "export_feature_dataset",
     "extract_or_load_track_features",
     "extract_or_load_vocal_stem",
+    "extract_or_load_roformer_vocal_stem",
+    "extract_or_load_vocal_stem_with_backend",
     "feature_index",
     "feature_schema",
     "global_feature_index",

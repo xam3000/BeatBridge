@@ -38,7 +38,10 @@ from src.features.global_pair import (
     GLOBAL_PAIR_EXTRACTOR_VERSION,
     build_global_pair_features,
 )
-from src.features.vocal import DEFAULT_DEMUCS_MODEL
+from src.features.vocal import (
+    DEFAULT_ROFORMER_MODEL,
+    DEFAULT_VOCAL_BACKEND,
+)
 from src.pipeline import DEFAULT_SAMPLE_RATE
 
 
@@ -183,8 +186,8 @@ def export_feature_dataset(
     top_k_per_pair=DEFAULT_TOP_K_PER_PAIR,
     transition_bars=4,
     split_config=None,
-    vocal_backend="demucs",
-    vocal_model=DEFAULT_DEMUCS_MODEL,
+    vocal_backend=DEFAULT_VOCAL_BACKEND,
+    vocal_model=DEFAULT_ROFORMER_MODEL,
     track_exclusions_path=DEFAULT_TRACK_EXCLUSIONS_PATH,
     minimum_bpm=None,
     maximum_bpm=None,
@@ -342,7 +345,7 @@ def export_feature_dataset(
         "top_k_per_pair": int(top_k_per_pair),
         "sample_rate": int(sample_rate),
         "vocal_backend": str(vocal_backend),
-        "vocal_model": str(vocal_model) if vocal_backend == "demucs" else None,
+        "vocal_model": str(vocal_model) if vocal_backend != "disabled" else None,
         "bpm_filter": {
             "minimum_bpm": None if minimum_bpm is None else float(minimum_bpm),
             "maximum_bpm": None if maximum_bpm is None else float(maximum_bpm),
@@ -768,10 +771,10 @@ def build_argument_parser():
     parser.add_argument("--max-bpm", type=float)
     parser.add_argument(
         "--vocal-backend",
-        choices=("disabled", "demucs"),
-        default="demucs",
+        choices=("disabled", "demucs", "roformer"),
+        default=DEFAULT_VOCAL_BACKEND,
     )
-    parser.add_argument("--vocal-model", default=DEFAULT_DEMUCS_MODEL)
+    parser.add_argument("--vocal-model", default=DEFAULT_ROFORMER_MODEL)
     parser.add_argument(
         "--track-exclusions",
         default=str(DEFAULT_TRACK_EXCLUSIONS_PATH),

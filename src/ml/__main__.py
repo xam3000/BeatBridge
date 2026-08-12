@@ -6,7 +6,7 @@ import argparse
 import json
 
 from src.bridge import DEFAULT_FEATURE_CACHE_ROOT
-from src.features.vocal import DEFAULT_DEMUCS_MODEL
+from src.features.vocal import DEFAULT_ROFORMER_MODEL
 
 from .data import (
     DEFAULT_BRIDGE_WAVEFORM_CACHE_ROOT,
@@ -129,7 +129,7 @@ def build_argument_parser():
         "--feature-cache-root",
         default=str(DEFAULT_FEATURE_CACHE_ROOT),
     )
-    vocal_train_parser.add_argument("--vocal-model", default=DEFAULT_DEMUCS_MODEL)
+    vocal_train_parser.add_argument("--vocal-model", default=DEFAULT_ROFORMER_MODEL)
     vocal_train_parser.add_argument("--seed", type=int, default=VocalTrainingConfig.seed)
     vocal_train_parser.add_argument(
         "--max-epochs",

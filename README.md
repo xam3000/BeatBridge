@@ -22,7 +22,7 @@ Der aktuelle, verifizierte Projektstand und die weitere Dokumentation liegen unt
 ```
 
 `requirements-cuda.txt` installiert unter Windows den CUDA-13.0-Build von
-PyTorch. Training und neue Demucs-Separationen wählen standardmäßig
+PyTorch. Training und neue BS-RoFormer-Separationen wählen standardmäßig
 `cuda:0`, wenn CUDA verfügbar ist, und fallen sonst auf CPU zurück. Für einen
 bewussten CPU-Lauf kann bei den Trainingsbefehlen `--device cpu` angegeben
 werden.

@@ -8,7 +8,11 @@ import librosa
 import numpy as np
 
 from src.cutting.equal_power_fade_cut import EqualPowerFadeCut
-from src.features.vocal import DEFAULT_DEMUCS_MODEL, extract_or_load_vocal_stem
+from src.features.vocal import (
+    DEFAULT_ROFORMER_MODEL,
+    DEFAULT_VOCAL_BACKEND,
+    extract_or_load_vocal_stem_with_backend,
+)
 from src.pipeline import BeatBridgePipeline, DEFAULT_SAMPLE_RATE, PROJECT_ROOT
 from src.tempo.time_stretch import TimeStretch
 
@@ -104,12 +108,13 @@ def extract_aligned_vocal_bridge(
     sample_rate=DEFAULT_SAMPLE_RATE,
     include_context_audio=False,
     feature_cache_root=DEFAULT_FEATURE_CACHE_ROOT,
-    vocal_model=DEFAULT_DEMUCS_MODEL,
+    vocal_backend=DEFAULT_VOCAL_BACKEND,
+    vocal_model=DEFAULT_ROFORMER_MODEL,
     source_vocal_artifact=None,
     target_vocal_artifact=None,
     tempo_adjuster=None,
 ):
-    """Return sample-aligned mix and Demucs-vocal bridge waveforms."""
+    """Return sample-aligned mix and RoFormer-vocal bridge waveforms."""
     source, target, geometry = extract_aligned_bridge(
         candidate,
         analysis,
@@ -118,14 +123,16 @@ def extract_aligned_vocal_bridge(
     )
     source_path = _resolve_track_path(candidate["source_track"]["path"])
     target_path = _resolve_track_path(candidate["target_track"]["path"])
-    source_vocal_artifact = source_vocal_artifact or extract_or_load_vocal_stem(
+    source_vocal_artifact = source_vocal_artifact or extract_or_load_vocal_stem_with_backend(
         source_path,
+        backend=vocal_backend,
         cache_root=feature_cache_root,
         source_sha256=candidate["source_track"]["sha256"],
         model_name=vocal_model,
     )
-    target_vocal_artifact = target_vocal_artifact or extract_or_load_vocal_stem(
+    target_vocal_artifact = target_vocal_artifact or extract_or_load_vocal_stem_with_backend(
         target_path,
+        backend=vocal_backend,
         cache_root=feature_cache_root,
         source_sha256=candidate["target_track"]["sha256"],
         model_name=vocal_model,
@@ -166,6 +173,7 @@ def extract_aligned_vocal_bridge(
         raise ValueError("Aligned mix and vocal bridges have different shapes")
     geometry.update({
         "vocal_model": str(vocal_model),
+        "vocal_backend": str(vocal_backend),
         "source_vocal_artifact_sha256": source_vocal_artifact.manifest["artifact_sha256"],
         "target_vocal_artifact_sha256": target_vocal_artifact.manifest["artifact_sha256"],
         "vocal_tempo_backend": vocal_tempo_backend,

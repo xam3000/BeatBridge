@@ -26,8 +26,9 @@ from src.features.contract import (
     validate_feature_channels,
 )
 from src.features.vocal import (
-    DEFAULT_DEMUCS_MODEL,
-    extract_or_load_vocal_stem,
+    DEFAULT_ROFORMER_MODEL,
+    DEFAULT_VOCAL_BACKEND,
+    extract_or_load_vocal_stem_with_backend,
 )
 from src.pipeline import DEFAULT_SAMPLE_RATE, RENDER_RESULT_FORMAT_VERSION
 from src.tempo import TimeStretch
@@ -128,8 +129,8 @@ def extract_or_load_track_features(
     sample_rate=DEFAULT_SAMPLE_RATE,
     target_bpm=None,
     tempo_adjuster=None,
-    vocal_backend="disabled",
-    vocal_model=DEFAULT_DEMUCS_MODEL,
+    vocal_backend=DEFAULT_VOCAL_BACKEND,
+    vocal_model=DEFAULT_ROFORMER_MODEL,
     vocal_stem_loader=None,
 ):
     """Load one immutable cache entry or extract it from the complete track."""
@@ -142,17 +143,25 @@ def extract_or_load_track_features(
 
     source_hash = _file_sha256(song_path)
     vocal_backend = str(vocal_backend)
-    if vocal_backend not in {"disabled", "demucs"}:
-        raise ValueError("vocal_backend must be 'disabled' or 'demucs'")
+    if vocal_backend not in {"disabled", "demucs", "roformer"}:
+        raise ValueError("vocal_backend must be 'disabled', 'demucs' or 'roformer'")
     vocal_artifact = None
-    if vocal_backend == "demucs":
-        vocal_stem_loader = vocal_stem_loader or extract_or_load_vocal_stem
-        vocal_artifact = vocal_stem_loader(
-            song_path,
-            cache_root=cache_root,
-            source_sha256=source_hash,
-            model_name=vocal_model,
-        )
+    if vocal_backend in {"demucs", "roformer"}:
+        if vocal_stem_loader is None:
+            vocal_artifact = extract_or_load_vocal_stem_with_backend(
+                song_path,
+                backend=vocal_backend,
+                cache_root=cache_root,
+                source_sha256=source_hash,
+                model_name=vocal_model,
+            )
+        else:
+            vocal_artifact = vocal_stem_loader(
+                song_path,
+                cache_root=cache_root,
+                source_sha256=source_hash,
+                model_name=vocal_model,
+            )
     detected_sample_rate = librosa.get_samplerate(str(song_path))
     if detected_sample_rate is None or int(detected_sample_rate) <= 0:
         raise ValueError(f"Could not determine sample rate: {song_path}")
@@ -298,7 +307,7 @@ def extract_or_load_track_features(
             "vocal": (
                 "not_implemented"
                 if vocal_artifact is None
-                else "demucs_energy_activity_v1"
+                else f"{vocal_backend}_energy_activity_v1"
             ),
         },
         "vocal_artifact": (
@@ -309,7 +318,12 @@ def extract_or_load_track_features(
                 "cache_hit": bool(vocal_artifact.cache_hit),
                 "artifact_sha256": vocal_artifact.manifest["artifact_sha256"],
                 "model_name": vocal_artifact.manifest["model_name"],
-                "demucs_version": vocal_artifact.manifest["demucs_version"],
+                "backend": vocal_artifact.manifest.get("backend", vocal_backend),
+                "backend_version": vocal_artifact.manifest.get("backend_version"),
+                "software_version": vocal_artifact.manifest.get(
+                    "bs_roformer_infer_version",
+                    vocal_artifact.manifest.get("demucs_version"),
+                ),
                 "weights": vocal_artifact.manifest["weights"],
                 "paper": vocal_artifact.manifest["paper"],
             }
@@ -687,10 +701,10 @@ def build_argument_parser():
     parser.add_argument("--target-bpm", type=float)
     parser.add_argument(
         "--vocal-backend",
-        choices=("disabled", "demucs"),
-        default="demucs",
+        choices=("disabled", "demucs", "roformer"),
+        default=DEFAULT_VOCAL_BACKEND,
     )
-    parser.add_argument("--vocal-model", default=DEFAULT_DEMUCS_MODEL)
+    parser.add_argument("--vocal-model", default=DEFAULT_ROFORMER_MODEL)
     return parser
 
 

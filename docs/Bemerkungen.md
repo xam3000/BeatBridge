@@ -65,3 +65,10 @@
 - **Entscheidung (2026-07-17):** Die Root-`README.md` bleibt eine kompakte Projekt- und Bedienungsübersicht; der veränderliche Arbeitsplan wird ausschließlich in `docs/STATUS.md` gepflegt. Grund: Doppelte Aktionspläne waren bereits auseinander gelaufen und enthielten erledigte Renderer weiterhin als offene Arbeit.
 - **Historischer Stand (2026-07-17, 1. Versuch; durch die Analyse-/Provenienzänderung vom 2026-08-12 überholt):** Fehlende Downbeat-Metadaten führten zuvor zu stillem Fallback auf beliebige Beats → Downbeat-Snapping brach mit einer konkreten Fehlermeldung ab → kein vorgetäuschtes Bar-Alignment. Heute bleibt der Analyse-Fallback verfügbar, wird aber als approximativ markiert und von der Kandidatengenerierung standardmäßig abgelehnt.
 - **Gelernt (2026-07-17, 1. Versuch):** Eine Prüfung innerhalb der Codex-Dateisandbox meldete `ffmpeg` als nicht auffindbar, obwohl dessen WinGet-Verzeichnis im `PATH` stand → die Sandbox verweigerte Zugriff und Ausführung im Paketverzeichnis → externe Programme bei einem solchen Widerspruch durch einen tatsächlichen Prozessstart außerhalb der eingeschränkten Sandbox verifizieren. `ffmpeg 8.1` ist installiert und ausführbar.
+**Entscheidung (2026-08-12):** RoFormer wird als Standard für Vocal-Stems
+verwendet. `audio-separator` wurde zunächst geprüft, ist unter Python 3.14
+unter Windows aber an `diffq-fixed`/zusätzlichen ONNX-Abhängigkeiten nicht
+reproduzierbar installierbar. Deshalb nutzt BeatBridge das schlanke,
+inference-only `bs-roformer-infer==0.1.1` mit verifizierten Modell-Downloads.
+Demucs bleibt als explizites Vergleichsbackend erhalten; bestehende Demucs-
+Caches werden nicht migriert oder überschrieben.

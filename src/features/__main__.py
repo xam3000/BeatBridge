@@ -4,6 +4,7 @@ import argparse
 import json
 
 from .contract import feature_schema
+from .vocal import DEFAULT_ROFORMER_MODEL, DEFAULT_VOCAL_BACKEND
 
 
 def build_argument_parser():
@@ -21,10 +22,10 @@ def build_argument_parser():
     cache_parser.add_argument("--target-bpm", type=float)
     cache_parser.add_argument(
         "--vocal-backend",
-        choices=("disabled", "demucs"),
-        default="demucs",
+        choices=("disabled", "demucs", "roformer"),
+        default=DEFAULT_VOCAL_BACKEND,
     )
-    cache_parser.add_argument("--vocal-model", default="htdemucs")
+    cache_parser.add_argument("--vocal-model", default=DEFAULT_ROFORMER_MODEL)
     export_parser = subparsers.add_parser(
         "export-dataset",
         help="Export four-bar feature examples with track-disjoint splits.",
@@ -46,10 +47,10 @@ def build_argument_parser():
     export_parser.add_argument("--max-bpm", type=float)
     export_parser.add_argument(
         "--vocal-backend",
-        choices=("disabled", "demucs"),
-        default="demucs",
+        choices=("disabled", "demucs", "roformer"),
+        default=DEFAULT_VOCAL_BACKEND,
     )
-    export_parser.add_argument("--vocal-model", default="htdemucs")
+    export_parser.add_argument("--vocal-model", default=DEFAULT_ROFORMER_MODEL)
     export_parser.add_argument(
         "--track-exclusions",
         default="config/track_exclusions.json",

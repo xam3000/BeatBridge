@@ -58,12 +58,14 @@ def test_full_track_features_are_cached_and_reused(tmp_path):
         cache_root=tmp_path / "cache",
         analysis=analysis,
         sample_rate=8_000,
+        vocal_backend="disabled",
     )
     second = extract_or_load_track_features(
         song,
         cache_root=tmp_path / "cache",
         analysis=analysis,
         sample_rate=8_000,
+        vocal_backend="disabled",
     )
 
     assert first.cache_hit is False
@@ -85,12 +87,14 @@ def test_grid_provenance_changes_feature_cache_identity(tmp_path):
         cache_root=tmp_path / "cache",
         analysis=_Analysis(8_000),
         sample_rate=8_000,
+        vocal_backend="disabled",
     )
     detected = extract_or_load_track_features(
         song,
         cache_root=tmp_path / "cache",
         analysis=_DetectedAnalysis(8_000),
         sample_rate=8_000,
+        vocal_backend="disabled",
     )
 
     assert unknown.cache_directory != detected.cache_directory
@@ -114,6 +118,7 @@ def test_audio_change_creates_a_different_cache_entry(tmp_path):
         cache_root=tmp_path / "cache",
         analysis=analysis,
         sample_rate=8_000,
+        vocal_backend="disabled",
     )
 
     _write_tone(song, frequency=440.0)
@@ -122,6 +127,7 @@ def test_audio_change_creates_a_different_cache_entry(tmp_path):
         cache_root=tmp_path / "cache",
         analysis=analysis,
         sample_rate=8_000,
+        vocal_backend="disabled",
     )
 
     assert second.cache_hit is False
@@ -136,6 +142,7 @@ def test_cached_track_yields_contract_valid_source_and_target_windows(tmp_path):
         cache_root=tmp_path / "cache",
         analysis=_Analysis(8_000),
         sample_rate=8_000,
+        vocal_backend="disabled",
     )
     stats = normalization_stats_from_training_artifacts(
         (artifact,),
@@ -175,6 +182,7 @@ def test_cache_manifest_records_missing_vocal_and_phrase_extractors(tmp_path):
         cache_root=tmp_path / "cache",
         analysis=_Analysis(8_000),
         sample_rate=8_000,
+        vocal_backend="disabled",
     )
 
     manifest = json.loads(
@@ -194,6 +202,7 @@ def test_window_requires_training_normalization_and_sufficient_context(tmp_path)
         cache_root=tmp_path / "cache",
         analysis=_Analysis(8_000),
         sample_rate=8_000,
+        vocal_backend="disabled",
     )
     stats = FeatureNormalizationStats(1.0, 1.0, "fixed")
 
@@ -233,6 +242,7 @@ def test_tempo_aligned_track_variant_is_cached_by_target_bpm(tmp_path):
         cache_root=tmp_path / "cache",
         analysis=analysis,
         sample_rate=8_000,
+        vocal_backend="disabled",
         target_bpm=100.0,
         tempo_adjuster=_TempoAdjuster(),
     )
@@ -241,6 +251,7 @@ def test_tempo_aligned_track_variant_is_cached_by_target_bpm(tmp_path):
         cache_root=tmp_path / "cache",
         analysis=analysis,
         sample_rate=8_000,
+        vocal_backend="disabled",
         target_bpm=100.0,
         tempo_adjuster=_TempoAdjuster(fail=True),
     )

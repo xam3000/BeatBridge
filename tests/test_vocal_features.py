@@ -6,7 +6,11 @@ import torch
 
 from src.features import feature_index
 from src.features.extract_track import extract_or_load_track_features
-from src.features.vocal import VocalStemArtifact, extract_or_load_vocal_stem
+from src.features.vocal import (
+    VocalStemArtifact,
+    extract_or_load_roformer_vocal_stem,
+    extract_or_load_vocal_stem,
+)
 
 
 class _Analysis:
@@ -73,6 +77,49 @@ def test_demucs_vocal_stem_is_cached_with_model_provenance(tmp_path):
     assert np.array_equal(first.audio, second.audio)
     assert first.manifest["paper"]["citation_key"] == "rouard2023hybrid"
     assert first.manifest["artifact_sha256"] == second.manifest["artifact_sha256"]
+
+
+def test_roformer_vocal_stem_is_cached_and_uses_audio_separator_contract(tmp_path):
+    song = tmp_path / "song.wav"
+    audio = _write_test_song(song)
+    calls = []
+
+    def _fake_roformer_separator(**kwargs):
+        calls.append(kwargs)
+        model_path = kwargs["model_directory"] / "fake.ckpt"
+        model_path.write_bytes(b"fake-roformer-weights")
+        return np.stack((audio * 0.25, audio * 0.5)), 8_000, {
+            "provider": "test",
+            "model_filename": "fake.ckpt",
+            "sha256": "test-sha256",
+            "size_bytes": 21,
+        }
+
+    first = extract_or_load_roformer_vocal_stem(
+        song,
+        cache_root=tmp_path / "cache",
+        model_name="test-roformer",
+        device="cpu",
+        separator_factory=_fake_roformer_separator,
+    )
+    second = extract_or_load_roformer_vocal_stem(
+        song,
+        cache_root=tmp_path / "cache",
+        model_name="test-roformer",
+        device="cpu",
+        separator_factory=lambda **_: (_ for _ in ()).throw(
+            AssertionError("A RoFormer cache hit must not load a model")
+        ),
+    )
+
+    assert first.cache_hit is False
+    assert second.cache_hit is True
+    assert len(calls) == 1
+    assert first.manifest["backend"] == "roformer"
+    assert first.manifest["paper"]["citation_key"] == "lu2024bsroformer"
+    assert first.manifest["weights"]["sha256"] == "test-sha256"
+    assert np.allclose(first.audio, audio * 0.375, atol=2e-4)
+    np.testing.assert_array_equal(first.audio, second.audio)
 
 
 def test_track_features_populate_vocal_channels_from_cached_stem(tmp_path):

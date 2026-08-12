@@ -4,3 +4,4 @@ numpy==2.4.6
 soundfile==0.14.0
 torch==2.13.0
 demucs==4.1.0
+bs-roformer-infer==0.1.1

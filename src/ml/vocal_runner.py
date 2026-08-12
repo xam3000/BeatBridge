@@ -24,7 +24,7 @@ from src.control import (
     VocalAwareTransitionObjective,
     VocalAwareTransitionObjectiveConfig,
 )
-from src.features.vocal import DEFAULT_DEMUCS_MODEL
+from src.features.vocal import DEFAULT_ROFORMER_MODEL
 from src.torch_device import (
     DEFAULT_TORCH_DEVICE,
     resolve_torch_device,
@@ -102,7 +102,7 @@ def run_vocal_feature_control_training(
     objective_config: VocalAwareTransitionObjectiveConfig | None = None,
     waveform_cache_root=DEFAULT_VOCAL_BRIDGE_WAVEFORM_CACHE_ROOT,
     feature_cache_root=DEFAULT_FEATURE_CACHE_ROOT,
-    vocal_model=DEFAULT_DEMUCS_MODEL,
+    vocal_model=DEFAULT_ROFORMER_MODEL,
     resume=False,
     progress=print,
 ):
@@ -166,7 +166,7 @@ def train_vocal_feature_control_model(
     model_config: VocalFeatureControlMLPConfig | None = None,
     objective_config: VocalAwareTransitionObjectiveConfig | None = None,
     dataset_identity: dict | None = None,
-    vocal_model=DEFAULT_DEMUCS_MODEL,
+    vocal_model=DEFAULT_ROFORMER_MODEL,
     resume=False,
     progress=print,
 ):
