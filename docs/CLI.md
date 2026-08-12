@@ -503,6 +503,12 @@ Modellkonfiguration und Ausgaben anzeigen:
 .venv\Scripts\python.exe -m src.ml model-info-vocal
 ```
 
+Die geplante TCN/BiLSTM-Architektur inspizieren:
+
+```powershell
+.venv\Scripts\python.exe -m src.ml model-info-tcn-bilstm
+```
+
 Mix und Demucs-Vocal-Stems für Objective v5 samplegleich cachen:
 
 ```powershell

@@ -715,6 +715,22 @@ auf realem Audio validieren.
 
 Danach: TCN-/BiLSTM-Hauptmodell und Mid-/High-Controls als neue Modellversion untersuchen sowie vortrainierte Embeddings auf demselben trackgetrennten Evaluationssatz vergleichen.
 
+### Verifiziert am 2026-08-12 (TCN/BiLSTM-Hauptmodell, Architektursonde)
+
+- Eine additive `tcn_bilstm_transition_control_v1`-Architektur ist unter
+  `src/ml/model.py` implementiert. Sie verwendet einen für A/B geteilten
+  temporalen Conv1d-Encoder `54 → 64 → 128`, die Fusion
+  `[A, B, A-B, A*B]` mit `512 → 256`, die Projektion der 16 globalen
+  Paarfeatures und einen zweilagigen bidirektionalen LSTM mit
+  `input_size=256` und `hidden_size=128`.
+- Der Controller gibt pro Halbbeat zehn sigmoid-beschränkte Werte als
+  `(B, 32, 10)` aus: Gain A/B, Low-/Mid-/High-EQ A/B, Low-End-Ownership und
+  Vocal-Ducking. Der Einstieg ist `python -m src.ml model-info-tcn-bilstm`.
+- Die Architektursonde verändert v1/v2-Checkpoints und deren Trainingsrunner
+  nicht. Monotonie, komplementäre Gains und die Anbindung an den
+  differenzierbaren Renderer bleiben ein eigener nächster Control-/Objective-
+  Schritt; ein selbstüberwachter Trainingsrunner für v3 ist noch offen.
+
 ## Offene Fragen / Entscheidungen (technisch)
 
 - BPM-/Beat-Grid: was ist maßgeblich, wenn librosa und aufTAKT abweichen (HELP_LESS 161 vs. 157)?

@@ -19,6 +19,13 @@
 
 ## Entscheidungen und Gelerntes
 
+- **Entscheidung (2026-08-12):** Das geplante größere Hauptmodell wird als
+  additive `tcn_bilstm_transition_control_v1`-Architektur neben den kleinen
+  MLP-Baselines implementiert: geteilter temporaler Encoder, explizite
+  `[A, B, A-B, A*B]`-Fusion, globale Paarfeatures und zweilagiger BiLSTM.
+  Grund: Die Architektur soll zeitliche Übergangszusammenhänge lernen, ohne
+  die reproduzierbaren v1/v2-Checkpoints oder deren Verträge zu verändern.
+
 - **Entscheidung (2026-07-17):** Rendering arbeitet standardmäßig mit 44,1 kHz und kanalorientiertem Stereo-Audio. Grund: Das Entwicklungsset enthält sowohl 44,1-kHz- als auch 48-kHz-Dateien; ein gemeinsames Raster verhindert stilles Fehl-Timing.
 - **Entscheidung (2026-07-17):** Der programmatische Rückgabevertrag startet mit `format_version = 1`; inkompatible Änderungen benötigen eine neue Version.
 - **Entscheidung (2026-07-21):** Übergangskandidaten führen die Länge kanonisch in Takten (`1/2/4`); die Beatanzahl wird aus dem vollständigen Taktfenster abgeleitet. Grund: Takte sind die musikalisch und für Nutzer:innen verständliche Constraint-Einheit, während die bestehenden Fade-Renderer weiterhin Beatanzahlen benötigen.
