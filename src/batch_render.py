@@ -445,6 +445,12 @@ def build_argument_parser():
         help="Maximum symmetric relative BPM difference, e.g. 0.15 for 15%% (default: 0.15).",
     )
     parser.add_argument(
+        "--approximate-grid-policy",
+        choices=("reject", "allow"),
+        default="reject",
+        help="Reject fallback/unknown downbeat grids or allow them explicitly (default: reject).",
+    )
+    parser.add_argument(
         "--top-k",
         type=int,
         default=5,
@@ -487,6 +493,7 @@ def main():
         source_boundary_count=args.source_boundaries,
         target_boundary_count=args.target_boundaries,
         max_tempo_relative_difference=args.max_tempo_difference,
+        approximate_grid_policy=args.approximate_grid_policy,
     )
     result = generate_and_render_batch(
         args.song1,

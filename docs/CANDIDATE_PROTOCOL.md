@@ -1,6 +1,6 @@
 # Kandidaten-Protokoll
 
-_Vertragsversion: 1, eingeführt am 2026-07-21._
+_Vertragsversion: 1, eingeführt am 2026-07-21; additive Grid-Provenienz seit 2026-08-12._
 
 Dieses Dokument beschreibt die stabile Schnittstelle zwischen Analyse, Kandidatengenerierung, künftigem Ranking und Batch-Rendering. Änderungen an Version 1 erfolgen nur additiv; inkompatible Änderungen benötigen eine neue `format_version`.
 
@@ -26,6 +26,7 @@ Ein akzeptierter Kandidat enthält mindestens:
 | `transition_length_beats` | Für Renderer abgeleitete Beatanzahl |
 | `source_bpm`, `target_bpm`, `tempo_relative_difference` | Tempo-Provenienz und Filtergrundlage |
 | `generator` | Aktuell `bar_grid_v1` |
+| `source_grid`, `target_grid` | Herkunft, Fallbackstatus, Backend-Version und Confidence des jeweiligen Taktrasters gemäß `ANALYSIS_PROTOCOL.md` |
 | `filter_status` | Für ausgegebene Kandidaten immer `accepted` |
 
 Das Python-Datenmodell bietet `to_dict()` für ein späteres JSON-Manifest. Die Abwesenheit eines Kandidaten wird nicht stillschweigend behandelt: `CandidateGenerationResult.rejections` enthält für jeden harten Filter einen maschinenlesbaren Code und eine Erklärung.
@@ -38,10 +39,18 @@ Die Fade-Renderer ab Rendering-Vertrag Version 2 mischen Source-Audio **nach** d
 
 Harte Filter in Version 1:
 
-1. vollständige, steigende Beat-/Downbeat-Metadaten mit konsistenten Takten im Übergangsfenster,
-2. vollständige Pre- und Post-Roll-Fenster auf beiden Songs für jede angeforderte Taktlänge,
-3. identische abgeleitete Beatanzahl auf beiden Seiten,
-4. symmetrische relative Tempoabweichung höchstens 15 % (konfigurierbar).
+1. bei der Default-Policy `approximate_grid_policy = reject` nachweislich erkannte Raster (`fallback_used = false`); approximative und historisch/extern unbekannte Raster werden abgelehnt,
+2. vollständige, steigende Beat-/Downbeat-Metadaten mit konsistenten Takten im Übergangsfenster,
+3. vollständige Pre- und Post-Roll-Fenster auf beiden Songs für jede angeforderte Taktlänge,
+4. identische abgeleitete Beatanzahl auf beiden Seiten,
+5. symmetrische relative Tempoabweichung höchstens 15 % (konfigurierbar).
+
+`approximate_grid_policy = allow` erlaubt Fallback- und unbekannte Raster nur
+nach explizitem Opt-in. Die Herkunft bleibt trotzdem in
+`CandidateGenerationResult.source_grid/target_grid` und in jedem Kandidaten
+gespeichert. Vollständige Tupel allein gelten nicht mehr als
+Downbeat-Erkennungsnachweis. Alte Analyse-Caches ohne Provenienz werden als
+`legacy_cache_unknown` behandelt und unter `reject` abgewiesen.
 
 Energie und Harmonie bleiben weiche Ranking-Komponenten; Vocal-Overlap, Phrasen- und Segmentinformationen fehlen weiterhin. „High Power“ wird daher nicht als harter Generatorfilter vorgetäuscht, sondern relativ zur Energieverteilung jedes Tracks im dokumentierten Ranking gemessen.
 
@@ -54,5 +63,8 @@ result = generate_transition_candidates("musik/song_a.wav", "musik/song_b.wav")
 for candidate in result.candidates:
     print(candidate.candidate_id, candidate.transition_length_beats)
 ```
+
+Der CLI-Schalter `--approximate-grid-policy allow` ist für bewusst
+approximative Experimente verfügbar; der Default bleibt `reject`.
 
 Die Funktion nutzt dieselbe Analyse und dieselbe Sample-Raten-Normalisierung wie `render_transition()`. Batch-Export und Manifest-Datei sind der folgende, bewusst getrennte Meilenstein.

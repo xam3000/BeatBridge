@@ -13,6 +13,7 @@ import uuid
 
 from src.analysis.pre_analysis import PreAnalysis
 from src.batch_render import DEFAULT_RENDERERS, generate_and_render_batch
+from src.candidates import CandidateGenerationConfig
 from src.dataset import (
     DEFAULT_TRACK_EXCLUSIONS_PATH,
     filter_excluded_tracks,
@@ -38,6 +39,7 @@ def generate_multi_song_batch(
     minimum_bpm=None,
     maximum_bpm=None,
     analysis_workers=1,
+    approximate_grid_policy="reject",
 ):
     """Rank targets per source, then render the best transition candidates.
 
@@ -75,6 +77,9 @@ def generate_multi_song_batch(
         analysis_location=cache_path,
     )
     _validate_request(song_paths, top_targets, top_transitions, renderers)
+    candidate_config = CandidateGenerationConfig(
+        approximate_grid_policy=approximate_grid_policy,
+    )
     output_directory.mkdir(parents=True, exist_ok=True)
     manifest_path = output_directory / "manifest.json"
     manifest = {
@@ -95,6 +100,7 @@ def generate_multi_song_batch(
         "top_transitions_per_pair": int(top_transitions),
         "renderers": list(renderers),
         "target_sample_rate": int(target_sample_rate),
+        "approximate_grid_policy": approximate_grid_policy,
         "sources": [],
         "failures": [],
     }
@@ -142,6 +148,7 @@ def generate_multi_song_batch(
                         renderers=renderers,
                         target_sample_rate=target_sample_rate,
                         analysis=analysis,
+                        candidate_config=candidate_config,
                         top_k=top_transitions,
                     )
                     pair_entry.update(
@@ -368,6 +375,11 @@ def build_argument_parser():
     parser.add_argument("--max-bpm", type=float)
     parser.add_argument("--analysis-workers", type=int, default=1)
     parser.add_argument(
+        "--approximate-grid-policy",
+        choices=("reject", "allow"),
+        default="reject",
+    )
+    parser.add_argument(
         "--track-exclusions",
         default=str(DEFAULT_TRACK_EXCLUSIONS_PATH),
     )
@@ -388,6 +400,7 @@ def main():
         minimum_bpm=args.min_bpm,
         maximum_bpm=args.max_bpm,
         analysis_workers=args.analysis_workers,
+        approximate_grid_policy=args.approximate_grid_policy,
     )
     print(manifest_path)
     return 0

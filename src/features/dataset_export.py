@@ -651,6 +651,8 @@ def _example_metadata(
         "target_track": candidate["target_track"],
         "source_cutpoint": candidate["source_cutpoint"],
         "target_cutpoint": candidate["target_cutpoint"],
+        "source_grid": candidate.get("source_grid"),
+        "target_grid": candidate.get("target_grid"),
         "aligned_source_cue_sample": int(source_cue),
         "aligned_target_cue_sample": int(target_cue),
         "source_bpm": float(candidate["source_bpm"]),

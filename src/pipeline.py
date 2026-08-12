@@ -15,7 +15,11 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.analysis.pre_analysis import PreAnalysis, ensure_bar_metadata
+from src.analysis.models import BeatGridMetadata, unpack_analysis_result
+from src.analysis.pre_analysis import (
+    PreAnalysis,
+    ensure_bar_metadata_with_provenance,
+)
 from src.candidates import CandidateGenerationConfig, TrackReference
 from src.candidates.generation import generate_candidates as generate_candidates_from_grids
 from src.cutting.equal_power_fade_cut import EqualPowerFadeCut
@@ -52,6 +56,8 @@ class RenderResult:
     transition_start_sample: int = 0
     transition_end_sample: int = 0
     format_version: int = RENDER_RESULT_FORMAT_VERSION
+    source_grid: BeatGridMetadata | None = None
+    target_grid: BeatGridMetadata | None = None
 
 
 class BeatBridgePipeline:
@@ -102,23 +108,29 @@ class BeatBridgePipeline:
         )
 
     def run_analysis(self):
-        analysed_bpm1, self.beat_frames1 = self.analysis(self.song1_name)
-        analysed_bpm2, self.beat_frames2 = self.analysis(self.song2_name)
+        analysed_bpm1, self.beat_frames1, self.grid_metadata1 = unpack_analysis_result(
+            self.analysis(self.song1_name)
+        )
+        analysed_bpm2, self.beat_frames2, self.grid_metadata2 = unpack_analysis_result(
+            self.analysis(self.song2_name)
+        )
         self.bpm1 = analysed_bpm1 if self.bpm_override1 is None else self.bpm_override1
         self.bpm2 = analysed_bpm2 if self.bpm_override2 is None else self.bpm_override2
         self.bpm1 = float(self.bpm1)
         self.bpm2 = float(self.bpm2)
-        self.beat_frames1 = ensure_bar_metadata(
+        self.beat_frames1, self.grid_metadata1 = ensure_bar_metadata_with_provenance(
             self.beat_frames1,
             bpm=self.bpm1,
             sample_count=self.song1.shape[-1],
             sample_rate=self.source_sr1,
+            existing_metadata=self.grid_metadata1,
         )
-        self.beat_frames2 = ensure_bar_metadata(
+        self.beat_frames2, self.grid_metadata2 = ensure_bar_metadata_with_provenance(
             self.beat_frames2,
             bpm=self.bpm2,
             sample_count=self.song2.shape[-1],
             sample_rate=self.source_sr2,
+            existing_metadata=self.grid_metadata2,
         )
 
     def normalise_tracks(self):
@@ -346,6 +358,8 @@ def render_transition(
         tempo_backend=pipeline.tempo_backend,
         transition_start_sample=transition_start_sample - preview_start,
         transition_end_sample=transition_end_sample - preview_start,
+        source_grid=pipeline.grid_metadata1,
+        target_grid=pipeline.grid_metadata2,
     )
 
 
@@ -377,8 +391,12 @@ def generate_transition_candidates(
 
     song1_path = Path(song1)
     song2_path = Path(song2)
-    bpm1, beat_frames1 = analysis(str(song1_path))
-    bpm2, beat_frames2 = analysis(str(song2_path))
+    bpm1, beat_frames1, grid_metadata1 = unpack_analysis_result(
+        analysis(str(song1_path))
+    )
+    bpm2, beat_frames2, grid_metadata2 = unpack_analysis_result(
+        analysis(str(song2_path))
+    )
     sample_rate1 = librosa.get_samplerate(str(song1_path))
     sample_rate2 = librosa.get_samplerate(str(song2_path))
     if sample_rate1 is None or sample_rate2 is None:
@@ -386,17 +404,19 @@ def generate_transition_candidates(
 
     info1 = sf.info(str(song1_path))
     info2 = sf.info(str(song2_path))
-    beat_frames1 = ensure_bar_metadata(
+    beat_frames1, grid_metadata1 = ensure_bar_metadata_with_provenance(
         beat_frames1,
         bpm=bpm1,
         sample_count=info1.frames,
         sample_rate=sample_rate1,
+        existing_metadata=grid_metadata1,
     )
-    beat_frames2 = ensure_bar_metadata(
+    beat_frames2, grid_metadata2 = ensure_bar_metadata_with_provenance(
         beat_frames2,
         bpm=bpm2,
         sample_count=info2.frames,
         sample_rate=sample_rate2,
+        existing_metadata=grid_metadata2,
     )
     beat_frames1 = BeatBridgePipeline._scale_beat_frames(
         beat_frames1,
@@ -413,6 +433,8 @@ def generate_transition_candidates(
         TrackReference(str(song2_path), _file_sha256(song2_path)),
         bpm2,
         beat_frames2,
+        source_grid_metadata=grid_metadata1,
+        target_grid_metadata=grid_metadata2,
         config=config,
     )
 

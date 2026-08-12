@@ -1,16 +1,23 @@
 from pathlib import Path
 import hashlib
+import json
 import logging
 import numpy as np
+import os
+import shutil
 import subprocess
 import uuid
 
 import librosa
 
+from .models import AnalysisResult, BeatGridMetadata
+
 tmp_folder = Path("tmp/")
 MAX_BEAT_MATCH_DISTANCE_SECONDS = 0.2
 FALLBACK_BEATS_PER_BAR = 4
 logger = logging.getLogger(__name__)
+GRID_METADATA_FILENAME = "02_grid_metadata.json"
+FALLBACK_BACKEND_VERSION = "beatbridge_4_4_fallback_v1"
 
 
 def ensure_bar_metadata(beat_frames, *, bpm=None, sample_count=None, sample_rate=None):
@@ -21,9 +28,33 @@ def ensure_bar_metadata(beat_frames, *, bpm=None, sample_count=None, sample_rate
     spaced grid from BPM. This is intentionally a usable fallback rather than
     a claim that the inferred downbeats are ground truth.
     """
+    frames, _ = ensure_bar_metadata_with_provenance(
+        beat_frames,
+        bpm=bpm,
+        sample_count=sample_count,
+        sample_rate=sample_rate,
+    )
+    return frames
+
+
+def ensure_bar_metadata_with_provenance(
+    beat_frames,
+    *,
+    bpm=None,
+    sample_count=None,
+    sample_rate=None,
+    existing_metadata=None,
+):
+    """Return a complete grid plus explicit detected/fallback provenance."""
     frames = [] if beat_frames is None else list(beat_frames)
     if _has_complete_bar_metadata(frames):
-        return [tuple(int(value) for value in frame) for frame in frames]
+        metadata = existing_metadata or BeatGridMetadata(
+            grid_source="external_unknown",
+            fallback_used=None,
+            backend_version=None,
+            confidence=None,
+        )
+        return [tuple(int(value) for value in frame) for frame in frames], metadata
 
     samples = []
     for frame in frames:
@@ -34,6 +65,7 @@ def ensure_bar_metadata(beat_frames, *, bpm=None, sample_count=None, sample_rate
             raise ValueError("Beat samples must be strictly increasing")
         samples.append(sample)
 
+    grid_source = "fallback_from_detected_beats"
     if not samples:
         if bpm is None or float(bpm) <= 0:
             raise ValueError("Fallback beat grid requires detected beats or a BPM value greater than 0")
@@ -41,15 +73,22 @@ def ensure_bar_metadata(beat_frames, *, bpm=None, sample_count=None, sample_rate
             raise ValueError("Fallback beat grid without detected beats requires sample_count and sample_rate")
         beat_samples = max(1, int(round(float(sample_rate) * 60.0 / float(bpm))))
         samples = list(range(0, int(sample_count), beat_samples))
+        grid_source = "fallback_from_bpm"
 
     logger.warning(
         "Using 4/4 fallback bar metadata for %d beat positions; inferred downbeats are approximate.",
         len(samples),
     )
-    return [
+    grid = [
         (sample, index % FALLBACK_BEATS_PER_BAR + 1, FALLBACK_BEATS_PER_BAR)
         for index, sample in enumerate(samples)
     ]
+    return grid, BeatGridMetadata(
+        grid_source=grid_source,
+        fallback_used=True,
+        backend_version=f"{FALLBACK_BACKEND_VERSION};librosa={librosa.__version__}",
+        confidence=0.0,
+    )
 
 
 def _has_complete_bar_metadata(beat_frames):
@@ -78,30 +117,43 @@ class PreAnalysis:
 
     def __call__(self,song_path):
         self.song_path = Path(song_path)
+        self.grid_metadata = None
         self.previous_analysis = self.find_previous_analysis()
         if self.previous_analysis and self.load_previous_analysis():
             try:
-                self.beat_frames = ensure_bar_metadata(self.beat_frames, bpm=self.bpm)
+                self.beat_frames, self.grid_metadata = ensure_bar_metadata_with_provenance(
+                    self.beat_frames,
+                    bpm=self.bpm,
+                    existing_metadata=self.grid_metadata,
+                )
             except ValueError:
                 # An empty legacy cache has no usable beat positions; analyse again.
                 self.previous_analysis = None
             else:
                 self.save_previous_analysis()
-                return self.bpm, self.beat_frames
+                return self._result()
         self.load_song()
         self.find_bpm()
 
         self.auftakt_analysis_comparison()
-        self.beat_frames = ensure_bar_metadata(
+        self.beat_frames, self.grid_metadata = ensure_bar_metadata_with_provenance(
             self.beat_frames,
             bpm=self.bpm,
             sample_count=self.song.size,
             sample_rate=self.sr,
+            existing_metadata=getattr(self, "grid_metadata", None),
         )
 
         self.save_previous_analysis()
         
-        return self.bpm, self.beat_frames
+        return self._result()
+
+    def _result(self):
+        return AnalysisResult(
+            bpm=float(self.bpm),
+            beat_frames=tuple(tuple(int(value) for value in frame) for frame in self.beat_frames),
+            grid_metadata=self.grid_metadata,
+        )
 
     def find_previous_analysis(self):
         song_name = self.song_path.stem
@@ -135,7 +187,19 @@ class PreAnalysis:
 
             self.bpm = float(bpm_line)
             self.beat_frames = [self._parse_saved_beat_line(line) for line in analysis_lines[2:] if line.strip()]
-        except (IndexError, ValueError):
+            metadata_path = analysis_path.with_name(GRID_METADATA_FILENAME)
+            if metadata_path.is_file():
+                self.grid_metadata = BeatGridMetadata.from_dict(
+                    json.loads(metadata_path.read_text(encoding="utf-8"))
+                )
+            else:
+                self.grid_metadata = BeatGridMetadata(
+                    grid_source="legacy_cache_unknown",
+                    fallback_used=None,
+                    backend_version=None,
+                    confidence=None,
+                )
+        except (IndexError, KeyError, TypeError, ValueError, json.JSONDecodeError):
             return False
 
         # output False for devolempent purposes to force re-analysis, can be removed later
@@ -152,7 +216,20 @@ class PreAnalysis:
         analysis_contents = f"{song_hash}\n{self.bpm}\n{beat_frame_lines}\n"
         analysis_path.write_text(analysis_contents)
         self.previous_analysis = analysis_path
+        self._save_grid_metadata(analysis_folder)
         self.save_missing_beats()
+
+    def _save_grid_metadata(self, analysis_folder):
+        metadata_path = Path(analysis_folder) / GRID_METADATA_FILENAME
+        temporary_path = metadata_path.with_name(f".{metadata_path.name}.{uuid.uuid4().hex}.tmp")
+        try:
+            temporary_path.write_text(
+                json.dumps(self.grid_metadata.to_dict(), indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            os.replace(temporary_path, metadata_path)
+        finally:
+            temporary_path.unlink(missing_ok=True)
 
     def save_missing_beats(self):
         song_name = self.song_path.stem
@@ -207,6 +284,7 @@ class PreAnalysis:
                 str(auftakt_output_path),
             ]
             subprocess.run(command, check=True)
+            backend_version = self._auftakt_backend_version()
 
             auftakt_lines = auftakt_output_path.read_text().splitlines()[1:]
             auftakt_beats = []
@@ -221,6 +299,7 @@ class PreAnalysis:
                 auftakt_times = np.array([beat[0] for beat in auftakt_beats], dtype=float)
                 librosa_times = librosa.samples_to_time(np.asarray(self.beat_frames), sr=self.sr)
                 combined_beats = []
+                matched_confidences = []
                 matched_auftakt_indices = set()
                 self.missing_beats = {"librosa": [], "auftakt": []}
 
@@ -243,6 +322,9 @@ class PreAnalysis:
                         continue
 
                     matched_auftakt_indices.add(closest_index)
+                    matched_confidences.append(
+                        max(0.0, 1.0 - distance / MAX_BEAT_MATCH_DISTANCE_SECONDS)
+                    )
                     _, count_in_bar, beats_in_bar = auftakt_beats[closest_index]
                     combined_beats.append((int(sample), count_in_bar, beats_in_bar))
 
@@ -266,6 +348,15 @@ class PreAnalysis:
                         )
 
                 self.beat_frames = combined_beats
+                if _has_complete_bar_metadata(combined_beats):
+                    self.grid_metadata = BeatGridMetadata(
+                        grid_source="auftakt_matched_to_librosa",
+                        fallback_used=False,
+                        backend_version=(
+                            f"librosa={librosa.__version__};aufTAKTCl={backend_version}"
+                        ),
+                        confidence=float(np.mean(matched_confidences)),
+                    )
         except (OSError, subprocess.SubprocessError, ValueError) as error:
             logger.warning(
                 "aufTAKT analysis failed for %s; falling back to inferred 4/4 bar metadata: %s",
@@ -276,6 +367,16 @@ class PreAnalysis:
             auftakt_output_path.unlink(missing_ok=True)
             if temp_wav_path is not None:
                 temp_wav_path.unlink(missing_ok=True)
+
+    @staticmethod
+    def _auftakt_backend_version():
+        executable = shutil.which("aufTAKTCl.exe")
+        if executable is None:
+            return "unreported"
+        try:
+            return f"sha256:{hashlib.sha256(Path(executable).read_bytes()).hexdigest()}"
+        except OSError:
+            return "unreported"
 
     @staticmethod
     def _parse_saved_beat_line(line):

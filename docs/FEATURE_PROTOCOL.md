@@ -295,13 +295,16 @@ Rendering-Protokoll
 Sample-Rate
 Original- und ausgerichtete BPM
 Hash des ausgerichteten Beat-Grids
+Beat-Grid-Provenienz (`grid_source`, `fallback_used`, Backend-Version, Confidence)
 Time-Stretch-Policy
 Vocal-Backend, Modellname und Vocal-Stem-Hash
 ```
 
-Eine andere Audiodatei, ein anderes Grid, eine andere Ziel-BPM oder eine
-Extractor-/Protokolländerung erzeugt deshalb einen neuen Eintrag. Vorhandene
-Caches werden nicht überschrieben.
+Eine andere Audiodatei, ein anderes Grid, eine andere Grid-Herkunft, eine
+andere Ziel-BPM oder eine Extractor-/Protokolländerung erzeugt deshalb einen
+neuen Eintrag. Vorhandene Caches werden nicht überschrieben. Das Manifestfeld
+`beat_grid_metadata` folgt `ANALYSIS_PROTOCOL.md`; historische Herkunft wird
+nicht aus den Rasterkoordinaten geraten.
 
 `track_features.npz` enthält:
 

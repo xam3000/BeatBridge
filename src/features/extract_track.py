@@ -15,7 +15,8 @@ import uuid
 import librosa
 import numpy as np
 
-from src.analysis.pre_analysis import PreAnalysis, ensure_bar_metadata
+from src.analysis.models import unpack_analysis_result
+from src.analysis.pre_analysis import PreAnalysis, ensure_bar_metadata_with_provenance
 from src.features.contract import (
     FEATURE_DIMENSION,
     FEATURE_PROTOCOL_VERSION,
@@ -157,11 +158,17 @@ def extract_or_load_track_features(
         raise ValueError(f"Could not determine sample rate: {song_path}")
     source_sample_rate = int(detected_sample_rate)
     analysis = analysis or PreAnalysis(str(Path(analysis_root)) + os.sep)
-    original_bpm, beat_frames = analysis(str(song_path))
+    original_bpm, beat_frames, grid_metadata = unpack_analysis_result(
+        analysis(str(song_path))
+    )
     original_bpm = float(original_bpm)
     if not math.isfinite(original_bpm) or original_bpm <= 0:
         raise ValueError("Analysis BPM must be a finite value above 0")
-    beat_frames = ensure_bar_metadata(beat_frames, bpm=original_bpm)
+    beat_frames, grid_metadata = ensure_bar_metadata_with_provenance(
+        beat_frames,
+        bpm=original_bpm,
+        existing_metadata=grid_metadata,
+    )
     beat_frames = _scale_beat_frames(
         beat_frames,
         sample_rate / float(source_sample_rate),
@@ -182,6 +189,7 @@ def extract_or_load_track_features(
         "original_bpm": original_bpm,
         "aligned_bpm": aligned_bpm,
         "beat_grid_sha256": beat_grid_hash,
+        "beat_grid_metadata": grid_metadata.to_dict(),
         "time_stretch_policy": TIME_STRETCH_POLICY,
         "vocal_backend": vocal_backend,
         "vocal_model": None if vocal_artifact is None else str(vocal_model),

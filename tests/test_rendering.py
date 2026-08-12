@@ -93,6 +93,8 @@ def test_rendering_baseline_returns_finite_stereo(synthetic_tracks, renderer):
     )
 
     assert result.format_version == RENDER_RESULT_FORMAT_VERSION
+    assert result.source_grid.grid_source == "external_unknown"
+    assert result.target_grid.grid_source == "external_unknown"
     assert result.renderer == renderer
     assert result.sample_rate == 44_100
     assert result.audio.ndim == 2

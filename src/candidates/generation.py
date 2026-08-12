@@ -5,6 +5,8 @@ import hashlib
 import json
 from typing import Sequence
 
+from src.analysis.models import BeatGridMetadata, unknown_grid_metadata
+
 from .models import (
     CandidateGenerationResult,
     CandidateRejection,
@@ -25,6 +27,7 @@ class CandidateGenerationConfig:
     source_boundary_count: int | None = None
     target_boundary_count: int | None = None
     max_tempo_relative_difference: float = 0.15
+    approximate_grid_policy: str = "reject"
 
     def __post_init__(self):
         lengths = tuple(int(length) for length in self.transition_lengths_bars)
@@ -38,6 +41,8 @@ class CandidateGenerationConfig:
             raise ValueError("target_boundary_count must be greater than 0 or None")
         if not 0.0 <= self.max_tempo_relative_difference < 1.0:
             raise ValueError("max_tempo_relative_difference must be in [0, 1)")
+        if self.approximate_grid_policy not in {"reject", "allow"}:
+            raise ValueError("approximate_grid_policy must be 'reject' or 'allow'")
         object.__setattr__(self, "transition_lengths_bars", tuple(sorted(lengths)))
 
 
@@ -74,6 +79,8 @@ def generate_candidates(
     target_bpm: float,
     target_beat_frames: Sequence[object],
     *,
+    source_grid_metadata: BeatGridMetadata | None = None,
+    target_grid_metadata: BeatGridMetadata | None = None,
     config: CandidateGenerationConfig | None = None,
 ) -> CandidateGenerationResult:
     """Return accepted candidates and auditable hard-filter outcomes.
@@ -87,18 +94,37 @@ def generate_candidates(
     """
     config = CandidateGenerationConfig() if config is None else config
     rejections = []
+    source_grid_metadata = source_grid_metadata or unknown_grid_metadata()
+    target_grid_metadata = target_grid_metadata or unknown_grid_metadata()
+
+    def result(candidates=()):
+        return CandidateGenerationResult(
+            tuple(candidates),
+            tuple(rejections),
+            source_grid=source_grid_metadata,
+            target_grid=target_grid_metadata,
+            approximate_grid_policy=config.approximate_grid_policy,
+        )
 
     try:
         source_grid = _parse_grid(source_beat_frames)
     except _InvalidGrid as error:
         rejections.append(CandidateRejection("invalid_source_grid", str(error)))
-        return CandidateGenerationResult((), tuple(rejections))
+        return result()
 
     try:
         target_grid = _parse_grid(target_beat_frames)
     except _InvalidGrid as error:
         rejections.append(CandidateRejection("invalid_target_grid", str(error)))
-        return CandidateGenerationResult((), tuple(rejections))
+        return result()
+
+    if config.approximate_grid_policy == "reject":
+        if not source_grid_metadata.is_verified_detection:
+            rejections.append(_grid_provenance_rejection("source", source_grid_metadata))
+        if not target_grid_metadata.is_verified_detection:
+            rejections.append(_grid_provenance_rejection("target", target_grid_metadata))
+        if rejections:
+            return result()
 
     source_bpm = float(source_bpm)
     target_bpm = float(target_bpm)
@@ -106,7 +132,7 @@ def generate_candidates(
         rejections.append(
             CandidateRejection("invalid_tempo", "Both tracks need a BPM value greater than 0.")
         )
-        return CandidateGenerationResult((), tuple(rejections))
+        return result()
 
     tempo_difference = abs(source_bpm - target_bpm) / max(source_bpm, target_bpm)
     if tempo_difference > config.max_tempo_relative_difference:
@@ -118,7 +144,7 @@ def generate_candidates(
                 f"({config.max_tempo_relative_difference:.3f}).",
             )
         )
-        return CandidateGenerationResult((), tuple(rejections))
+        return result()
 
     source_boundaries = _eligible_bridge_boundaries(
         source_grid,
@@ -148,7 +174,7 @@ def generate_candidates(
             )
         )
     if rejections:
-        return CandidateGenerationResult((), tuple(rejections))
+        return result()
 
     candidates = []
     for source_boundary in source_boundaries:
@@ -204,13 +230,23 @@ def generate_candidates(
                         target_bpm=target_bpm,
                         tempo_relative_difference=tempo_difference,
                         generator=GENERATOR_NAME,
+                        source_grid=source_grid_metadata,
+                        target_grid=target_grid_metadata,
                     )
                 )
 
     if not candidates and not rejections:
         rejections.append(
             CandidateRejection("no_compatible_candidates", "No compatible bar-grid candidates were found."))
-    return CandidateGenerationResult(tuple(candidates), tuple(rejections))
+    return result(candidates)
+
+
+def _grid_provenance_rejection(role, metadata):
+    return CandidateRejection(
+        f"{role}_grid_provenance_rejected",
+        f"The {role} grid source {metadata.grid_source!r} is fallback or unknown; "
+        "set approximate_grid_policy='allow' to opt in explicitly.",
+    )
 
 
 def _parse_grid(beat_frames: Sequence[object]) -> _Grid:

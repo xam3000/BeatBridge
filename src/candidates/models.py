@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass
 
+from src.analysis.models import BeatGridMetadata
+
 
 CANDIDATE_FORMAT_VERSION = 1
 
@@ -54,6 +56,8 @@ class TransitionCandidate:
     generator: str
     filter_status: str = "accepted"
     format_version: int = CANDIDATE_FORMAT_VERSION
+    source_grid: BeatGridMetadata | None = None
+    target_grid: BeatGridMetadata | None = None
 
     def to_dict(self):
         return {
@@ -69,6 +73,8 @@ class TransitionCandidate:
             "target_bpm": self.target_bpm,
             "tempo_relative_difference": self.tempo_relative_difference,
             "generator": self.generator,
+            "source_grid": None if self.source_grid is None else self.source_grid.to_dict(),
+            "target_grid": None if self.target_grid is None else self.target_grid.to_dict(),
             "filter_status": self.filter_status,
         }
 
@@ -91,10 +97,16 @@ class CandidateGenerationResult:
     candidates: tuple[TransitionCandidate, ...]
     rejections: tuple[CandidateRejection, ...]
     format_version: int = CANDIDATE_FORMAT_VERSION
+    source_grid: BeatGridMetadata | None = None
+    target_grid: BeatGridMetadata | None = None
+    approximate_grid_policy: str = "reject"
 
     def to_dict(self):
         return {
             "format_version": self.format_version,
+            "approximate_grid_policy": self.approximate_grid_policy,
+            "source_grid": None if self.source_grid is None else self.source_grid.to_dict(),
+            "target_grid": None if self.target_grid is None else self.target_grid.to_dict(),
             "candidates": [candidate.to_dict() for candidate in self.candidates],
             "rejections": [rejection.to_dict() for rejection in self.rejections],
         }

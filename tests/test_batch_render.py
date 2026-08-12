@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 import soundfile as sf
 
+from src.analysis.models import AnalysisResult, BeatGridMetadata
 from src.batch_render import render_candidate_batch
 from src.candidates import CandidateGenerationConfig, CandidateGenerationResult
 from src.pipeline import generate_transition_candidates
@@ -19,7 +20,16 @@ class StubAnalysis:
             (sample, index % 4 + 1, 4)
             for index, sample in enumerate(range(0, info.frames, beat_step))
         ]
-        return 120.0, beats
+        return AnalysisResult(
+            120.0,
+            tuple(beats),
+            BeatGridMetadata(
+                grid_source="test_detector",
+                fallback_used=False,
+                backend_version="test_detector=1",
+                confidence=0.9,
+            ),
+        )
 
 
 @pytest.fixture

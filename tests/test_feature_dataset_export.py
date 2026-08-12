@@ -167,6 +167,8 @@ def test_dataset_export_selects_four_bar_candidate_and_writes_tensors(tmp_path):
     assert {item["split"] for item in manifest["track_assignments"]} == {"train"}
     assert examples[0]["candidate_id"] == "candidate-four"
     assert examples[0]["transition_length_bars"] == 4
+    assert examples[0]["source_grid"] is None
+    assert examples[0]["target_grid"] is None
 
 
 def test_bpm_filter_is_inclusive_and_rejects_either_track_outside_range(tmp_path):

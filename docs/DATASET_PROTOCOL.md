@@ -106,6 +106,13 @@ global_features: float32  (N, 16)
 Auch leere Splits besitzen vertragsgültige Arrays mit führender Dimension
 null. `examples.jsonl` ordnet jede Tensorzeile Kandidat, Split, Tracks,
 Audio-Hashes, Original-/Aligned-Cues, BPM, Quellmanifest und Featurecaches zu.
+Seit 2026-08-12 werden additiv auch `source_grid` und `target_grid` aus dem
+Kandidaten übernommen. Bei historischen Kandidaten ohne diese Felder steht
+jeweils `null`; eine erkannte Herkunft darf daraus nicht nachträglich
+abgeleitet werden. Neue Kandidaten tragen die vollständigen Felder
+`grid_source`, `fallback_used`, `backend_version` und `confidence` gemäß
+`ANALYSIS_PROTOCOL.md`, sodass neue Dataset- und Studienartefakte die
+Downbeat-Provenienz nicht verlieren.
 
 `manifest.json` enthält mindestens:
 

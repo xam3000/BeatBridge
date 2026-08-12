@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 import soundfile as sf
 
+from src.analysis.models import AnalysisResult, BeatGridMetadata
 from src.features import FEATURE_DIMENSION, SEQUENCE_LENGTH, feature_index
 from src.features.extract_track import (
     FeatureNormalizationStats,
@@ -24,6 +25,21 @@ class _Analysis:
             (index * beat_samples, index % 4 + 1, 4)
             for index in range(self.beat_count)
         ]
+
+
+class _DetectedAnalysis(_Analysis):
+    def __call__(self, path):
+        bpm, beats = super().__call__(path)
+        return AnalysisResult(
+            bpm,
+            tuple(beats),
+            BeatGridMetadata(
+                grid_source="test_detector",
+                fallback_used=False,
+                backend_version="test_detector=1",
+                confidence=0.9,
+            ),
+        )
 
 
 def _write_tone(path, *, sample_rate=8_000, seconds=13.0, frequency=220.0):
@@ -57,6 +73,34 @@ def test_full_track_features_are_cached_and_reused(tmp_path):
     assert np.array_equal(first.base_features, second.base_features)
     assert (first.cache_directory / "manifest.json").is_file()
     assert (first.cache_directory / "track_features.npz").is_file()
+    assert first.manifest["beat_grid_metadata"]["grid_source"] == "external_unknown"
+
+
+def test_grid_provenance_changes_feature_cache_identity(tmp_path):
+    song = tmp_path / "song.wav"
+    _write_tone(song)
+
+    unknown = extract_or_load_track_features(
+        song,
+        cache_root=tmp_path / "cache",
+        analysis=_Analysis(8_000),
+        sample_rate=8_000,
+    )
+    detected = extract_or_load_track_features(
+        song,
+        cache_root=tmp_path / "cache",
+        analysis=_DetectedAnalysis(8_000),
+        sample_rate=8_000,
+    )
+
+    assert unknown.cache_directory != detected.cache_directory
+    assert detected.manifest["beat_grid_metadata"] == {
+        "format_version": 1,
+        "grid_source": "test_detector",
+        "fallback_used": False,
+        "backend_version": "test_detector=1",
+        "confidence": 0.9,
+    }
 
 
 def test_audio_change_creates_a_different_cache_entry(tmp_path):

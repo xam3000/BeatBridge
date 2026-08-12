@@ -1,6 +1,6 @@
 # BeatBridge – Stand & Next Steps
 
-_Stand: 2026-08-06_
+_Stand: 2026-08-12_
 
 **Maßgeblicher Kontext: [`Projekt-Gesamtuebersicht.md`](./Projekt-Gesamtuebersicht.md) (Exposé).** Diese Datei hält den *technischen Prototyp-Stand der Startphase* (Monat 1 / erste 2–3 Wochen) fest. Ziel, Scope, wissenschaftlicher Beitrag, Related Work, Datenstrategie, Evaluation, 6-Monats-Plan und Risiken stehen im Exposé.
 
@@ -20,6 +20,7 @@ Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automa
   - Merge beider Quellen zu bar-annotierten Beats (`sample, count_in_bar, beats_in_bar`); Abweichungen werden protokolliert.
   - Analyse-Cache per SHA-256-Hash des Songs (`00_pre_analysis.txt`), Diskrepanzen in `01_missing_beats.txt`.
   - Fallback: Wenn aufTAKT fehlt, fehlschlägt oder unvollständige Metadaten liefert, werden die Beat-Positionen als approximatives 4/4-Raster annotiert; ohne Beats wird bei gültigem BPM ein gleichmäßiges Raster erzeugt.
+  - Analyseformat 1 trennt seit 2026-08-12 Raster und Herkunft: `02_grid_metadata.json` speichert additiv `grid_source`, `fallback_used`, Backend-Version und Confidence. Alt-Caches ohne Sidecar werden als `legacy_cache_unknown` markiert und nicht nachträglich als erkannt klassifiziert. Vertrag: `ANALYSIS_PROTOCOL.md`.
 - **Übergänge**:
   - `src/cutting/simple_cut.py`: Hard Cut, Snap auf den nächstgelegenen Downbeat, Bar-Alignment zwischen beiden Songs.
   - `src/cutting/fade_cut.py`: linearer Crossfade über N Beats (Default 8), Bar-aligned.
@@ -28,7 +29,7 @@ Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automa
 - **Bridge-Rendering Version 2**: Fade-Renderer erhalten Drop A vollständig bis zum Source-Cut, mischen ausschließlich Source-Postroll mit Target-Preroll und beginnen Drop B exakt am Target-Cut. Die beiden High-Power-Abschnitte liegen dadurch außerhalb des überlappenden Fensters.
 - **Tempo** (`src/tempo/`): Resample-basierte Variante (`SimpleTempoAdjust`, verändert Tonhöhe) und tonhöhenerhaltender `TimeStretch` über Rubber Band. Primär läuft FFmpegs `rubberband`-Filter mit gemeinsamem Stereo; bei Fehlern folgt das eigenständige Rubber-Band-CLI mit R3-Engine. Der frühere Librosa-Phase-Vocoder ist nicht mehr im Produktionspfad.
 - **Tests**: `pytest`-Suite mit synthetischen Audiodaten prüft alle vier Renderer, FFmpeg-Priorität, Rubber-Band-CLI-Fallback, Float32-Zwischenformat, Tempoanpassung, 48→44,1-kHz-Resampling, Mono→Stereo und den Fehlerpfad bei fehlenden Downbeat-Metadaten.
-- **Kandidatengenerierung** (`src/candidates/`): versionierter Vertrag `CANDIDATE_PROTOCOL.md` und Generator `bar_grid_v1`. Er kombiniert standardmäßig alle nutzbaren Taktgrenzen beider Songs für 2/4 Takte; vollständige Downbeat-Metadaten, Pre-/Post-Roll auf beiden Seiten, kompatible Beatanzahl in allen vier Fenstern und maximal 15 % Tempoabweichung sind harte Filter.
+- **Kandidatengenerierung** (`src/candidates/`): versionierter Vertrag `CANDIDATE_PROTOCOL.md` und Generator `bar_grid_v1`. Er kombiniert standardmäßig alle nutzbaren Taktgrenzen beider Songs für 2/4 Takte; nachweislich erkannte Downbeat-Herkunft, vollständige Downbeat-Metadaten, Pre-/Post-Roll auf beiden Seiten, kompatible Beatanzahl in allen vier Fenstern und maximal 15 % Tempoabweichung sind harte Filter. `approximate_grid_policy = reject|allow` ist standardmäßig strikt; neue Kandidaten und Manifeste tragen Source-/Target-Grid-Provenienz.
 - **Feature-Ranking** (`src/ranking/`): `feature_baseline_v3` bewertet Drop A, Source-Auslauf, Target-Vorlauf und Drop B getrennt. Je 30 % entfallen auf High Power der Drops und Non-Overlap (Energieabfall nach A, niedrige Transition-Energie, Energieanstieg vor B); Chroma, RMS-Kontinuität, Spektrum und Tempo ergänzen den Score.
 - **Featurevertrag, globale Paarfeatures und Datasetexport** (`src/features/`): Feature-Protokoll 1 definiert `features_a/features_b` als `float32 (32, 54)` und 16 globale Merkmale. `extract_track.py` berechnet und cached Volltrackmerkmale, `vocal.py` trennt mit HT Demucs einmal pro Song einen wiederverwendbaren Vocal-Stem, `global_pair.py` erzeugt Tempo-, lokale Key-/Harmonie- und Kontextwerte. `dataset_export.py` wählt gerankte Vier-Takt-Kandidaten, wendet Trainingsausschlüsse an, bildet Audio-SHA-getrennte Splits, fitttet Flux-/Onset-Normalisierung nur auf Trainingsartefakten und exportiert atomar NPZ/JSONL mit vollständiger Provenienz. Phrasenkanäle bleiben mit `phrase_valid = 0` deaktiviert. Verträge: `FEATURE_PROTOCOL.md`, `DATASET_PROTOCOL.md`, `PRETRAINED_MODELS.md`.
 - **Metrik für gerenderte Übergänge** (`src/ranking/rendered_transition.py`): `rendered_transition_baseline_v1` bewertet nach dem Rendering das tatsächliche Audio inklusive Time-Stretch und Crossfade. Energieform und Grenzglätte zählen je 30 %, harmonische Kontinuität und rhythmische Stabilität je 20 %. Score, Teilwerte, Messwerte, Rang und isolierte Fehler stehen additiv im Batch-Manifest.
@@ -43,6 +44,28 @@ Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automa
 - **ML-Baseline Version 1** (`src/ml/`): `FeatureControlDataset` verbindet die bestehenden Feature-Splits mit unveränderlichen, hashbasiert gecachten Source-/Target-Bridge-Waveforms. `time_shared_mlp_v1` hat 10.394 Parameter, wird auf alle 31 Halbbeat-Intervalle geteilt angewendet und erzeugt über dieselbe konstruktive Control-v3-Transformation zwei gültige Kurven. Die Nullinitialisierung startet exakt bei Equal Power; `self_supervised_batch_loss` rendert variable Audiolängen ohne Padding einzeln und mittelt Objective v4. `self_supervised_train_validation_v1` ergänzt deterministische Seeds, Equal-Power-Epoche 0, atomare Best-/Latest-Checkpoints mit SHA-256, vollständige Loss-History, Early Stopping und vertragsgeprüftes Resume. Vertrag: `ML_CONTROL_MODEL_PROTOCOL.md`.
 - **Vocal-Control-Erweiterung Version 2** (`src/control/`, `src/ml/`): `vocal_time_shared_mlp_v2` hat 20.821 Parameter und erzeugt zusätzlich eine monotone Vocal-Übergabe sowie getrenntes Source-/Target-Ducking. `DifferentiableVocalAwareRenderer` verarbeitet gecachte Demucs-Stems separat vom Zwei-Band-Accompaniment. Objective v5 ersetzt die alten mixgebundenen Vocal-Gewichte durch tatsächlichen Stem-Overlap, einen Audibility-Loss gegen unnötig leise aktive Vocals und eine Strafe für Gain-Änderungen mitten in Phrasen. Der Cache v2 speichert Mix und beide samplegleichen Vocal-Stems. `self_supervised_vocal_train_validation_v2` trainiert diese Kette reproduzierbar mit atomaren Checkpoints, Early Stopping, strengem Vertrags-/Hash-Resume und ohne Zugriff auf den Testsplit. Vertrag: `VOCAL_CONTROL_MODEL_PROTOCOL.md`.
 - **GPU-Ausführung** (`src/torch_device.py`): `auto` wählt für Training und neue Demucs-Separationen CUDA, wenn verfügbar, andernfalls CPU. Der aufgelöste Trainings-Device wird im unveränderlichen Run-Vertrag gespeichert; explizite Overrides bleiben mit `--device cpu` und `--device cuda:<index>` möglich. `requirements-cuda.txt` fixiert den offiziellen CUDA-13.0-Wheel zusätzlich zum plattformneutralen Basis-Requirement.
+
+### Verifiziert am 2026-08-12 (Codex, Downbeat-Grid-Provenienz)
+
+- `AnalysisResult` ergänzt die bisherigen BPM-/Beat-Tupel um
+  `BeatGridMetadata`; Zweiwert-Unpacking bleibt kompatibel. Direkte
+  `RenderResult`-Objekte führen Source-/Target-Provenienz ebenfalls additiv.
+- Frische vollständige aufTAKT/librosa-Merges speichern `fallback_used = false`,
+  beide Backendidentitäten und eine normierte Match-Confidence. Beat- und
+  BPM-Fallbacks speichern `fallback_used = true`, ihre genaue Quelle und
+  Confidence `0,0`; Alt-Caches bleiben explizit
+  `legacy_cache_unknown` mit `fallback_used = null`.
+- Der Default `approximate_grid_policy = reject` weist Fallback und unbekannte
+  Herkunft mit getrennten Source-/Target-Rejectioncodes ab. `allow` ist ein
+  expliziter Opt-in und entfernt die Provenienz nicht.
+- Neue Batchkandidaten tragen `source_grid`/`target_grid`; neue Datasetzeilen
+  übernehmen diese Felder. Historische Kandidaten werden als `null` behandelt,
+  nicht rückwirkend geraten.
+- Volltrack-Featurecaches führen `beat_grid_metadata` im Manifest und im
+  Cache-Key, sodass eine geänderte Herkunft keinen alten Cache-Hit erzeugt.
+- `.venv\Scripts\python.exe -m pytest -q`: **115 Tests bestanden**; zwei
+  bestehende `audioread`-Deprecation-Warnungen und zwei erwartete
+  CUDA-Determinismuswarnungen.
 
 ### Verifiziert am 2026-07-30 (Codex, Feature-Protokoll 1)
 
@@ -592,7 +615,7 @@ Damit ist die technische Grundlage aus Monat 1 weitgehend vorhanden. Das frühe 
 
 - **Tonhöhe**: `SimpleTempoAdjust` (Resample) verändert die Tonhöhe — als zusätzliche einfache Baseline bewusst behandeln; alle Renderer verwenden den tonhöhenerhaltenden Rubber-Band-`TimeStretch`.
 - **Time-Stretch-Hörvalidierung**: Rubber Band wurde im neuen Hörsatz real verwendet, aber Paar 5 klingt laut Nutzer in beiden Methoden schlecht. Noch offen ist die isolierte Diagnose Originalsegment versus gestretchtes Segment versus musikalisch ungeeignetes Target-Fenster.
-- **Downbeat-Fallback**: Bei fehlenden Taktinformationen wird ein approximatives 4/4-Raster aus den Beat-Positionen (oder BPM) erzeugt. Es hält die Pipeline lauffähig, ist aber keine verlässliche Downbeat-Erkennung und sollte im Hörvergleich geprüft werden.
+- **Downbeat-Fallback**: Bei fehlenden Taktinformationen bleibt ein approximatives 4/4-Raster für explizite Experimente verfügbar. Es ist jetzt per Provenienz von erkannten Downbeats unterscheidbar und wird von der Kandidatengenerierung standardmäßig abgelehnt. Historische Artefakte ohne Provenienz bleiben methodisch `unknown`.
 - **BPM-Divergenz** (dokumentiert in `Bemerkungen.md`): librosa vs. aufTAKT (HELP_LESS: 161 vs. 157) — Grid-Wahl noch ungeklärt.
 - **Phrasenlänge**: Raster 4 Beats, Phrasen aber meist 8 — relevant für plausible Übergangspositionen (Kandidatengenerierung).
 - **Repo-/Cache-Hygiene**: Die früheren Track-Ordner sind im Arbeitsbaum gelöscht; unter `output/pre_analysis/` bleibt ein zusätzlicher veralteter Cache `HELP_LESS` ohne gleichnamigen aktuellen Audio-Stem.
@@ -634,7 +657,7 @@ auf realem Audio validieren.
 **Abgeschlossen am 2026-08-06:** geblendeter Vocal-v2-Modell-Hörsatz mit fünf vocal-aktiven, gerichteten Validation-Paaren ohne Time-Stretch; Best-Checkpoint aus Epoche 22 gegen die ungelernte Initialisierung, Ratings noch offen.
 
 1. **Time-Stretch und Target-Fenster von Paar 5 isolieren** — Original-Targetsegment und Rubber-Band-Variante mit identischem Ausschnitt separat exportieren und hören. So wird unterschieden, ob der schlechte Klang vom Backend, der Tempoänderung oder bereits vom gewählten Aversion-Fenster stammt.
-2. **Feature-Protokoll 1 auditieren** — globale Paarfeatures, Datasetexport und track-getrennte Splits sind implementiert. Als Nächstes die Vocal-Scores gegen gehörte Lyrics-/Clash-Fälle prüfen und ein semantisch passendes Phrasenverfahren validieren. Kein stilles 4/4→8-Takt-Fallback.
+2. **Feature-Protokoll 1 auditieren** — globale Paarfeatures, Datasetexport und track-getrennte Splits sind implementiert. Als Nächstes die Vocal-Scores gegen gehörte Lyrics-/Clash-Fälle prüfen und ein semantisch passendes Phrasenverfahren validieren. Kein stilles 4/4→8-Takt-Fallback; Downbeat-Fallbacks bleiben über `source_grid`/`target_grid` sichtbar.
 3. **Objective v5 direkt hörvalidieren** — Gate bestanden: 2 v5-Siege, 1 v4-Sieg, 3 Gleichstände; Vocal-Klarheit `4,3333→5,0`. Für endgültige Gewichte später mit mehr Ratenden und ohne Time-Stretch-dominierte Paare wiederholen.
 4. **Gelerntes Vocal-v2-Modell hörvalidieren** — Hörsatz ist gerendert: fünf vocal-aktive gerichtete Paarungen, alle ohne Time-Stretch. Als Nächstes A/B vollständig bewerten, erst danach entblinden und auswerten; dabei starkes Target-Ducking und Mid-Phrase-Pegeländerungen gezielt notieren. Objective-Gewichte oder Architektur erst nach diesem Gate ändern.
 5. **Entwicklungsset kuratieren** — die 111 eindeutigen BPM-zugelassenen Tracks als reproduzierbares Set definieren, Varianz prüfen, Track-Notizen ergänzen und Lizenzfrage klären (parallel, eher Handarbeit).

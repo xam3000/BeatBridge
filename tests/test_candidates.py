@@ -1,7 +1,9 @@
 import numpy as np
+import pytest
 import soundfile as sf
 
-from src.analysis.pre_analysis import ensure_bar_metadata
+from src.analysis.models import AnalysisResult, BeatGridMetadata
+from src.analysis.pre_analysis import ensure_bar_metadata_with_provenance
 from src.candidates import CandidateGenerationConfig, TrackReference, generate_candidates
 from src.pipeline import generate_transition_candidates
 
@@ -18,6 +20,21 @@ def _track(name):
     return TrackReference(path=f"musik/{name}.wav", sha256=f"hash-{name}")
 
 
+DETECTED_GRID = BeatGridMetadata(
+    grid_source="test_detector",
+    fallback_used=False,
+    backend_version="test_detector=1",
+    confidence=0.9,
+)
+
+
+def _detected_grid_kwargs():
+    return {
+        "source_grid_metadata": DETECTED_GRID,
+        "target_grid_metadata": DETECTED_GRID,
+    }
+
+
 def test_default_search_uses_two_or_four_bars_and_all_usable_target_boundaries():
     result = generate_candidates(
         _track("source"),
@@ -26,6 +43,7 @@ def test_default_search_uses_two_or_four_bars_and_all_usable_target_boundaries()
         _track("target"),
         120.0,
         _four_four_grid(bar_count=12),
+        **_detected_grid_kwargs(),
     )
 
     assert len(result.candidates) == 32
@@ -41,6 +59,7 @@ def test_target_boundary_requires_complete_post_transition_bars():
         _track("target"),
         120.0,
         _four_four_grid(bar_count=5),
+        **_detected_grid_kwargs(),
     )
 
     assert not result.candidates
@@ -64,6 +83,7 @@ def test_generates_deterministic_candidates_from_last_and_first_usable_boundarie
         _track("target"),
         120.0,
         _four_four_grid(),
+        **_detected_grid_kwargs(),
         config=config,
     )
 
@@ -86,10 +106,34 @@ def test_rejects_grid_without_downbeat_metadata():
         _track("target"),
         120.0,
         _four_four_grid(),
+        **_detected_grid_kwargs(),
     )
 
     assert not result.candidates
     assert result.rejections[0].code == "invalid_source_grid"
+
+
+def test_strict_policy_rejects_structurally_complete_grid_with_unknown_origin():
+    result = generate_candidates(
+        _track("source"),
+        120.0,
+        _four_four_grid(),
+        _track("target"),
+        120.0,
+        _four_four_grid(),
+    )
+
+    assert not result.candidates
+    assert {item.code for item in result.rejections} == {
+        "source_grid_provenance_rejected",
+        "target_grid_provenance_rejected",
+    }
+    assert result.to_dict()["source_grid"]["fallback_used"] is None
+
+
+def test_candidate_config_rejects_unknown_grid_policy():
+    with pytest.raises(ValueError, match="reject.*allow"):
+        CandidateGenerationConfig(approximate_grid_policy="sometimes")
 
 
 def test_rejects_pair_above_tempo_tolerance():
@@ -100,6 +144,7 @@ def test_rejects_pair_above_tempo_tolerance():
         _track("target"),
         130.0,
         _four_four_grid(),
+        **_detected_grid_kwargs(),
     )
 
     assert not result.candidates
@@ -114,6 +159,7 @@ def test_candidate_result_is_serialisable_for_a_future_manifest():
         _track("target"),
         120.0,
         _four_four_grid(),
+        **_detected_grid_kwargs(),
     )
 
     payload = result.to_dict()
@@ -121,6 +167,8 @@ def test_candidate_result_is_serialisable_for_a_future_manifest():
     assert payload["format_version"] == 1
     assert payload["candidates"][0]["source_track"]["sha256"] == "hash-source"
     assert payload["candidates"][0]["source_cutpoint"]["sample"] > 0
+    assert payload["candidates"][0]["source_grid"]["grid_source"] == "test_detector"
+    assert payload["candidates"][0]["source_grid"]["confidence"] == 0.9
 
 
 def test_pipeline_api_scales_candidate_cutpoints_to_the_renderer_grid(tmp_path):
@@ -137,7 +185,7 @@ def test_pipeline_api_scales_candidate_cutpoints_to_the_renderer_grid(tmp_path):
                 (sample, index % 4 + 1, 4)
                 for index, sample in enumerate(range(0, info.frames, beat_step))
             ]
-            return 120.0, beats
+            return AnalysisResult(120.0, tuple(beats), DETECTED_GRID)
 
     result = generate_transition_candidates(
         song1,
@@ -154,7 +202,7 @@ def test_pipeline_api_scales_candidate_cutpoints_to_the_renderer_grid(tmp_path):
     assert result.candidates[0].target_cutpoint.sample == 352_800
 
 
-def test_pipeline_falls_back_to_a_four_four_grid_when_analysis_lacks_bar_metadata(tmp_path):
+def test_pipeline_rejects_fallback_grid_by_default_and_allows_explicit_opt_in(tmp_path):
     song1 = tmp_path / "song1.wav"
     song2 = tmp_path / "song2.wav"
     sf.write(song1, np.zeros(44_100 * 20, dtype=np.float32), 44_100)
@@ -164,7 +212,7 @@ def test_pipeline_falls_back_to_a_four_four_grid_when_analysis_lacks_bar_metadat
         def __call__(self, song_path):
             return 120.0, list(range(0, sf.info(song_path).frames, 22_050))
 
-    result = generate_transition_candidates(
+    rejected = generate_transition_candidates(
         song1,
         song2,
         analysis=BareBeatAnalysis(),
@@ -175,11 +223,37 @@ def test_pipeline_falls_back_to_a_four_four_grid_when_analysis_lacks_bar_metadat
         ),
     )
 
-    assert len(result.candidates) == 1
-    assert result.candidates[0].source_cutpoint.count_in_bar == 1
+    assert not rejected.candidates
+    assert {item.code for item in rejected.rejections} == {
+        "source_grid_provenance_rejected",
+        "target_grid_provenance_rejected",
+    }
+    assert rejected.source_grid.fallback_used is True
+
+    allowed = generate_transition_candidates(
+        song1,
+        song2,
+        analysis=BareBeatAnalysis(),
+        config=CandidateGenerationConfig(
+            transition_lengths_bars=(1,),
+            source_boundary_count=1,
+            target_boundary_count=1,
+            approximate_grid_policy="allow",
+        ),
+    )
+
+    assert len(allowed.candidates) == 1
+    assert allowed.candidates[0].source_cutpoint.count_in_bar == 1
+    assert allowed.candidates[0].source_grid.grid_source == "fallback_from_detected_beats"
+    assert allowed.to_dict()["approximate_grid_policy"] == "allow"
 
 
 def test_fallback_builds_a_beat_grid_from_bpm_when_no_beats_are_detected():
-    grid = ensure_bar_metadata([], bpm=120.0, sample_count=1_000, sample_rate=100)
+    grid, metadata = ensure_bar_metadata_with_provenance(
+        [], bpm=120.0, sample_count=1_000, sample_rate=100
+    )
 
     assert grid[:5] == [(0, 1, 4), (50, 2, 4), (100, 3, 4), (150, 4, 4), (200, 1, 4)]
+    assert metadata.to_dict()["grid_source"] == "fallback_from_bpm"
+    assert metadata.fallback_used is True
+    assert metadata.confidence == 0.0
