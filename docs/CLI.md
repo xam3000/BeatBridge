@@ -620,10 +620,14 @@ Fallback prüfen.
 
 ### Downbeat-Metadaten fehlen
 
-Fehlt eine belastbare Downbeat-Erkennung, erzeugt die Analyse weiterhin ein
-explizit markiertes approximatives Raster. Die Kandidatengenerierung lehnt es
-mit der Default-Policy `reject` ab. Nur
-`--approximate-grid-policy allow` erlaubt diesen Fallback bewusst.
+Fehlt eine belastbare Downbeat-Erkennung, bricht die Analyse nicht deshalb ab:
+Sie erzeugt ein explizit als approximativ markiertes 4/4-Raster und schreibt
+die Herkunft in den Analyse-Cache. Das ist vom späteren Kandidatenfilter zu
+unterscheiden: Die Kandidatengenerierung lehnt approximative oder unbekannte
+Raster mit der Default-Policy `reject` ab. Nur
+`--approximate-grid-policy allow` erlaubt diesen Fallback für einen bewussten
+Batchlauf. Ein Batch ohne andere nutzbare Kandidaten endet dann mit einer
+begründeten Rejection im Manifest, nicht mit einem stillen Ersatz-Grid.
 
 ### Ausgabedatei klingt zu früh oder zu spät geschnitten
 

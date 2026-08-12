@@ -1,6 +1,10 @@
 # BeatBridge-Dokumentation
 
-Dieser Ordner ist das dauerhafte Projektgedächtnis. Verifizierte Erkenntnisse, Entscheidungen und offene Punkte werden hier festgehalten und nicht nur in Chat-Verläufen.
+Dieser Ordner ist das dauerhafte Projektgedächtnis. Verifizierte Erkenntnisse,
+Entscheidungen und offene Punkte werden hier festgehalten und nicht nur in
+Chat-Verläufen. `STATUS.md` ist der kurze Einstieg mit aktuellem Stand und
+priorisierten nächsten Schritten; `Bemerkungen.md` ist die fortlaufende
+Chronik aus Beobachtungen, Entscheidungen und gelernten Lektionen.
 
 ## Dokumentrollen
 
@@ -11,6 +15,9 @@ Dieser Ordner ist das dauerhafte Projektgedächtnis. Verifizierte Erkenntnisse, 
 | [`CLI.md`](./CLI.md) | Installation, Kommandozeilen-Aufrufe, Renderer und Fehlerbehebung | Bei Änderungen an CLI-Argumenten oder Laufzeitvoraussetzungen aktualisieren |
 | [`RENDERING_PROTOCOL.md`](./RENDERING_PROTOCOL.md) | Versionierter Vertrag der programmatischen Rendering-Pipeline | Nur additiv ändern; inkompatible Änderungen benötigen eine neue Version |
 | [`CANDIDATE_PROTOCOL.md`](./CANDIDATE_PROTOCOL.md) | Versionierter Vertrag für automatische Übergangskandidaten | Nur additiv ändern; inkompatible Änderungen benötigen eine neue Version |
+| [`RANKING_PROTOCOL.md`](./RANKING_PROTOCOL.md) | Versionierter Vertrag für Cutpoint-/Feature-Ranking und Vorab-Auswahl | Nur additiv ändern; inkompatible Änderungen benötigen eine neue Version |
+| [`RATINGS_PROTOCOL.md`](./RATINGS_PROTOCOL.md) | Versionierter Vertrag für menschliche Ratings und Fehler-Tags | Nur additiv ändern; inkompatible Änderungen benötigen eine neue Version |
+| [`SONG_COMPATIBILITY_PROTOCOL.md`](./SONG_COMPATIBILITY_PROTOCOL.md) | Versionierter Vertrag für das Songpaar-Kompatibilitätsranking | Nur additiv ändern; inkompatible Änderungen benötigen eine neue Version |
 | [`BATCH_RENDERING_PROTOCOL.md`](./BATCH_RENDERING_PROTOCOL.md) | Versionierter Vertrag für Batch-Exporte und Manifeste | Nur additiv ändern; inkompatible Änderungen benötigen eine neue Version |
 | [`RENDERED_TRANSITION_METRIC_PROTOCOL.md`](./RENDERED_TRANSITION_METRIC_PROTOCOL.md) | Versionierte Baseline-Metrik für bereits gerenderte Übergänge | Nur additiv ändern; inkompatible Änderungen benötigen eine neue Version |
 | [`DIFFERENTIABLE_CONTROL_PROTOCOL.md`](./DIFFERENTIABLE_CONTROL_PROTOCOL.md) | Versionierter Vertrag für lernbare Mixing-Controls, differenzierbaren Renderer und Proxy-Objective | Nur additiv ändern; inkompatible Änderungen benötigen eine neue Version |

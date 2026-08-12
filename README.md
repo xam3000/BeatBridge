@@ -33,11 +33,14 @@ Metrik für gerenderte Varianten stehen unter [`docs/`](./docs/README.md).
 ## Projektstand
 
 Die technische Basis ist vorhanden: Beat-/Bar-Analyse, Audio-Normalisierung,
-vier Übergangs-Renderer, automatische bar-synchrone Kandidaten, Cutpoint-Ranking,
-eine Baseline-Metrik für gerenderte Varianten, Batch-Export und ein
-Notebook-Hörvergleich.
+vier Übergangs-Renderer, automatische bar-synchrone Kandidaten, Cutpoint- und
+Render-Ranking, Batch-Export sowie blinde Hörstudien. Das Vocal-v2-Training und
+mehrere Objective-/Control-Hörsätze sind abgeschlossen; der aktuelle
+Vocal-v2-Modellhörsatz ist jedoch noch unbewertet (0/5 Ratings, noch keine
+`study_results.json`).
 
-Der nächste Meilenstein ist die Validierung der beiden Rankings gegen
-menschliche Hörurteile. Der verbindliche, priorisierte Arbeitsstand wird
-ausschließlich in [`docs/STATUS.md`](./docs/STATUS.md) gepflegt, damit keine
-parallelen Aktionspläne auseinanderlaufen.
+Der nächste Arbeitsblock ist deshalb die geblendete Bewertung dieses
+Vocal-v2-Satzes, ergänzt um die isolierte Time-Stretch-/Target-Fenster-Diagnose
+und die weitere Kuratierung des Entwicklungssets. Der verbindliche,
+priorisierte Arbeitsstand wird ausschließlich in
+[`docs/STATUS.md`](./docs/STATUS.md) gepflegt.

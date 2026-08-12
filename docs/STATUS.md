@@ -2,6 +2,10 @@
 
 _Stand: 2026-08-12_
 
+**Rolle dieser Datei:** Einstieg, verifizierter aktueller Stand und priorisierte
+nächste Schritte. Der ausführliche chronologische Experimentlog gehört in
+[`Bemerkungen.md`](./Bemerkungen.md); die älteren Verifizierungsblöcke hier
+bleiben als Übergangsarchiv erhalten und sind keine zusätzlichen To-do-Listen.
 **Maßgeblicher Kontext: [`Projekt-Gesamtuebersicht.md`](./Projekt-Gesamtuebersicht.md) (Exposé).** Diese Datei hält den *technischen Prototyp-Stand der Startphase* (Monat 1 / erste 2–3 Wochen) fest. Ziel, Scope, wissenschaftlicher Beitrag, Related Work, Datenstrategie, Evaluation, 6-Monats-Plan und Risiken stehen im Exposé.
 
 **Forschungsfrage (präzisiert am 2026-07-29):** Wie können Self-Supervised Learning und gelernte musikalische Repräsentationen genutzt werden, um kurze, taktgenaue, nutzergesteuerte Übergänge zwischen ausgewählten Songabschnitten automatisch zu **bewerten** und zu **erzeugen** — möglichst ohne explizite Annotationen? Wissenschaftlicher Kern ist jetzt das **Lernen zeitabhängiger Mixing-Kurven ohne Ground-Truth-Kontrollkurven**; eine eingefrorene Übergangsmetrik liefert über einen differenzierbaren Renderer das Lernsignal. Compatibility- und Render-Metriken bleiben Baselines und Hilfskomponenten.
@@ -617,8 +621,9 @@ Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automa
   über `0,2` aktiv.
 - Alle öffentlichen WAV-Hashes stimmen; A/B sind je Paar samplegleich,
   endlich und haben gemeinsame Peak-Absenkung auf höchstens 0,98.
-  `ratings.json` verwendet Format 3 und ist vollständig `unrated`.
-  `answer_key.json` wurde zur Wahrung der Blendung nicht geöffnet.
+  `ratings.json` verwendet Format 3 und enthält **0/5 Ratings**; ein
+  `study_results.json` existiert noch nicht. `answer_key.json` wurde zur
+  Wahrung der Blendung nicht geöffnet.
 - Der Objective-v5-Proxy verbessert sich pro Paar nicht einheitlich: zwei
   Paare sinken, drei steigen. Damit darf der Trainingsmittelwert nicht als
   Ersatz für die ausstehende Hörbewertung interpretiert werden.
@@ -648,12 +653,12 @@ Damit ist die technische Grundlage aus Monat 1 weitgehend vorhanden. Das frühe 
 | Beat-/Bar-Analyse | ✅ | librosa + aufTAKT-Merge, mit Diskrepanz-Log |
 | Mehrere gerenderte Übergänge | 🟡 | Automatischer Batch-Export vorhanden; erster realer 2-Varianten-Lauf HELP_LESS → BREATH_LESS ohne Fehler dokumentiert |
 | Automatische Kandidaten | 🟡 | `bar_grid_v1` erzeugt standardmäßig 2/4-Takt-Varianten über alle nutzbaren Downbeats beider Songs; keine Phrasen-/Strukturinformationen |
-| Systematischer Vergleich / Höranalyse | 🟡 | Gerankter Batch, Inline-Playback sowie bewertete blinde v3- und Objective-v4-Hörsätze vorhanden; v4 gewinnt 9/9 auf drei Testtrack-Hashes, weitere Rater und ein breiterer Testsatz fehlen |
+| Systematischer Vergleich / Höranalyse | 🟡 | Gerankter Batch, Inline-Playback sowie bewertete blinde Control-/Objective-Hörsätze vorhanden; der aktuelle Vocal-v2-Modellhörsatz ist mit 0/5 Ratings noch offen, weitere Rater und ein breiterer Testsatz fehlen |
 | Erste Baseline-Renderer (4 Stück) | ✅ | Tempoangepasster Hard Cut, linearer Crossfade, Equal-Power und Kompatibilitätsalias `tempo_fade` getestet |
 | Einfache Feature-Metrik | ✅ | `feature_baseline_v3` mit High-Power- und Non-Overlap-Komponente, auditierbaren Messwerten und Top-k-Rendering |
 | Render-Audio-Metrik | ✅ | `rendered_transition_baseline_v1` mit vier erklärbaren Komponenten, eigenem Ranking und Fehlerisolation im Batch-Manifest |
 | Erste Embedding-Tests | ❌ | offen (Monat 3) |
-| Liste typischer Fehlerfälle | 🟡 | nur punktuell (`Bemerkungen.md`) |
+| Liste typischer Fehlerfälle | 🟡 | fortlaufend in [`Bemerkungen.md`](./Bemerkungen.md), noch nicht vollständig systematisiert |
 | Entscheidung ML-Fokus | ✅ | Self-supervised Feature→Control-Lernen ohne Ground-Truth-Kurven; differenzierbarer Renderer und eingefrorenes Objective als Lernpfad |
 
 ## Bekannte Bugs / Baustellen
@@ -700,12 +705,12 @@ auf realem Audio validieren.
 
 **Abgeschlossen am 2026-08-05:** rekursiver 145–165-BPM-Datenlauf, fehlerfreier 111-Paar-Batch, erweiterter 370/50/60-Datensatz und Vocal-v2-Retraining; beste Validation in Epoche 22, Early Stopping in Epoche 28.
 
-**Abgeschlossen am 2026-08-06:** geblendeter Vocal-v2-Modell-Hörsatz mit fünf vocal-aktiven, gerichteten Validation-Paaren ohne Time-Stretch; Best-Checkpoint aus Epoche 22 gegen die ungelernte Initialisierung, Ratings noch offen.
+**Abgeschlossen am 2026-08-06:** geblendeter Vocal-v2-Modell-Hörsatz mit fünf vocal-aktiven, gerichteten Validation-Paaren ohne Time-Stretch; Best-Checkpoint aus Epoche 22 gegen die ungelernte Initialisierung. Der Satz ist weiterhin **0/5 bewertet**, und es gibt noch kein `study_results.json`.
 
 1. **Time-Stretch und Target-Fenster von Paar 5 isolieren** — Original-Targetsegment und Rubber-Band-Variante mit identischem Ausschnitt separat exportieren und hören. So wird unterschieden, ob der schlechte Klang vom Backend, der Tempoänderung oder bereits vom gewählten Aversion-Fenster stammt.
 2. **Feature-Protokoll 1 auditieren** — globale Paarfeatures, Datasetexport und track-getrennte Splits sind implementiert. Als Nächstes die Vocal-Scores gegen gehörte Lyrics-/Clash-Fälle prüfen und ein semantisch passendes Phrasenverfahren validieren. Kein stilles 4/4→8-Takt-Fallback; Downbeat-Fallbacks bleiben über `source_grid`/`target_grid` sichtbar.
 3. **Objective v5 direkt hörvalidieren** — Gate bestanden: 2 v5-Siege, 1 v4-Sieg, 3 Gleichstände; Vocal-Klarheit `4,3333→5,0`. Für endgültige Gewichte später mit mehr Ratenden und ohne Time-Stretch-dominierte Paare wiederholen.
-4. **Gelerntes Vocal-v2-Modell hörvalidieren** — Hörsatz ist gerendert: fünf vocal-aktive gerichtete Paarungen, alle ohne Time-Stretch. Als Nächstes A/B vollständig bewerten, erst danach entblinden und auswerten; dabei starkes Target-Ducking und Mid-Phrase-Pegeländerungen gezielt notieren. Objective-Gewichte oder Architektur erst nach diesem Gate ändern.
+4. **Gelerntes Vocal-v2-Modell hörvalidieren** — Hörsatz ist gerendert: fünf vocal-aktive gerichtete Paarungen, alle ohne Time-Stretch; aktuell **0/5 Ratings**, noch kein `study_results.json`. Als Nächstes A/B vollständig bewerten, erst danach entblinden und auswerten; dabei starkes Target-Ducking und Mid-Phrase-Pegeländerungen gezielt notieren. Objective-Gewichte oder Architektur erst nach diesem Gate ändern.
 5. **Entwicklungsset kuratieren** — die 111 eindeutigen BPM-zugelassenen Tracks als reproduzierbares Set definieren, Varianz prüfen, Track-Notizen ergänzen und Lizenzfrage klären (parallel, eher Handarbeit).
 
 Danach: TCN-/BiLSTM-Hauptmodell und Mid-/High-Controls als neue Modellversion untersuchen sowie vortrainierte Embeddings auf demselben trackgetrennten Evaluationssatz vergleichen.
