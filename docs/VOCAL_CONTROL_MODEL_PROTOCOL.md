@@ -145,8 +145,8 @@ Beispiel einzeln, wertet Objective v5 aus und mittelt alle Komponenten.
 
 `self_supervised_vocal_train_validation_v2` trainiert ausschließlich
 `vocal_time_shared_mlp_v2` mit Control-Protokoll 4, Objective v5 und
-Vocal-Bridge-Cacheformat 2. Der bestehende v1-Runner bleibt unverändert und
-kann seine alten Checkpoints weiterhin laden.
+Vocal-Bridge-Cacheformat 2. Der separat versionierte v1-Runner kann seine
+alten Checkpoints weiterhin laden.
 
 Der unveränderliche Run-Vertrag bindet Datasetmanifest und Splitgrößen,
 Feature-/Modell-/Renderer-/Objective-Versionen, Demucs-Modellname,
@@ -156,6 +156,9 @@ Vocal-Cachemanifests. Der Testsplit wird weder geladen noch gecacht.
 geschrieben und gehasht. Resume akzeptiert nur denselben Vertrag; lediglich
 `max_epochs` darf erhöht werden. Vor dem Laden wird zusätzlich der im
 Runmanifest gespeicherte SHA-256 des Latest-Checkpoints geprüft.
+Resume und Studienexport verwenden ausschließlich
+`torch.load(..., weights_only=True)`; Checkpoints dürfen daher nur Tensoren,
+Zustandswörter und einfache primitive Container enthalten.
 
 Epoche 0 misst die deterministische, nahe an Equal Power liegende
 Vocal-Modellinitialisierung ohne Update. Danach steuert ausschließlich

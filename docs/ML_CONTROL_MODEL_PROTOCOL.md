@@ -174,7 +174,11 @@ Checkpoints enthalten Modell, Optimizer, Epoche, bisherigen Bestwert,
 Early-Stopping-Zähler und History. Ihre SHA-256-Werte stehen im Manifest.
 `--resume` akzeptiert nur denselben unveränderlichen Vertrag; ausschließlich
 `max_epochs` darf erhöht werden. Bereits vorhandene Ausgaben werden ohne
-`--resume` nicht überschrieben.
+`--resume` nicht überschrieben. Vor jedem Resume wird der SHA-256 von
+`latest.pt` gegen den Manifesteintrag geprüft. Resume und Studienexport laden
+Checkpoints ausschließlich mit `torch.load(..., weights_only=True)`; der
+Checkpointvertrag bleibt daher auf Tensoren, Zustandswörter und einfache
+primitive Container beschränkt.
 
 ```powershell
 .venv\Scripts\python.exe -m src.ml train `

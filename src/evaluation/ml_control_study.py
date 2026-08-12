@@ -384,7 +384,7 @@ def _load_best_model(training_run_directory):
     checkpoint_sha256 = _file_sha256(checkpoint_path)
     if checkpoint_sha256 != checkpoint_record["sha256"]:
         raise ValueError("Best-checkpoint SHA-256 differs from the training manifest")
-    checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
+    checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
     if checkpoint.get("run_id") != manifest["run_id"]:
         raise ValueError("Checkpoint run ID differs from the training manifest")
     if int(checkpoint["epoch"]) != int(manifest["best_epoch"]):

@@ -38,12 +38,45 @@ Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automa
 - **Blinde Control-Hörstudie** (`src/evaluation/blind_control_study.py`, `control_study_ratings.py`, `analyze_control_study.py`): erzeugt A/B-Dateien ohne Methodenlabel, trennt den unveränderlichen Antwortschlüssel vom öffentlichen Manifest, speichert Ratings atomisch und entblindet erst nach vollständiger Bewertung in ein reproduzierbares `study_results.json`. Vertrag: `CONTROL_STUDY_PROTOCOL.md`.
 - **Historische Render-Metrik** (`src/evaluation/backfill_transition_metrics.py`): bewertet vorhandene Multi-Song-Batches ohne Änderung der WAVs oder ursprünglichen Manifeste. Samplegenaue Grenzen werden aus Kandidaten-Beat-Index, Read-only-Analyse-Cache und Tempoanpassung rekonstruiert; atomische `transition_metrics.json`-Sidecars dokumentieren Fortschritt und Ergebnisse.
 - **Songpaar-Kompatibilität** (`src/ranking/song_compatibility.py`): `rank_song_targets()` ordnet Target-Songs pro Source-Song vor der Cutpoint-Generierung nach Harmonie, Tempoanpassungsstärke, Klang, Energie und Rhythmus.
-- **Batch-Rendering** (`src/batch_render.py`, `src/multi_batch_render.py`): rankt akzeptierte Kandidaten und rendert standardmäßig die Top 5 × ausgewählte Renderer als kurze WAV-Vorschauen. Multi-Batches akzeptieren rekursive Musikordner, deduplizieren identisches Audio per SHA-256, filtern optional inklusive BPM-Grenzen und teilen Volltrack-Kompatibilitätsfeatures über alle Quellen. Mehrere Analyseworker verwenden getrennte temporäre aufTAKT-Dateien. Exporte werden atomar geschrieben; vorhandene Dateien werden ohne explizites `--overwrite` nicht ersetzt. Seit 2026-07-22 übernehmen alle Renderer Source-/Target-BPM explizit aus dem Kandidatenvertrag und passen Song B konsistent auf Song A an.
+- **Batch-Rendering** (`src/batch_render.py`, `src/multi_batch_render.py`): rankt akzeptierte Kandidaten und rendert standardmäßig die Top 5 × ausgewählte Renderer als kurze WAV-Vorschauen. Multi-Batches akzeptieren rekursive Musikordner, deduplizieren identisches Audio per SHA-256, filtern optional inklusive BPM-Grenzen und teilen Volltrack-Kompatibilitätsfeatures über alle Quellen. Mehrere Analyseworker verwenden getrennte temporäre aufTAKT-Dateien. Exporte werden atomar geschrieben; vorhandene Dateien werden ohne explizites `--overwrite` nicht ersetzt. Source-/Paarfehler isolieren unabhängige Arbeit und bleiben im finalen Manifest; jeder dort dokumentierte Analyse-, Render- oder Metrikfehler führt anschließend zu CLI-Exit-Code 1. Seit 2026-07-22 übernehmen alle Renderer Source-/Target-BPM explizit aus dem Kandidatenvertrag und passen Song B konsistent auf Song A an.
 - **Hörbewertung und Visualisierung** (`src/evaluation/ratings.py`, `notebooks/listen_batch.ipynb`): das Notebook listet Varianten in Rangfolge, zeigt für den umgebenden Multi-Song-Batch die Render-Score-Verteilung sowie Cutpoint-gegen-Render-Score und hebt das aktuelle Songpaar hervor. Pro Hörprobe werden die Source- und Target-Waveform an ihren jeweiligen Cue Points bei `t = 0` ausgerichtet untereinander sowie Gesamtscore und vier Render-Metrikkomponenten visualisiert. WAVs werden über `IPython.display.Audio` eingebettet. `rate()` speichert eine 1–5-Bewertung mit Fehler-Tags und Notiz atomar in einer getrennten `ratings.json`; dieselbe Funktionalität ist als CLI verfügbar. Der Startpfad verweist auf ein nachbewertetes reales Songpaar.
 - **Dataset und Ausschlüsse**: 119 FLAC-Pfade liegen rekursiv im ignorierten Ordner `musik/`. `config/track_exclusions.json` schließt `14 - STRUGGLING.flac` aus neuen Multi-Batches, Control-Vergleichen und Training aus. Der neue Batch entfernt zusätzlich ein byteidentisches BREATH_LESS-Duplikat und sechs Tracks unter 145 BPM; keiner lag über 165 BPM. Der erweiterte SHA-getrennte Datensatz enthält 370/50/60 Beispiele über 43/5/7 verwendete Trackhashes. Der historische 45/9/9-Datensatz und frühere Läufe bleiben unverändert. Kuratierte Track-Notizen und Lizenzstatus fehlen weiterhin.
-- **ML-Baseline Version 1** (`src/ml/`): `FeatureControlDataset` verbindet die bestehenden Feature-Splits mit unveränderlichen, hashbasiert gecachten Source-/Target-Bridge-Waveforms. `time_shared_mlp_v1` hat 10.394 Parameter, wird auf alle 31 Halbbeat-Intervalle geteilt angewendet und erzeugt über dieselbe konstruktive Control-v3-Transformation zwei gültige Kurven. Die Nullinitialisierung startet exakt bei Equal Power; `self_supervised_batch_loss` rendert variable Audiolängen ohne Padding einzeln und mittelt Objective v4. `self_supervised_train_validation_v1` ergänzt deterministische Seeds, Equal-Power-Epoche 0, atomare Best-/Latest-Checkpoints mit SHA-256, vollständige Loss-History, Early Stopping und vertragsgeprüftes Resume. Vertrag: `ML_CONTROL_MODEL_PROTOCOL.md`.
-- **Vocal-Control-Erweiterung Version 2** (`src/control/`, `src/ml/`): `vocal_time_shared_mlp_v2` hat 20.821 Parameter und erzeugt zusätzlich eine monotone Vocal-Übergabe sowie getrenntes Source-/Target-Ducking. `DifferentiableVocalAwareRenderer` verarbeitet gecachte Demucs-Stems separat vom Zwei-Band-Accompaniment. Objective v5 ersetzt die alten mixgebundenen Vocal-Gewichte durch tatsächlichen Stem-Overlap, einen Audibility-Loss gegen unnötig leise aktive Vocals und eine Strafe für Gain-Änderungen mitten in Phrasen. Der Cache v2 speichert Mix und beide samplegleichen Vocal-Stems. `self_supervised_vocal_train_validation_v2` trainiert diese Kette reproduzierbar mit atomaren Checkpoints, Early Stopping, strengem Vertrags-/Hash-Resume und ohne Zugriff auf den Testsplit. Vertrag: `VOCAL_CONTROL_MODEL_PROTOCOL.md`.
+- **ML-Baseline Version 1** (`src/ml/`): `FeatureControlDataset` verbindet die bestehenden Feature-Splits mit unveränderlichen, hashbasiert gecachten Source-/Target-Bridge-Waveforms. `time_shared_mlp_v1` hat 10.394 Parameter, wird auf alle 31 Halbbeat-Intervalle geteilt angewendet und erzeugt über dieselbe konstruktive Control-v3-Transformation zwei gültige Kurven. Die Nullinitialisierung startet exakt bei Equal Power; `self_supervised_batch_loss` rendert variable Audiolängen ohne Padding einzeln und mittelt Objective v4. `self_supervised_train_validation_v1` ergänzt deterministische Seeds, Equal-Power-Epoche 0, atomare Best-/Latest-Checkpoints mit SHA-256, vollständige Loss-History, Early Stopping und vertragsgeprüftes Resume. Resume und Studienexport prüfen den Manifesthash vor dem eingeschränkten `weights_only`-Laden. Vertrag: `ML_CONTROL_MODEL_PROTOCOL.md`.
+- **Vocal-Control-Erweiterung Version 2** (`src/control/`, `src/ml/`): `vocal_time_shared_mlp_v2` hat 20.821 Parameter und erzeugt zusätzlich eine monotone Vocal-Übergabe sowie getrenntes Source-/Target-Ducking. `DifferentiableVocalAwareRenderer` verarbeitet gecachte Demucs-Stems separat vom Zwei-Band-Accompaniment. Objective v5 ersetzt die alten mixgebundenen Vocal-Gewichte durch tatsächlichen Stem-Overlap, einen Audibility-Loss gegen unnötig leise aktive Vocals und eine Strafe für Gain-Änderungen mitten in Phrasen. Der Cache v2 speichert Mix und beide samplegleichen Vocal-Stems. `self_supervised_vocal_train_validation_v2` trainiert diese Kette reproduzierbar mit atomaren Checkpoints, Early Stopping, strengem Vertrags-/Hash-Resume und ohne Zugriff auf den Testsplit; Checkpoint-Loads sind auf `weights_only` beschränkt. Vertrag: `VOCAL_CONTROL_MODEL_PROTOCOL.md`.
 - **GPU-Ausführung** (`src/torch_device.py`): `auto` wählt für Training und neue Demucs-Separationen CUDA, wenn verfügbar, andernfalls CPU. Der aufgelöste Trainings-Device wird im unveränderlichen Run-Vertrag gespeichert; explizite Overrides bleiben mit `--device cpu` und `--device cuda:<index>` möglich. `requirements-cuda.txt` fixiert den offiziellen CUDA-13.0-Wheel zusätzlich zum plattformneutralen Basis-Requirement.
+
+### Verifiziert am 2026-08-12 (Codex, Multi-Batch-Exitstatus)
+
+- `src.multi_batch_render` verarbeitet unabhängige Sources und Paare trotz
+  Einzelfehlern weiter und schreibt das finale Wurzelmanifest weiterhin
+  atomar.
+- Danach liefert die CLI Exit-Code `1` für dokumentierte BPM-Analyse-,
+  Source-, Paar-, Render- oder Render-Metrikfehler. Exit-Code `0` ist auf
+  Läufe ohne aufgezeichnete Fehler beschränkt; reguläre Ausschlüsse und
+  Duplikate sind keine Fehler.
+- CLI-Tests decken Source-/Paarfehler, BPM-Analysefehler, verschachtelte
+  Render-/Metrikfehler und den fehlerfreien Exit-0-Fall ab.
+- `.venv\Scripts\python.exe -m pytest -q`: **128 Tests bestanden**; zwei
+  bestehende `audioread`-Deprecation-Warnungen und zwei erwartete
+  CUDA-Determinismuswarnungen.
+
+### Verifiziert am 2026-08-12 (Codex, sichere Checkpoint-Loads)
+
+- Alle vier Produktionspfade für v1-/v2-Resume und Studienexport verwenden
+  `torch.load(..., weights_only=True)`; es gibt keinen verbleibenden
+  `weights_only=False`-Aufruf unter `src/`.
+- Der v1-Runner prüft nun wie v2 den SHA-256 von `latest.pt` gegen
+  `manifest.json`, bevor PyTorch die Datei öffnet. Beide Studienloader prüfen
+  den manifestierten Best-Checkpoint ebenfalls vor dem Laden.
+- Tests verankern den `weights_only`-Parameter an allen vier Loadpfaden und
+  weisen manipulierte v1-/v2-`latest.pt` sowie beide `best.pt` vor dem Laden
+  ab.
+- Alle sechs vorhandenen manifestierten Checkpoints aus den drei realen
+  v1-/v2-Trainingsläufen bestanden ihre SHA-256-Prüfung und ließen sich mit
+  `weights_only=True` auf CPU laden.
+- `.venv\Scripts\python.exe -m pytest -q`: **123 Tests bestanden**; zwei
+  bestehende `audioread`-Deprecation-Warnungen und zwei erwartete
+  CUDA-Determinismuswarnungen.
 
 ### Verifiziert am 2026-08-12 (Codex, Downbeat-Grid-Provenienz)
 

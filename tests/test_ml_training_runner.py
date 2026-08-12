@@ -47,7 +47,10 @@ def _config(max_epochs):
     )
 
 
-def test_training_runner_writes_baseline_history_and_restartable_checkpoints(tmp_path):
+def test_training_runner_writes_baseline_history_and_restartable_checkpoints(
+    tmp_path,
+    monkeypatch,
+):
     output = tmp_path / "run"
     first = train_feature_control_model(
         _examples(3, 1),
@@ -70,6 +73,13 @@ def test_training_runner_writes_baseline_history_and_restartable_checkpoints(tmp
     assert (output / "checkpoints" / "latest.pt").is_file()
     assert (output / "checkpoints" / "best.pt").is_file()
 
+    real_torch_load = torch.load
+
+    def require_weights_only(*args, **kwargs):
+        assert kwargs.get("weights_only") is True
+        return real_torch_load(*args, **kwargs)
+
+    monkeypatch.setattr(torch, "load", require_weights_only)
     resumed = train_feature_control_model(
         _examples(3, 1),
         _examples(2, 2),
@@ -82,6 +92,29 @@ def test_training_runner_writes_baseline_history_and_restartable_checkpoints(tmp
     assert resumed.status == "completed"
     assert resumed.last_epoch == 2
     assert [entry["epoch"] for entry in resumed_history["epochs"]] == [0, 1, 2]
+
+
+def test_training_runner_rejects_modified_latest_checkpoint(tmp_path):
+    output = tmp_path / "run"
+    train_feature_control_model(
+        _examples(2, 7),
+        _examples(1, 8),
+        output,
+        config=_config(1),
+        progress=lambda message: None,
+    )
+    latest_path = output / "checkpoints" / "latest.pt"
+    latest_path.write_bytes(latest_path.read_bytes() + b"tampered")
+
+    with pytest.raises(ValueError, match="Latest checkpoint SHA-256"):
+        train_feature_control_model(
+            _examples(2, 7),
+            _examples(1, 8),
+            output,
+            config=_config(2),
+            resume=True,
+            progress=lambda message: None,
+        )
 
 
 def test_training_runner_refuses_to_overwrite_existing_run(tmp_path):

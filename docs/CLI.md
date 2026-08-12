@@ -250,6 +250,11 @@ keine temporären aufTAKT-Dateien.
 
 Das Wurzel-Manifest wird nach jedem Songpaar atomar aktualisiert. Bereits
 abgeschlossene Paare bleiben bei einer Unterbrechung nachvollziehbar.
+Unabhängige Sources und Paare werden bei Einzelfehlern weiterverarbeitet.
+Nach dem finalen Manifest endet die CLI jedoch mit Exit-Code `1`, wenn dort
+BPM-Analyse-, Source-, Paar-, Render- oder Render-Metrikfehler dokumentiert
+sind. Exit-Code `0` bedeutet einen Lauf ohne aufgezeichnete Fehler;
+Policy-/BPM-Ausschlüsse und erkannte Audio-Duplikate sind reguläre Ergebnisse.
 
 ### Vorhandenen Multi-Song-Batch nachbewerten
 

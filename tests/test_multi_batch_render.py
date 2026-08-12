@@ -1,9 +1,13 @@
+import json
 from pathlib import Path
+
+import pytest
 
 from src.multi_batch_render import (
     _deduplicate_tracks_by_sha256,
     _expand_song_paths,
     _filter_tracks_by_bpm,
+    main,
 )
 
 
@@ -79,3 +83,97 @@ def test_identical_audio_files_are_deduplicated_by_content(tmp_path):
     assert len(duplicates) == 1
     assert duplicates[0]["path"] == str(duplicate)
     assert duplicates[0]["same_audio_as"] == str(first)
+
+
+def _stub_multi_batch(monkeypatch, manifest_path, payload):
+    manifest_path.write_text(json.dumps(payload), encoding="utf-8")
+    monkeypatch.setattr(
+        "src.multi_batch_render.generate_multi_song_batch",
+        lambda *args, **kwargs: manifest_path,
+    )
+
+
+@pytest.mark.parametrize("stage", ("pair", "source"))
+def test_multi_batch_cli_returns_nonzero_for_recorded_failures(
+    tmp_path,
+    monkeypatch,
+    capsys,
+    stage,
+):
+    manifest_path = tmp_path / "manifest.json"
+    _stub_multi_batch(
+        monkeypatch,
+        manifest_path,
+        {"failures": [{"stage": stage}], "bpm_filter": {"analysis_failures": []}},
+    )
+
+    exit_code = main(
+        ["source.wav", "target.wav", "--output-dir", str(tmp_path / "output")]
+    )
+
+    captured = capsys.readouterr()
+    assert exit_code == 1
+    assert str(manifest_path) in captured.out
+    assert "1 recorded failure" in captured.err
+
+
+def test_multi_batch_cli_returns_nonzero_for_bpm_analysis_failures(
+    tmp_path,
+    monkeypatch,
+):
+    manifest_path = tmp_path / "manifest.json"
+    _stub_multi_batch(
+        monkeypatch,
+        manifest_path,
+        {"failures": [], "bpm_filter": {"analysis_failures": [{"path": "bad.wav"}]}},
+    )
+
+    assert main(
+        ["source.wav", "target.wav", "--output-dir", str(tmp_path / "output")]
+    ) == 1
+
+
+def test_multi_batch_cli_propagates_nested_render_and_metric_failures(
+    tmp_path,
+    monkeypatch,
+):
+    manifest_path = tmp_path / "manifest.json"
+    _stub_multi_batch(
+        monkeypatch,
+        manifest_path,
+        {
+            "failures": [],
+            "bpm_filter": {"analysis_failures": []},
+            "sources": [
+                {
+                    "pairs": [
+                        {
+                            "status": "completed",
+                            "render_failure_count": 1,
+                            "transition_metric_failure_count": 2,
+                        }
+                    ]
+                }
+            ],
+        },
+    )
+
+    assert main(
+        ["source.wav", "target.wav", "--output-dir", str(tmp_path / "output")]
+    ) == 1
+
+
+def test_multi_batch_cli_returns_zero_without_recorded_failures(
+    tmp_path,
+    monkeypatch,
+):
+    manifest_path = tmp_path / "manifest.json"
+    _stub_multi_batch(
+        monkeypatch,
+        manifest_path,
+        {"failures": [], "bpm_filter": {"analysis_failures": []}},
+    )
+
+    assert main(
+        ["source.wav", "target.wav", "--output-dir", str(tmp_path / "output")]
+    ) == 0

@@ -9,6 +9,7 @@ import math
 import os
 from pathlib import Path
 import re
+import sys
 import uuid
 
 from src.analysis.pre_analysis import PreAnalysis
@@ -386,8 +387,19 @@ def build_argument_parser():
     return parser
 
 
-def main():
-    args = build_argument_parser().parse_args()
+def _recorded_failure_count(manifest):
+    failure_count = len(manifest.get("failures", ())) + len(
+        manifest.get("bpm_filter", {}).get("analysis_failures", ())
+    )
+    for source in manifest.get("sources", ()):
+        for pair in source.get("pairs", ()):
+            failure_count += int(pair.get("render_failure_count", 0))
+            failure_count += int(pair.get("transition_metric_failure_count", 0))
+    return failure_count
+
+
+def main(argv=None):
+    args = build_argument_parser().parse_args(argv)
     manifest_path = generate_multi_song_batch(
         args.songs,
         args.output_dir,
@@ -403,6 +415,15 @@ def main():
         approximate_grid_policy=args.approximate_grid_policy,
     )
     print(manifest_path)
+    manifest = json.loads(Path(manifest_path).read_text(encoding="utf-8"))
+    failure_count = _recorded_failure_count(manifest)
+    if failure_count:
+        print(
+            f"Multi-batch completed with {failure_count} recorded failure(s); "
+            f"see {manifest_path}",
+            file=sys.stderr,
+        )
+        return 1
     return 0
 
 

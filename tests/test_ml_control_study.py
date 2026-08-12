@@ -18,7 +18,10 @@ def _sha256(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def test_load_best_model_verifies_checkpoint_and_restores_contract(tmp_path):
+def test_load_best_model_verifies_checkpoint_and_restores_contract(
+    tmp_path,
+    monkeypatch,
+):
     run = tmp_path / "run"
     checkpoints = run / "checkpoints"
     checkpoints.mkdir(parents=True)
@@ -60,12 +63,23 @@ def test_load_best_model_verifies_checkpoint_and_restores_contract(tmp_path):
     }
     (run / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
 
+    real_torch_load = torch.load
+
+    def require_weights_only(*args, **kwargs):
+        assert kwargs.get("weights_only") is True
+        return real_torch_load(*args, **kwargs)
+
+    monkeypatch.setattr(torch, "load", require_weights_only)
     restored, provenance, objective_config, sample_rate = _load_best_model(run)
 
     assert restored.parameter_count == model.parameter_count
     assert provenance["checkpoint_epoch"] == 3
     assert sample_rate == 8_000
     assert objective_config.vocal_overlap_weight == 1.0
+
+    checkpoint_path.write_bytes(checkpoint_path.read_bytes() + b"tampered")
+    with pytest.raises(ValueError, match="Best-checkpoint SHA-256"):
+        _load_best_model(run)
 
 
 def test_select_indices_limits_repeated_directed_pairs():

@@ -58,7 +58,7 @@ def _config(max_epochs):
     )
 
 
-def test_vocal_runner_persists_v2_contract_terms_and_resume(tmp_path):
+def test_vocal_runner_persists_v2_contract_terms_and_resume(tmp_path, monkeypatch):
     output = tmp_path / "vocal-run"
     first = train_vocal_feature_control_model(
         _examples(3, 1),
@@ -86,6 +86,13 @@ def test_vocal_runner_persists_v2_contract_terms_and_resume(tmp_path):
     assert (output / "checkpoints" / "latest.pt").is_file()
     assert (output / "checkpoints" / "best.pt").is_file()
 
+    real_torch_load = torch.load
+
+    def require_weights_only(*args, **kwargs):
+        assert kwargs.get("weights_only") is True
+        return real_torch_load(*args, **kwargs)
+
+    monkeypatch.setattr(torch, "load", require_weights_only)
     resumed = train_vocal_feature_control_model(
         _examples(3, 1),
         _examples(2, 2),
@@ -110,6 +117,29 @@ def test_vocal_runner_requires_stem_waveforms(tmp_path):
             _examples(1, 4),
             tmp_path / "run",
             config=_config(1),
+            progress=lambda message: None,
+        )
+
+
+def test_vocal_runner_rejects_modified_latest_checkpoint(tmp_path):
+    output = tmp_path / "vocal-run"
+    train_vocal_feature_control_model(
+        _examples(2, 7),
+        _examples(1, 8),
+        output,
+        config=_config(1),
+        progress=lambda message: None,
+    )
+    latest_path = output / "checkpoints" / "latest.pt"
+    latest_path.write_bytes(latest_path.read_bytes() + b"tampered")
+
+    with pytest.raises(ValueError, match="Latest vocal checkpoint hash"):
+        train_vocal_feature_control_model(
+            _examples(2, 7),
+            _examples(1, 8),
+            output,
+            config=_config(2),
+            resume=True,
             progress=lambda message: None,
         )
 

@@ -224,7 +224,10 @@ def train_feature_control_model(
         manifest = _read_json(manifest_path)
         if manifest.get("run_id") != run_id or manifest.get("contract") != immutable_contract:
             raise ValueError("Existing run contract differs from the requested configuration")
-        checkpoint = torch.load(latest_path, map_location=device, weights_only=False)
+        declared_latest = manifest.get("files", {}).get("latest_checkpoint")
+        if not declared_latest or _file_sha256(latest_path) != declared_latest.get("sha256"):
+            raise ValueError("Latest checkpoint SHA-256 differs from the run manifest")
+        checkpoint = torch.load(latest_path, map_location=device, weights_only=True)
         _validate_checkpoint(checkpoint, run_id)
         model.load_state_dict(checkpoint["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])

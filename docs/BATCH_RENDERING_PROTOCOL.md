@@ -43,6 +43,14 @@ Filterentscheidungen nachvollziehbar. Einzelne fehlgeschlagene Render- oder
 Metrikvarianten brechen die übrigen unabhängigen Exporte nicht ab, werden aber
 sichtbar im Manifest erfasst und führen in der CLI zu Exit-Code `1`.
 
+Für `src.multi_batch_render` gilt dieselbe Prozesssemantik additiv auf der
+Wurzelebene: Alle unabhängigen Sources und Paare werden soweit möglich
+weiterverarbeitet und das Wurzelmanifest wird final atomar geschrieben.
+Danach liefert die CLI Exit-Code `1`, sobald das Manifest mindestens einen
+BPM-Analyse-, Source-, Paar-, Render- oder Render-Metrikfehler dokumentiert.
+Exit-Code `0` bedeutet damit, dass der Lauf keine Fehler aufgezeichnet hat;
+reguläre Policy-/BPM-Ausschlüsse und SHA-Duplikate gelten nicht als Fehler.
+
 ## Schreib- und Überschreiberegeln
 
 - Audio und Manifest werden zuerst in einer temporären Datei geschrieben und anschließend atomar an ihren Zielpfad verschoben.

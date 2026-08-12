@@ -20,7 +20,10 @@ def _sha256(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def test_load_best_vocal_model_verifies_checkpoint_and_restores_contract(tmp_path):
+def test_load_best_vocal_model_verifies_checkpoint_and_restores_contract(
+    tmp_path,
+    monkeypatch,
+):
     run = tmp_path / "run"
     checkpoints = run / "checkpoints"
     checkpoints.mkdir(parents=True)
@@ -66,6 +69,13 @@ def test_load_best_vocal_model_verifies_checkpoint_and_restores_contract(tmp_pat
     }
     (run / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
 
+    real_torch_load = torch.load
+
+    def require_weights_only(*args, **kwargs):
+        assert kwargs.get("weights_only") is True
+        return real_torch_load(*args, **kwargs)
+
+    monkeypatch.setattr(torch, "load", require_weights_only)
     restored, config, provenance, objective_config, sample_rate = (
         _load_best_vocal_model(run)
     )
@@ -76,6 +86,10 @@ def test_load_best_vocal_model_verifies_checkpoint_and_restores_contract(tmp_pat
     assert provenance["dataset"]["dataset_id"] == "dataset-test"
     assert sample_rate == 8_000
     assert objective_config.vocal_audibility_weight == 0.5
+
+    checkpoint_path.write_bytes(checkpoint_path.read_bytes() + b"tampered")
+    with pytest.raises(ValueError, match="Best-checkpoint SHA-256"):
+        _load_best_vocal_model(run)
 
 
 def _item(example_id, source, target, tempo, vocal_score, rank=1):
