@@ -9,6 +9,7 @@ import importlib.metadata
 import json
 import os
 from pathlib import Path
+import shutil
 import uuid
 
 import numpy as np
@@ -22,6 +23,15 @@ DEFAULT_DEMUCS_MODEL = "htdemucs"
 DEFAULT_VOCAL_BACKEND = "roformer"
 ROFORMER_BACKEND_VERSION = 1
 DEFAULT_ROFORMER_MODEL = "roformer-model-bs-roformer-sw-by-jarredou"
+ROFORMER_CHECKPOINT_URL_OVERRIDES = {
+    # The original jarredou Hugging Face repository is no longer available.
+    # This mirror is documented by bs-roformer-infer and contains the same
+    # checkpoint with a stable public URL.
+    "BS-Rofo-SW-Fixed.ckpt": (
+        "https://huggingface.co/enerjazzer/BS-ROFO-SW-Fixed/resolve/main/"
+        "BS-Rofo-SW-Fixed.ckpt"
+    ),
+}
 DEMUCS_HF_NAMESPACE = "adefossez"
 DEMUCS_PAPER = {
     "citation_key": "rouard2023hybrid",
@@ -363,6 +373,7 @@ def _run_bs_roformer(song_path, *, model_name, model_directory, device):
     from ml_collections import ConfigDict
     from bs_roformer import MODEL_REGISTRY, demix_track, get_model_from_config
     from bs_roformer.inference import SafeLoaderWithTuple
+    import bs_roformer.download as bs_roformer_download
     from bs_roformer.download import download_model_assets
 
     try:
@@ -370,6 +381,23 @@ def _run_bs_roformer(song_path, *, model_name, model_directory, device):
     except KeyError as error:
         raise ValueError(f"Unknown BS-RoFormer model: {model_name}") from error
     asset_directory = model_directory.parent / model.slug
+
+    # bs-roformer-infer 0.1.1 still points the default SW checkpoint at the
+    # deleted jarredou repository. Keep the project default stable by using
+    # the current public mirror, without modifying the installed package.
+    bs_roformer_download.CHECKPOINT_URL_OVERRIDES.update(
+        ROFORMER_CHECKPOINT_URL_OVERRIDES
+    )
+    if model.config == "BS-Rofo-SW-Fixed.yaml":
+        packaged_config = (
+            Path(bs_roformer_download.PACKAGE_ROOT)
+            / "configs"
+            / "config_bs_roformer_sw.yaml"
+        )
+        config_target = asset_directory / model.config
+        if packaged_config.is_file() and not config_target.is_file():
+            config_target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(packaged_config, config_target)
     if not download_model_assets([model], model_directory.parent):
         raise RuntimeError(f"Could not download BS-RoFormer assets for {model_name}")
     model_path = asset_directory / model.checkpoint

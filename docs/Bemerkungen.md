@@ -2,6 +2,10 @@
 
 ## Offene Beobachtungen
 
+- **Beobachtung (2026-08-12, RoFormer-Training):** Der selbstüberwachte Vocal-Control-Trainingslauf v2 verwendete für alle 370 Train- und 50 Validation-Beispiele ausschließlich vorhandene RoFormer-Bridge-Caches. Auf `cuda:0` stoppte der Lauf nach Epoche 27 frühzeitig; der beste Checkpoint stammt aus Epoche 21 mit Validation-Loss `0,3318392038` gegenüber `0,350723` bei der Initialisierung. Der Testsplit blieb unberührt.
+
+- **Beobachtung (2026-08-12, aktueller Datensatz):** Der RoFormer-Vocal-Cache wurde für den erweiterten SHA-getrennten Datensatz vollständig erzeugt (370/50/60 Train-/Validation-/Testbeispiele). Dabei entstanden 55 eindeutige Vocal-Stem-Artefakte und 480 RoFormer-Bridge-Caches. Der konfigurierte `jarredou`-SW-Download war nicht mehr öffentlich erreichbar (`401`); der identische Checkpoint wurde deshalb über den dokumentierten `enerjazzer/BS-ROFO-SW-Fixed`-Mirror geladen und per SHA-256 verifiziert.
+
 - **Beobachtung (2026-08-12, Dokumentationsaudit):** Der aktuelle Vocal-v2-Modellhörsatz unter `output/control_studies/blind_v8_vocal_mlp_v2_best_vs_initial_validation5_20260806/` enthält fünf geblendete Paarungen und `ratings.json` mit **0/5 Ratings**. Es gibt noch kein `study_results.json`; der Satz gilt daher weiterhin als offen und nicht als ausgewertete Hörstudie.
 - **Entscheidung (2026-08-12, Dokumentationsrollen):** `STATUS.md` bleibt Einstieg mit aktuellem Stand und priorisierten nächsten Schritten. Chronologische Beobachtungen, Entscheidungen und gelernte Lektionen werden in dieser Datei fortgeführt; die detaillierten historischen Verifizierungsblöcke in `STATUS.md` sind Übergangsarchiv und keine parallelen Backlogs.
 - **Gelernt (2026-08-12, Dokumentationsaudit):** Die Aussage „fehlende Downbeat-Metadaten führen zum Abbruch, ohne Fallback“ beschreibt nicht den aktuellen Stand. Die Analyse erzeugt ein markiertes approximatives Raster; erst die Kandidatengenerierung lehnt es standardmäßig mit `approximate_grid_policy = reject` ab. `allow` ist ein expliziter Opt-in.

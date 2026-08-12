@@ -16,6 +16,29 @@ Umgebung bei Librosa/Numba-JIT-Initialisierung beziehungsweise einem bekannten
 Numba-Fehler in `librosa.resample` hängen; das ist separat von der RoFormer-
 Integration zu behandeln.
 
+**Verifiziert am 2026-08-12 (RoFormer-Vocal-Cache aktueller Datensatz):** Der
+Datensatz `output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805`
+ist vollstÃ¤ndig mit dem Default `roformer-model-bs-roformer-sw-by-jarredou`
+verarbeitet: Train 370/370, Validation 50/50 und Test 60/60. Der Bridge-Cache
+enthÃ¤lt damit 480 RoFormer-Beispiele; 55 eindeutige RoFormer-Vocal-Stem-
+Manifeste liegen unter `output/feature_cache/model_artifacts/roformer_vocal_v1/`.
+Alle geprÃ¼ften Stem-Manifeste melden Backend `roformer`, Modellkennung,
+`cuda:0`, SHA-256 des Checkpoints und 44,1-kHz-Audio; bestehende Demucs-
+Artefakte wurden nicht verÃ¤ndert. Der ursprÃ¼ngliche SW-Download unter dem
+gelÃ¶schten `jarredou`-Repository wurde fÃ¼r diesen Lauf auf den Ã¶ffentlichen
+`enerjazzer/BS-ROFO-SW-Fixed`-Mirror umgeleitet; die Checkpoint-SHA stimmt mit
+der dokumentierten 699.412.152-Byte-Datei Ã¼berein.
+
+**Verifiziert am 2026-08-12 (RoFormer-Trainingslauf):** Der Vocal-Control-
+Runner `self_supervised_vocal_train_validation_v2` wurde auf demselben
+370/50-Datensatz mit `roformer-model-bs-roformer-sw-by-jarredou` und
+`cuda:0` ausgefÃ¼hrt. Alle 420 materialisierten Train-/Validation-Bridge-
+Manifeste meldeten Backend `roformer` und wurden als Cache-Hits verwendet.
+Der Lauf endete per Early Stopping nach Epoche 27; der beste Checkpoint ist
+Epoche 21 mit Validation-Loss `0.3318392038` (Initialisierung: `0.350723`).
+Run-Artefakte liegen unter
+`output/training_runs/vocal_roformer_extended_bpm145_165_top10_seed20260812/`.
+
 **Rolle dieser Datei:** Einstieg, verifizierter aktueller Stand und priorisierte
 nächste Schritte. Der ausführliche chronologische Experimentlog gehört in
 [`Bemerkungen.md`](./Bemerkungen.md); die älteren Verifizierungsblöcke hier
@@ -49,7 +72,7 @@ Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automa
 - **Tests**: `pytest`-Suite mit synthetischen Audiodaten prüft alle vier Renderer, FFmpeg-Priorität, Rubber-Band-CLI-Fallback, Float32-Zwischenformat, Tempoanpassung, 48→44,1-kHz-Resampling, Mono→Stereo und den Fehlerpfad bei fehlenden Downbeat-Metadaten.
 - **Kandidatengenerierung** (`src/candidates/`): versionierter Vertrag `CANDIDATE_PROTOCOL.md` und Generator `bar_grid_v1`. Er kombiniert standardmäßig alle nutzbaren Taktgrenzen beider Songs für 2/4 Takte; nachweislich erkannte Downbeat-Herkunft, vollständige Downbeat-Metadaten, Pre-/Post-Roll auf beiden Seiten, kompatible Beatanzahl in allen vier Fenstern und maximal 15 % Tempoabweichung sind harte Filter. `approximate_grid_policy = reject|allow` ist standardmäßig strikt; neue Kandidaten und Manifeste tragen Source-/Target-Grid-Provenienz.
 - **Feature-Ranking** (`src/ranking/`): `feature_baseline_v3` bewertet Drop A, Source-Auslauf, Target-Vorlauf und Drop B getrennt. Je 30 % entfallen auf High Power der Drops und Non-Overlap (Energieabfall nach A, niedrige Transition-Energie, Energieanstieg vor B); Chroma, RMS-Kontinuität, Spektrum und Tempo ergänzen den Score.
-- **Featurevertrag, globale Paarfeatures und Datasetexport** (`src/features/`): Feature-Protokoll 1 definiert `features_a/features_b` als `float32 (32, 54)` und 16 globale Merkmale. `extract_track.py` berechnet und cached Volltrackmerkmale, `vocal.py` trennt mit HT Demucs einmal pro Song einen wiederverwendbaren Vocal-Stem, `global_pair.py` erzeugt Tempo-, lokale Key-/Harmonie- und Kontextwerte. `dataset_export.py` wählt gerankte Vier-Takt-Kandidaten, wendet Trainingsausschlüsse an, bildet Audio-SHA-getrennte Splits, fitttet Flux-/Onset-Normalisierung nur auf Trainingsartefakten und exportiert atomar NPZ/JSONL mit vollständiger Provenienz. Phrasenkanäle bleiben mit `phrase_valid = 0` deaktiviert. Verträge: `FEATURE_PROTOCOL.md`, `DATASET_PROTOCOL.md`, `PRETRAINED_MODELS.md`.
+- **Featurevertrag, globale Paarfeatures und Datasetexport** (`src/features/`): Feature-Protokoll 1 definiert `features_a/features_b` als `float32 (32, 54)` und 16 globale Merkmale. `extract_track.py` berechnet und cached Volltrackmerkmale, `vocal.py` trennt standardmäßig mit BS-RoFormer einmal pro Song einen wiederverwendbaren Vocal-Stem (HT Demucs bleibt explizit wählbar), `global_pair.py` erzeugt Tempo-, lokale Key-/Harmonie- und Kontextwerte. `dataset_export.py` wählt gerankte Vier-Takt-Kandidaten, wendet Trainingsausschlüsse an, bildet Audio-SHA-getrennte Splits, fitttet Flux-/Onset-Normalisierung nur auf Trainingsartefakten und exportiert atomar NPZ/JSONL mit vollständiger Provenienz. Phrasenkanäle bleiben mit `phrase_valid = 0` deaktiviert. Verträge: `FEATURE_PROTOCOL.md`, `DATASET_PROTOCOL.md`, `PRETRAINED_MODELS.md`.
 - **Metrik für gerenderte Übergänge** (`src/ranking/rendered_transition.py`): `rendered_transition_baseline_v1` bewertet nach dem Rendering das tatsächliche Audio inklusive Time-Stretch und Crossfade. Energieform und Grenzglätte zählen je 30 %, harmonische Kontinuität und rhythmische Stabilität je 20 %. Score, Teilwerte, Messwerte, Rang und isolierte Fehler stehen additiv im Batch-Manifest.
 - **Differenzierbarer Control-Prototyp** (`src/control/`): `differentiable_control_v3` rendert vier Takte aus zwei komplementären, konstruktiv monotonen Kurven (`mix_position`, `low_end_position`) mit Equal-Power-Gains und festem FIR-Crossover. Bei 32 Punkten ist jeder Halbbeat-Schritt konstruktiv kleiner als 0,099644; normalisierte Abweichungs- und Krümmungsterme bestrafen abrupte Übergaben. Objective Version 4 ergänzt gültigkeitsmaskierte Vocal-Overlap-, Vocal-Onset/-Offset-Grenz- und Transientenartefakt-Terme aus den gespeicherten Featurefenstern. Frei parametrisierte Kurven können vor einem neuronalen Netz direkt optimiert werden; der Vertrag steht in `DIFFERENTIABLE_CONTROL_PROTOCOL.md`.
 - **Reale Control-Vergleiche** (`src/evaluation/control_probe.py`): wählt aus einem nachbewerteten Multi-Song-Batch hoch bewertete 4-Takt-Kandidaten, rekonstruiert Source-Postroll und Target-Preroll, optimiert die zwei Control-Kurven und exportiert pro Paar Baseline/Optimiert mit identischem Kontext, gemeinsamer Peak-Absenkung und versioniertem Manifest. Der aktuelle blinde v3-Control-Satz mit Rubber Band liegt unter `output/control_studies/blind_v4_control_v3_rubberband_top8_4bar_20260730/`; frühere v1/v2-Versuche bleiben unverändert.
