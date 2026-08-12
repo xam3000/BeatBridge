@@ -10,6 +10,12 @@ import uuid
 import numpy as np
 import soundfile as sf
 
+from src.analysis.pre_analysis import (
+    ANALYSIS_CACHE_FILENAME,
+    ANALYSIS_CACHE_FORMAT_VERSION,
+    ANALYSIS_CACHE_NAMESPACE,
+)
+
 from src.ranking import RenderedTransitionInput, rank_rendered_transitions
 
 
@@ -286,11 +292,13 @@ def _bridge_transition_samples(candidate, sample_rate, analysis_cache):
         candidate["source_track"]["path"],
         candidate["source_track"]["sha256"],
         sample_rate,
+        expected_grid_metadata=candidate.get("source_grid"),
     )
     target_beats = analysis_cache.normalised_beats(
         candidate["target_track"]["path"],
         candidate["target_track"]["sha256"],
         sample_rate,
+        expected_grid_metadata=candidate.get("target_grid"),
     )
     source_index = int(candidate["source_cutpoint"]["beat_index"])
     target_index = int(candidate["target_cutpoint"]["beat_index"])
@@ -320,30 +328,102 @@ class _ReadOnlyBeatGridCache:
         self.analysis_location = Path(analysis_location)
         self._cache = {}
 
-    def normalised_beats(self, track_path, expected_hash, sample_rate):
-        key = (str(Path(track_path)), str(expected_hash), int(sample_rate))
+    def normalised_beats(
+        self,
+        track_path,
+        expected_hash,
+        sample_rate,
+        *,
+        expected_grid_metadata=None,
+    ):
+        analysis_id = (
+            None
+            if not expected_grid_metadata
+            else expected_grid_metadata.get("analysis_id")
+        )
+        key = (
+            str(Path(track_path)),
+            str(expected_hash),
+            int(sample_rate),
+            analysis_id,
+        )
         if key in self._cache:
             return self._cache[key]
 
         track_path = Path(track_path)
-        cache_path = self.analysis_location / track_path.stem / "00_pre_analysis.txt"
-        lines = cache_path.read_text(encoding="utf-8").splitlines()
+        legacy_path = self.analysis_location / track_path.stem / "00_pre_analysis.txt"
+        if analysis_id is None and legacy_path.is_file():
+            lines = legacy_path.read_text(encoding="utf-8").splitlines()
+            if lines and lines[0].strip() == str(expected_hash):
+                beats = self._legacy_beats(lines, legacy_path)
+                self._cache[key] = self._scale_beats(beats, track_path, sample_rate)
+                return self._cache[key]
+
+        cache_path = self._current_cache_path(expected_hash, analysis_id)
+        payload = json.loads(cache_path.read_text(encoding="utf-8"))
+        if payload.get("format_version") != ANALYSIS_CACHE_FORMAT_VERSION:
+            raise ValueError(f"Unsupported analysis cache format: {cache_path}")
+        if analysis_id and payload.get("analysis_id") != str(analysis_id):
+            raise ValueError(f"Analysis cache identity does not match candidate: {cache_path}")
+        if payload["source_audio"]["sha256"] != str(expected_hash):
+            raise ValueError(f"Analysis cache hash does not match candidate: {cache_path}")
+        grid_metadata = payload["result"]["grid_metadata"]
+        expected_grid_hash = (
+            None
+            if not expected_grid_metadata
+            else expected_grid_metadata.get("beat_grid_sha256")
+        )
+        if (
+            expected_grid_hash
+            and grid_metadata.get("beat_grid_sha256") != expected_grid_hash
+        ):
+            raise ValueError(
+                f"Analysis cache beat-grid hash does not match candidate: {cache_path}"
+            )
+        beats = [
+            tuple(int(value) for value in frame)
+            for frame in payload["result"]["beat_frames"]
+        ]
+        if not beats:
+            raise ValueError(f"Analysis cache contains no beat positions: {cache_path}")
+        self._cache[key] = self._scale_beats(beats, track_path, sample_rate)
+        return self._cache[key]
+
+    def _current_cache_path(self, expected_hash, analysis_id):
+        hash_root = (
+            self.analysis_location
+            / ANALYSIS_CACHE_NAMESPACE
+            / str(expected_hash)
+        )
+        if analysis_id:
+            cache_path = hash_root / str(analysis_id) / ANALYSIS_CACHE_FILENAME
+            if cache_path.is_file():
+                return cache_path
+            raise ValueError(f"Expected analysis cache is missing: {cache_path}")
+        matches = sorted(hash_root.glob(f"*/{ANALYSIS_CACHE_FILENAME}"))
+        if len(matches) == 1:
+            return matches[0]
+        if not matches:
+            raise ValueError(f"No analysis cache found for audio hash {expected_hash}")
+        raise ValueError(
+            f"Multiple analysis caches exist for audio hash {expected_hash}; "
+            "candidate provenance needs analysis_id"
+        )
+
+    @staticmethod
+    def _legacy_beats(lines, cache_path):
         if len(lines) < 3:
             raise ValueError(f"Analysis cache is incomplete: {cache_path}")
-        if lines[0].strip() != str(expected_hash):
-            raise ValueError(f"Analysis cache hash does not match candidate: {cache_path}")
-        source_sample_rate = int(sf.info(str(track_path)).samplerate)
-        scale = int(sample_rate) / float(source_sample_rate)
         beats = []
         for line in lines[2:]:
             if not line.strip():
                 continue
             parts = [part.strip() for part in line.split(",")]
             if len(parts) == 1:
-                beat = (int(round(int(parts[0]) * scale)), None, None)
+                beat = (int(parts[0]), None, None)
             elif len(parts) == 3:
                 beat = (
-                    int(round(int(parts[0]) * scale)),
+                    int(parts[0]),
                     int(parts[1]),
                     int(parts[2]),
                 )
@@ -352,8 +432,15 @@ class _ReadOnlyBeatGridCache:
             beats.append(beat)
         if not beats:
             raise ValueError(f"Analysis cache contains no beat positions: {cache_path}")
-        self._cache[key] = tuple(beats)
-        return self._cache[key]
+        return beats
+
+    @staticmethod
+    def _scale_beats(beats, track_path, sample_rate):
+        source_sample_rate = int(sf.info(str(track_path)).samplerate)
+        scale = int(sample_rate) / float(source_sample_rate)
+        return tuple(
+            (int(round(int(beat[0]) * scale)), beat[1], beat[2]) for beat in beats
+        )
 
 
 def _pair_entries(root_manifest):

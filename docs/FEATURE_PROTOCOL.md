@@ -295,7 +295,8 @@ Rendering-Protokoll
 Sample-Rate
 Original- und ausgerichtete BPM
 Hash des ausgerichteten Beat-Grids
-Beat-Grid-Provenienz (`grid_source`, `fallback_used`, Backend-Version, Confidence)
+Beat-Grid-Provenienz (`grid_source`, `fallback_used`, Backend-Version, Confidence,
+`analysis_id`, `beat_grid_sha256`)
 Time-Stretch-Policy
 Vocal-Backend, Modellname und Vocal-Stem-Hash
 ```

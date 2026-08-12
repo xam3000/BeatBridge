@@ -100,6 +100,8 @@ def test_grid_provenance_changes_feature_cache_identity(tmp_path):
         "fallback_used": False,
         "backend_version": "test_detector=1",
         "confidence": 0.9,
+        "analysis_id": None,
+        "beat_grid_sha256": None,
     }
 
 

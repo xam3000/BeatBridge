@@ -1,8 +1,14 @@
 import json
+import hashlib
 
 import numpy as np
 import soundfile as sf
 
+from src.analysis.pre_analysis import (
+    ANALYSIS_CACHE_FILENAME,
+    ANALYSIS_CACHE_FORMAT_VERSION,
+    ANALYSIS_CACHE_NAMESPACE,
+)
 from src.evaluation.backfill_transition_metrics import (
     _ReadOnlyBeatGridCache,
     score_existing_pair_batch,
@@ -86,3 +92,59 @@ def test_existing_pair_batch_is_scored_without_changing_its_manifest(tmp_path):
     assert payload["variants"][0]["transition_end_sample"] == region_samples * 2
     assert 0.0 <= payload["variants"][0]["transition_score"] <= 1.0
     assert manifest_path.read_text(encoding="utf-8") == manifest_text
+
+
+def test_read_only_cache_loads_exact_current_analysis_id(tmp_path):
+    sample_rate = 8_000
+    track = tmp_path / "track.wav"
+    sf.write(track, np.zeros(sample_rate, dtype=np.float32), sample_rate)
+    digest = hashlib.sha256(track.read_bytes()).hexdigest()
+    analysis_id = "analysis-test"
+    beats = [[index * 1000, index % 4 + 1, 4] for index in range(8)]
+    grid_hash = hashlib.sha256(
+        json.dumps(beats, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    cache_path = (
+        tmp_path
+        / "analysis"
+        / ANALYSIS_CACHE_NAMESPACE
+        / digest
+        / analysis_id
+        / ANALYSIS_CACHE_FILENAME
+    )
+    cache_path.parent.mkdir(parents=True)
+    cache_path.write_text(
+        json.dumps(
+            {
+                "format_version": ANALYSIS_CACHE_FORMAT_VERSION,
+                "analysis_id": analysis_id,
+                "source_audio": {"sha256": digest},
+                "result": {
+                    "beat_frames": beats,
+                    "grid_metadata": {
+                        "analysis_id": analysis_id,
+                        "beat_grid_sha256": grid_hash,
+                    },
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    legacy_path = tmp_path / "analysis" / track.stem / "00_pre_analysis.txt"
+    legacy_path.parent.mkdir(parents=True)
+    legacy_path.write_text(
+        f"{digest}\n120.0\n999,1,4\n",
+        encoding="utf-8",
+    )
+
+    loaded = _ReadOnlyBeatGridCache(tmp_path / "analysis").normalised_beats(
+        track,
+        digest,
+        sample_rate,
+        expected_grid_metadata={
+            "analysis_id": analysis_id,
+            "beat_grid_sha256": grid_hash,
+        },
+    )
+
+    assert loaded == tuple(tuple(beat) for beat in beats)

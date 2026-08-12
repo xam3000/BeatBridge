@@ -18,9 +18,9 @@ Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automa
   - librosa `beat_track` für BPM + Beats.
   - aufTAKT (`aufTAKTCl.exe`) für Taktposition; Nicht-WAV wird per ffmpeg konvertiert.
   - Merge beider Quellen zu bar-annotierten Beats (`sample, count_in_bar, beats_in_bar`); Abweichungen werden protokolliert.
-  - Analyse-Cache per SHA-256-Hash des Songs (`00_pre_analysis.txt`), Diskrepanzen in `01_missing_beats.txt`.
+  - Analyse-Cacheformat 2 unter `v2/<audio-sha256>/<analysis-id>/analysis.json`: kollisionsfrei für gleiche Stems, an Audio und vollständigen Analysevertrag gebunden und atomar geschrieben. Die JSON-Datei enthält BPM, Beats, Grid-Provenienz und Diskrepanzdiagnostik; alte Stem-/Text-Caches bleiben read-only lesbar.
   - Fallback: Wenn aufTAKT fehlt, fehlschlägt oder unvollständige Metadaten liefert, werden die Beat-Positionen als approximatives 4/4-Raster annotiert; ohne Beats wird bei gültigem BPM ein gleichmäßiges Raster erzeugt.
-  - Analyseformat 1 trennt seit 2026-08-12 Raster und Herkunft: `02_grid_metadata.json` speichert additiv `grid_source`, `fallback_used`, Backend-Version und Confidence. Alt-Caches ohne Sidecar werden als `legacy_cache_unknown` markiert und nicht nachträglich als erkannt klassifiziert. Vertrag: `ANALYSIS_PROTOCOL.md`.
+  - Analyseformat 1 trennt seit 2026-08-12 Raster und Herkunft: `grid_source`, `fallback_used`, Backend-Version, Confidence, `analysis_id` und Beat-Grid-Hash werden additiv gespeichert. Alt-Caches ohne Sidecar werden als `legacy_cache_unknown` markiert und nicht nachträglich als erkannt klassifiziert. Verträge: `ANALYSIS_PROTOCOL.md`, `EXTERNAL_TOOLS.md`.
 - **Übergänge**:
   - `src/cutting/simple_cut.py`: Hard Cut, Snap auf den nächstgelegenen Downbeat, Bar-Alignment zwischen beiden Songs.
   - `src/cutting/fade_cut.py`: linearer Crossfade über N Beats (Default 8), Bar-aligned.
@@ -63,7 +63,19 @@ Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automa
   nicht rückwirkend geraten.
 - Volltrack-Featurecaches führen `beat_grid_metadata` im Manifest und im
   Cache-Key, sodass eine geänderte Herkunft keinen alten Cache-Hit erzeugt.
-- `.venv\Scripts\python.exe -m pytest -q`: **115 Tests bestanden**; zwei
+- Cacheformat 2 adressiert Ergebnisse über vollständigen Audio-SHA und einen
+  Hash aus Algorithmusversion, librosa-Version/-Parametern,
+  aufTAKT-Binary-SHA, Merge- und Fallbackvertrag. `analysis.json` wird atomar
+  geschrieben; gleichnamige, inhaltlich verschiedene Dateien besitzen
+  getrennte Cachepfade. Legacy-Caches werden nur bei passendem Audiohash
+  read-only geladen.
+- Die lokale `aufTAKTCl.exe` hat SHA-256
+  `35f9149cfef66df9b7ac7716953f859f2d37d34af1beb2d2db231062a4a1b523`
+  und keine eingebettete Versions-/Herstellerinformation. Die CLI passt zur
+  zplane-AUFTAKT-SDK-Dokumentation; exakte Lieferkette, lokale Lizenz und
+  Weitergaberecht sind im Repository nicht belegt. Maschinenlesbarer Stand:
+  `config/auftakt_binary_provenance.json`.
+- `.venv\Scripts\python.exe -m pytest -q`: **121 Tests bestanden**; zwei
   bestehende `audioread`-Deprecation-Warnungen und zwei erwartete
   CUDA-Determinismuswarnungen.
 
@@ -598,7 +610,7 @@ Damit ist die technische Grundlage aus Monat 1 weitgehend vorhanden. Das frühe 
 
 | Baustein | Status | Kurz |
 |---|:--:|---|
-| Reproduzierbares Repository | 🟡 | Git, MD-Doku und Requirements-Dateien vorhanden; aufTAKT und ffmpeg funktionieren lokal, sind aber externe Windows-Komponenten und ihre Einrichtung ist noch nicht automatisiert |
+| Reproduzierbares Repository | 🟡 | Git, MD-Doku und Requirements-Dateien vorhanden; aufTAKT und ffmpeg funktionieren lokal, sind aber externe Windows-Komponenten. aufTAKT ist technisch per SHA identifiziert, konkrete Lizenz/Weitergabeberechtigung bleibt ungeklärt. |
 | Kleines Entwicklungsset (10–20 Tracks) | 🟡 | Technisch auf 119 lokale FLAC-Pfade beziehungsweise 111 eindeutige BPM-zugelassene Tracks erweitert; Kuratierung, Track-Notizen und Rechte fehlen weiterhin |
 | Beat-/Bar-Analyse | ✅ | librosa + aufTAKT-Merge, mit Diskrepanz-Log |
 | Mehrere gerenderte Übergänge | 🟡 | Automatischer Batch-Export vorhanden; erster realer 2-Varianten-Lauf HELP_LESS → BREATH_LESS ohne Fehler dokumentiert |
@@ -618,7 +630,8 @@ Damit ist die technische Grundlage aus Monat 1 weitgehend vorhanden. Das frühe 
 - **Downbeat-Fallback**: Bei fehlenden Taktinformationen bleibt ein approximatives 4/4-Raster für explizite Experimente verfügbar. Es ist jetzt per Provenienz von erkannten Downbeats unterscheidbar und wird von der Kandidatengenerierung standardmäßig abgelehnt. Historische Artefakte ohne Provenienz bleiben methodisch `unknown`.
 - **BPM-Divergenz** (dokumentiert in `Bemerkungen.md`): librosa vs. aufTAKT (HELP_LESS: 161 vs. 157) — Grid-Wahl noch ungeklärt.
 - **Phrasenlänge**: Raster 4 Beats, Phrasen aber meist 8 — relevant für plausible Übergangspositionen (Kandidatengenerierung).
-- **Repo-/Cache-Hygiene**: Die früheren Track-Ordner sind im Arbeitsbaum gelöscht; unter `output/pre_analysis/` bleibt ein zusätzlicher veralteter Cache `HELP_LESS` ohne gleichnamigen aktuellen Audio-Stem.
+- **Repo-/Cache-Hygiene**: Neue Caches sind Audio-SHA-/Analyse-ID-adressiert und kollidieren nicht über Track-Stems. Historische Stem-Caches bleiben unverändert; darunter befindet sich ein zusätzlicher veralteter `HELP_LESS`-Eintrag ohne gleichnamigen aktuellen Audio-Stem.
+- **aufTAKT-Lizenz**: Die eingecheckte Binärdatei ist per SHA-256 fixiert, aber ihre exakte Quelle und Weitergabeberechtigung sind nicht belegt. Vor Veröffentlichung klären beziehungsweise Binary aus dem Distributionsartefakt entfernen.
 
 ## GUI-Frage: jetzt oder später? (Entscheidung)
 

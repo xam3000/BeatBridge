@@ -1,4 +1,5 @@
 from pathlib import Path
+from dataclasses import replace
 import hashlib
 import json
 import logging
@@ -13,11 +14,21 @@ import librosa
 from .models import AnalysisResult, BeatGridMetadata
 
 tmp_folder = Path("tmp/")
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 MAX_BEAT_MATCH_DISTANCE_SECONDS = 0.2
 FALLBACK_BEATS_PER_BAR = 4
 logger = logging.getLogger(__name__)
+# Legacy format-1 sidecar name. New cache entries use one authoritative JSON.
 GRID_METADATA_FILENAME = "02_grid_metadata.json"
 FALLBACK_BACKEND_VERSION = "beatbridge_4_4_fallback_v1"
+ANALYSIS_CACHE_FORMAT_VERSION = 2
+ANALYSIS_CACHE_NAMESPACE = "v2"
+ANALYSIS_CACHE_FILENAME = "analysis.json"
+ANALYSIS_ALGORITHM_VERSION = "beatbridge_pre_analysis_v2"
+BEAT_BACKEND_NAME = "librosa.beat.beat_track"
+BAR_BACKEND_NAME = "zplane_AUFTAKT_aufTAKTCl"
+MERGE_ALGORITHM_VERSION = "librosa_auftakt_merge_v1"
+AUFTAKT_EXECUTABLE_NAME = "aufTAKTCl.exe"
 
 
 def ensure_bar_metadata(beat_frames, *, bpm=None, sample_count=None, sample_rate=None):
@@ -110,13 +121,109 @@ def _has_complete_bar_metadata(beat_frames):
     return True
 
 
+def _file_sha256(path):
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _beat_grid_sha256(beat_frames):
+    encoded = json.dumps(
+        [[int(value) for value in frame] for frame in beat_frames],
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _resolve_auftakt_executable():
+    project_executable = PROJECT_ROOT / AUFTAKT_EXECUTABLE_NAME
+    if project_executable.is_file():
+        return project_executable.resolve()
+    executable = shutil.which(AUFTAKT_EXECUTABLE_NAME)
+    return None if executable is None else Path(executable).resolve()
+
+
+def _describe_auftakt_binary(executable):
+    if executable is None:
+        return {
+            "name": BAR_BACKEND_NAME,
+            "reported_version": None,
+            "binary_sha256": None,
+            "binary_size_bytes": None,
+            "version_identity": "unavailable",
+        }
+    executable = Path(executable)
+    return {
+        "name": BAR_BACKEND_NAME,
+        "reported_version": None,
+        "binary_sha256": _file_sha256(executable),
+        "binary_size_bytes": executable.stat().st_size,
+        "version_identity": "sha256",
+    }
+
+
+def _analysis_config(auftakt_binary):
+    return {
+        "analysis_algorithm": ANALYSIS_ALGORITHM_VERSION,
+        "beat_backend": {
+            "name": BEAT_BACKEND_NAME,
+            "library": "librosa",
+            "library_version": librosa.__version__,
+            "onset_strength_aggregate": "median",
+            "beat_units": "samples",
+        },
+        "bar_backend": dict(auftakt_binary),
+        "merge": {
+            "algorithm": MERGE_ALGORITHM_VERSION,
+            "maximum_match_distance_seconds": MAX_BEAT_MATCH_DISTANCE_SECONDS,
+        },
+        "fallback": {
+            "algorithm": FALLBACK_BACKEND_VERSION,
+            "beats_per_bar": FALLBACK_BEATS_PER_BAR,
+        },
+    }
+
+
+def _analysis_id(config):
+    encoded = json.dumps(config, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _write_json_atomic(path, payload):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary_path = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
+    try:
+        temporary_path.write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        os.replace(temporary_path, path)
+    finally:
+        temporary_path.unlink(missing_ok=True)
+
+
 class PreAnalysis:
     def __init__(self,analysis_location):
-        self.analysis_location = analysis_location
+        self.analysis_location = Path(analysis_location)
         self.missing_beats = {"librosa": [], "auftakt": []}
+        self.auftakt_executable = _resolve_auftakt_executable()
+        self.auftakt_binary = _describe_auftakt_binary(self.auftakt_executable)
+        self.analysis_config = _analysis_config(self.auftakt_binary)
+        self.analysis_id = _analysis_id(self.analysis_config)
 
     def __call__(self,song_path):
         self.song_path = Path(song_path)
+        self.missing_beats = {"librosa": [], "auftakt": []}
+        self.song_hash = _file_sha256(self.song_path)
+        self.cache_directory = (
+            self.analysis_location
+            / ANALYSIS_CACHE_NAMESPACE
+            / self.song_hash
+            / self.analysis_id
+        )
         self.grid_metadata = None
         self.previous_analysis = self.find_previous_analysis()
         if self.previous_analysis and self.load_previous_analysis():
@@ -130,8 +237,10 @@ class PreAnalysis:
                 # An empty legacy cache has no usable beat positions; analyse again.
                 self.previous_analysis = None
             else:
-                self.save_previous_analysis()
+                self._finalize_grid_metadata()
                 return self._result()
+        # A stale or malformed cache must not affect provenance of a fresh run.
+        self.previous_analysis_kind = None
         self.load_song()
         self.find_bpm()
 
@@ -143,6 +252,7 @@ class PreAnalysis:
             sample_rate=self.sr,
             existing_metadata=getattr(self, "grid_metadata", None),
         )
+        self._finalize_grid_metadata()
 
         self.save_previous_analysis()
         
@@ -155,38 +265,87 @@ class PreAnalysis:
             grid_metadata=self.grid_metadata,
         )
 
+    def _finalize_grid_metadata(self):
+        analysis_id = self.analysis_id if self.previous_analysis_kind != "legacy" else None
+        self.grid_metadata = replace(
+            self.grid_metadata,
+            analysis_id=analysis_id,
+            beat_grid_sha256=_beat_grid_sha256(self.beat_frames),
+        )
+
     def find_previous_analysis(self):
-        song_name = self.song_path.stem
-        song_extension = self.song_path.suffix
-        analysis_folder = Path(f"{self.analysis_location}{song_name}")
+        current_path = self.cache_directory / ANALYSIS_CACHE_FILENAME
+        if current_path.is_file():
+            self.previous_analysis_kind = "current"
+            return current_path
 
-        if not analysis_folder.is_dir():
-            return None
+        legacy_path = self.analysis_location / self.song_path.stem / "00_pre_analysis.txt"
+        if legacy_path.is_file():
+            self.previous_analysis_kind = "legacy"
+            return legacy_path
 
-        matching_file = analysis_folder / "00_pre_analysis.txt"
-        if matching_file.is_file():
-            return matching_file
-
+        self.previous_analysis_kind = None
         return None
 
     def load_previous_analysis(self):
-        # first line is the hash, second line is the BPM, and each following line stores one beat entry
+        if self.previous_analysis_kind == "current":
+            return self._load_current_analysis()
+        if self.previous_analysis_kind == "legacy":
+            return self._load_legacy_analysis()
+        return False
+
+    def _load_current_analysis(self):
         analysis_path = Path(self.previous_analysis)
-        song_path = self.song_path
-
-        if not analysis_path.is_file() or not song_path.is_file():
+        if not analysis_path.is_file():
             return False
-
         try:
-            analysis_lines = analysis_path.read_text().splitlines()
-            stored_hash = analysis_lines[0]
-            bpm_line = analysis_lines[1]
-            current_hash = hashlib.sha256(song_path.read_bytes()).hexdigest()
-            if stored_hash != current_hash:
+            payload = json.loads(analysis_path.read_text(encoding="utf-8"))
+            if (
+                int(payload["format_version"]) != ANALYSIS_CACHE_FORMAT_VERSION
+                or payload["analysis_id"] != self.analysis_id
+                or payload["analysis_config"] != self.analysis_config
+                or payload["source_audio"]["sha256"] != self.song_hash
+            ):
                 return False
+            result = payload["result"]
+            self.bpm = float(result["bpm"])
+            if not np.isfinite(self.bpm) or self.bpm <= 0:
+                return False
+            self.beat_frames = [
+                tuple(int(value) for value in frame)
+                for frame in result["beat_frames"]
+            ]
+            if not _has_complete_bar_metadata(self.beat_frames):
+                return False
+            self.grid_metadata = BeatGridMetadata.from_dict(result["grid_metadata"])
+            if (
+                self.grid_metadata.analysis_id != self.analysis_id
+                or self.grid_metadata.beat_grid_sha256
+                != _beat_grid_sha256(self.beat_frames)
+            ):
+                return False
+            self.missing_beats = payload.get(
+                "diagnostics", {}
+            ).get("missing_beats", {"librosa": [], "auftakt": []})
+        except (IndexError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+            return False
+        return True
 
-            self.bpm = float(bpm_line)
-            self.beat_frames = [self._parse_saved_beat_line(line) for line in analysis_lines[2:] if line.strip()]
+    def _load_legacy_analysis(self):
+        # Legacy: hash, BPM, then one comma-separated beat entry per line.
+        analysis_path = Path(self.previous_analysis)
+        if not analysis_path.is_file():
+            return False
+        try:
+            analysis_lines = analysis_path.read_text(encoding="utf-8").splitlines()
+            if analysis_lines[0] != self.song_hash:
+                return False
+            self.bpm = float(analysis_lines[1])
+            self.beat_frames = [
+                self._parse_saved_beat_line(line)
+                for line in analysis_lines[2:]
+                if line.strip()
+            ]
             metadata_path = analysis_path.with_name(GRID_METADATA_FILENAME)
             if metadata_path.is_file():
                 self.grid_metadata = BeatGridMetadata.from_dict(
@@ -201,54 +360,30 @@ class PreAnalysis:
                 )
         except (IndexError, KeyError, TypeError, ValueError, json.JSONDecodeError):
             return False
-
-        # output False for devolempent purposes to force re-analysis, can be removed later
         return True
 
     def save_previous_analysis(self):
-        song_name = self.song_path.stem
-        analysis_folder = Path(f"{self.analysis_location}{song_name}")
-        analysis_folder.mkdir(parents=True, exist_ok=True)
-
-        analysis_path = analysis_folder / "00_pre_analysis.txt"
-        song_hash = hashlib.sha256(self.song_path.read_bytes()).hexdigest()
-        beat_frame_lines = "\n".join(self._format_saved_beat_line(frame) for frame in self.beat_frames)
-        analysis_contents = f"{song_hash}\n{self.bpm}\n{beat_frame_lines}\n"
-        analysis_path.write_text(analysis_contents)
+        analysis_path = self.cache_directory / ANALYSIS_CACHE_FILENAME
+        payload = {
+            "format_version": ANALYSIS_CACHE_FORMAT_VERSION,
+            "analysis_id": self.analysis_id,
+            "analysis_config": self.analysis_config,
+            "source_audio": {
+                "sha256": self.song_hash,
+                "size_bytes": self.song_path.stat().st_size,
+            },
+            "result": {
+                "bpm": float(self.bpm),
+                "beat_frames": [
+                    [int(value) for value in frame] for frame in self.beat_frames
+                ],
+                "grid_metadata": self.grid_metadata.to_dict(),
+            },
+            "diagnostics": {"missing_beats": self.missing_beats},
+        }
+        _write_json_atomic(analysis_path, payload)
         self.previous_analysis = analysis_path
-        self._save_grid_metadata(analysis_folder)
-        self.save_missing_beats()
-
-    def _save_grid_metadata(self, analysis_folder):
-        metadata_path = Path(analysis_folder) / GRID_METADATA_FILENAME
-        temporary_path = metadata_path.with_name(f".{metadata_path.name}.{uuid.uuid4().hex}.tmp")
-        try:
-            temporary_path.write_text(
-                json.dumps(self.grid_metadata.to_dict(), indent=2, sort_keys=True) + "\n",
-                encoding="utf-8",
-            )
-            os.replace(temporary_path, metadata_path)
-        finally:
-            temporary_path.unlink(missing_ok=True)
-
-    def save_missing_beats(self):
-        song_name = self.song_path.stem
-        analysis_folder = Path(f"{self.analysis_location}{song_name}")
-        analysis_folder.mkdir(parents=True, exist_ok=True)
-
-        missing_beats_path = analysis_folder / "01_missing_beats.txt"
-        missing_lines = ["librosa_without_auftakt"]
-        missing_lines.extend(
-            f"{beat['sample']},{beat['time_seconds']:.6f},{beat['distance_seconds']:.6f}"
-            for beat in self.missing_beats["librosa"]
-        )
-        missing_lines.append("")
-        missing_lines.append("auftakt_without_librosa")
-        missing_lines.extend(
-            f"{beat['time_seconds']:.6f},{beat['count_in_bar']},{beat['beats_in_bar']},{beat['distance_seconds']:.6f}"
-            for beat in self.missing_beats["auftakt"]
-        )
-        missing_beats_path.write_text("\n".join(missing_lines) + "\n")
+        self.previous_analysis_kind = "current"
 
     def load_song(self):
         self.song, self.sr = librosa.load(self.song_path, sr=None, mono=True)
@@ -277,7 +412,11 @@ class PreAnalysis:
                 song_to_analyze = self.song_path
 
             command = [
-                "aufTAKTCl.exe",
+                (
+                    str(self.auftakt_executable)
+                    if self.auftakt_executable is not None
+                    else AUFTAKT_EXECUTABLE_NAME
+                ),
                 "-i",
                 str(song_to_analyze),
                 "-r",
@@ -368,15 +507,11 @@ class PreAnalysis:
             if temp_wav_path is not None:
                 temp_wav_path.unlink(missing_ok=True)
 
-    @staticmethod
-    def _auftakt_backend_version():
-        executable = shutil.which("aufTAKTCl.exe")
-        if executable is None:
-            return "unreported"
-        try:
-            return f"sha256:{hashlib.sha256(Path(executable).read_bytes()).hexdigest()}"
-        except OSError:
-            return "unreported"
+    def _auftakt_backend_version(self):
+        binary_sha256 = self.auftakt_binary["binary_sha256"]
+        if binary_sha256 is None:
+            return "unavailable"
+        return f"sha256:{binary_sha256}"
 
     @staticmethod
     def _parse_saved_beat_line(line):

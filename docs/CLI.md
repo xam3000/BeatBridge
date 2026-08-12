@@ -12,7 +12,10 @@ Alle Befehle werden in PowerShell aus dem Projektordner `BeatBridge` ausgeführt
    .venv\Scripts\python.exe -m pip install -r requirements.txt
    ```
 
-2. `aufTAKTCl.exe` muss im Projekt-Root liegen. Das ist im aktuellen Repository bereits der Fall.
+2. `aufTAKTCl.exe` muss im Projekt-Root liegen. Die aktuell eingecheckte Datei
+   ist technisch per SHA-256 identifiziert; ihre konkrete Version, Herkunft
+   und Weitergabeberechtigung sind jedoch nicht belegt. Vor Distribution die
+   Hinweise in [`EXTERNAL_TOOLS.md`](./EXTERNAL_TOOLS.md) beachten.
 3. Für Tempoanpassung sowie MP3-, FLAC- und andere Nicht-WAV-Eingaben muss
    `ffmpeg` über `PATH` aufrufbar und mit `librubberband` kompiliert sein:
 
@@ -571,16 +574,23 @@ Abschluss geschlossen.
 
 ## Analyse-Cache und Ausgaben
 
-Beim ersten Lauf analysiert BeatBridge BPM, Beats und Taktpositionen. Ergebnisse werden anhand des Datei-Hashes zwischengespeichert:
+Beim ersten Lauf analysiert BeatBridge BPM, Beats und Taktpositionen. Neue
+Ergebnisse werden anhand von Audio-SHA und Analysevertrag zwischengespeichert:
 
 ```text
-output/pre_analysis/05 - HELP_LESS/00_pre_analysis.txt
-output/pre_analysis/05 - HELP_LESS/01_missing_beats.txt
+output/pre_analysis/v2/<audio-sha256>/<analysis-id>/analysis.json
 ```
 
-- `00_pre_analysis.txt` enthält Datei-Hash, BPM und Beat-/Taktpositionen.
-- `01_missing_beats.txt` dokumentiert Abweichungen zwischen librosa und aufTAKT.
-- Wird die Quelldatei verändert, passt der gespeicherte Hash nicht mehr und die Analyse wird neu ausgeführt.
+- `analysis.json` enthält Audioidentität, vollständigen Analysevertrag, BPM,
+  Beat-/Taktpositionen, Fallbackstatus, Backendidentitäten, Confidence und
+  Diskrepanzen zwischen librosa und aufTAKT.
+- Die Datei wird atomar geschrieben.
+- Gleichnamige Audiodateien kollidieren nicht, weil der vollständige Audiohash
+  statt des Track-Stems den Ordner bestimmt.
+- Wird Audio, Algorithmus, librosa-Version oder aufTAKT-Binary verändert,
+  entsteht ein neuer Cacheeintrag.
+- Historische Stem-/Text-Caches bleiben read-only lesbar und werden nicht
+  automatisch als aktuelle Analysen klassifiziert.
 - Audiodateien im Ordner `musik/` werden ausschließlich gelesen und nicht verändert.
 
 ## Häufige Fehler
@@ -605,7 +615,10 @@ Fallback prüfen.
 
 ### Downbeat-Metadaten fehlen
 
-BeatBridge bricht mit `Downbeat snapping requires beat frames with count_in_bar metadata` ab, wenn keine Taktinformationen verfügbar sind. In diesem Fall zuerst die aufTAKT-/ffmpeg-Ausführung prüfen. Es gibt bewusst keinen stillen Fallback auf beliebige Beats.
+Fehlt eine belastbare Downbeat-Erkennung, erzeugt die Analyse weiterhin ein
+explizit markiertes approximatives Raster. Die Kandidatengenerierung lehnt es
+mit der Default-Policy `reject` ab. Nur
+`--approximate-grid-policy allow` erlaubt diesen Fallback bewusst.
 
 ### Ausgabedatei klingt zu früh oder zu spät geschnitten
 

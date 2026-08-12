@@ -16,6 +16,8 @@ class BeatGridMetadata:
     backend_version: str | None
     confidence: float | None
     format_version: int = GRID_METADATA_FORMAT_VERSION
+    analysis_id: str | None = None
+    beat_grid_sha256: str | None = None
 
     def __post_init__(self):
         if not str(self.grid_source).strip():
@@ -24,6 +26,12 @@ class BeatGridMetadata:
             raise ValueError("fallback_used must be true, false, or null")
         if self.backend_version is not None and not isinstance(self.backend_version, str):
             raise ValueError("backend_version must be a string or null")
+        for name, value in (
+            ("analysis_id", self.analysis_id),
+            ("beat_grid_sha256", self.beat_grid_sha256),
+        ):
+            if value is not None and (not isinstance(value, str) or not value.strip()):
+                raise ValueError(f"{name} must be a non-empty string or null")
         if self.confidence is not None:
             confidence = float(self.confidence)
             if not math.isfinite(confidence) or not 0.0 <= confidence <= 1.0:
@@ -41,6 +49,8 @@ class BeatGridMetadata:
             "fallback_used": self.fallback_used,
             "backend_version": self.backend_version,
             "confidence": self.confidence,
+            "analysis_id": self.analysis_id,
+            "beat_grid_sha256": self.beat_grid_sha256,
         }
 
     @classmethod
@@ -53,6 +63,8 @@ class BeatGridMetadata:
             fallback_used=payload.get("fallback_used"),
             backend_version=payload.get("backend_version"),
             confidence=payload.get("confidence"),
+            analysis_id=payload.get("analysis_id"),
+            beat_grid_sha256=payload.get("beat_grid_sha256"),
         )
 
 

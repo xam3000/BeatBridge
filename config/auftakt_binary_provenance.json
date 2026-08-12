@@ -1,0 +1,19 @@
+{
+  "format_version": 1,
+  "filename": "aufTAKTCl.exe",
+  "sha256": "35f9149cfef66df9b7ac7716953f859f2d37d34af1beb2d2db231062a4a1b523",
+  "size_bytes": 7195648,
+  "measured_at_utc": "2026-08-12",
+  "embedded_file_version": null,
+  "embedded_product_version": null,
+  "embedded_company_name": null,
+  "embedded_copyright": null,
+  "probable_product_family": "zplane AUFTAKT SDK command-line example",
+  "repository_first_seen_commit": "85369de81ae63b3737b7211e81001887845ecd8b",
+  "repository_first_seen_date": "2026-06-17T16:43:59+02:00",
+  "exact_binary_source": "unknown",
+  "license_evidence_in_repository": null,
+  "redistribution_status": "unverified_do_not_assume_distribution_rights",
+  "official_documentation": "https://licensing.zplane.de/uploads/SDK/AUFTAKT/V4/manual/AUFTAKT_v4_sdk_documentation.pdf",
+  "official_licensing": "https://licensing.zplane.de/licensing"
+}

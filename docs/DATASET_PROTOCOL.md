@@ -110,8 +110,8 @@ Seit 2026-08-12 werden additiv auch `source_grid` und `target_grid` aus dem
 Kandidaten übernommen. Bei historischen Kandidaten ohne diese Felder steht
 jeweils `null`; eine erkannte Herkunft darf daraus nicht nachträglich
 abgeleitet werden. Neue Kandidaten tragen die vollständigen Felder
-`grid_source`, `fallback_used`, `backend_version` und `confidence` gemäß
-`ANALYSIS_PROTOCOL.md`, sodass neue Dataset- und Studienartefakte die
+`grid_source`, `fallback_used`, `backend_version`, `confidence`, `analysis_id`
+und `beat_grid_sha256` gemäß `ANALYSIS_PROTOCOL.md`, sodass neue Dataset- und Studienartefakte die
 Downbeat-Provenienz nicht verlieren.
 
 `manifest.json` enthält mindestens:
