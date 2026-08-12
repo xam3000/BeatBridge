@@ -16,8 +16,11 @@ from .data import (
     VocalFeatureControlDataset,
 )
 from .model import (
+    TRANSITION_CONTROL_MODEL_NAME,
+    TRANSITION_CONTROL_OUTPUT_NAMES,
     VOCAL_FEATURE_CONTROL_MODEL_NAME,
     FeatureControlMLP,
+    TCNBiLSTMTransitionControl,
     VocalFeatureControlMLP,
 )
 from .runner import TrainingConfig, run_feature_control_training
@@ -55,6 +58,7 @@ def build_argument_parser():
 
     subparsers.add_parser("model-info")
     subparsers.add_parser("model-info-vocal")
+    subparsers.add_parser("model-info-tcn-bilstm")
     train_parser = subparsers.add_parser("train")
     train_parser.add_argument("dataset_directory")
     train_parser.add_argument("output_directory")
@@ -170,6 +174,21 @@ def main():
                         "vocal_gain_a",
                         "vocal_gain_b",
                     ],
+                },
+                indent=2,
+            )
+        )
+        return 0
+
+    if args.command == "model-info-tcn-bilstm":
+        model = TCNBiLSTMTransitionControl()
+        print(
+            json.dumps(
+                {
+                    "model_name": TRANSITION_CONTROL_MODEL_NAME,
+                    "parameter_count": model.parameter_count,
+                    "config": model.config.to_dict(),
+                    "outputs": list(TRANSITION_CONTROL_OUTPUT_NAMES),
                 },
                 indent=2,
             )
