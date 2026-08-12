@@ -30,12 +30,14 @@ from .model import (
     TRANSITION_CONTROL_MODEL_FORMAT_VERSION,
     TRANSITION_CONTROL_MODEL_NAME,
     TRANSITION_CONTROL_OUTPUT_NAMES,
+    TCN_BILSTM_TRAINING_RUNNER_NAME,
     TCNBiLSTMTransitionControl,
     TCNBiLSTMTransitionControlConfig,
     TCNBiLSTMTransitionControlOutput,
 )
 from .training import (
     SelfSupervisedBatchResult,
+    full_band_self_supervised_batch_loss,
     self_supervised_batch_loss,
     vocal_self_supervised_batch_loss,
 )
@@ -45,6 +47,7 @@ from .runner import (
     TrainingConfig,
     TrainingRunResult,
     run_feature_control_training,
+    run_tcn_bilstm_transition_control_training,
     train_feature_control_model,
 )
 from .vocal_runner import (
@@ -83,10 +86,12 @@ __all__ = [
     "TRANSITION_CONTROL_MODEL_FORMAT_VERSION",
     "TRANSITION_CONTROL_MODEL_NAME",
     "TRANSITION_CONTROL_OUTPUT_NAMES",
+    "TCN_BILSTM_TRAINING_RUNNER_NAME",
     "TCNBiLSTMTransitionControl",
     "TCNBiLSTMTransitionControlConfig",
     "TCNBiLSTMTransitionControlOutput",
     "SelfSupervisedBatchResult",
+    "full_band_self_supervised_batch_loss",
     "self_supervised_batch_loss",
     "vocal_self_supervised_batch_loss",
     "TRAINING_RUN_FORMAT_VERSION",
@@ -94,6 +99,7 @@ __all__ = [
     "TrainingConfig",
     "TrainingRunResult",
     "run_feature_control_training",
+    "run_tcn_bilstm_transition_control_training",
     "train_feature_control_model",
     "VOCAL_TRAINING_RUN_FORMAT_VERSION",
     "VOCAL_TRAINING_RUNNER_NAME",

@@ -28,6 +28,7 @@ from src.control import (
     DifferentiableTransitionObjective,
     DifferentiableTransitionObjectiveConfig,
     DifferentiableTwoBandRenderer,
+    DifferentiableFullBandTransitionRenderer,
 )
 
 from .data import (
@@ -36,8 +37,16 @@ from .data import (
     FeatureControlDataset,
     collate_feature_control_examples,
 )
-from .model import FEATURE_CONTROL_MODEL_NAME, FeatureControlMLP, FeatureControlMLPConfig
-from .training import self_supervised_batch_loss
+from .model import (
+    FEATURE_CONTROL_MODEL_NAME,
+    TCN_BILSTM_TRAINING_RUNNER_NAME,
+    TRANSITION_CONTROL_MODEL_NAME,
+    FeatureControlMLP,
+    FeatureControlMLPConfig,
+    TCNBiLSTMTransitionControl,
+    TCNBiLSTMTransitionControlConfig,
+)
+from .training import full_band_self_supervised_batch_loss, self_supervised_batch_loss
 
 
 TRAINING_RUN_FORMAT_VERSION = 1
@@ -106,6 +115,12 @@ def run_feature_control_training(
     waveform_cache_root=DEFAULT_BRIDGE_WAVEFORM_CACHE_ROOT,
     resume=False,
     progress=print,
+    model_factory=FeatureControlMLP,
+    model_name=FEATURE_CONTROL_MODEL_NAME,
+    runner_name=TRAINING_RUNNER_NAME,
+    renderer_factory=DifferentiableTwoBandRenderer,
+    loss_function=self_supervised_batch_loss,
+    renderer_contract=None,
 ):
     """Materialize train/validation audio caches and run self-supervised training."""
     config = _resolve_training_device(config or TrainingConfig())
@@ -151,6 +166,47 @@ def run_feature_control_training(
         dataset_identity=dataset_identity,
         resume=resume,
         progress=progress,
+        model_factory=model_factory,
+        model_name=model_name,
+        runner_name=runner_name,
+        renderer_factory=renderer_factory,
+        loss_function=loss_function,
+        renderer_contract=renderer_contract,
+    )
+
+
+def run_tcn_bilstm_transition_control_training(
+    dataset_directory,
+    output_directory,
+    *,
+    config: TrainingConfig | None = None,
+    model_config: TCNBiLSTMTransitionControlConfig | None = None,
+    objective_config: DifferentiableTransitionObjectiveConfig | None = None,
+    waveform_cache_root=DEFAULT_BRIDGE_WAVEFORM_CACHE_ROOT,
+    resume=False,
+    progress=print,
+):
+    """Run the versioned self-supervised TCN/BiLSTM architecture probe."""
+
+    return run_feature_control_training(
+        dataset_directory,
+        output_directory,
+        config=config,
+        model_config=model_config or TCNBiLSTMTransitionControlConfig(),
+        objective_config=objective_config,
+        waveform_cache_root=waveform_cache_root,
+        resume=resume,
+        progress=progress,
+        model_factory=TCNBiLSTMTransitionControl,
+        model_name=TRANSITION_CONTROL_MODEL_NAME,
+        runner_name=TCN_BILSTM_TRAINING_RUNNER_NAME,
+        renderer_factory=DifferentiableFullBandTransitionRenderer,
+        loss_function=full_band_self_supervised_batch_loss,
+        renderer_contract={
+            "name": "differentiable_full_band_transition_v1",
+            "midpass_cutoff_hz": 3500.0,
+            "control_outputs": 10,
+        },
     )
 
 
@@ -165,6 +221,12 @@ def train_feature_control_model(
     dataset_identity: dict | None = None,
     resume=False,
     progress=print,
+    model_factory=FeatureControlMLP,
+    model_name=FEATURE_CONTROL_MODEL_NAME,
+    runner_name=TRAINING_RUNNER_NAME,
+    renderer_factory=DifferentiableTwoBandRenderer,
+    loss_function=self_supervised_batch_loss,
+    renderer_contract=None,
 ):
     """Train from pre-materialized examples and persist restartable artifacts."""
     config = _resolve_training_device(config or TrainingConfig())
@@ -194,6 +256,9 @@ def train_feature_control_model(
         model_config,
         objective_config,
         dataset_identity,
+        model_name=model_name,
+        runner_name=runner_name,
+        renderer_contract=renderer_contract,
     )
     run_id = hashlib.sha256(
         json.dumps(immutable_contract, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -201,8 +266,8 @@ def train_feature_control_model(
 
     device = torch.device(config.device)
     _seed_everything(config.seed)
-    model = FeatureControlMLP(model_config).to(device=device, dtype=torch.float32)
-    renderer = DifferentiableTwoBandRenderer(
+    model = model_factory(model_config).to(device=device, dtype=torch.float32)
+    renderer = renderer_factory(
         sample_rate=config.training_sample_rate,
         lowpass_cutoff_hz=config.lowpass_cutoff_hz,
         lowpass_kernel_size=config.lowpass_kernel_size,
@@ -265,6 +330,7 @@ def train_feature_control_model(
                 objective,
                 optimizer=None,
                 epoch=0,
+                loss_function=loss_function,
             )
             initial_validation = _run_epoch(
                 model,
@@ -274,6 +340,7 @@ def train_feature_control_model(
                 objective,
                 optimizer=None,
                 epoch=0,
+                loss_function=loss_function,
             )
             history.append({
                 "epoch": 0,
@@ -325,6 +392,7 @@ def train_feature_control_model(
                 objective,
                 optimizer=optimizer,
                 epoch=epoch,
+                loss_function=loss_function,
             )
             validation_metrics = _run_epoch(
                 model,
@@ -334,6 +402,7 @@ def train_feature_control_model(
                 objective,
                 optimizer=None,
                 epoch=epoch,
+                loss_function=loss_function,
             )
             history.append({
                 "epoch": epoch,
@@ -438,7 +507,17 @@ def train_feature_control_model(
     )
 
 
-def _run_epoch(model, examples, config, renderer, objective, optimizer, epoch):
+def _run_epoch(
+    model,
+    examples,
+    config,
+    renderer,
+    objective,
+    optimizer,
+    epoch,
+    *,
+    loss_function,
+):
     training = optimizer is not None
     model.train(training)
     if training:
@@ -464,7 +543,7 @@ def _run_epoch(model, examples, config, renderer, objective, optimizer, epoch):
             batch = _move_feature_batch(batch, torch.device(config.device))
             if training:
                 optimizer.zero_grad(set_to_none=True)
-            result = self_supervised_batch_loss(
+            result = loss_function(
                 model,
                 batch,
                 renderer=renderer,
@@ -520,24 +599,36 @@ def _materialize_dataset(dataset, split, progress):
     return tuple(examples)
 
 
-def _immutable_contract(config, model_config, objective_config, dataset_identity):
+def _immutable_contract(
+    config,
+    model_config,
+    objective_config,
+    dataset_identity,
+    *,
+    model_name=FEATURE_CONTROL_MODEL_NAME,
+    runner_name=TRAINING_RUNNER_NAME,
+    renderer_contract=None,
+):
     training = config.to_dict()
     training.pop("max_epochs")
+    renderer = {
+        "control_protocol_version": CONTROL_PROTOCOL_VERSION,
+        "sample_rate": config.training_sample_rate,
+        "lowpass_cutoff_hz": config.lowpass_cutoff_hz,
+        "lowpass_kernel_size": config.lowpass_kernel_size,
+    }
+    if renderer_contract:
+        renderer.update(renderer_contract)
     return {
         "format_version": TRAINING_RUN_FORMAT_VERSION,
-        "runner_name": TRAINING_RUNNER_NAME,
+        "runner_name": runner_name,
         "dataset": dataset_identity,
         "model": {
-            "name": FEATURE_CONTROL_MODEL_NAME,
+            "name": model_name,
             "config": model_config.to_dict(),
         },
         "training": training,
-        "renderer": {
-            "control_protocol_version": CONTROL_PROTOCOL_VERSION,
-            "sample_rate": config.training_sample_rate,
-            "lowpass_cutoff_hz": config.lowpass_cutoff_hz,
-            "lowpass_kernel_size": config.lowpass_kernel_size,
-        },
+        "renderer": renderer,
         "objective": {
             "version": OBJECTIVE_VERSION,
             "energy_frames": 32,

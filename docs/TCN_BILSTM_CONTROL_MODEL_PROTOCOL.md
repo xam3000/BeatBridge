@@ -4,8 +4,8 @@ _Modellvertrag 3, additive Architektursonde, eingeführt am 2026-08-12._
 
 Dieses Dokument beschreibt die größere Architektur nach den kleinen MLP-
 Baselines. Die v1-/v2-Checkpoints, Trainingsrunner und Hörstudien bleiben
-unverändert. Ein produktiver selbstüberwachter Trainingsrunner für dieses
-Modell ist ein nachgelagerter Arbeitsschritt.
+unverändert. Ein separater Architektur-Trainingsrunner ist implementiert und
+nutzt einen additiven Drei-Band-Renderer mit Objective v4.
 
 ## 1. Eingaben
 
@@ -62,16 +62,25 @@ vocal_ducking
 ```
 
 Die öffentliche Ausgabe hat damit die Form `(B, 32, 10)`. Eine Sigmoid-
-Transformation beschränkt die aktuellen Controls auf `[0, 1]`.
+Transformation beschränkt die aktuellen Controls auf `[0, 1]`. `gain_A` und
+`gain_B` werden dabei komplementär aus einer monotonen Ownership-Kurve
+abgeleitet; `low_end_ownership` wird ebenfalls monoton konstruiert.
 
 ## 3. Bewusste Grenze der ersten Implementierung
 
-Die Architektur gibt zunächst zehn bounded Controls aus. Monotonie,
-komplementäre Gain-Kurven, Frequenzband-Semantik und die genaue Abbildung auf
-den differenzierbaren Renderer werden in einem nachfolgenden Control-Adapter
-beziehungsweise Objective-Vertrag festgelegt. Das verhindert, dass die neue
-Architektur stillschweigend die bereits validierten v1-/v2-Controlverträge
-ändert.
+Die Architektur gibt zehn bounded Controls aus. Der additive
+`DifferentiableFullBandTransitionRenderer` verwendet alle zehn Ausgänge:
+
+- `gain_A/B` steuern Mid- und High-Band,
+- `low_end_ownership` steuert das Low-Band,
+- `eq_low/mid/high_A/B` skalieren die drei Frequenzbänder separat,
+- `vocal_ducking` senkt bei vorhandenen Vocal-Stems beide Vocals ab.
+
+Ohne Stems wird Vocal-Ducking ausschließlich auf das Mid-Band als expliziter
+Proxy angewendet. Der aktuelle generische TCN-Datensatz nutzt diesen Proxy;
+ein zukünftiger stem-basierter Lauf kann die vorhandenen Demucs-Stems direkt
+übergeben. Dadurch werden die validierten v1-/v2-Controlverträge nicht
+stillschweigend verändert.
 
 ## 4. Python-Einstieg
 
@@ -86,13 +95,25 @@ assert output.controls.shape == (batch_size, 32, 10)
 Der Modellname ist `tcn_bilstm_transition_control_v1`; die interne
 Formatversion ist `3`.
 
-## 5. Nächste Schritte
+## 5. Trainingssonde
+
+```powershell
+.venv\Scripts\python.exe -m src.ml train-tcn-bilstm `
+  output\datasets\feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 `
+  output\training_runs\tcn_bilstm_transition_control_v1_full_band_extended_bpm145_165_top10_20260812 `
+  --device cuda:0 --max-epochs 30 --batch-size 5 --patience 6 --seed 20260812
+```
+
+Der reale Full-Band-Lauf auf 370 Train- und 50 Validation-Beispielen stoppte
+nach Epoche 20 per Early Stopping. Der beste Checkpoint stammt aus Epoche 14
+und erreichte einen Validation-Proxy-Loss von `0,3206756`, gegenüber
+`1,9383116` bei der Initialisierung. Der Testsplit wurde nicht geladen.
+
+## 6. Nächste Schritte
 
 1. Den Vocal-v2-Hörsatz vollständig bewerten.
-2. Einen Control-Adapter mit monotonen Ownership-Kurven und komplementären
-   Gains definieren.
-3. Mid-/High-EQ-Controls an den differenzierbaren Renderer anbinden.
-4. Einen separaten self-supervised Trainingsrunner mit Objective v5 und
-   trackgetrennten Splits ergänzen.
+2. Einen stem-basierten TCN-Lauf mit Objective v5 durchführen und gegen den
+   Mid-Band-Vocal-Proxy vergleichen.
+3. Mid-/High-EQ- und Vocal-Controls gegen Hörbewertungen evaluieren.
 5. Gegen Equal Power, MLP v1/v2, direkte Kurvenoptimierung und Embedding-
    Baselines evaluieren.

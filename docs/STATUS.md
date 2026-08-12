@@ -726,10 +726,44 @@ Danach: TCN-/BiLSTM-Hauptmodell und Mid-/High-Controls als neue Modellversion un
 - Der Controller gibt pro Halbbeat zehn sigmoid-beschränkte Werte als
   `(B, 32, 10)` aus: Gain A/B, Low-/Mid-/High-EQ A/B, Low-End-Ownership und
   Vocal-Ducking. Der Einstieg ist `python -m src.ml model-info-tcn-bilstm`.
-- Die Architektursonde verändert v1/v2-Checkpoints und deren Trainingsrunner
-  nicht. Monotonie, komplementäre Gains und die Anbindung an den
-  differenzierbaren Renderer bleiben ein eigener nächster Control-/Objective-
-  Schritt; ein selbstüberwachter Trainingsrunner für v3 ist noch offen.
+- Ein separater `train-tcn-bilstm`-Runner nutzt den additiven
+  `DifferentiableFullBandTransitionRenderer` mit Low-/Mid-/High-Band,
+  sechs EQ-Gains und Vocal-Ducking. Der generische Datensatz verwendet für
+  Vocal-Ducking den dokumentierten Mid-Band-Proxy; die Renderer-API kann
+  alternativ Vocal-Stems verarbeiten.
+
+### Verifiziert am 2026-08-12 (TCN/BiLSTM-Trainingslauf)
+
+- Der aktuelle erweiterte SHA-getrennte Datensatz mit 370 Train- und 50
+  Validation-Beispielen wurde auf `cuda:0` trainiert. Bridge-Waveform-Caches
+  wurden vollständig materialisiert und anschließend wiederverwendet.
+- Der Lauf
+  `output/training_runs/tcn_bilstm_transition_control_v1_extended_bpm145_165_top10_20260812`
+  stoppte nach Epoche 10 per Early Stopping; der beste Checkpoint liegt in
+  Epoche 4.
+- Der Validation-Proxy-Loss sank von `0,4210349` auf `0,4139656`. Der
+  manifestierte SHA-256 des Best-Checkpoints wurde geprüft und der Checkpoint
+  mit `weights_only=True` geladen. Eine Vorhersage hatte die Form
+  `(1, 32, 10)` und positive monotone Mix-/Low-End-Schritte.
+- Der Testsplit blieb unberührt; v1/v2-Runs und Checkpoints wurden nicht
+  verändert.
+
+### Verifiziert am 2026-08-12 (TCN/BiLSTM Full-Band-Renderer und Training)
+
+- `DifferentiableFullBandTransitionRenderer` verarbeitet drei Bänder:
+  Low `<180 Hz`, Mid `180–3500 Hz` und High `>3500 Hz`. Alle zehn
+  Modellkanäle beeinflussen differentiabel das gerenderte Audio; mit
+  Vocal-Stems wird Ducking auf die tatsächlichen Stems angewendet.
+- Der neue Lauf
+  `output/training_runs/tcn_bilstm_transition_control_v1_full_band_extended_bpm145_165_top10_20260812`
+  stoppte nach Epoche 20 per Early Stopping; der beste Checkpoint liegt in
+  Epoche 14.
+- Der Validation-Proxy-Loss sank von `1,9383116` auf `0,3206756`. Der
+  Best-Checkpoint-SHA wurde geprüft und mit `weights_only=True` geladen; die
+  Vorhersage besitzt die Form `(32, 10)` für ein einzelnes Beispiel und zeigt
+  nicht-konstante zeitabhängige EQ-/Ownership-Controls.
+- Die vollständige Suite umfasst **142 bestandene Tests**; vier bekannte
+  Warnungen bleiben bestehen.
 
 ## Offene Fragen / Entscheidungen (technisch)
 

@@ -21,6 +21,7 @@ VOCAL_FEATURE_CONTROL_MODEL_FORMAT_VERSION = 2
 VOCAL_FEATURE_CONTROL_MODEL_NAME = "vocal_time_shared_mlp_v2"
 TRANSITION_CONTROL_MODEL_FORMAT_VERSION = 3
 TRANSITION_CONTROL_MODEL_NAME = "tcn_bilstm_transition_control_v1"
+TCN_BILSTM_TRAINING_RUNNER_NAME = "self_supervised_train_validation_tcn_bilstm_v1"
 TRANSITION_CONTROL_OUTPUT_NAMES = (
     "gain_A",
     "gain_B",
@@ -126,6 +127,7 @@ class TCNBiLSTMTransitionControlConfig:
     controller_layers: int = 2
     output_dimension: int = len(TRANSITION_CONTROL_OUTPUT_NAMES)
     dropout: float = 0.0
+    increment_logit_bound: float = DEFAULT_INCREMENT_LOGIT_BOUND
 
     def __post_init__(self):
         if (
@@ -160,6 +162,8 @@ class TCNBiLSTMTransitionControlConfig:
             raise ValueError("output_dimension must match the ten control outputs")
         if not 0.0 <= float(self.dropout) < 1.0:
             raise ValueError("dropout must be in [0, 1)")
+        if float(self.increment_logit_bound) <= 0:
+            raise ValueError("increment_logit_bound must be positive")
 
     def to_dict(self):
         payload = asdict(self)
@@ -203,6 +207,18 @@ class TCNBiLSTMTransitionControlOutput:
     @property
     def vocal_ducking(self):
         return self["vocal_ducking"]
+
+    @property
+    def mix_position(self):
+        """Monotone target ownership curve for the current two-band renderer."""
+
+        return self.gain_b
+
+    @property
+    def low_end_position(self):
+        """Monotone low-end ownership curve for the current renderer."""
+
+        return self["low_end_ownership"]
 
 
 class FeatureControlMLP(nn.Module):
@@ -321,6 +337,11 @@ class TCNBiLSTMTransitionControl(nn.Module):
             2 * self.config.controller_hidden_size,
             self.config.output_dimension,
         )
+        # Start with linear ownership curves and neutral auxiliary controls.
+        # The monotone transform below turns zero increment logits into the
+        # equal-power-compatible linear control baseline.
+        nn.init.zeros_(self.output_head.weight)
+        nn.init.zeros_(self.output_head.bias)
 
     def forward(
         self,
@@ -351,6 +372,18 @@ class TCNBiLSTMTransitionControl(nn.Module):
         sequence, _ = self.controller(fused)
         controller_logits = self.output_head(sequence)
         controls = torch.sigmoid(controller_logits)
+        mix_position = bounded_monotone_unit_curve(
+            controller_logits[..., :-1, 1],
+            self.config.increment_logit_bound,
+        )
+        low_end_position = bounded_monotone_unit_curve(
+            controller_logits[..., :-1, 8],
+            self.config.increment_logit_bound,
+        )
+        controls = controls.clone()
+        controls[..., 0] = 1.0 - mix_position
+        controls[..., 1] = mix_position
+        controls[..., 8] = low_end_position
         if squeezed:
             controls = controls.squeeze(0)
             controller_logits = controller_logits.squeeze(0)

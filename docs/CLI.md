@@ -509,6 +509,15 @@ Die geplante TCN/BiLSTM-Architektur inspizieren:
 .venv\Scripts\python.exe -m src.ml model-info-tcn-bilstm
 ```
 
+Die TCN/BiLSTM-Trainingssonde auf dem erweiterten Feature-Datensatz starten:
+
+```powershell
+.venv\Scripts\python.exe -m src.ml train-tcn-bilstm `
+  output\datasets\feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 `
+  output\training_runs\tcn_bilstm_transition_control_v1_full_band_extended_bpm145_165_top10_20260812 `
+  --device cuda:0
+```
+
 Mix und Demucs-Vocal-Stems für Objective v5 samplegleich cachen:
 
 ```powershell

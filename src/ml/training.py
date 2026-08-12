@@ -68,6 +68,64 @@ def self_supervised_batch_loss(
     return SelfSupervisedBatchResult(controls=controls, terms=mean_terms)
 
 
+def full_band_self_supervised_batch_loss(
+    model,
+    batch,
+    *,
+    renderer,
+    objective,
+):
+    """Train ten TCN/BiLSTM controls through the full-band renderer."""
+
+    features_a = batch["features_a"]
+    features_b = batch["features_b"]
+    controls = model(features_a, features_b, batch["global_features"])
+    batch_size = int(features_a.shape[0])
+    source_audio = tuple(batch["source_audio"])
+    target_audio = tuple(batch["target_audio"])
+    if len(source_audio) != batch_size or len(target_audio) != batch_size:
+        raise ValueError("Audio-list length must match the feature batch size")
+
+    accumulated = {}
+    for index in range(batch_size):
+        source = source_audio[index].to(
+            device=features_a.device,
+            dtype=features_a.dtype,
+        )
+        target = target_audio[index].to(
+            device=features_a.device,
+            dtype=features_a.dtype,
+        )
+        rendered = renderer(
+            source,
+            target,
+            controls.gain_a[index],
+            controls.gain_b[index],
+            controls["eq_low_A"][index],
+            controls["eq_low_B"][index],
+            controls["eq_mid_A"][index],
+            controls["eq_mid_B"][index],
+            controls["eq_high_A"][index],
+            controls["eq_high_B"][index],
+            controls.low_end_ownership[index],
+            controls.vocal_ducking[index],
+        )
+        terms = objective(
+            rendered,
+            source,
+            target,
+            features_a[index],
+            features_b[index],
+        )
+        for name, value in terms.items():
+            accumulated[name] = accumulated.get(name, value.new_zeros(())) + value
+    mean_terms = {
+        name: value / float(batch_size)
+        for name, value in accumulated.items()
+    }
+    return SelfSupervisedBatchResult(controls=controls, terms=mean_terms)
+
+
 def vocal_self_supervised_batch_loss(
     model,
     batch,

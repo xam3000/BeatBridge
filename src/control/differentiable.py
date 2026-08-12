@@ -16,6 +16,7 @@ CONTROL_PROTOCOL_VERSION = 3
 OBJECTIVE_VERSION = 4
 VOCAL_CONTROL_PROTOCOL_VERSION = 4
 VOCAL_OBJECTIVE_VERSION = 5
+FULL_BAND_CONTROL_PROTOCOL_VERSION = 5
 CONTROL_NAMES = ("mix_position", "low_end_position")
 DEFAULT_INCREMENT_LOGIT_BOUND = 0.6
 
@@ -51,6 +52,29 @@ class VocalAwareRenderResult:
     vocal_gain_b: torch.Tensor
     vocal_duck_a: torch.Tensor
     vocal_duck_b: torch.Tensor
+
+
+@dataclass(frozen=True)
+class FullBandRenderResult:
+    """Rendered audio and all ten TCN/BiLSTM control channels."""
+
+    format_version: int
+    audio: torch.Tensor
+    mix_position: torch.Tensor
+    low_end_position: torch.Tensor
+    gain_a: torch.Tensor
+    gain_b: torch.Tensor
+    eq_low_a: torch.Tensor
+    eq_low_b: torch.Tensor
+    eq_mid_a: torch.Tensor
+    eq_mid_b: torch.Tensor
+    eq_high_a: torch.Tensor
+    eq_high_b: torch.Tensor
+    vocal_ducking: torch.Tensor
+    vocal_gain_a: torch.Tensor
+    vocal_gain_b: torch.Tensor
+    low_gain_a: torch.Tensor
+    low_gain_b: torch.Tensor
 
 
 @dataclass(frozen=True)
@@ -224,6 +248,216 @@ class DifferentiableTwoBandRenderer(nn.Module):
         padded = F.pad(flat, (padding, padding), mode="reflect")
         kernel = self.lowpass_kernel.to(device=audio.device, dtype=audio.dtype)
         filtered = F.conv1d(padded, kernel.view(1, 1, -1))
+        return filtered.reshape(batch_size, channels, sample_count)
+
+
+class DifferentiableFullBandTransitionRenderer(nn.Module):
+    """Render gain, three-band EQ, low-end ownership, and vocal ducking.
+
+    The renderer accepts the ten per-control-point outputs of the
+    TCN/BiLSTM model. With vocal stems, ducking is applied to the actual vocal
+    stems. Without stems, it is applied only to the mid-band as an explicit
+    differentiable vocal proxy; this keeps the generic feature dataset usable
+    without pretending that vocals were separated.
+    """
+
+    def __init__(
+        self,
+        sample_rate: int = 44_100,
+        lowpass_cutoff_hz: float = 180.0,
+        midpass_cutoff_hz: float = 3_500.0,
+        lowpass_kernel_size: int = 255,
+    ):
+        super().__init__()
+        self.sample_rate = int(sample_rate)
+        self.lowpass_cutoff_hz = float(lowpass_cutoff_hz)
+        self.midpass_cutoff_hz = float(midpass_cutoff_hz)
+        self.lowpass_kernel_size = int(lowpass_kernel_size)
+        self._validate_config()
+        self.register_buffer(
+            "lowpass_kernel",
+            _windowed_sinc_lowpass(
+                self.sample_rate,
+                self.lowpass_cutoff_hz,
+                self.lowpass_kernel_size,
+            ),
+        )
+        self.register_buffer(
+            "midpass_kernel",
+            _windowed_sinc_lowpass(
+                self.sample_rate,
+                self.midpass_cutoff_hz,
+                self.lowpass_kernel_size,
+            ),
+        )
+
+    def _validate_config(self):
+        if self.sample_rate <= 0:
+            raise ValueError("sample_rate must be greater than 0")
+        if not 0 < self.lowpass_cutoff_hz < self.midpass_cutoff_hz:
+            raise ValueError("lowpass_cutoff_hz must be below midpass_cutoff_hz")
+        if not self.midpass_cutoff_hz < self.sample_rate / 2:
+            raise ValueError("midpass_cutoff_hz must be below Nyquist")
+        if self.lowpass_kernel_size < 3 or self.lowpass_kernel_size % 2 == 0:
+            raise ValueError("lowpass_kernel_size must be an odd integer of at least 3")
+
+    def forward(
+        self,
+        source_audio: torch.Tensor,
+        target_audio: torch.Tensor,
+        gain_a: torch.Tensor,
+        gain_b: torch.Tensor,
+        eq_low_a: torch.Tensor,
+        eq_low_b: torch.Tensor,
+        eq_mid_a: torch.Tensor,
+        eq_mid_b: torch.Tensor,
+        eq_high_a: torch.Tensor,
+        eq_high_b: torch.Tensor,
+        low_end_ownership: torch.Tensor,
+        vocal_ducking: torch.Tensor,
+        *,
+        source_vocal_audio: torch.Tensor | None = None,
+        target_vocal_audio: torch.Tensor | None = None,
+    ) -> FullBandRenderResult:
+        source, squeezed = _normalise_audio(source_audio, "source_audio")
+        target, target_squeezed = _normalise_audio(target_audio, "target_audio")
+        if squeezed != target_squeezed:
+            raise ValueError("source_audio and target_audio must have the same rank")
+        if source.shape != target.shape:
+            raise ValueError("source_audio and target_audio must have identical shapes")
+        if source.device != target.device or source.dtype != target.dtype:
+            raise ValueError("source_audio and target_audio must share device and dtype")
+        if not source.is_floating_point():
+            raise TypeError("Audio tensors must use a floating-point dtype")
+        if not torch.isfinite(source).all() or not torch.isfinite(target).all():
+            raise ValueError("Audio tensors must contain only finite values")
+
+        source_vocal = target_vocal = None
+        if (source_vocal_audio is None) != (target_vocal_audio is None):
+            raise ValueError("Both vocal stems must be supplied together")
+        if source_vocal_audio is not None:
+            source_vocal, source_vocal_squeezed = _normalise_audio(
+                source_vocal_audio,
+                "source_vocal_audio",
+            )
+            target_vocal, target_vocal_squeezed = _normalise_audio(
+                target_vocal_audio,
+                "target_vocal_audio",
+            )
+            if len({squeezed, target_squeezed, source_vocal_squeezed, target_vocal_squeezed}) != 1:
+                raise ValueError("Mix and vocal tensors must have the same rank")
+            if not (source.shape == target.shape == source_vocal.shape == target_vocal.shape):
+                raise ValueError("Mix and vocal tensors must have identical shapes")
+            if not (
+                source.device == target.device == source_vocal.device == target_vocal.device
+                and source.dtype == target.dtype == source_vocal.dtype == target_vocal.dtype
+            ):
+                raise ValueError("Mix and vocal tensors must share device and dtype")
+            if not torch.isfinite(source_vocal).all() or not torch.isfinite(target_vocal).all():
+                raise ValueError("Vocal tensors must contain only finite values")
+
+        batch_size, _, sample_count = source.shape
+        if sample_count <= self.lowpass_kernel_size // 2:
+            raise ValueError("Audio is too short for the configured low-pass filter")
+        controls = {
+            "gain_a": gain_a,
+            "gain_b": gain_b,
+            "eq_low_a": eq_low_a,
+            "eq_low_b": eq_low_b,
+            "eq_mid_a": eq_mid_a,
+            "eq_mid_b": eq_mid_b,
+            "eq_high_a": eq_high_a,
+            "eq_high_b": eq_high_b,
+            "low_end_ownership": low_end_ownership,
+            "vocal_ducking": vocal_ducking,
+        }
+        normalised = {
+            name: _normalise_control(value, batch_size, source.device, source.dtype, name)
+            for name, value in controls.items()
+        }
+        control_shape = normalised["gain_a"].shape
+        if any(value.shape != control_shape for value in normalised.values()):
+            raise ValueError("All full-band controls must have identical shapes")
+        samples = {
+            name: _interpolate_control(value, sample_count)
+            for name, value in normalised.items()
+        }
+
+        source_render = source if source_vocal is None else source - source_vocal
+        target_render = target if target_vocal is None else target - target_vocal
+        source_low = self._filter(source_render, self.lowpass_kernel)
+        target_low = self._filter(target_render, self.lowpass_kernel)
+        source_below_mid = self._filter(source_render, self.midpass_kernel)
+        target_below_mid = self._filter(target_render, self.midpass_kernel)
+        source_mid = source_below_mid - source_low
+        target_mid = target_below_mid - target_low
+        source_high = source_render - source_below_mid
+        target_high = target_render - target_below_mid
+
+        low_gain_a, low_gain_b = _equal_power_pair(samples["low_end_ownership"])
+        gain_a = samples["gain_a"].clamp(0.0, 1.0)
+        gain_b = samples["gain_b"].clamp(0.0, 1.0)
+        vocal_duck = samples["vocal_ducking"].clamp(0.0, 1.0)
+
+        low_source_gain = low_gain_a * samples["eq_low_a"]
+        low_target_gain = low_gain_b * samples["eq_low_b"]
+        mid_source_gain = gain_a * samples["eq_mid_a"]
+        mid_target_gain = gain_b * samples["eq_mid_b"]
+        high_source_gain = gain_a * samples["eq_high_a"]
+        high_target_gain = gain_b * samples["eq_high_b"]
+
+        if source_vocal is None:
+            # No vocal stems: use the 180–3500 Hz band as a documented proxy.
+            mid_source_gain = mid_source_gain * (1.0 - vocal_duck)
+            mid_target_gain = mid_target_gain * (1.0 - vocal_duck)
+
+        audio = (
+            source_low * low_source_gain.unsqueeze(1)
+            + target_low * low_target_gain.unsqueeze(1)
+            + source_mid * mid_source_gain.unsqueeze(1)
+            + target_mid * mid_target_gain.unsqueeze(1)
+            + source_high * high_source_gain.unsqueeze(1)
+            + target_high * high_target_gain.unsqueeze(1)
+        )
+        vocal_gain_a = gain_a * (1.0 - vocal_duck)
+        vocal_gain_b = gain_b * (1.0 - vocal_duck)
+        if source_vocal is not None:
+            audio = (
+                audio
+                + source_vocal * vocal_gain_a.unsqueeze(1)
+                + target_vocal * vocal_gain_b.unsqueeze(1)
+            )
+        if squeezed:
+            audio = audio.squeeze(0)
+        return FullBandRenderResult(
+            format_version=FULL_BAND_CONTROL_PROTOCOL_VERSION,
+            audio=audio,
+            mix_position=samples["gain_b"],
+            low_end_position=samples["low_end_ownership"],
+            gain_a=gain_a,
+            gain_b=gain_b,
+            eq_low_a=samples["eq_low_a"],
+            eq_low_b=samples["eq_low_b"],
+            eq_mid_a=samples["eq_mid_a"],
+            eq_mid_b=samples["eq_mid_b"],
+            eq_high_a=samples["eq_high_a"],
+            eq_high_b=samples["eq_high_b"],
+            vocal_ducking=vocal_duck,
+            vocal_gain_a=vocal_gain_a,
+            vocal_gain_b=vocal_gain_b,
+            low_gain_a=low_gain_a,
+            low_gain_b=low_gain_b,
+        )
+
+    def _filter(self, audio: torch.Tensor, kernel: torch.Tensor) -> torch.Tensor:
+        batch_size, channels, sample_count = audio.shape
+        flat = audio.reshape(batch_size * channels, 1, sample_count)
+        padding = self.lowpass_kernel_size // 2
+        padded = F.pad(flat, (padding, padding), mode="reflect")
+        filtered = F.conv1d(
+            padded,
+            kernel.to(device=audio.device, dtype=audio.dtype).view(1, 1, -1),
+        )
         return filtered.reshape(batch_size, channels, sample_count)
 
 

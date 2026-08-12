@@ -24,6 +24,7 @@ from .model import (
     VocalFeatureControlMLP,
 )
 from .runner import TrainingConfig, run_feature_control_training
+from .runner import run_tcn_bilstm_transition_control_training
 from .vocal_runner import VocalTrainingConfig, run_vocal_feature_control_training
 
 
@@ -78,6 +79,44 @@ def build_argument_parser():
         help="PyTorch device: auto (CUDA if available), cpu, cuda, or cuda:<index>",
     )
     train_parser.add_argument("--resume", action="store_true")
+
+    tcn_train_parser = subparsers.add_parser("train-tcn-bilstm")
+    tcn_train_parser.add_argument("dataset_directory")
+    tcn_train_parser.add_argument("output_directory")
+    tcn_train_parser.add_argument(
+        "--cache-root", default=str(DEFAULT_BRIDGE_WAVEFORM_CACHE_ROOT)
+    )
+    tcn_train_parser.add_argument("--seed", type=int, default=TrainingConfig.seed)
+    tcn_train_parser.add_argument(
+        "--max-epochs", type=int, default=TrainingConfig.max_epochs
+    )
+    tcn_train_parser.add_argument(
+        "--batch-size", type=int, default=TrainingConfig.batch_size
+    )
+    tcn_train_parser.add_argument(
+        "--learning-rate", type=float, default=TrainingConfig.learning_rate
+    )
+    tcn_train_parser.add_argument(
+        "--weight-decay", type=float, default=TrainingConfig.weight_decay
+    )
+    tcn_train_parser.add_argument("--patience", type=int, default=TrainingConfig.patience)
+    tcn_train_parser.add_argument("--min-delta", type=float, default=TrainingConfig.min_delta)
+    tcn_train_parser.add_argument(
+        "--gradient-clip-norm",
+        type=float,
+        default=TrainingConfig.gradient_clip_norm,
+    )
+    tcn_train_parser.add_argument(
+        "--training-sample-rate",
+        type=int,
+        default=DEFAULT_TRAINING_SAMPLE_RATE,
+    )
+    tcn_train_parser.add_argument(
+        "--device",
+        default=TrainingConfig.device,
+        help="PyTorch device: auto (CUDA if available), cpu, cuda, or cuda:<index>",
+    )
+    tcn_train_parser.add_argument("--resume", action="store_true")
 
     vocal_train_parser = subparsers.add_parser("train-vocal")
     vocal_train_parser.add_argument("dataset_directory")
@@ -209,6 +248,35 @@ def main():
             device=args.device,
         )
         result = run_feature_control_training(
+            args.dataset_directory,
+            args.output_directory,
+            config=config,
+            waveform_cache_root=args.cache_root,
+            resume=args.resume,
+        )
+        print(json.dumps({
+            "output_directory": str(result.output_directory),
+            "status": result.status,
+            "last_epoch": result.last_epoch,
+            "best_epoch": result.best_epoch,
+            "best_validation_loss": result.best_validation_loss,
+        }, indent=2))
+        return 0
+
+    if args.command == "train-tcn-bilstm":
+        config = TrainingConfig(
+            seed=args.seed,
+            max_epochs=args.max_epochs,
+            batch_size=args.batch_size,
+            learning_rate=args.learning_rate,
+            weight_decay=args.weight_decay,
+            patience=args.patience,
+            min_delta=args.min_delta,
+            gradient_clip_norm=args.gradient_clip_norm,
+            training_sample_rate=args.training_sample_rate,
+            device=args.device,
+        )
+        result = run_tcn_bilstm_transition_control_training(
             args.dataset_directory,
             args.output_directory,
             config=config,
