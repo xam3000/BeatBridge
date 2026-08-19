@@ -88,3 +88,36 @@ reproduzierbar installierbar. Deshalb nutzt BeatBridge das schlanke,
 inference-only `bs-roformer-infer==0.1.1` mit verifizierten Modell-Downloads.
 Demucs bleibt als explizites Vergleichsbackend erhalten; bestehende Demucs-
 Caches werden nicht migriert oder überschrieben.
+
+## Verifiziert am 2026-08-19 (ML-Modellübersicht)
+
+- **Fragestellung und Reasoning:** Die aktuelle Form der ML-Modelle sollte so
+  visualisiert werden, dass Default, Baseline und experimenteller
+  Hauptmodellpfad nicht verwechselt werden. Dafür wurden Projektstatus,
+  Modellverträge, `src/ml/model.py` und die realen Trainingsmanifeste gemeinsam
+  abgeglichen.
+- **Eingaben/Setup:** Repository-Stand vom 2026-08-19; gelesen wurden
+  `docs/STATUS.md`, `docs/Projekt-Gesamtuebersicht.md`, `.agents/AGENT.md`,
+  `.agents/multi-session-project-discipline.skill`,
+  `docs/ML_CONTROL_MODEL_PROTOCOL.md`,
+  `docs/VOCAL_CONTROL_MODEL_PROTOCOL.md`,
+  `docs/TCN_BILSTM_CONTROL_MODEL_PROTOCOL.md`, `src/ml/model.py` sowie die
+  Manifeste unter `output/training_runs/`.
+- **Testumfang bzw. Befehl:** Read-only-Abgleich mit `rg`, PowerShell-
+  Dateiausgaben und `.venv\Scripts\python.exe` zum Parsen der JSON-Manifeste;
+  anschließend strukturelle Markdown-/Mermaid-Dokumentation in
+  `docs/ML_MODEL_CURRENT_STATE.md` sowie Verweise in `STATUS.md`.
+- **Ergebnis:** Die Übersicht weist `vocal_time_shared_mlp_v2` mit
+  20.821 Parametern und aktuellem RoFormer-Run als Default aus. Sie hält
+  `time_shared_mlp_v1` mit 10.394 Parametern als Baseline und
+  `tcn_bilstm_transition_control_v1` mit 1.013.226 Parametern als
+  implementiert/trainiert, aber experimentell fest. Die reale TCN- und
+  Vocal-Run-Provenienz (Dataset, Splits, Device, Early Stopping und bester
+  Validation-Loss) wurde aus den Manifesten übernommen. Keine Fehler oder
+  Blockaden.
+- **Schlussfolgerung und nächster Schritt:** Die aktuelle Modellform ist
+  dokumentiert und verlinkt. Inhaltlich bleibt der geblendete Hörvergleich
+  des gelernten Vocal-v2-Checkpoints gegen die Initialisierung das nächste
+  Gate; der dokumentierte Stand meldet weiterhin `0/5` Ratings.
+- **Nachprüfung:** Befehl
+  `.venv\Scripts\python.exe -c "from src.ml.model import FeatureControlMLP, VocalFeatureControlMLP, TCNBiLSTMTransitionControl; assert ...; parse training_runs manifests and docs/ML_MODEL_CURRENT_STATE.md"` sowie `git diff --check` bestätigten die neue Datei, die Mermaid-Codeumgebung, die Verweise in `STATUS.md` und die Modell-/Run-Kennungen ohne Fehler. Ergebnis: Parameterzahlen `10394/20821/1013226` und drei Manifeste stimmen.
