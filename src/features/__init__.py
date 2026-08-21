@@ -54,6 +54,35 @@ from .dataset_export import (
     assign_track_disjoint_splits,
     export_feature_dataset,
 )
+from .variable_contract import (
+    LENGTH_CONDITION_DIMENSION,
+    SUPPORTED_VARIABLE_LENGTHS,
+    VARIABLE_FEATURE_PROTOCOL_VERSION,
+    VariableTransitionGeometry,
+    geometry_for_length,
+    variable_feature_schema,
+    validate_length_condition,
+    validate_variable_feature_array,
+    validate_variable_feature_batch,
+)
+from .variable_dataset_export import (
+    DATASET_FORMAT_VERSION as VARIABLE_DATASET_FORMAT_VERSION,
+    VariableDatasetExportResult,
+    export_variable_feature_dataset,
+)
+from .variable_extract import extract_variable_track_window
+from .variable_global_pair import (
+    VARIABLE_GLOBAL_PAIR_EXTRACTOR_VERSION,
+    build_variable_global_pair_features,
+    estimate_variable_key,
+)
+from .variable_split import (
+    VariableSplitAuthority,
+    authority_from_mapping,
+    build_variable_split_authority,
+    canonical_mapping_sha256,
+    load_variable_split_authority,
+)
 
 __all__ = [
     "ANALYSIS_CONTEXT_BARS_AFTER",
@@ -100,4 +129,25 @@ __all__ = [
     "validate_feature_channels",
     "validate_feature_array",
     "validate_global_feature_array",
+    "LENGTH_CONDITION_DIMENSION",
+    "SUPPORTED_VARIABLE_LENGTHS",
+    "VARIABLE_FEATURE_PROTOCOL_VERSION",
+    "VariableTransitionGeometry",
+    "geometry_for_length",
+    "variable_feature_schema",
+    "validate_length_condition",
+    "validate_variable_feature_array",
+    "validate_variable_feature_batch",
+    "VARIABLE_DATASET_FORMAT_VERSION",
+    "VariableDatasetExportResult",
+    "export_variable_feature_dataset",
+    "extract_variable_track_window",
+    "VARIABLE_GLOBAL_PAIR_EXTRACTOR_VERSION",
+    "build_variable_global_pair_features",
+    "estimate_variable_key",
+    "VariableSplitAuthority",
+    "authority_from_mapping",
+    "build_variable_split_authority",
+    "canonical_mapping_sha256",
+    "load_variable_split_authority",
 ]

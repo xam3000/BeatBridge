@@ -27,6 +27,11 @@ from .differentiable import (
     optimize_control_curves,
     optimize_vocal_control_curves,
 )
+from .variable_differentiable import (
+    VARIABLE_OBJECTIVE_FORMAT_VERSION,
+    VARIABLE_OBJECTIVE_NAME,
+    VariableVocalAwareTransitionObjective,
+)
 
 __all__ = [
     "CONTROL_NAMES",
@@ -54,4 +59,7 @@ __all__ = [
     "maximum_control_increment",
     "optimize_control_curves",
     "optimize_vocal_control_curves",
+    "VARIABLE_OBJECTIVE_FORMAT_VERSION",
+    "VARIABLE_OBJECTIVE_NAME",
+    "VariableVocalAwareTransitionObjective",
 ]

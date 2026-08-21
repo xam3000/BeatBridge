@@ -1,6 +1,6 @@
 # Aktuelle Form der ML-Modelle
 
-_Stand: 2026-08-19_
+_Stand: 2026-08-21_
 
 Diese Übersicht trennt den aktuell verwendeten Modellpfad von den historischen
 Baselines und dem bereits implementierten, aber noch experimentellen größeren
@@ -63,6 +63,25 @@ Der aktuelle Vocal-Lauf verwendet den RoFormer-Stem-Backend
 Trainings- und Featurepfad nutzt die verifizierte RoFormer-Separation. Die 60
 Testbeispiele des erweiterten Datensatzes bleiben vom Training ausgeschlossen.
 
+## Additiver Variable-Length-Stand (2026-08-21)
+
+Der neue, nicht als Default aktivierte Pfad
+`variable_tcn_bilstm_transition_control_v1` (Modellformat 4) arbeitet mit
+homogenen `T=16/32/48/64`-Batches und der separaten Konditionierung
+`length_condition = L/8`. Der reale Dataset-v2-Loader wurde ausschließlich für
+Train und Validation geöffnet. Ein kurzer CPU-Smoke über alle vier Längen lief
+über zwei Epochen; die zweite Epoche wurde sicher aus dem Latest-Checkpoint
+resumed. Der Run ist unter
+`output/review_variable_v2_training_smoke_20260821_run01/` dokumentiert.
+
+Die Inferenzprüfung eines Validationbeispiels je Länge erzeugte endliche
+`(T,10)`-Controls mit exakt monotonen Positionskurven und T=16/32/48/64. Das
+ist eine technische Vertragsprüfung, kein Nachweis musikalischer Qualität und
+keine lange Trainingskampagne. Der Testsplit wurde in diesem Pfad nicht geladen.
+Ein realer v2-Waveform-Cache und ein CLI-Einstieg für einen vollständigen
+CUDA-Lauf fehlen noch; der Pfad kann deshalb derzeit nur über die API mit
+explizit gelieferten Waveform-Batches gesmoked werden.
+
 ## Eingabe, Ausgabe und Constraints des Defaults
 
 ```text
@@ -109,3 +128,16 @@ werden.
 - Vocal-Vertrag: [`VOCAL_CONTROL_MODEL_PROTOCOL.md`](./VOCAL_CONTROL_MODEL_PROTOCOL.md)
 - TCN-/BiLSTM-Vertrag: [`TCN_BILSTM_CONTROL_MODEL_PROTOCOL.md`](./TCN_BILSTM_CONTROL_MODEL_PROTOCOL.md)
 - Verifizierter Projektstand: [`STATUS.md`](./STATUS.md)
+
+## Verifizierter Real-Cache- und CUDA-Stand (2026-08-21)
+
+Der Variable-Length-Pfad verwendet nun den separaten
+`local_grid_target_to_source_v1`-Waveformvertrag und den unveränderlichen
+Cache `output/ml_cache/variable_bridge_waveform_v2`. Der reale Datensatz
+enthält 420 Train- und 48 Validation-Entries, je 105/12 für 2/4/6/8 Takte;
+der Testsplit bleibt geschlossen. Der reale TCN/BiLSTM-Smoke lief mit
+`cuda:0` eine Epoche und wurde im selben Run auf zwei Epochen resumed. Beide
+Läufe meldeten 468 Cache-Hits; der CUDA-Audit bestätigte die RTX 5070 Ti,
+finite Gradienten, Checkpoint-SHAs und Controls mit `T=16/32/48/64` und zehn
+Kanälen. Dieser Pfad ist technisch verifiziert, aber weiterhin nicht der
+Projekt-Default und kein vollständiger 100-Epochen-Lauf.

@@ -86,3 +86,22 @@ Drop A | Source-Auslauf  ×  Target-Vorlauf | Drop B
 - Bei unterschiedlichen Beatdauern bestimmt das kürzere verfügbare Übergangsfenster die Samplelänge; die musikalischen Cut-Grenzen bleiben erhalten.
 
 Alle Fade-Renderer verwenden bei direktem API-Aufruf standardmäßig acht Beats. Automatische Kandidaten leiten aktuell 2 oder 4 Takte in die entsprechende Beatanzahl um. Version 1 mischte dagegen die Fenster unmittelbar vor beiden Cutpoints und ist für neue Batches nicht mehr maßgeblich.
+
+## Additiver Exaktdauerpfad für Candidate-v2
+
+Variable Candidate-v2-Exporte verwenden additiv Rendering-Format 6. Die
+Fade- und Equal-Power-Renderer erhalten die aus dem tatsächlichen Taktfenster
+abgeleitete `transition_length_beats`-Zahl und prüfen nach Alignment die
+Source- und Target-Bridge-Sampleanzahl. Beide Seiten müssen exakt gleich lang
+sein; der v2-Pfad kürzt nicht still auf die kleinere Seite. Die Rückgabe führt
+zusätzlich `transition_length_bars` und `transition_length_beats`.
+
+Der v2-Einstieg validiert die L/Beat-Geometrie bereits vor dem Laden der
+Audiodateien. Nach der bestehenden strikten Sampleprüfung werden Kandidaten mit
+unterschiedlicher Source-/Target-Bridgeabdeckung verworfen; diese Fälle sind
+keine alte v1-„kürzeres Fenster“-Semantik und werden nicht still angepasst.
+
+Der bestehende Rendering-Format-5-Pfad behält seine historische
+„kürzeres verfügbares Fenster bestimmt die Samplelänge“-Semantik. Dadurch
+bleiben alte direkte Renderaufrufe, Batch-Manifeste und WAV-Artefakte
+kompatibel. Nur Candidate-v2-Batchvarianten verwenden den Exaktdauerpfad.

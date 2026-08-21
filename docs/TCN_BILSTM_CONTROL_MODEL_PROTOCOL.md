@@ -117,3 +117,15 @@ und erreichte einen Validation-Proxy-Loss von `0,3206756`, gegenüber
 3. Mid-/High-EQ- und Vocal-Controls gegen Hörbewertungen evaluieren.
 5. Gegen Equal Power, MLP v1/v2, direkte Kurvenoptimierung und Embedding-
    Baselines evaluieren.
+
+## Additiver Variable-v2-Smoke (verifiziert 2026-08-21)
+
+Die additive Modellvariante `variable_tcn_bilstm_transition_control_v1`
+verwendet Dataset-/Feature-Protocol 2 mit `T=16/32/48/64` und den separaten
+Längenkanal `length_condition=L/8`. Sie ist an den Vertrag
+`local_grid_target_to_source_v1` und den Cache
+`output/ml_cache/variable_bridge_waveform_v2` gebunden. Der reale Smoke-Test
+auf 420 Train- und 48 Validation-Beispielen lief mit `cuda:0` eine Epoche und
+wurde auf zwei Epochen resumed; beide Läufe meldeten 468 Cache-Hits. Der
+Testsplit wurde nicht geladen. Der vollständige 100-Epochen-Lauf ist weiterhin
+nicht ausgeführt.

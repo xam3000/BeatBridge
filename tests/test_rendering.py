@@ -12,8 +12,10 @@ from src.pipeline import (
     RENDER_RESULT_FORMAT_VERSION,
     render_transition,
 )
+from src.candidates import CutPoint, TrackReference, TransitionCandidate
 from src.tempo.simple_tempo_adjust import SimpleTempoAdjust
 from src.tempo.time_stretch import TimeStretch
+from src.variable_rendering import render_variable_transition
 
 
 class StubAnalysis:
@@ -202,3 +204,84 @@ def test_downbeat_snapping_fails_clearly_without_bar_metadata():
             [0, 100, 200, 300, 400],
             [0, 100, 200, 300, 400],
         )
+
+
+@pytest.fixture
+def variable_candidate_inputs(tmp_path):
+    sample_rate = 44_100
+    duration_seconds = 40
+    time = np.arange(sample_rate * duration_seconds, dtype=np.float32) / sample_rate
+    source = np.column_stack(
+        [0.1 * np.sin(2 * np.pi * 220 * time), 0.1 * np.sin(2 * np.pi * 330 * time)]
+    )
+    target = np.column_stack(
+        [0.1 * np.sin(2 * np.pi * 440 * time), 0.1 * np.sin(2 * np.pi * 550 * time)]
+    )
+    source_path = tmp_path / "variable_source.wav"
+    target_path = tmp_path / "variable_target.wav"
+    sf.write(source_path, source, sample_rate)
+    sf.write(target_path, target, sample_rate)
+
+    class Analysis:
+        def __call__(self, song_path):
+            info = sf.info(song_path)
+            beat_step = int(round(info.samplerate * 60.0 / 120.0))
+            beats = [
+                (sample, index % 4 + 1, 4)
+                for index, sample in enumerate(range(0, info.frames, beat_step))
+            ]
+            return 120.0, beats
+
+    analysis = Analysis()
+    cut_sample = 8 * 4 * (sample_rate // 2)
+    target_cut_sample = 12 * 4 * (sample_rate // 2)
+    return source_path, target_path, analysis, cut_sample, target_cut_sample
+
+
+@pytest.mark.parametrize("renderer", ["fade", "equal_power"])
+@pytest.mark.parametrize("length_bars", [2, 6, 8])
+def test_variable_fade_renderers_are_exactly_taktgenau(
+    variable_candidate_inputs,
+    renderer,
+    length_bars,
+    monkeypatch,
+):
+    source_path, target_path, analysis, cut_sample, target_cut_sample = variable_candidate_inputs
+    def load_with_soundfile(path, sr=None, mono=False):
+        audio, sample_rate = sf.read(path, always_2d=False)
+        if audio.ndim == 2:
+            audio = audio.T
+        return audio, sample_rate
+
+    monkeypatch.setattr("src.pipeline.librosa.load", load_with_soundfile)
+    candidate = TransitionCandidate(
+        candidate_id=f"variable-{renderer}-{length_bars}",
+        source_track=TrackReference(str(source_path), f"source-{length_bars}"),
+        target_track=TrackReference(str(target_path), f"target-{length_bars}"),
+        source_cutpoint=CutPoint(cut_sample, 32, 8, 1, 4),
+        target_cutpoint=CutPoint(target_cut_sample, 48, 12, 1, 4),
+        transition_length_bars=length_bars,
+        transition_length_beats=length_bars * 4,
+        source_bpm=120.0,
+        target_bpm=120.0,
+        tempo_relative_difference=0.0,
+        generator="bar_grid_v2_length_specific",
+        format_version=2,
+    )
+
+    result = render_variable_transition(
+        candidate,
+        renderer=renderer,
+        analysis=analysis,
+        tempo_adjuster=SimpleTempoAdjust(),
+        preview_seconds_before=0.0,
+        preview_seconds_after=20.0,
+    )
+
+    expected_samples = length_bars * 4 * (sample_rate := 44_100) // 2
+    assert result.format_version == 6
+    assert result.transition_length_bars == length_bars
+    assert result.transition_length_beats == length_bars * 4
+    assert result.transition_end_sample - result.transition_start_sample == expected_samples
+    assert result.audio.shape == (2, 20 * sample_rate)
+    assert np.isfinite(result.audio).all()

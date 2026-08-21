@@ -85,9 +85,13 @@ class CandidateRejection:
 
     code: str
     message: str
+    transition_length_bars: int | None = None
 
     def to_dict(self):
-        return {"code": self.code, "message": self.message}
+        payload = {"code": self.code, "message": self.message}
+        if self.transition_length_bars is not None:
+            payload["transition_length_bars"] = int(self.transition_length_bars)
+        return payload
 
 
 @dataclass(frozen=True)

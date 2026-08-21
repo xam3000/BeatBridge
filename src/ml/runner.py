@@ -47,6 +47,7 @@ from .model import (
     TCNBiLSTMTransitionControlConfig,
 )
 from .training import full_band_self_supervised_batch_loss, self_supervised_batch_loss
+from .wandb_logging import WandbConfig, WandbLogger
 
 
 TRAINING_RUN_FORMAT_VERSION = 1
@@ -121,6 +122,7 @@ def run_feature_control_training(
     renderer_factory=DifferentiableTwoBandRenderer,
     loss_function=self_supervised_batch_loss,
     renderer_contract=None,
+    wandb_config: WandbConfig | None = None,
 ):
     """Materialize train/validation audio caches and run self-supervised training."""
     config = _resolve_training_device(config or TrainingConfig())
@@ -172,6 +174,7 @@ def run_feature_control_training(
         renderer_factory=renderer_factory,
         loss_function=loss_function,
         renderer_contract=renderer_contract,
+        wandb_config=wandb_config,
     )
 
 
@@ -185,6 +188,7 @@ def run_tcn_bilstm_transition_control_training(
     waveform_cache_root=DEFAULT_BRIDGE_WAVEFORM_CACHE_ROOT,
     resume=False,
     progress=print,
+    wandb_config: WandbConfig | None = None,
 ):
     """Run the versioned self-supervised TCN/BiLSTM architecture probe."""
 
@@ -202,6 +206,7 @@ def run_tcn_bilstm_transition_control_training(
         runner_name=TCN_BILSTM_TRAINING_RUNNER_NAME,
         renderer_factory=DifferentiableFullBandTransitionRenderer,
         loss_function=full_band_self_supervised_batch_loss,
+        wandb_config=wandb_config,
         renderer_contract={
             "name": "differentiable_full_band_transition_v1",
             "midpass_cutoff_hz": 3500.0,
@@ -227,6 +232,7 @@ def train_feature_control_model(
     renderer_factory=DifferentiableTwoBandRenderer,
     loss_function=self_supervised_batch_loss,
     renderer_contract=None,
+    wandb_config: WandbConfig | None = None,
 ):
     """Train from pre-materialized examples and persist restartable artifacts."""
     config = _resolve_training_device(config or TrainingConfig())
@@ -317,9 +323,20 @@ def train_feature_control_model(
         stale_epochs = 0
         created_at = _now_utc()
 
+    wandb_logger = WandbLogger.start(
+        wandb_config,
+        run_id=run_id,
+        runner_name=runner_name,
+        contract=immutable_contract,
+        output_directory=output_directory,
+        resume=resume,
+    )
+
     previous_deterministic = torch.are_deterministic_algorithms_enabled()
     previous_warn_only = torch.is_deterministic_algorithms_warn_only_enabled()
     torch.use_deterministic_algorithms(True, warn_only=device.type == "cuda")
+    status = "running"
+    last_epoch = start_epoch - 1
     try:
         if not history:
             initial_train = _run_epoch(
@@ -380,9 +397,16 @@ def train_feature_control_model(
                 f"epoch=0 equal_power train={initial_train['loss']:.6f} "
                 f"validation={initial_validation['loss']:.6f}"
             )
+            wandb_logger.log_epoch(
+                0,
+                initial_train,
+                initial_validation,
+                best_validation_loss=best_validation_loss,
+                stale_epochs=stale_epochs,
+                improved=False,
+            )
 
         status = "completed"
-        last_epoch = start_epoch - 1
         for epoch in range(start_epoch, config.max_epochs + 1):
             train_metrics = _run_epoch(
                 model,
@@ -452,6 +476,14 @@ def train_feature_control_model(
                 f"validation={validation_loss:.6f} best={best_validation_loss:.6f} "
                 f"stale={stale_epochs}/{config.patience}"
             )
+            wandb_logger.log_epoch(
+                epoch,
+                train_metrics,
+                validation_metrics,
+                best_validation_loss=best_validation_loss,
+                stale_epochs=stale_epochs,
+                improved=improved,
+            )
             if stale_epochs >= config.patience:
                 status = "early_stopped"
                 break
@@ -472,7 +504,14 @@ def train_feature_control_model(
             best_path,
             completed_at=_now_utc(),
         )
-    except Exception:
+        wandb_logger.finish(
+            status=status,
+            last_epoch=last_epoch,
+            best_epoch=best_epoch,
+            best_validation_loss=best_validation_loss,
+            output_directory=output_directory,
+        )
+    except Exception as error:
         if output_directory.exists():
             _write_run_files(
                 manifest_path,
@@ -490,6 +529,14 @@ def train_feature_control_model(
                 best_path,
                 completed_at=_now_utc(),
             )
+        wandb_logger.finish(
+            status="failed",
+            last_epoch=last_epoch,
+            best_epoch=best_epoch,
+            best_validation_loss=best_validation_loss,
+            output_directory=output_directory,
+            error=error,
+        )
         raise
     finally:
         torch.use_deterministic_algorithms(

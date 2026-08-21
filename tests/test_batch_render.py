@@ -6,7 +6,7 @@ import pytest
 import soundfile as sf
 
 from src.analysis.models import AnalysisResult, BeatGridMetadata
-from src.batch_render import render_candidate_batch
+from src.batch_render import build_argument_parser, render_candidate_batch
 from src.candidates import CandidateGenerationConfig, CandidateGenerationResult
 from src.pipeline import generate_transition_candidates
 from src.tempo.simple_tempo_adjust import SimpleTempoAdjust
@@ -134,3 +134,21 @@ def test_batch_passes_candidate_bpms_to_every_renderer(batch_inputs, monkeypatch
 
     assert not result.failures
     assert recorded_bpms == [(120.0, 100.0)] * 4
+
+
+def test_batch_cli_accepts_all_variable_transition_lengths():
+    args = build_argument_parser().parse_args(
+        [
+            "source.wav",
+            "target.wav",
+            "--output-dir",
+            "output/variable-test",
+            "--transition-bars",
+            "2",
+            "4",
+            "6",
+            "8",
+        ]
+    )
+
+    assert tuple(args.transition_bars) == (2, 4, 6, 8)

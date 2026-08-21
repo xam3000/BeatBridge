@@ -82,8 +82,26 @@ class TrackFeatureArtifact:
         *,
         role,
         normalization: FeatureNormalizationStats,
+        transition_length_bars=None,
+        sequence_length=None,
     ):
-        """Return one contract-valid source-postroll or target-preroll window."""
+        """Return one source-postroll or target-preroll window.
+
+        The no-length call is the unchanged Feature Protocol 1 API and returns
+        32 steps. Variable callers must provide the explicit transition length;
+        the optional sequence length is only a consistency assertion.
+        """
+        variable_geometry = None
+        if transition_length_bars is None and sequence_length is None:
+            requested_length = SEQUENCE_LENGTH
+        else:
+            from src.features.variable_contract import geometry_for_length
+
+            variable_geometry = geometry_for_length(
+                transition_length_bars,
+                sequence_length=sequence_length,
+            )
+            requested_length = variable_geometry.sequence_length
         role = str(role)
         if role not in {"source", "target"}:
             raise ValueError("role must be 'source' or 'target'")
@@ -97,8 +115,8 @@ class TrackFeatureArtifact:
                 f"Cue sample {cue_sample} is not close to a cached half-beat boundary"
             )
 
-        start = boundary_index if role == "source" else boundary_index - SEQUENCE_LENGTH
-        end = start + SEQUENCE_LENGTH
+        start = boundary_index if role == "source" else boundary_index - requested_length
+        end = start + requested_length
         if start < 0 or end > self.bin_count:
             raise ValueError(
                 f"Track has insufficient cached context for a {role} window at "
@@ -107,8 +125,8 @@ class TrackFeatureArtifact:
 
         features = self.base_features[start:end].copy()
         features[:, feature_index("transition_position")] = (
-            np.arange(SEQUENCE_LENGTH, dtype=np.float32) + 0.5
-        ) / float(SEQUENCE_LENGTH)
+            np.arange(requested_length, dtype=np.float32) + 0.5
+        ) / float(requested_length)
         features[:, feature_index("spectral_flux")] = _normalize_deferred(
             self.spectral_flux_raw[start:end],
             normalization.spectral_flux_log1p_p99,
@@ -117,7 +135,16 @@ class TrackFeatureArtifact:
             self.onset_strength_raw[start:end],
             normalization.onset_strength_log1p_p99,
         )
-        return validate_feature_array(features.astype(np.float32, copy=False))
+        features = features.astype(np.float32, copy=False)
+        if variable_geometry is None:
+            return validate_feature_array(features)
+        from src.features.variable_contract import validate_variable_feature_array
+
+        return validate_variable_feature_array(
+            features,
+            transition_length_bars=variable_geometry.transition_length_bars,
+            sequence_length=variable_geometry.sequence_length,
+        )
 
 
 def extract_or_load_track_features(

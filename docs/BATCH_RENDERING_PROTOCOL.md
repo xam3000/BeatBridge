@@ -88,3 +88,29 @@ Seit Rendering-Protokoll 5 verwendet die Tempoanpassung zuerst FFmpeg mit
 `rubberband`-CLI mit R3-Engine zurück. Der tatsächlich genutzte Pfad steht pro
 Variante als `tempo_backend` im Manifest. Historische Manifeste vor Version 5
 besitzen dieses additive Feld nicht.
+
+## Additive Candidate-v2-Batches
+
+Ein Batch mit `bar_grid_v2_length_specific` verwendet additiv
+`format_version = 2` und `render_protocol_version = 6`. Jede gerenderte
+Variante speichert neben Candidate-ID und Rendergrenzen auch
+`transition_length_bars` sowie die daraus abgeleitete
+`transition_length_beats`. Bestehende v1-Batchroots werden nicht umgeschrieben;
+die Ausgabeprüfung verlangt weiterhin einen neuen Zielordner oder ein
+explizites Überschreibflag.
+
+## Additive Multi-Song-Variable-Längen
+
+`src.multi_batch_render.generate_multi_song_batch()` akzeptiert additiv
+`transition_lengths_bars=(2, 4)`. Die API und CLI validieren das angeforderte
+Set über den zentralen Candidate-v2-Längenvertrag; zulässig sind ausschließlich
+`2`, `4`, `6` und `8`. Das Root-Manifest speichert die sortierte Liste unter
+`transition_lengths_bars`.
+
+Der unveränderte Aufruf ohne Option verwendet weiterhin den v1-
+`CandidateGenerationConfig`-Pfad mit genau `(2, 4)`. Wird mindestens eine
+6- oder 8-Takt-Länge angefordert, verwendet jedes unabhängige Paar additiv
+`VariableCandidateGenerationConfig` und erzeugt ein Candidate-v2-
+Paarmanifest. Die Längenprüfung findet pro Länge und pro Boundary statt;
+fehlender langer Kontext verwirft daher keine gültigen kürzeren Kandidaten.
+Bestehende Multi-Batch-Roots werden nicht aktualisiert oder überschrieben.

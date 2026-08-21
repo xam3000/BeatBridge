@@ -26,6 +26,62 @@ from .model import (
 from .runner import TrainingConfig, run_feature_control_training
 from .runner import run_tcn_bilstm_transition_control_training
 from .vocal_runner import VocalTrainingConfig, run_vocal_feature_control_training
+from .variable_runner import (
+    VariableTemporalTrainingConfig,
+    run_variable_tcn_bilstm_training,
+)
+from .variable_waveform_cache import (
+    VARIABLE_WAVEFORM_CACHE_ROOT,
+    VARIABLE_WAVEFORM_RENDER_SAMPLE_RATE,
+    VARIABLE_WAVEFORM_SAMPLE_RATE,
+    materialize_variable_waveform_cache,
+)
+from .wandb_logging import WandbConfig
+
+
+def _add_wandb_options(parser):
+    parser.add_argument(
+        "--wandb-mode",
+        choices=("disabled", "offline", "online"),
+        default=None,
+        help="W&B mode; defaults to WANDB_MODE or disabled",
+    )
+    parser.add_argument(
+        "--wandb-project",
+        default=None,
+        help="W&B project; defaults to WANDB_PROJECT or beatbridge",
+    )
+    parser.add_argument(
+        "--wandb-entity",
+        default=None,
+        help="W&B entity/team; defaults to WANDB_ENTITY",
+    )
+    parser.add_argument(
+        "--wandb-group",
+        default=None,
+        help="Optional W&B run group; defaults to WANDB_GROUP",
+    )
+    parser.add_argument(
+        "--wandb-log-checkpoints",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Log checkpoints and local run files as a W&B artifact",
+    )
+
+
+def _wandb_config_from_args(args):
+    environment = WandbConfig.from_environment(mode=args.wandb_mode)
+    return WandbConfig(
+        mode=environment.mode,
+        project=args.wandb_project or environment.project,
+        entity=args.wandb_entity or environment.entity,
+        group=args.wandb_group or environment.group,
+        log_checkpoints=(
+            environment.log_checkpoints
+            if args.wandb_log_checkpoints is None
+            else args.wandb_log_checkpoints
+        ),
+    )
 
 
 def build_argument_parser():
@@ -79,6 +135,7 @@ def build_argument_parser():
         help="PyTorch device: auto (CUDA if available), cpu, cuda, or cuda:<index>",
     )
     train_parser.add_argument("--resume", action="store_true")
+    _add_wandb_options(train_parser)
 
     tcn_train_parser = subparsers.add_parser("train-tcn-bilstm")
     tcn_train_parser.add_argument("dataset_directory")
@@ -117,6 +174,35 @@ def build_argument_parser():
         help="PyTorch device: auto (CUDA if available), cpu, cuda, or cuda:<index>",
     )
     tcn_train_parser.add_argument("--resume", action="store_true")
+    _add_wandb_options(tcn_train_parser)
+
+    variable_cache_parser = subparsers.add_parser("cache-variable-waveforms")
+    variable_cache_parser.add_argument("dataset_directory")
+    variable_cache_parser.add_argument("--cache-root", default=str(VARIABLE_WAVEFORM_CACHE_ROOT))
+    variable_cache_parser.add_argument("--feature-cache-root", default=None)
+    variable_cache_parser.add_argument("--transition-bars", nargs="+", type=int, default=[2, 4, 6, 8])
+    variable_cache_parser.add_argument("--limit", type=int, help="Maximum examples per split and length")
+    variable_cache_parser.add_argument("--training-sample-rate", type=int, default=VARIABLE_WAVEFORM_SAMPLE_RATE)
+    variable_cache_parser.add_argument("--render-sample-rate", type=int, default=VARIABLE_WAVEFORM_RENDER_SAMPLE_RATE)
+    variable_cache_parser.add_argument("--rounding-tolerance-samples", type=int, default=2)
+
+    variable_train_parser = subparsers.add_parser("train-variable-tcn-bilstm")
+    variable_train_parser.add_argument("dataset_directory")
+    variable_train_parser.add_argument("output_directory")
+    variable_train_parser.add_argument("--cache-root", default=str(VARIABLE_WAVEFORM_CACHE_ROOT))
+    variable_train_parser.add_argument("--transition-bars", nargs="+", type=int, default=[2, 4, 6, 8])
+    variable_train_parser.add_argument("--seed", type=int, default=VariableTemporalTrainingConfig().seed)
+    variable_train_parser.add_argument("--max-epochs", type=int, default=VariableTemporalTrainingConfig().max_epochs)
+    variable_train_parser.add_argument("--batch-size", type=int, default=4)
+    variable_train_parser.add_argument("--learning-rate", type=float, default=VariableTemporalTrainingConfig().learning_rate)
+    variable_train_parser.add_argument("--weight-decay", type=float, default=VariableTemporalTrainingConfig().weight_decay)
+    variable_train_parser.add_argument("--patience", type=int, default=VariableTemporalTrainingConfig().patience)
+    variable_train_parser.add_argument("--min-delta", type=float, default=VariableTemporalTrainingConfig().min_delta)
+    variable_train_parser.add_argument("--gradient-clip-norm", type=float, default=VariableTemporalTrainingConfig().gradient_clip_norm)
+    variable_train_parser.add_argument("--training-sample-rate", type=int, default=VARIABLE_WAVEFORM_SAMPLE_RATE)
+    variable_train_parser.add_argument("--device", default=VariableTemporalTrainingConfig().device)
+    variable_train_parser.add_argument("--resume", action="store_true")
+    _add_wandb_options(variable_train_parser)
 
     vocal_train_parser = subparsers.add_parser("train-vocal")
     vocal_train_parser.add_argument("dataset_directory")
@@ -177,6 +263,7 @@ def build_argument_parser():
         help="PyTorch device: auto (CUDA if available), cpu, cuda, or cuda:<index>",
     )
     vocal_train_parser.add_argument("--resume", action="store_true")
+    _add_wandb_options(vocal_train_parser)
     return parser
 
 
@@ -253,6 +340,7 @@ def main():
             config=config,
             waveform_cache_root=args.cache_root,
             resume=args.resume,
+            wandb_config=_wandb_config_from_args(args),
         )
         print(json.dumps({
             "output_directory": str(result.output_directory),
@@ -282,6 +370,7 @@ def main():
             config=config,
             waveform_cache_root=args.cache_root,
             resume=args.resume,
+            wandb_config=_wandb_config_from_args(args),
         )
         print(json.dumps({
             "output_directory": str(result.output_directory),
@@ -289,6 +378,52 @@ def main():
             "last_epoch": result.last_epoch,
             "best_epoch": result.best_epoch,
             "best_validation_loss": result.best_validation_loss,
+        }, indent=2))
+        return 0
+
+    if args.command == "cache-variable-waveforms":
+        report = materialize_variable_waveform_cache(
+            args.dataset_directory,
+            cache_root=args.cache_root,
+            feature_cache_root=args.feature_cache_root,
+            transition_lengths=args.transition_bars,
+            limit=args.limit,
+            training_sample_rate=args.training_sample_rate,
+            render_sample_rate=args.render_sample_rate,
+            rounding_tolerance_samples=args.rounding_tolerance_samples,
+        )
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.command == "train-variable-tcn-bilstm":
+        config = VariableTemporalTrainingConfig(
+            seed=args.seed,
+            max_epochs=args.max_epochs,
+            learning_rate=args.learning_rate,
+            weight_decay=args.weight_decay,
+            patience=args.patience,
+            min_delta=args.min_delta,
+            gradient_clip_norm=args.gradient_clip_norm,
+            training_sample_rate=args.training_sample_rate,
+            device=args.device,
+        )
+        result = run_variable_tcn_bilstm_training(
+            args.dataset_directory,
+            args.output_directory,
+            config=config,
+            waveform_cache_root=args.cache_root,
+            transition_lengths=args.transition_bars,
+            batch_size=args.batch_size,
+            resume=args.resume,
+            wandb_config=_wandb_config_from_args(args),
+        )
+        print(json.dumps({
+            "output_directory": str(result["output_directory"]),
+            "status": result["status"],
+            "last_epoch": result["last_epoch"],
+            "best_epoch": result["best_epoch"],
+            "best_validation_loss": result["best_validation_loss"],
+            "cache_hits": result["cache_hits"],
         }, indent=2))
         return 0
 
@@ -313,6 +448,7 @@ def main():
             feature_cache_root=args.feature_cache_root,
             vocal_model=args.vocal_model,
             resume=args.resume,
+            wandb_config=_wandb_config_from_args(args),
         )
         print(json.dumps({
             "output_directory": str(result.output_directory),

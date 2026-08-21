@@ -68,3 +68,35 @@ Der CLI-Schalter `--approximate-grid-policy allow` ist für bewusst
 approximative Experimente verfügbar; der Default bleibt `reject`.
 
 Die Funktion nutzt dieselbe Analyse und dieselbe Sample-Raten-Normalisierung wie `render_transition()`. Batch-Export und Manifest-Datei sind der folgende, bewusst getrennte Meilenstein.
+
+## Additiver Candidate-v2-Vertrag für variable Längen
+
+Seit 2026-08-20 unterstützt der Batchpfad additiv den Generator
+`bar_grid_v2_length_specific` mit `format_version = 2`. Der v1-Generator,
+seine positiven Taktzahlen und bestehende v1-Manifeste bleiben unverändert
+lesbar und ausführbar.
+
+Der v2-Request akzeptiert für die erste variable Stufe ausschließlich
+`transition_length_bars ∈ {2, 4, 6, 8}`. Für jede angeforderte Länge werden
+Source- und Target-Boundaries separat geprüft:
+
+```text
+B_source[L] = vollständige Pre-/Post-Roll-Boundaries für L
+B_target[L] = vollständige Pre-/Post-Roll-Boundaries für L
+C[L]        = B_source[L] × B_target[L]
+```
+
+Eine fehlende 8-Takt-Abdeckung entfernt daher keinen gültigen 2- oder
+4-Takt-Kandidaten. `source_boundary_count` und `target_boundary_count` gelten
+je Länge, ebenso die Rejection-Provenienz. Ein per-L-Rejectionseintrag führt
+`transition_length_bars`; ein Kandidat führt zusätzlich `format_version = 2`
+und `generator = "bar_grid_v2_length_specific"`.
+
+Für jeden v2-Kandidaten müssen alle vier abgeleiteten Fenster — Source vor,
+Source nach, Target vor und Target nach der Boundary — vollständig und mit
+derselben Taktstruktur vorhanden sein. `transition_length_beats` wird aus dem
+tatsächlichen vollständigen Source-Postroll-Fenster abgeleitet und nur dann
+gespeichert, wenn alle vier Fenster dieselbe positive Beatanzahl liefern. Es
+gibt keine akzeptierten Kandidaten mit `None` oder widersprüchlicher
+Beatanzahl. Die kanonische Nutzereingabe bleibt immer
+`transition_length_bars`; die Beatanzahl ist ein abgeleitetes Rendererfeld.

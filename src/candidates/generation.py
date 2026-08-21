@@ -65,6 +65,8 @@ class _Boundary:
 class _Grid:
     boundaries: tuple[_Boundary, ...]
     complete_bar_indices: frozenset[int]
+    contiguous_bar_starts: frozenset[int] = frozenset()
+    strict_contiguity: bool = False
 
 
 class _InvalidGrid(ValueError):
@@ -92,6 +94,20 @@ def generate_candidates(
     and target pre-roll form the bridge transition, while source pre-roll and
     target post-roll contain the two non-overlapping high-power sections.
     """
+    if int(getattr(config, "format_version", 1)) == 2:
+        from .variable import generate_variable_candidates_from_grids
+
+        return generate_variable_candidates_from_grids(
+            source_track,
+            source_bpm,
+            source_beat_frames,
+            target_track,
+            target_bpm,
+            target_beat_frames,
+            source_grid_metadata=source_grid_metadata,
+            target_grid_metadata=target_grid_metadata,
+            config=config,
+        )
     config = CandidateGenerationConfig() if config is None else config
     rejections = []
     source_grid_metadata = source_grid_metadata or unknown_grid_metadata()
@@ -249,7 +265,11 @@ def _grid_provenance_rejection(role, metadata):
     )
 
 
-def _parse_grid(beat_frames: Sequence[object]) -> _Grid:
+def _parse_grid(
+    beat_frames: Sequence[object],
+    *,
+    strict_contiguity: bool = False,
+) -> _Grid:
     beats = []
     for index, frame in enumerate(beat_frames):
         if not isinstance(frame, (tuple, list)) or len(frame) != 3:
@@ -289,7 +309,38 @@ def _parse_grid(beat_frames: Sequence[object]) -> _Grid:
 
     if not complete_bar_indices:
         raise _InvalidGrid("No complete bars with a consistent beat count were found.")
-    return _Grid(boundaries, frozenset(complete_bar_indices))
+
+    contiguous_bar_starts = set()
+    if strict_contiguity:
+        intervals = [
+            right.sample - left.sample
+            for left, right in zip(beats, beats[1:])
+        ]
+        median_interval = sorted(intervals)[len(intervals) // 2] if intervals else 0
+        if median_interval <= 0:
+            raise _InvalidGrid("Strict grid requires a positive median interbeat interval.")
+        maximum_contiguous_interval = median_interval * 1.5
+        for boundary, next_boundary in zip(boundaries, boundaries[1:]):
+            if boundary.bar_index not in complete_bar_indices:
+                continue
+            bar_samples = [
+                beat.sample
+                for beat in beats[boundary.beat_index : next_boundary.beat_index + 1]
+            ]
+            if all(
+                right - left <= maximum_contiguous_interval
+                for left, right in zip(bar_samples, bar_samples[1:])
+            ):
+                contiguous_bar_starts.add(boundary.bar_index)
+    else:
+        contiguous_bar_starts = set(complete_bar_indices)
+
+    return _Grid(
+        boundaries,
+        frozenset(complete_bar_indices),
+        frozenset(contiguous_bar_starts),
+        strict_contiguity,
+    )
 
 
 def _eligible_boundaries(grid: _Grid, lengths_bars: tuple[int, ...]) -> list[_Boundary]:
@@ -339,6 +390,11 @@ def _window_beats(grid: _Grid, boundary_index: int, length_bars: int) -> int | N
         return None
     if any(bar.bar_index not in grid.complete_bar_indices for bar in preceding_bars):
         return None
+    if grid.strict_contiguity and any(
+        bar.bar_index not in grid.contiguous_bar_starts
+        for bar in preceding_bars
+    ):
+        return None
     beats_per_bar = {bar.beats_in_bar for bar in preceding_bars}
     if len(beats_per_bar) != 1:
         return None
@@ -354,6 +410,11 @@ def _following_window_beats(
     if len(following_bars) != length_bars:
         return None
     if any(bar.bar_index not in grid.complete_bar_indices for bar in following_bars):
+        return None
+    if grid.strict_contiguity and any(
+        bar.bar_index not in grid.contiguous_bar_starts
+        for bar in following_bars
+    ):
         return None
     beats_per_bar = {bar.beats_in_bar for bar in following_bars}
     if len(beats_per_bar) != 1:

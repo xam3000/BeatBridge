@@ -9,6 +9,13 @@ from .models import (
     TrackReference,
     TransitionCandidate,
 )
+from .variable import (
+    SUPPORTED_VARIABLE_LENGTHS,
+    VARIABLE_CANDIDATE_FORMAT_VERSION,
+    VARIABLE_GENERATOR_NAME,
+    VariableCandidateGenerationConfig,
+    generate_variable_candidates_from_grids,
+)
 
 __all__ = [
     "CANDIDATE_FORMAT_VERSION",
@@ -19,4 +26,9 @@ __all__ = [
     "TrackReference",
     "TransitionCandidate",
     "generate_candidates",
+    "SUPPORTED_VARIABLE_LENGTHS",
+    "VARIABLE_CANDIDATE_FORMAT_VERSION",
+    "VARIABLE_GENERATOR_NAME",
+    "VariableCandidateGenerationConfig",
+    "generate_variable_candidates_from_grids",
 ]

@@ -111,3 +111,45 @@ Volltrack-Featurecaches speichern dieselben Metadaten als
 `beat_grid_metadata`; sie sind Bestandteil des Cache-Keys. Dasselbe
 Koordinatenraster mit anderer oder nun bekannter Herkunft wird daher nicht mit
 einem alten Provenienzzustand wiederverwendet.
+
+## Additiver Merge-v2-Vertrag: monotone partielle Detektion
+
+`PartialPreAnalysis` (Alias `PreAnalysisV2`) ist ein neuer Analysepfad neben
+`PreAnalysis`/Merge-v1. Er verwendet die Kennung
+`librosa_auftakt_monotonic_partial_v2`; dadurch adressiert er einen eigenen
+`analysis_id`-Ordner. Bestehende v1-`analysis.json`- und Legacy-Caches werden
+weder umgeschrieben noch als v2 interpretiert. `PreAnalysis` bleibt der
+unveränderte v1-Aufruf.
+
+Die Sequenzzuordnung ist monoton und eindeutig eins-zu-eins. Eine dynamische
+Programmierung maximiert zuerst die Zahl der Paarungen innerhalb der
+unveränderten Distanzgrenze von `0.2` Sekunden und minimiert danach die
+Summenabweichung. Nicht zugeordnete Beats erhalten keine Taktmetadaten. Ein
+akzeptierter Merge enthält ausschließlich tatsächlich gepaarte Tupel
+`(librosa_sample, auftakt_count_in_bar, auftakt_beats_in_bar)`.
+
+`fallback_used = false` wird im v2-Pfad nur gesetzt, wenn beide Matchabdeckungen
+im gemeinsamen Zeitbereich mindestens `0.98` betragen, die Paarung monoton,
+eindeutig und endlich/streng steigend ist und mindestens acht zusammenhängende
+vollständige Takte vorliegen. Die `0.98`-Schwelle liegt knapp unter der für
+`LESS_IS_MORE` gemessenen Librosa-Abdeckung von `528/533 = 99.06 %`; die
+gemeinsame aufTAKT-Abdeckung war vollständig. Acht Takte entsprechen zwei
+vollständigen Vier-Takt-Phrasen und sind die kleinste v2-Integritätsstrecke,
+bevor Kandidaten freigegeben werden. Scheitert ein Kriterium, bleiben die
+unzugeordneten Werte ausschließlich Diagnostik und der Track erhält den
+bestehenden expliziten Fallback.
+
+Der v2-Cache speichert additiv unter `diagnostics.merge`:
+Sequenzanzahlen, gemeinsamen Zeitbereich, Matchanzahl, Matchabdeckung je Folge,
+unmatched `before/inside/after`, Distanz `p50/p95/max`, vollständige und
+unvollständige Takte sowie den längsten zusammenhängenden vollständigen
+Taktblock. `grid_source = auftakt_matched_to_librosa_partial_v2` benennt die
+Herkunft eindeutig; dieser Wert bedeutet ausschließlich, dass jedes ausgegebene
+Tupel detektiert wurde, nicht dass fehlende Beats interpoliert wurden.
+
+Der variable Candidate-v2-Parser verwendet für diese Provenienz zusätzlich
+eine Lückenprüfung: ein Interbeat-Abstand über `1.5 ×` dem Median der
+detektierten Abstände trennt Taktblöcke. Count-Sequenzen und diese zeitliche
+Adjazenz müssen für jedes längenspezifische Fenster vollständig sein. Dadurch
+überquert ein Kandidat weder eine fehlende Beatposition noch eine ausgelassene
+vollständige Bar. `approximate_grid_policy = reject` bleibt unverändert strikt.

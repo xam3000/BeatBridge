@@ -216,3 +216,53 @@ Power liegt mit allen neun Validation-Beispielen unter
 seine Ratings sind offen. Für einen unabhängigen Wirksamkeitsnachweis und den
 Vergleich gegen direkt optimierte Kurven werden weiterhin neue Audio-Hashes
 benötigt.
+
+## 9. Additive variable Dataset-2-Baseline
+
+`variable_time_shared_mlp_v1` ist ein neues Modell mit Formatversion `2`.
+Es verändert `time_shared_mlp_v1` und `vocal_time_shared_mlp_v2` nicht. Der
+Loader liest homogene Dataset-2-Shards für `T=16,32,48,64`; eine additive
+Mehrlängenansicht verwendet einen Batch-Sampler, der niemals verschiedene
+Längen in einen Featurebatch mischt. Waveforms bleiben pro Beispiel als
+ungepadete Tupel und dürfen zwischen Beispielen verschiedene Samplezahlen
+haben.
+
+Das Modell erhält die 54 Kanäle und den unveränderten 16-dimensionalen
+Globalvektor sowie separat `length_condition = transition_length_bars / 8`.
+Für eine explizite Länge werden drei monotone Kurven mit genau `T-1`
+Softmax-Inkrementen und genau `T` Kontrollpunkten erzeugt. Die Endpunkte sind
+exakt `0` und `1`; die Vocal-Ducking-Kurven beginnen und enden dadurch exakt
+bei `0`.
+
+`VariableVocalAwareTransitionObjective` verwendet Objective-v5 mit
+`energy_frames=T`. Die Lossaggregation rendert jede Waveform einzeln und
+mittelt erst danach skalare, zeitnormalisierte Terme. Checkpoint- und
+Resume-Manifeste tragen Datasetformat, unterstützte Längen,
+Sequenzlängen, Längenkonditionierung, Modell- und Objective-Namen sowie den
+Datasetmanifest-Hash. Der aktuelle Review hat zusätzlich reale Feature-/Global-
+und Längenkonditionierungsdaten aus Train und Validation mit je einem kleinen
+expliziten Waveform-Callback pro Länge gesmoked. Das ist kein vollständiger
+realer Waveform-Cache und keine lange Trainingskampagne; der Testsplit bleibt
+außerhalb des Runners.
+
+### Variabler temporaler Hauptvertrag
+
+`variable_tcn_bilstm_transition_control_v1` hat Modellformat `4` und ist
+vollständig getrennt von `tcn_bilstm_transition_control_v1`. Ein gemeinsamer
+TCN-Encoder verarbeitet A und B, danach folgt die Fusion
+`[A, B, A-B, A*B]`, der unveränderte Globalvektor und eine separate,
+wirksame Längenprojektion. Die BiLSTM verarbeitet die ganze gültige Länge.
+Der Dataset-2-Normalpfad bleibt längenhomogen; ein optionaler gepaddeter
+Carrier muss `sequence_lengths` angeben, maskiert die TCN-Eingaben und wird
+über `pack_padded_sequence` verarbeitet.
+
+Der Output enthält `(B,T,10)` Diagnose-/Renderercontrols sowie explizite
+monotone Mix-, Low-End- und Vocal-Kurven, getrenntes Source-/Target-Ducking
+und die daraus abgeleiteten Vocal-Gains. Der neue temporal Runner akzeptiert
+nur übergebene Train-/Validation-Batches, nie einen Testsplit. Er speichert
+gleiche Gewichte je vorhandener Länge, Gesamt- und Per-L-Metriken, atomare
+`latest.pt`/`best.pt`-Checkpoints und SHA-gebundene Manifeste. W&B bleibt
+über dieselben `disabled`/`offline`/`online`-Modi optional.
+Ein vollständiger realer CUDA-Lauf ist derzeit noch kein CLI-Befehl: Der Runner
+akzeptiert API-seitig bereits gebaute Train-/Validation-Batches, während der
+versionierte v2-Waveform-Cache und ein eigener CLI-Subcommand noch fehlen.

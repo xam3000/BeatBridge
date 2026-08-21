@@ -14,7 +14,7 @@ import uuid
 
 from src.analysis.pre_analysis import PreAnalysis
 from src.batch_render import DEFAULT_RENDERERS, generate_and_render_batch
-from src.candidates import CandidateGenerationConfig
+from src.candidates import CandidateGenerationConfig, VariableCandidateGenerationConfig
 from src.dataset import (
     DEFAULT_TRACK_EXCLUSIONS_PATH,
     filter_excluded_tracks,
@@ -25,6 +25,7 @@ from src.ranking.song_compatibility import rank_song_targets
 
 MULTI_BATCH_MANIFEST_FORMAT_VERSION = 1
 AUDIO_EXTENSIONS = {".flac", ".mp3", ".ogg", ".wav"}
+DEFAULT_TRANSITION_LENGTHS_BARS = (2, 4)
 
 
 def generate_multi_song_batch(
@@ -41,6 +42,7 @@ def generate_multi_song_batch(
     maximum_bpm=None,
     analysis_workers=1,
     approximate_grid_policy="reject",
+    transition_lengths_bars=DEFAULT_TRANSITION_LENGTHS_BARS,
 ):
     """Rank targets per source, then render the best transition candidates.
 
@@ -59,6 +61,7 @@ def generate_multi_song_batch(
     _validate_bpm_bounds(minimum_bpm, maximum_bpm)
     if int(analysis_workers) <= 0:
         raise ValueError("analysis_workers must be greater than 0")
+    transition_lengths_bars = _normalise_transition_lengths(transition_lengths_bars)
 
     output_directory = Path(output_directory)
     _preflight_output_directory(output_directory)
@@ -78,7 +81,8 @@ def generate_multi_song_batch(
         analysis_location=cache_path,
     )
     _validate_request(song_paths, top_targets, top_transitions, renderers)
-    candidate_config = CandidateGenerationConfig(
+    candidate_config = _candidate_generation_config(
+        transition_lengths_bars,
         approximate_grid_policy=approximate_grid_policy,
     )
     output_directory.mkdir(parents=True, exist_ok=True)
@@ -102,6 +106,7 @@ def generate_multi_song_batch(
         "renderers": list(renderers),
         "target_sample_rate": int(target_sample_rate),
         "approximate_grid_policy": approximate_grid_policy,
+        "transition_lengths_bars": list(transition_lengths_bars),
         "sources": [],
         "failures": [],
     }
@@ -196,6 +201,27 @@ def _validate_request(song_paths, top_targets, top_transitions, renderers):
     unknown_renderers = set(renderers).difference(DEFAULT_RENDERERS)
     if unknown_renderers:
         raise ValueError(f"Unknown renderer(s): {', '.join(sorted(unknown_renderers))}")
+
+
+def _normalise_transition_lengths(transition_lengths_bars):
+    """Validate requested lengths through the additive variable-length contract."""
+    variable_config = VariableCandidateGenerationConfig(
+        transition_lengths_bars=tuple(transition_lengths_bars),
+    )
+    return variable_config.transition_lengths_bars
+
+
+def _candidate_generation_config(transition_lengths_bars, *, approximate_grid_policy):
+    """Keep the historical v1 default while enabling v2 lengths additively."""
+    if tuple(transition_lengths_bars) == DEFAULT_TRANSITION_LENGTHS_BARS:
+        return CandidateGenerationConfig(
+            transition_lengths_bars=tuple(transition_lengths_bars),
+            approximate_grid_policy=approximate_grid_policy,
+        )
+    return VariableCandidateGenerationConfig(
+        transition_lengths_bars=tuple(transition_lengths_bars),
+        approximate_grid_policy=approximate_grid_policy,
+    )
 
 
 def _expand_song_paths(songs):
@@ -376,6 +402,14 @@ def build_argument_parser():
     parser.add_argument("--max-bpm", type=float)
     parser.add_argument("--analysis-workers", type=int, default=1)
     parser.add_argument(
+        "--transition-bars",
+        nargs="+",
+        type=int,
+        choices=(2, 4, 6, 8),
+        default=DEFAULT_TRANSITION_LENGTHS_BARS,
+        help="Candidate transition lengths in bars (default: 2 4).",
+    )
+    parser.add_argument(
         "--approximate-grid-policy",
         choices=("reject", "allow"),
         default="reject",
@@ -413,6 +447,7 @@ def main(argv=None):
         maximum_bpm=args.max_bpm,
         analysis_workers=args.analysis_workers,
         approximate_grid_policy=args.approximate_grid_policy,
+        transition_lengths_bars=tuple(args.transition_bars),
     )
     print(manifest_path)
     manifest = json.loads(Path(manifest_path).read_text(encoding="utf-8"))

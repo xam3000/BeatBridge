@@ -1,6 +1,56 @@
 # BeatBridge – Stand & Next Steps
 
-_Stand: 2026-08-12_
+_Stand: 2026-08-21_
+
+**Verifiziert am 2026-08-21 (Variable-v2 Waveform-Alignment, Cache und CUDA-
+Smoke):** Der blockierende Source-/Target-Samplelängenfehler ist additiv durch
+den versionierten Vertrag `local_grid_target_to_source_v1` gelöst. Die
+Source-Griddauer ist die Autorität; das Target-Preroll wird mit einem
+tonhöhenerhaltenden Rubber-Band-Backend auf diese lokale Dauer transformiert.
+Die tatsächliche lokale Ratio wird aus den gespeicherten Gridgrenzen berechnet;
+die globale BPM-Ratio bleibt als Diagnosewert erhalten. Ein isoliertes
+Rubber-Band-Fenster mit einem Rohrest von 3.423–3.640 Samples wurde korrekt
+abgelehnt; ein Guard-Kontextpfad liefert exakt grenzbezogene Fenster ohne
+Cropping-/Padding-Fallback.
+
+Der unveränderliche Cache unter
+`output/ml_cache/variable_bridge_waveform_v2` bindet Dataset-ID,
+Dataset-Manifest-SHA, Example-ID, Länge, Alignment-Vertrag, Grid-/Audio-/Stem-
+und Payload-SHAs. Er enthält 468/468 reale Train-/Validation-Beispiele:
+420 Train und 48 Validation, je 105/12 für 2/4/6/8 Takte. Alle vier
+Waveforms sind finite Float32-Stereoarrays mit 11.025 Hz und exakt gleicher
+Shape; 377 Einträge nutzten Guard-Kontext, 91 direkt. Die lokale Ratio reicht
+über alle Längen von 0,935849… bis 1,102564…; es gab 0 Rejects. Der Testsplit
+wurde weder materialisiert noch geöffnet.
+
+Der neue CLI-/Loaderpfad `cache-variable-waveforms` und
+`train-variable-tcn-bilstm` verwendet nur vollständige Cache-Hits und
+`VariableLengthBatchSampler`. Der echte CUDA-Smoke auf `cuda:0` lief eine
+Epoche (Train/Validation `0,310062/0,260667`), der Resume lief auf Epoche 2
+(`0,303663/0,265043`), jeweils mit 468 Cache-Hits und W&B disabled. Der
+CUDA-/Checkpoint-Audit bestätigte eine RTX 5070 Ti, finite Losses/Gradienten,
+gültige Checkpoint-SHAs, Per-Length-Validation und Controls
+`(16,10)/(32,10)/(48,10)/(64,10)`. Die vollständige Suite besteht mit
+`209 passed, 4 warnings in 38.06s`. Ein 100-Epochen-Lauf wurde nicht
+gestartet.
+
+**Verifiziert am 2026-08-20 (additiver Librosa-/aufTAKT-Merge-v2-Audit):**
+Der neue `PartialPreAnalysis`-Pfad mit
+`librosa_auftakt_monotonic_partial_v2` wurde auf drei realen Tracks unter
+neuen Analyse-Roots geprüft. `LESS_IS_MORE` (533 Librosa-/632 aufTAKT-Beats,
+527 monotone eindeutige Matches, Coverage 0,988743/1,0, 131 vollständige
+Takte, längster Block 93) und `HELP_LESS` (451/491, 449 Matches, Coverage
+0,995556/1,0, 113 vollständige Takte, längster Block 113) erhalten
+`grid_source=auftakt_matched_to_librosa_partial_v2`, `fallback_used=false` und
+Self-Pair-Kandidaten für 2/4/6/8 Takte. Für `END OF THE STORY` (601/316, 300
+Matches) beträgt die Librosa-Coverage im gemeinsamen Bereich nur 0,499168;
+der Track bleibt daher korrekt bei `fallback_from_detected_beats`, ohne
+erfundene Metadaten oder Kandidaten. Die Binary-SHA
+`35f9149cfef66df9b7ac7716953f859f2d37d34af1beb2d2db231062a4a1b523`, alle drei
+neuen Cache-Hashes und `diagnostics.merge` wurden maschinell validiert. Es
+wurde kein Batch, Featurecache, Dataset oder Training gestartet. Details und
+die vollständigen Distanz-/Unmatched-Zahlen stehen in
+[`Bemerkungen.md`](./Bemerkungen.md).
 
 **Verifiziert am 2026-08-12 (BS-RoFormer als Vocal-Default):** Die bisherige
 HT-Demucs-Vocaltrennung wurde um ein RoFormer-Backend ergänzt. Standardmäßig
@@ -75,6 +125,7 @@ Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automa
 - **Kandidatengenerierung** (`src/candidates/`): versionierter Vertrag `CANDIDATE_PROTOCOL.md` und Generator `bar_grid_v1`. Er kombiniert standardmäßig alle nutzbaren Taktgrenzen beider Songs für 2/4 Takte; nachweislich erkannte Downbeat-Herkunft, vollständige Downbeat-Metadaten, Pre-/Post-Roll auf beiden Seiten, kompatible Beatanzahl in allen vier Fenstern und maximal 15 % Tempoabweichung sind harte Filter. `approximate_grid_policy = reject|allow` ist standardmäßig strikt; neue Kandidaten und Manifeste tragen Source-/Target-Grid-Provenienz.
 - **Feature-Ranking** (`src/ranking/`): `feature_baseline_v3` bewertet Drop A, Source-Auslauf, Target-Vorlauf und Drop B getrennt. Je 30 % entfallen auf High Power der Drops und Non-Overlap (Energieabfall nach A, niedrige Transition-Energie, Energieanstieg vor B); Chroma, RMS-Kontinuität, Spektrum und Tempo ergänzen den Score.
 - **Featurevertrag, globale Paarfeatures und Datasetexport** (`src/features/`): Feature-Protokoll 1 definiert `features_a/features_b` als `float32 (32, 54)` und 16 globale Merkmale. `extract_track.py` berechnet und cached Volltrackmerkmale, `vocal.py` trennt standardmäßig mit BS-RoFormer einmal pro Song einen wiederverwendbaren Vocal-Stem (HT Demucs bleibt explizit wählbar), `global_pair.py` erzeugt Tempo-, lokale Key-/Harmonie- und Kontextwerte. `dataset_export.py` wählt gerankte Vier-Takt-Kandidaten, wendet Trainingsausschlüsse an, bildet Audio-SHA-getrennte Splits, fitttet Flux-/Onset-Normalisierung nur auf Trainingsartefakten und exportiert atomar NPZ/JSONL mit vollständiger Provenienz. Phrasenkanäle bleiben mit `phrase_valid = 0` deaktiviert. Verträge: `FEATURE_PROTOCOL.md`, `DATASET_PROTOCOL.md`, `PRETRAINED_MODELS.md`.
+- **Feature-/Dataset-v2 für variable Längen (2026-08-20)**: Additive Protocol-2-Module erzeugen aus 2/4/6/8 Takten homogene `T=16/32/48/64`-Fenster, behalten 54 Kanäle und 16 globale Features stabil, führen `length_condition` getrennt und exportieren reproduzierbare NPZ-/JSONL-Shards über eine gemeinsame Audio-SHA-Split-Autorität. Leere Shards werden explizit manifestiert; v1-APIs und v1-Datasets bleiben unverändert testbar. Der synthetische v2-Testumfang besteht, ein großer realer Export wurde nicht erzeugt. Verträge: `FEATURE_PROTOCOL_V2.md`, `DATASET_PROTOCOL_V2.md`.
 - **Metrik für gerenderte Übergänge** (`src/ranking/rendered_transition.py`): `rendered_transition_baseline_v1` bewertet nach dem Rendering das tatsächliche Audio inklusive Time-Stretch und Crossfade. Energieform und Grenzglätte zählen je 30 %, harmonische Kontinuität und rhythmische Stabilität je 20 %. Score, Teilwerte, Messwerte, Rang und isolierte Fehler stehen additiv im Batch-Manifest.
 - **Differenzierbarer Control-Prototyp** (`src/control/`): `differentiable_control_v3` rendert vier Takte aus zwei komplementären, konstruktiv monotonen Kurven (`mix_position`, `low_end_position`) mit Equal-Power-Gains und festem FIR-Crossover. Bei 32 Punkten ist jeder Halbbeat-Schritt konstruktiv kleiner als 0,099644; normalisierte Abweichungs- und Krümmungsterme bestrafen abrupte Übergaben. Objective Version 4 ergänzt gültigkeitsmaskierte Vocal-Overlap-, Vocal-Onset/-Offset-Grenz- und Transientenartefakt-Terme aus den gespeicherten Featurefenstern. Frei parametrisierte Kurven können vor einem neuronalen Netz direkt optimiert werden; der Vertrag steht in `DIFFERENTIABLE_CONTROL_PROTOCOL.md`.
 - **Reale Control-Vergleiche** (`src/evaluation/control_probe.py`): wählt aus einem nachbewerteten Multi-Song-Batch hoch bewertete 4-Takt-Kandidaten, rekonstruiert Source-Postroll und Target-Preroll, optimiert die zwei Control-Kurven und exportiert pro Paar Baseline/Optimiert mit identischem Kontext, gemeinsamer Peak-Absenkung und versioniertem Manifest. Der aktuelle blinde v3-Control-Satz mit Rubber Band liegt unter `output/control_studies/blind_v4_control_v3_rubberband_top8_4bar_20260730/`; frühere v1/v2-Versuche bleiben unverändert.
@@ -88,6 +139,7 @@ Kurzfazit Prototyp: Kandidaten können jetzt aus taktsynchronen Downbeats automa
 - **Vocal-Control-Erweiterung Version 2** (`src/control/`, `src/ml/`): `vocal_time_shared_mlp_v2` hat 20.821 Parameter und erzeugt zusätzlich eine monotone Vocal-Übergabe sowie getrenntes Source-/Target-Ducking. `DifferentiableVocalAwareRenderer` verarbeitet gecachte Demucs-Stems separat vom Zwei-Band-Accompaniment. Objective v5 ersetzt die alten mixgebundenen Vocal-Gewichte durch tatsächlichen Stem-Overlap, einen Audibility-Loss gegen unnötig leise aktive Vocals und eine Strafe für Gain-Änderungen mitten in Phrasen. Der Cache v2 speichert Mix und beide samplegleichen Vocal-Stems. `self_supervised_vocal_train_validation_v2` trainiert diese Kette reproduzierbar mit atomaren Checkpoints, Early Stopping, strengem Vertrags-/Hash-Resume und ohne Zugriff auf den Testsplit; Checkpoint-Loads sind auf `weights_only` beschränkt. Vertrag: `VOCAL_CONTROL_MODEL_PROTOCOL.md`.
 - **ML-Modellübersicht (2026-08-19):** [`ML_MODEL_CURRENT_STATE.md`](./ML_MODEL_CURRENT_STATE.md) visualisiert den aktuellen RoFormer-gestützten `vocal_time_shared_mlp_v2`-Default, die historische `time_shared_mlp_v1`-Baseline und den implementierten, aber noch experimentellen `tcn_bilstm_transition_control_v1`-Pfad einschließlich Run-Status und offener Hörvalidierung.
 - **GPU-Ausführung** (`src/torch_device.py`): `auto` wählt für Training und neue Demucs-Separationen CUDA, wenn verfügbar, andernfalls CPU. Der aufgelöste Trainings-Device wird im unveränderlichen Run-Vertrag gespeichert; explizite Overrides bleiben mit `--device cpu` und `--device cuda:<index>` möglich. `requirements-cuda.txt` fixiert den offiziellen CUDA-13.0-Wheel zusätzlich zum plattformneutralen Basis-Requirement.
+- **W&B-Logging (2026-08-20)** (`src/ml/wandb_logging.py`): Beide Trainingsrunner loggen epochweise Train-/Validation-Losses und Objective-Teilmetriken nach W&B. `--wandb-mode offline|online|disabled` sowie `WANDB_*`-Umgebungsvariablen steuern die Integration; Checkpoints, `history.json` und `manifest.json` können als Artifact gespeichert werden. Lokale Run-Dateien und Run-Verträge bleiben maßgeblich, Dataset-Pfade werden nicht an W&B übertragen. Drei reale CUDA-Läufe wurden mit gemeinsamer Gruppe `beatbridge-all-models-20260820` ausgeführt: MLP beste Validation `0,4149939463`, Vocal-v2 `0,3292209521`, TCN/BiLSTM `0,3226487994`. Die Online-Synchronisation ist wegen eines ungültigen/stale API-Keys noch offen; die W&B-Offline-Runs liegen lokal vor. Abhängigkeit: `wandb==0.28.1`.
 
 ### Verifiziert am 2026-08-12 (Codex, Multi-Batch-Exitstatus)
 
@@ -815,3 +867,84 @@ Danach: TCN-/BiLSTM-Hauptmodell und Mid-/High-Controls als neue Modellversion un
 - Board/Task-Übersicht (Trello o. ä.) — ja/nein?
 
 _Vom Exposé bereits beantwortet: Forschungsfrage, Scope/Abgrenzung, Rolle der GUI, Related-Work-Rahmen, Evaluationsansatz, ML-Priorisierung._
+## Verifiziert am 2026-08-21: Realer Dataset v2 abgeschlossen
+
+Die reale variable Materialisierung ist unter neuen, eindeutigen Outputpfaden abgeschlossen. Die Korpusinventur akzeptierte 87 Tracks strikt mit Merge-v2; 24 Fallback-Tracks, 7 BPM-/Policy-Ausschlüsse und 1 Audio-SHA-Duplikat wurden nicht in den Batch übernommen. Der Batch enthält 87/87 Paarmanifeste mit 1.922.730 Kandidaten: 789.021 (2 Takte), 529.434 (4), 360.231 (6), 244.044 (8); alle sind v2-verifiziert und ohne `None`-Beatlängen.
+
+Dataset v2: `output/datasets/variable_v2_strict_20260820_selected_roformer_run01`, `dataset_id=2a9679f687c50696692b`. Pro Länge wurden exportiert: Train 105, Validation 12, Test 21; Sequenzlängen sind 16/32/48/64. Der Export umfasst 552 eindeutige Beispiele und verwendet eine gemeinsame Audio-SHA-Split-Autorität über alle Längen (87 Trackzuweisungen: 61/13/13). Die maschinelle Prüfung `DATASET_V2_VALIDATION_OK` bestätigte Shapes, finite Werte, transition_position, Manifest-/Dateihashes, Audio-SHA-Isolation und RoFormer-Provenienz.
+
+Es wurde kein Training und kein Prompt 8 gestartet. Die abgeleitete Top-k-Auswahl liegt unter `output/batch_variable_v2_strict_20260820_selected_top3_run01`; die vollständigen Batchmanifeste bleiben unverändert erhalten. Der neue RoFormer-Cache liegt unter `output/feature_cache_variable_v2_roformer_20260821`; bestehende Demucs-/RoFormer-Artefakte wurden nicht überschrieben.
+
+## Verifiziert am 2026-08-21: Fresh End-to-End-Review Variable-Length
+
+Der additive Dataset-/ML-/Renderingpfad wurde frisch geprüft. Der reale Loader
+öffnete ausschließlich `train` und `validation`: je Länge 105 Train- und 12
+Validationbeispiele, insgesamt 420/48, mit T=16/32/48/64, endlichen Features,
+korrekter `length_condition` und längenhomogenen Batches. Kein Test-Shard wurde
+geladen.
+
+Die neue Hardening-Prüfung behob und regressionsprüfte drei reproduzierbare
+v2-Fehler: Split-Autoritätsdateien prüfen jetzt die deklarierte Mapping-SHA;
+fractionale Längen werden nicht mehr still zu Integern gecastet; Candidate-v2
+lehnt Nicht-4/4-Raster ab. Zusätzlich validiert der v2-Renderer die
+L/Beat-Geometrie vor Audio-I/O. Die v1-Verträge und Modelle blieben unverändert.
+
+Der kurze reale Feature-Trainings-Smoke nutzte je ein echtes Train- und
+Validation-Featurebeispiel pro Länge, deterministische synthetische Waveforms
+als expliziten Loss-Callback, CPU und W&B `disabled`. Zwei Epochen liefen über
+alle vier Längen; Epoche 2 wurde aus dem SHA-geprüften Latest-Checkpoint von
+Epoche 1 resumed. Gesamt-Validation-Loss: `0,2956906296` (Epoche 1) und
+`0,2944503240` (Epoche 2). Gesamt- und Per-L-Metriken stehen in
+`output/review_variable_v2_training_smoke_20260821_run01/history.json`; der
+abschließende Reviewreport liegt daneben. Inferenz auf je einem Validationbeispiel
+bestätigte endliche `(T,10)`-Controls und monotone Kurven für 2/4/6/8 Takte.
+
+Vier neue reale Validation-Equal-Power-Renderings liegen unter
+`output/review_variable_v2_e2e_20260821_run04/`. Sie verwenden je einen
+samplegleichen Kandidaten aus der Validation, Rendering-Format 6, 44.100 Hz,
+endliche Stereo-Float-WAVs und exakte Bridge-Samplegrenzen von 136.704,
+268.288, 401.920 und 546.304 Samples für 2/4/6/8 Takte. Kandidaten mit
+unterschiedlichen Source-/Target-Gridfenstern werden vom v2-Vertrag weiterhin
+abgelehnt; der Pfad kürzt nicht still.
+
+Die gezielte v2-/Hardening-/v1-Regression sowie die Batch-/Candidate-Regression
+bestanden. Die vollständige Suite bestand frisch mit **199 Tests und 4
+Warnungen in 46,34 s**. Die Warnungen sind die bekannten `aifc`-/`sunau`-
+Deprecations und zwei CUDA-Determinismuswarnungen. Das ältere, separat bekannte
+Librosa-/Numba-JIT-/`librosa.resample`-Problem wurde in diesem Lauf nicht
+beobachtet und ist nicht als v2-Fehler zu werten.
+
+Ein vollständiger realer CUDA-Trainingslauf wurde ausdrücklich nicht gestartet.
+Der aktuelle v2-Runner ist eine API für bereits gebaute Train-/Validation-Batches;
+ein realer v2-Waveform-Cache und ein eigener CLI-Subcommand fehlen noch. Der
+empfohlene spätere Befehl nach Abschluss dieser Cache-/CLI-Stufe ist daher:
+
+```powershell
+.venv\Scripts\python.exe -m src.ml train-variable-tcn-bilstm output\datasets\variable_v2_strict_20260820_selected_roformer_run01 output\training_runs\variable_tcn_bilstm_variable_v2_full_cuda --waveform-cache-root output\ml_cache\variable_bridge_waveform_v2 --batch-size 8 --max-epochs 100 --device cuda:0 --wandb-mode disabled
+```
+
+Dieser Befehl wurde nicht ausgeführt; vor seiner Freigabe muss der neue
+Waveform-Cache-/CLI-Pfad implementiert und separat verifiziert werden.
+
+## Verifiziert am 2026-08-21: Waveform-v2-Alignment-Gate blockiert
+
+Die vorgeschaltete Längenanalyse wurde ausschließlich auf den realen
+Train-/Validation-Shards des Dataset-v2 ausgeführt: 420/48 Beispiele,
+gleichmäßig 117 je Länge für 2/4/6/8 Takte. In den referenzierten aligned
+Feature-/Beatgrid-Fenstern liegen Source- und Target-Bridge-Längen bereits bei
+44.100 Hz systematisch auseinander: exakt gleich sind nur 85/468; 383/468
+überschreiten ein strenges Rundungskriterium. Die Differenzbereiche betragen
+−12.288…+8.704 (2 Takte), −8.192…+10.752 (4), −9.216…+12.288 (6) und
+−15.360…+14.848 Samples (8). Die 46 eindeutigen RoFormer-Stem-Manifeste
+sind vorhanden; ihre erwarteten tempoangepassten Gesamtlängen stimmen in
+allen 468 Fällen mit den aligned Audio-Gesamtlängen überein. Die Ursache ist
+damit die lokale Source-/Target-Griddauer, nicht fehlende Vocal-Provenienz.
+
+Gemäß der Stopbedingung wurde keine willkürliche Cropping-, Padding- oder
+Resampling-Regel eingebaut. Der zulässige nächste Vertrag ist ein
+Reject-Vertrag um die reproduzierbare kanonische Länge
+`round(transition_length_beats * 60 / source_bpm * training_sample_rate)`;
+eine symmetrische Korrektur ist nur für echte Sample-Rundung zulässig und muss
+für Mix und Vocal identisch sein. Der neue Waveform-Cache, sein CLI-Pfad,
+CUDA-Smoke-Test und Resume bleiben bis zur Klärung der Grid-/Datenautorität
+offen. Der Testsplit wurde in dieser Analyse nicht geöffnet.

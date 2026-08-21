@@ -1,5 +1,76 @@
 # Beobachtungen, Entscheidungen und Gelerntes
 
+## Verifiziert am 2026-08-20 (W&B-Trainingsläufe aller Modelle)
+
+- **Fragestellung und Reasoning:** Nach der W&B-Integration sollten alle drei
+  aktuell vorhandenen Modellpfade auf demselben erweiterten Datensatz mit
+  identischem Seed, GPU-Setup und gemeinsamer W&B-Gruppe trainiert werden.
+  Wegen der fehlgeschlagenen Online-Authentifizierung wurden die Runs lokal
+  als W&B-Offline-Runs aufgezeichnet, damit Metriken und Checkpoint-Artefakte
+  nach einem gültigen Login synchronisiert werden können.
+- **Eingaben/Setup:** Dataset
+  `output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805`
+  mit 370 Train- und 50 Validation-Beispielen; Seed `20260820`;
+  `--device auto` löste auf `cuda:0` (NVIDIA GeForce RTX 5070 Ti) auf;
+  `--max-epochs 30`; W&B-Projekt `beatbridge`; Gruppe
+  `beatbridge-all-models-20260820`; W&B SDK `0.28.1`; Checkpoint-Logging
+  aktiviert. Der RoFormer-Vocal-Run nutzte
+  `roformer-model-bs-roformer-sw-by-jarredou`.
+- **Testumfang bzw. Befehle:** Ausgeführt wurden die CLI-Pfade
+  `src.ml train`, `src.ml train-vocal` und `src.ml train-tcn-bilstm`, jeweils
+  mit `--wandb-mode offline --wandb-project beatbridge
+  --wandb-group beatbridge-all-models-20260820 --wandb-log-checkpoints`.
+  Der MLP-Lauf wurde nach der Korrektur von `WANDB_DATA_DIR` einmal unter
+  einem separaten Output-Verzeichnis wiederholt, damit auch sein Artefakt
+  vollständig gestaged wird.
+- **Ergebnis:**
+  - `time_shared_mlp_v1`: Early Stopping in Epoche 8, beste Validation in
+    Epoche 2, Loss `0,4149939463`; Offline-Run unter
+    `output/training_runs/wandb_time_shared_mlp_v1_extended_bpm145_165_offline_20260820_rerun/`.
+  - `vocal_time_shared_mlp_v2`: abgeschlossen bis Epoche 30, beste Validation
+    in Epoche 25, Loss `0,3292209521`; Offline-Run unter
+    `output/training_runs/wandb_vocal_time_shared_mlp_v2_roformer_extended_bpm145_165_offline_20260820/`.
+  - `tcn_bilstm_transition_control_v1`: Early Stopping in Epoche 17, beste
+    Validation in Epoche 11, Loss `0,3226487994`; Offline-Run unter
+    `output/training_runs/wandb_tcn_bilstm_transition_control_v1_extended_bpm145_165_offline_20260820/`.
+  Alle drei Läufe meldeten vollständige Cache-Hits und legten lokale
+  `history.json`, `manifest.json`, `checkpoints/best.pt`,
+  `checkpoints/latest.pt` sowie W&B-Run-Dateien an. Für den wiederholten MLP-,
+  Vocal- und TCN-Lauf wurden Artefakt-Staging-Dateien im jeweiligen lokalen
+  W&B-Datenverzeichnis erzeugt.
+- **Fehler/Blockaden:** `.venv\Scripts\wandb.exe login --verify` schlug mit
+  „API key verification failed“ fehl; ein anschließender Online-Trainingsstart
+  meldete „user is not logged in“. Die eigentlichen Offline-Trainings und das
+  lokale Logging waren davon nicht betroffen. Die beiden vorherigen, nur
+  teilweise gestarteten Online-Versuche wurden nicht gelöscht.
+- **Schlussfolgerung und nächster Schritt:** Die drei Modellpfade trainieren
+  mit W&B-Logging reproduzierbar auf CUDA. Nach einem erneuten gültigen Login
+  sind die Offline-Runs mit `.venv\Scripts\wandb.exe sync <offline-run>` in
+  die Cloud übertragbar; die lokalen Manifeste bleiben die maßgebliche
+  Provenienz.
+
+## Verifiziert am 2026-08-20 (W&B-Trainingsabschlusschecks)
+
+- **Fragestellung und Reasoning:** Nach den realen Läufen sollten Adapter,
+  Abhängigkeiten, Manifeste, Checkpoints und lokale W&B-Run-Dateien nochmals
+  gemeinsam geprüft werden.
+- **Eingaben/Setup:** Die drei neuen Offline-Output-Verzeichnisse des
+  MLP-Reruns, Vocal-v2-Runs und TCN/BiLSTM-Runs; `.venv` mit `wandb==0.28.1`.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -m pytest -q tests\test_wandb_logging.py`,
+  `.venv\Scripts\python.exe -m pip check`, PowerShell-JSON-Prüfung der
+  drei `manifest.json` inklusive `cuda:0`, Checkpoint-Dateien und Offline-Run-
+  Anzahl sowie `git diff --check`.
+- **Ergebnis:** W&B-Tests **3 passed in 2,43 s**; `pip check` meldet
+  `No broken requirements found`. Alle drei Manifeste sind lesbar, enthalten
+  `best.pt` und `latest.pt`, melden jeweils `cuda:0` und je einen lokalen
+  W&B-Offline-Run. Das Artefakt-Staging enthält bei jedem Lauf vier Dateien.
+  `git diff --check` meldete keine Whitespace-Fehler; nur erwartete
+  LF/CRLF-Konvertierungswarnungen.
+- **Schlussfolgerung und nächster Schritt:** Der lokale Trainings- und
+  Logging-Workflow ist abgeschlossen. Offen bleibt nur die Cloud-Synchroni-
+  sation nach Korrektur des W&B-API-Keys.
+
 ## Offene Beobachtungen
 
 - **Beobachtung (2026-08-18, gelernte Vocal-Outputs):** Das Notebook lädt jetzt den manifest- und SHA-geprüften Best-Checkpoint `vocal_time_shared_mlp_v2_extended_bpm145_165_top10_seed20260805_20260805`, Epoche 22, mit 20.821 Parametern. Er wird auf das echte Validation-Beispiel `example-826d104398f9b3d2` aus demselben Dataset angewendet. Visualisiert und beschriftet werden `mix_position`, `low_end_position`, `vocal_position`, `vocal_duck_a`, `vocal_duck_b`, `vocal_gain_a` und `vocal_gain_b`. Die gelernten Vocal-Positionen, Ducking-Werte und resultierenden Gains weichen sichtbar von der linearen Nullinitialisierung ab.
@@ -89,6 +160,112 @@ inference-only `bs-roformer-infer==0.1.1` mit verifizierten Modell-Downloads.
 Demucs bleibt als explizites Vergleichsbackend erhalten; bestehende Demucs-
 Caches werden nicht migriert oder überschrieben.
 
+## Verifiziert am 2026-08-20 (W&B-Integration, gezielter Testlauf)
+
+- **Fragestellung und Reasoning:** Die neue optionale W&B-Schicht muss beide
+  Trainingsrunner erreichen, ohne lokale Resume-/Checkpoint-Verträge zu
+  verändern oder Tests von Netzwerk/Login abhängig zu machen. Deshalb wurden
+  Offline-/Online-/Disabled-Modi, epochweise Metriken, Artefakte und die
+  Pfad-Redaktion separat geprüft.
+- **Eingaben/Setup:** Repository-Stand vom 2026-08-20; synthetische CPU-
+  Beispiele der bestehenden MLP- und Vocal-Runner-Tests; W&B-SDK im
+  gezielten Testlauf durch ein Fake-Modul ersetzt. Die echte Abhängigkeit ist
+  in `requirements.txt` als `wandb==0.28.1` ergänzt.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -m pytest -q tests/test_wandb_logging.py tests/test_ml_training_runner.py tests/test_vocal_ml_training_runner.py`
+- **Ergebnis:** 11 Tests bestanden. Zwei erwartete PyTorch-CUDA-
+  Determinismuswarnungen; keine Fehler oder Blockaden. Geprüft wurden
+  Disabled-No-op, Offline-Initialisierung, Train-/Validation-Metriken,
+  Summary, Ergebnis-Artifact, Resume-Kompatibilität beider Runner und die
+  Entfernung lokaler Dataset-Pfade aus der W&B-Konfiguration.
+- **Schlussfolgerung und nächster Schritt:** Die Integration ist funktional
+  eingebunden. Als nächster Schritt folgen Abhängigkeitsinstallation bzw.
+  Importprüfung mit `wandb==0.28.1`, CLI-Help-/Disabled-Sonde und danach der
+  vollständige Testlauf.
+
+## Verifiziert am 2026-08-20 (W&B-SDK und CLI-Sonde)
+
+- **Fragestellung und Reasoning:** Die Fake-SDK-Tests prüfen die interne
+  Adapterlogik, aber nicht den echten W&B-Prozess. Deshalb wurde die
+  festgelegte SDK-Version installiert und ein echter Offline-Run mit einer
+  Epoche, CLI-Hilfe und Dependency-Prüfung ausgeführt. Online-Login und
+  Cloud-Synchronisation waren für diese Verifikation nicht erforderlich.
+- **Eingaben/Setup:** `.venv` mit Python 3.14; `wandb==0.28.1` aus PyPI;
+  synthetische Metriken und temporäres Output-Verzeichnis; W&B-Modus
+  `offline`.
+- **Testumfang bzw. Befehl:** Offline-Logging-Sonde über
+  `.venv\Scripts\python.exe -c "... WandbLogger.start(...); log_epoch(...); finish(...) ..."`,
+  anschließend `.venv\Scripts\python.exe -m src.ml train --help | rg --
+  '--wandb-(mode|project|log-checkpoints)'` und
+  `.venv\Scripts\python.exe -m pip check`.
+- **Ergebnis:** Echter W&B-Offline-Run erfolgreich; Metriken wurden in einem
+  lokalen Offline-Run gespeichert und der SDK-Sync-Hinweis wurde ausgegeben.
+  Die drei W&B-CLI-Optionen sind sichtbar. `pip check` meldet keine defekten
+  Abhängigkeiten. W&B meldete lediglich eine Windows-Berechtigungswarnung
+  für den globalen lokalen Logpfad; der Run selbst blieb erfolgreich.
+- **Schlussfolgerung und nächster Schritt:** Die echte SDK-Anbindung und der
+  CLI-Steuerpfad funktionieren. Danach folgt die vollständige pytest-Suite
+  sowie ein abschließender Diff-/Status-Check.
+
+## Verifiziert am 2026-08-20 (W&B-Integration, Vollsuite-Versuch)
+
+- **Fragestellung und Reasoning:** Nach den gezielten Runner-Tests sollte
+  geprüft werden, ob die additive W&B-Änderung die übrige Regression-Suite
+  beeinflusst. Der Gesamtstatus ist nur belastbar, wenn ein regulärer
+  pytest-Exit abgewartet oder eine bekannte Blockade mit Prozesszustand
+  belegt wird.
+- **Eingaben/Setup:** Repository-Stand vom 2026-08-20; `.venv` mit
+  installiertem `wandb==0.28.1`; Standard-Testumgebung ohne W&B-Online-Login.
+- **Testumfang bzw. Befehl:** `.venv\Scripts\python.exe -m pytest -q`.
+- **Ergebnis:** Nach mehr als sieben Minuten blieb der Prozess im bekannten
+  langsamen Audio-/JIT-Bereich aktiv (Python-Prozess reagierte und verbrauchte
+  CPU), ohne weiteren pytest-Fortschritt oder Fehlerausgabe. Der Lauf wurde
+  deshalb kontrolliert mit `Ctrl+C` beendet und endete mit Exit-Code 1; es
+  liegt kein W&B-bezogener Fehler vor. Der bekannte Suite-Engpass bleibt
+  separat offen.
+- **Schlussfolgerung und nächster Schritt:** Für diese Änderung sind die
+  gezielten ML-/W&B-Tests und die echte Offline-SDK-Sonde maßgeblich grün.
+  Vor dem Abschluss folgen `git diff --check`, Syntax-/Importprüfung sowie
+  eine Wiederholung der gezielten W&B-Tests nach dem letzten Patch.
+
+## Verifiziert am 2026-08-20 (W&B-Integration, Abschlusschecks)
+
+- **Fragestellung und Reasoning:** Nach dem letzten Offline-SDK-Patch sollten
+  die W&B-Adaptertests sowie Import, CLI-Argumente und Whitespace des Diffs
+  nochmals geprüft werden.
+- **Eingaben/Setup:** `.venv` mit `wandb==0.28.1`; W&B im Disabled-Modus für
+  den Testlauf; bytecodefreier Import für die abschließende Python-Sonde.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -m pytest -q tests/test_wandb_logging.py`
+  sowie zunächst `... -m compileall -q src\ml tests\test_wandb_logging.py`;
+  danach bytecodefreier Import-/CLI-Aufruf mit
+  `PYTHONDONTWRITEBYTECODE=1` und `git diff --check`.
+- **Ergebnis:** 3 Tests bestanden. `compileall` konnte wegen gesperrter
+  temporärer `.pyc`-Dateien in den vorhandenen Cache-Verzeichnissen keine
+  neuen Dateien schreiben und meldete `PermissionError`; die bytecodefreie
+  Import-/CLI-Sonde war erfolgreich. `git diff --check` meldete keine
+  Whitespace-Fehler; Git zeigte nur erwartete LF/CRLF-Warnungen.
+- **Schlussfolgerung und nächster Schritt:** W&B-Adapter, Runner-Imports und
+  CLI-Argumente sind abschließend geprüft. Es bleibt nur die optionale
+  Online-Anmeldung/Synchronisation des Nutzers; ein Commit wurde nicht erstellt.
+
+## Verifiziert am 2026-08-20 (W&B-Pfadredaktion, final)
+
+- **Fragestellung und Reasoning:** Die abschließende W&B-Konfigurationsprüfung
+  musste auch verschachtelte Dataset-/Cache-Pfade aus der Cloud-Konfiguration
+  entfernen, nicht nur den obersten Dataset-Pfad.
+- **Eingaben/Setup:** Aktualisierte `_public_contract()`-Implementierung und
+  synthetischer verschachtelter Dataset-Contract; W&B-SDK `0.28.1`.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -m pytest -q tests/test_wandb_logging.py`,
+  bytecodefreie Import-/Redaktionssonde und `git diff --check`.
+- **Ergebnis:** 3 Tests bestanden; verschachtelte Pfade werden entfernt,
+  Import und CLI-nahe Konfiguration funktionieren. Keine Diff-Whitespace-
+  Fehler; nur erwartete LF/CRLF-Warnungen von Git.
+- **Schlussfolgerung und nächster Schritt:** Die W&B-Implementierung ist
+  fertig verifiziert und kann vom Nutzer mit `--wandb-mode online` oder
+  `offline` verwendet werden. Ein Commit wurde nicht erstellt.
+
 ## Verifiziert am 2026-08-19 (ML-Modellübersicht)
 
 - **Fragestellung und Reasoning:** Die aktuelle Form der ML-Modelle sollte so
@@ -120,4 +297,1412 @@ Caches werden nicht migriert oder überschrieben.
   des gelernten Vocal-v2-Checkpoints gegen die Initialisierung das nächste
   Gate; der dokumentierte Stand meldet weiterhin `0/5` Ratings.
 - **Nachprüfung:** Befehl
-  `.venv\Scripts\python.exe -c "from src.ml.model import FeatureControlMLP, VocalFeatureControlMLP, TCNBiLSTMTransitionControl; assert ...; parse training_runs manifests and docs/ML_MODEL_CURRENT_STATE.md"` sowie `git diff --check` bestätigten die neue Datei, die Mermaid-Codeumgebung, die Verweise in `STATUS.md` und die Modell-/Run-Kennungen ohne Fehler. Ergebnis: Parameterzahlen `10394/20821/1013226` und drei Manifeste stimmen.
+ `.venv\Scripts\python.exe -c "from src.ml.model import FeatureControlMLP, VocalFeatureControlMLP, TCNBiLSTMTransitionControl; assert ...; parse training_runs manifests and docs/ML_MODEL_CURRENT_STATE.md"` sowie `git diff --check` bestätigten die neue Datei, die Mermaid-Codeumgebung, die Verweise in `STATUS.md` und die Modell-/Run-Kennungen ohne Fehler. Ergebnis: Parameterzahlen `10394/20821/1013226` und drei Manifeste stimmen.
+
+## Verifiziert am 2026-08-20 (Plan variable Übergangslängen)
+
+- **Fragestellung und Reasoning:** Für den Implementierungsplan zu extern
+  vorgegebenen Übergangslängen musste geprüft werden, ob alle geforderten
+  Geometrien, additiven Verträge, Split-/Testsplit-Regeln, Kandidatenrisiken,
+  Modell-/Vocalpfade, Lossnormalisierung und die gefundenen festen
+  32-Schritt-Annahmen vollständig abgedeckt sind. Die Codeanalyse sollte
+  insbesondere die gemeinsame Boundary-Auswahl und die bestehende
+  Vier-Takt-Split-Autorität absichern.
+- **Eingaben/Setup:** Read-only Repositoryanalyse im Stand vom 2026-08-20;
+  Pflichtlektüre von `AGENTS.md`, `docs/STATUS.md`,
+  `docs/Projekt-Gesamtuebersicht.md`, `.agents/AGENT.md`,
+  `.agents/multi-session-project-discipline.skill` und den relevanten
+  Candidate-, Feature-, Dataset-, ML-, TCN/BiLSTM-, Rendering-, Batch-,
+  Vocal-, W&B- und Control-Study-Protokollen. Bestehende Nutzeränderungen
+  blieben erhalten; Audio-, Dataset-, Cache- und Run-Artefakte wurden nicht
+  geschrieben.
+- **Testumfang bzw. Befehl:** Read-only `git status`, gezielte `rg`-Analyse
+  der festen `32`-/`SEQUENCE_LENGTH`-Stellen und der Candidate-/Split-
+  Verträge; danach
+  `git diff --check` sowie
+  `.venv\Scripts\python.exe -X utf8 -c "... prüft Existenz, Pflichtbegriffe,
+  Geometrieeinträge und fehlende Planabschnitte ..."` für
+  `docs/VARIABLE_LENGTH_TRANSITIONS_PLAN.md`.
+- **Ergebnis:** Der Plan wurde als neue Datei mit 380 Zeilen und 34.454
+  Bytes angelegt. Die strukturelle Python-Prüfung meldete
+  `exists=True`, keine fehlenden Pflichtinhalte und Exit-Code 0. `git
+  diff --check` meldete keine Whitespace-Fehler; Git zeigte nur die bereits
+  erwarteten LF/CRLF-Hinweise. Es wurde kein `pytest`-, Trainings-, Render-
+  oder Dataset-Exportlauf ausgeführt, weil ausdrücklich noch kein
+  Produktivcode implementiert werden sollte.
+- **Schlussfolgerung und nächster Schritt:** Der Plan ist vollständig als
+  additive Migrationsgrundlage abgelegt und hält Feature Protocol 1 sowie
+  bestehende Vier-Takt-Modelle getrennt. Der nächste sinnvolle Schritt ist
+  die Umsetzung des zentralen Längenvertrags und der per-L-
+  Kandidatenvalidierung mit neuen Tests; dabei bleibt der Testsplit aus
+ Training und Modellentwicklung ausgeschlossen. Kein Commit wurde erstellt.
+
+## Verifiziert am 2026-08-20 (Plan-Endkontrolle nach Rankingergänzung)
+
+- **Fragestellung und Reasoning:** Nach der ergänzten Einordnung von
+  Ranking-, Render-Metrik- und Ratings-Verträgen musste die finale
+  Planstruktur erneut auf Pflichtinhalte und Diff-Whitespace geprüft
+  werden.
+- **Eingaben/Setup:** Neue Planfassung mit 386 Zeilen und 35.656 Bytes;
+  `.venv`-Python für die statische Inhaltsprüfung; keine Audio-, Dataset-,
+  Cache-, Run- oder Testsplit-Dateien geladen oder verändert.
+- **Testumfang bzw. Befehl:** Zunächst eine strukturelle Python-Sonde mit
+  zu wörtlichen Suchbegriffen; sie meldete fälschlich fehlende Begriffe
+  (`gemeinsame Boundary-Auswahl`, `längenspezifische Validierung`,
+  `längengehomogene`, danach noch `per Länge`). Die Sonde wurde auf die
+  tatsächlich verwendeten fachlich gleichwertigen Begriffe korrigiert und
+  erneut mit `.venv\Scripts\python.exe -X utf8 -c "... Pflichtinhalte,
+  Geometrie und Ranking-/Metrikabschnitte ..."` ausgeführt. Zusätzlich
+  lief erneut `git diff --check`.
+- **Ergebnis:** Die korrigierte Sonde meldete
+  `lines=386`, `bytes=35656`, `missing=[]` und Exit-Code 0. `git
+  diff --check` meldete keine Whitespace-Fehler; nur die erwarteten
+  LF/CRLF-Hinweise erschienen. Die zwei vorherigen Sondenfehler waren
+  reine Prüfscript-Falschnegativen und keine Planlücken. Kein pytest-,
+  Trainings-, Render- oder Dataset-Exportlauf wurde ausgeführt.
+- **Schlussfolgerung und nächster Schritt:** Der Plan ist final geprüft.
+  Als nächstes kann die Umsetzung mit dem zentralen Längenvertrag und der
+  per-L-Kandidatenvalidierung beginnen; bestehende Vier-Takt-Verträge und
+  der Testsplit-Isolationsgrundsatz bleiben unverändert. Kein Commit wurde
+  erstellt.
+
+## Verifiziert am 2026-08-20 (unabhängiges Architektur-Review Variable Length)
+
+- **Fragestellung und Reasoning:** `docs/VARIABLE_LENGTH_TRANSITIONS_PLAN.md`
+  wurde unabhängig gegen Candidate-, Feature-, Dataset-, Bridge-, Vocal-,
+  Control-, ML-Training-, Runner-, Checkpoint- und Testsplit-Code geprüft.
+  Ziel war, tatsächliche v1-Annahmen von geplanten v2-Verträgen zu trennen und
+  insbesondere Mehrlängen-Boundaries, Featurefenster, Cacheidentitäten,
+  zeitnormalisierte Losses sowie additive Resume-/Split-Verträge nicht nur
+  konzeptionell, sondern mit konkreten Dateigrenzen zu beschreiben.
+- **Eingaben/Setup:** Repository `D:\Documents\00Uni\00master\BeatBridge`,
+  Stand 2026-08-20; Pflichtdokumente und relevante Protokolle vollständig
+  gelesen; vorhandene Nutzeränderungen, Audio-, Dataset-, Cache- und Run-
+  Artefakte blieben erhalten. Es wurde kein Produktivcode implementiert.
+- **Testumfang bzw. Befehl:** Read-only `git status`, gezielte Code-/Test-
+  Analyse mit `rg` und PowerShell; danach
+  `.venv\Scripts\python.exe -X utf8 -c "... strukturelle Planpflichten,
+  Abschnittsnummern und Split-Map-Hash ..."` sowie `git diff --check`.
+- **Ergebnis:** Der korrigierte Plan umfasst 787 Zeilen. Die abschließende
+  strukturelle Sonde meldete `missing=[]`, eindeutige Abschnitte für Invarianten, Risiken,
+  Arbeitspakete und das Analyseinventar sowie `mapping_count=111` und den
+  reproduzierten kanonischen Hash
+  `5548a9bf74f20f9022c02b48571bbb8b8e2e9b4cc58d68f2a81131f2d2b12e8b`.
+  `git diff --check` meldete keine Whitespace-Fehler; Git gab nur die bereits
+  bekannten LF/CRLF-Konvertierungswarnungen aus.
+- **Nachkontrolle:** Eine erneute bytefreie Planstruktur-Sonde
+  (`final_plan_lines=787`), `git diff --check` und `git status --short --branch`
+  bestätigten die unveränderte Planstruktur, den fehlerfreien Whitespace-Status
+  und die Erhaltung der vorher vorhandenen Nutzeränderungen.
+- **Fehler/Blockaden:** Die erste erweiterte Struktursonde meldete wegen zwei
+  absichtlicher Markdown-Zeilenumbruch-Leerzeichen in den Kopfzeilen zunächst
+  `trailing_whitespace=[3,4]`. Die Kopfzeilen wurden ohne Bedeutungsänderung
+  bereinigt; die Wiederholung war mit `trailing_whitespace=[]` erfolgreich.
+  Kein pytest-, Trainings-, Render- oder Dataset-Exportlauf wurde gestartet,
+  weil die Aufgabe ausdrücklich auf ein Architektur-Review ohne
+  Produktivimplementierung begrenzt war. Es gab keine fachliche Blockade und
+  keinen Artefakt-Schreibzugriff.
+- **Schlussfolgerung und nächster Schritt:** Der Plan beschreibt jetzt die
+  verifizierten Invarianten, latenten Risiken, tatsächlichen v1-Abweichungen,
+  exakten neuen Dateigrenzen und die Abnahmekriterien je Implementierungsschritt.
+  Als nächster Schritt kann WP1 (zentraler Längenvertrag) mit isolierten v2-
+  Tests begonnen werden; die alten Vier-Takt-Verträge und der Testsplit bleiben
+  dabei getrennt. Kein Commit wurde erstellt.
+
+## Verifiziert am 2026-08-20 (variable Kandidaten- und Baseline-Rendering-Stufe)
+
+- **Fragestellung und Reasoning:** Die additive v2-Stufe sollte die
+  angeforderten Längen 2, 4, 6 und 8 Takte je Boundary unabhängig prüfen,
+  gültige kürzere Kandidaten bei fehlender 8-Takt-Abdeckung erhalten und die
+  tatsächliche Beatanzahl ohne `None` oder Misch-Meter in Candidate und
+  Rendering weiterreichen. Zusätzlich mussten Fade und Equal-Power für 2, 6
+  und 8 Takte taktgenau bleiben, während der v1-Pfad unverändert nutzbar
+  bleibt.
+- **Eingaben/Setup:** Repository `D:\Documents\00Uni\00master\BeatBridge`,
+  ausschließlich synthetische WAV-Testsignale, `.venv\Scripts\python.exe`,
+  keine ML-/Dataset-Formatänderung. Vor der Änderung wurden die Pflicht-
+  dokumente und die relevanten Candidate-, Rendering-, Batch- und CLI-
+  Protokolle vollständig gelesen. Vorhandene Nutzeränderungen sowie Audio-,
+  Dataset-, Cache- und Run-Artefakte blieben erhalten.
+- **Testumfang bzw. Befehl:**
+  - `.venv\Scripts\python.exe -m pytest -q tests\test_candidates.py -k variable`
+  - `.venv\Scripts\python.exe -m pytest -q tests\test_rendering.py -k variable`
+  - `.venv\Scripts\python.exe -m pytest -q tests\test_batch_render.py -k variable`
+  - `.venv\Scripts\python.exe -m pytest -vv -s tests\test_rendering.py -k "variable_fade_renderers_are_exactly_taktgenau and fade and 2"`
+  - `.venv\Scripts\python.exe -c "... variable candidate/render/CLI imports ..."`
+  - `.venv\Scripts\python.exe -m src.batch_render --help | Select-String ...`
+  - abschließend `git diff --check`.
+- **Ergebnis:** Kandidatentests `3 passed, 11 deselected`; Renderingtests
+  `6 passed, 13 deselected`; CLI-Test `1 passed, 3 deselected`; der gezielte
+  Fade/Equal-Power-Lauf für die 2-Takt-Fälle `2 passed, 17 deselected`.
+  Die Importsonde nach Korrektur meldete `variable candidate/render/CLI
+  imports OK`; die CLI-Hilfe enthält `--transition-bars`. `git diff --check`
+  meldete keine Whitespace-Fehler, nur die bekannten LF/CRLF-Hinweise.
+- **Fehler/Blockaden:** Ein erster gemeinsamer Lauf von
+  `tests\test_candidates.py tests\test_rendering.py tests\test_batch_render.py`
+  überschritt 120 Sekunden nach acht erfolgreichen Tests; der vollständige
+  Kandidatenlauf überschritt 60 Sekunden ebenfalls nach acht Tests. Ein
+  initialer variabler Renderinglauf überschritt 120 Sekunden. Die isolierte
+  Wiederholung mit dem synthetischen Testpfad lief vollständig erfolgreich;
+  die verbleibende Blockade betrifft die bestehende Umgebung bei alten
+  `librosa.load`-Pipelines, nicht die neue variable Testgruppe. Eine erste
+  Importsonde verwendete versehentlich `generate_transition_candidates` aus
+  dem falschen Paket und endete mit `ImportError`; die korrigierte Sonde war
+  erfolgreich. Kein Test schrieb in bestehende Audio-, Dataset-, Cache- oder
+  Run-Verzeichnisse.
+- **Schlussfolgerung und nächster Schritt:** Die variable Kandidatenstufe und
+  der additive Rendering-6-Pfad sind für die geprüften synthetischen 2/4/6/8-
+  Taktfälle abgenommen; v1-Kandidaten und v1-Batchpfade bleiben separat. Die
+  nächsten Schritte aus dem Plan sind Dataset-/Feature- und ML-Verträge; sie
+  wurden in dieser Aufgabe ausdrücklich nicht implementiert. Kein Commit wurde
+  erstellt.
+
+## Verifiziert am 2026-08-20 (Feature Protocol 2 und Dataset Format 2)
+
+- **Fragestellung und Reasoning:** Die additive Feature-/Dataset-Stufe sollte
+  aus `transition_length_bars` deterministisch `T = 16/32/48/64` ableiten,
+  Source-Postroll und Target-Preroll ohne Padding ausschneiden,
+  `transition_position` mit dem tatsächlichen T normalisieren und die 54
+  bestehenden Kanäle sowie den 16-dimensionalen Global-Pair-Vektor semantisch
+  stabil halten. Der Export musste mehrere Längen gemeinsam, mit Top-k je
+  Songpaar und Länge, einer einzigen Audio-SHA-Split-Zuordnung, Training-only-
+  Normalisierung, expliziten L/Beats/T-Feldern, leeren Shards und
+  reproduzierbaren Datei-Hashes verarbeiten.
+- **Eingaben/Setup:** Repository `D:\Documents\00Uni\00master\BeatBridge`,
+  venv-Interpreter `.venv\Scripts\python.exe`, ausschließlich synthetische
+  Feature-/Artifact-Fixtures für die neuen Tests; kein großer realer Datensatz,
+  kein ML-Training und kein Zugriff auf bestehende Audio-, Dataset-, Cache- oder
+  Run-Artefakte. Pflichtdokumente und alle relevanten Feature-, Dataset-,
+  Candidate-, Analyse-, Batch- und ML-Protokolle wurden vor den Änderungen
+  vollständig gelesen; vorhandene Nutzeränderungen blieben erhalten.
+- **Implementierungsumfang:** Neue additive Module
+  `src/features/variable_contract.py`, `variable_extract.py`,
+  `variable_global_pair.py`, `variable_split.py`,
+  `variable_dataset_export.py` und `src/ml/variable_data.py`. Der bestehende
+  `TrackFeatureArtifact.model_window()`-Aufruf bleibt ohne neue Parameter ein
+  32-Schritt-v1-Aufruf; variable Parameter sind additiv. Dazu kamen
+  `FEATURE_PROTOCOL_V2.md`, `DATASET_PROTOCOL_V2.md`, ein
+  `export-dataset-v2`-CLI, homogene Längen-/Split-Shards und synthetische
+  Unit-/Integrationstests.
+- **Testumfang bzw. Befehle:**
+  - Bytefreier Import: `.venv\Scripts\python.exe -B -c "import src.features; ..."`
+  - `.venv\Scripts\python.exe -m pytest -q tests\test_variable_features.py`
+  - `.venv\Scripts\python.exe -m pytest -q tests\test_variable_dataset.py`
+  - `.venv\Scripts\python.exe -m pytest -q tests\test_feature_contract.py tests\test_global_pair_features.py tests\test_ml_data.py`
+  - `.venv\Scripts\python.exe -m pytest -q tests\test_feature_dataset_export.py`
+  - `.venv\Scripts\python.exe -m pytest -q tests\test_track_feature_cache.py`
+  - `.venv\Scripts\python.exe -m pytest -q tests\test_variable_features.py tests\test_variable_dataset.py`
+  - `.venv\Scripts\python.exe -B -c "... Geometrie 2/4/6/8 -> 16/32/48/64 und Schema ..."`
+  - `.venv\Scripts\python.exe -m src.features --help` sowie
+    `export-dataset-v2 --help | Select-String ...`
+  - abschließend `git diff --check`.
+- **Ergebnis:** Der erste erfolgreiche v2-Featurelauf ergab `7 passed`; der
+  Datasetlauf danach `2 passed`, nach dem expliziten L/Beats/T-NPZ-Feld und
+  deterministischen NPZ-Writer erneut `2 passed`. Der abschließende
+  v2-Gesamtlauf ergab `11 passed`. Er deckt alle vier T-Werte, variable
+  Fenstergrenzen, normalisierte Positionen, 16 globale Features, separate
+  Längenkonditionierung, leere Validation-/Test-Shards, dieselbe Split-Map,
+  Top-k pro Paar/Länge, homogene Loader-Batches und identische Datei-Hash-
+  Tabellen zweier identischer Exporte ab. Die v1-Regressionen bestanden mit
+  `12 passed` (Featurevertrag, Global-Pair, ML-Daten), `3 passed` (v1-
+  Datasetexport) und `7 passed` (v1-Featurecache). Die v1-Läufe meldeten je
+  zwei bekannte `aifc`-/`sunau`-Deprecation-Warnungen unter Python 3.14.
+  Import-, Geometrie-/Schema- und CLI-Sonden waren erfolgreich. `git
+  diff --check` meldete keine Whitespace-Fehler, nur die bekannten
+  LF/CRLF-Hinweise.
+- **Fehler/Blockaden:** Der erste `py_compile`-Versuch für die neuen Module
+  wurde von einer bestehenden geschützten `__pycache__`-Datei mit
+  `Permission denied` blockiert; bytefreie Imports waren erfolgreich und
+  schrieben keinen Bytecode. Ein erster Featuretest enthielt einen falschen
+  Erwartungswert (`2/8` statt eines fehlerhaften Werts) und schlug mit `1
+  failed, 6 passed` fehl. Zwei erste Datasetläufe schlugen ausschließlich
+  wegen der synthetischen Fake-Loader-Fixture fehl (SHA nicht an das Fake-
+  Manifest weitergereicht beziehungsweise veraltete Fixture-Aufrufe); nach
+  Korrektur liefen sie erfolgreich. Diese Fehler änderten keine
+  Produktivartefakte. Kein großer Datensatz wurde erzeugt.
+- **Schlussfolgerung und nächster Schritt:** Feature Protocol 2 und Dataset
+  Format 2 sind als additive, synthetisch geprüfte Export-/Ladestufe
+  implementiert. V1-APIs und v1-Datasets bleiben testbar; v2 nutzt getrennte
+  Protokoll-/Namespace-/CLI-Verträge, längenhomogene Shards ohne Padding und
+  eine gemeinsame Split-Autorität. Der nächste sinnvolle Schritt ist ein
+  separater Review der v2-ML-/Checkpoint-/Loss-Schicht; in dieser Aufgabe
+  wurden keine ML-Modelle, Trainingsrunner oder realen Großexporte geändert.
+  Kein Commit wurde erstellt.
+
+- **Nachkontrolle:** Nach der letzten Manifest-/Statuskorrektur liefen erneut
+  `.venv\Scripts\python.exe -m pytest -q tests\test_variable_features.py tests\test_variable_dataset.py`
+  mit `11 passed` sowie
+  `.venv\Scripts\python.exe -m pytest -q tests\test_feature_contract.py tests\test_global_pair_features.py tests\test_ml_data.py tests\test_feature_dataset_export.py tests\test_track_feature_cache.py`
+  mit `22 passed` und denselben zwei bekannten `aifc`-/`sunau`-
+  Deprecation-Warnungen. Der bytefreie Import-/Geometriesmoke meldete
+  `final v2 imports and geometry OK`; `git diff --check` blieb fehlerfrei.
+  Damit ist der dokumentierte Stand mit dem letzten Arbeitsbaum verifiziert.
+
+- **Datum:** 2026-08-20
+- **Fragestellung/Reasoning:** Erster synthetischer Integrationslauf für den
+  additiven Dataset-2-Loader, homogene Mehrlängen-Batches, variable MLP-Ausgaben,
+  Objective-v5-Forward-/Backward-Pfad und Checkpoint-Vertrag. Ziel war es,
+  Form-/Längenfehler vor dem nächsten Implementierungsschritt sichtbar zu
+  machen.
+- **Setup/Eingaben:** Repository BeatBridge, ausschließlich synthetische
+  Feature- und Audio-Tensoren; Dataset-2-Export mit Längen 2/4/6/8 und
+  variablen Waveform-Samplezahlen; `.venv\Scripts\python.exe`.
+- **Befehl/Testumfang:**
+  `.venv\Scripts\python.exe -m pytest -q tests/test_variable_dataset.py tests/test_variable_ml.py`
+- **Ergebnis inklusive Fehlern:** `10 passed, 2 failed`. Fehler 1 war ein
+  Test-Fixture-Verweis auf ein nicht existentes Ergebnisfeld
+  `dataset_directory`; der Exporter verwendet nachweislich
+  `output_directory`. Fehler 2 war ein Testfehler: Die für den absichtlich
+  falschen Längenfall verwendete `length_condition` entsprach weiterhin der
+  Länge 2 und konnte daher korrekt akzeptiert werden. Kein Produktivartefakt
+  wurde verändert oder gelöscht.
+- **Schlussfolgerung/nächster Schritt:** Der neue Pfad importiert und läuft
+  bis auf zwei isolierte Testannahmen. Die beiden Tests werden auf die
+  tatsächlich verifizierten API-/Konditionsverträge korrigiert; anschließend
+  folgt derselbe synthetische Lauf erneut.
+
+- **Datum:** 2026-08-20
+- **Fragestellung/Reasoning:** Nach Korrektur der beiden isolierten
+  Testannahmen sollte der vollständige synthetische Dataset-2-/variable-ML-
+  Umfang ohne Padding- oder Längenfehler laufen.
+- **Setup/Eingaben:** Dieselben ausschließlich synthetischen Dataset-2-
+  Exportdaten, Featuretensore und variablen Waveforms wie im vorherigen Lauf;
+  `.venv\Scripts\python.exe`.
+- **Befehl/Testumfang:**
+  `.venv\Scripts\python.exe -m pytest -q tests/test_variable_dataset.py tests/test_variable_ml.py`
+- **Ergebnis inklusive Fehlern:** `12 passed in 5.26s`; keine Fehler oder
+  Blockaden.
+- **Schlussfolgerung/nächster Schritt:** Dataset-2-Loader, homogener
+  Mehrlängen-Batch-Sampler, dynamische 16/32/48/64-Kontrollpunkte,
+  exakte monotone Endpunkte, variable Audio-Samplezahlen, Objective-v5-
+  Backpropagation und der neue Checkpoint-/Resume-Vertrag sind synthetisch
+  verifiziert. Als nächstes werden die unveränderten v1-Regressionen und ein
+  kleiner expliziter Trainings-Smoke-Test ausgeführt.
+
+- **Datum:** 2026-08-20
+- **Fragestellung/Reasoning:** Der additive v2-Pfad darf bestehende v1-
+  Loader, MLP-Modelle, Audio-Cache-Nutzung und den v1-Training-Runner nicht
+  verändern. Deshalb wurde die gezielte v1-Regression nach dem neuen Import-
+  und Modellpfad erneut ausgeführt.
+- **Setup/Eingaben:** Bestehende Repository-Tests mit ihren synthetischen
+  Fixtures; kein neuer Datensatz; `.venv\Scripts\python.exe`.
+- **Befehl/Testumfang:**
+  `.venv\Scripts\python.exe -m pytest -q tests/test_feature_control_model.py tests/test_vocal_control_model.py tests/test_ml_data.py tests/test_ml_training_runner.py`
+- **Ergebnis inklusive Fehlern:** `15 passed in 9.31s`; zwei bekannte CUDA-
+  Determinismus-Warnungen aus dem bestehenden Runner-Test, keine Fehler.
+- **Schlussfolgerung/nächster Schritt:** v1-Loader, v1-Misch-/Vocal-Modelle
+  und der v1-Runner bleiben testbar und unverändert semantisch nutzbar. Es
+  folgt nur noch der kleine synthetische Trainings-Smoke-Test des neuen
+  variablen Pfades sowie die Abschlussprüfung von Diff und Arbeitsbaum.
+
+- **Datum:** 2026-08-20
+- **Fragestellung/Reasoning:** Minimaler Trainings-Smoke-Test des neuen
+  `variable_time_shared_mlp_v1`: Verifiziert werden sollten ein synthetischer
+  Dataset-2-Batch, der dynamische `T=48`-Forwardlauf, Objective-v5-
+  Gradiententransport und genau ein Optimizer-Schritt, ohne einen großen oder
+  realen Datensatz anzulegen.
+- **Setup/Eingaben:** Zwei synthetische Beispiele mit jeweils 48 Feature-
+  Kontrollpunkten, unterschiedlichen Waveform-Samplezahlen 320 und 384,
+  synthetischen Vocal-Stems, kleiner differentiabler Renderer mit
+  Kernelgröße 31; `.venv\Scripts\python.exe`.
+- **Befehl/Testumfang:**
+  `.venv\Scripts\python.exe -m pytest -q tests/test_variable_ml.py::test_variable_loss_forward_backward_and_audio_lengths_are_unpadded`
+- **Ergebnis inklusive Fehlern:** `1 passed in 4.43s`; Forward, Loss,
+  Backward und ein Optimizer-Schritt erfolgreich; keine Fehler oder
+  Blockaden.
+- **Schlussfolgerung/nächster Schritt:** Der kleine synthetische
+  Trainingspfad ist verifiziert. Es folgt nur die abschließende statische
+  Prüfung, ein letzter gezielter v2-/v1-Testlauf und die Kontrolle, dass keine
+  bestehenden Audio-, Dataset-, Cache- oder Run-Artefakte angefasst wurden.
+
+- **Datum:** 2026-08-20
+- **Fragestellung/Reasoning:** Abschlussregression nach der additiven
+  Dokumentation: Der variable Dataset-/ML-Pfad und die betroffenen v1-
+  Loader/Modelle sollen gemeinsam grün bleiben.
+- **Setup/Eingaben:** Ausschließlich synthetische v2-Fixtures sowie die
+  bestehenden v1-Test-Fixtures; kein Testsplit wurde im Training verwendet;
+  `.venv\Scripts\python.exe`.
+- **Befehl/Testumfang:**
+  `.venv\Scripts\python.exe -m pytest -q tests/test_variable_dataset.py tests/test_variable_ml.py tests/test_feature_control_model.py tests/test_vocal_control_model.py tests/test_ml_data.py`
+- **Ergebnis inklusive Fehlern:** `23 passed in 8.49s`; keine Fehler,
+  Blockaden oder Warnungen in diesem kombinierten Lauf.
+- **Schlussfolgerung/nächster Schritt:** Die implementierte additive
+  Dataset-2-/variable-ML-Baseline ist für den angeforderten synthetischen
+  Umfang verifiziert. Es folgt die reine Arbeitsbaum-/Diff-Prüfung; kein
+  Commit und kein großer Datensatz werden erstellt.
+
+- **Datum:** 2026-08-20
+- **Fragestellung/Reasoning:** Synthetische Abnahme des neuen additiven
+  variablen TCN/BiLSTM-Hauptmodells: dynamische 2/4/6/8-Takt-Geometrie,
+  konstruktive Kurven, Padding-/Packing-Invarianz, stem-aware Objective-v5
+  und der neue per-Längen-Runner-/Resume-Vertrag sollten ohne den v1-
+  Checkpointpfad zu berühren funktionieren.
+- **Setup/Eingaben:** Ausschließlich synthetische 54-Kanal-Featuretensore,
+  globale 16er Features und Vocal-/Mix-Waveforms; Längen 2/4/6/8 mit
+  T=16/32/48/64; lokaler temporärer Run-Ordner; W&B im Defaultmodus
+  `disabled`; `.venv\Scripts\python.exe`.
+- **Befehl/Testumfang:**
+  `.venv\Scripts\python.exe -m pytest -q tests/test_variable_tcn_bilstm.py`
+- **Ergebnis inklusive Fehlern:** `7 passed in 5.71s`; keine Fehler,
+  Blockaden oder Warnungen. Geprüft wurden Single-/Batch-Outputs,
+  Gradientenfluss, monotone Endpunkte, gepackte Padding-Invarianz,
+  DifferentiableVocalAwareRenderer mit Objective v5, atomare
+  Checkpoint-/Manifest-Dateien mit SHA sowie Resume-Ablehnung bei anderem
+  Längenset.
+- **Schlussfolgerung/nächster Schritt:** Der neue temporale Modellvertrag
+  erfüllt den synthetisch geprüften Umfang. Als nächstes folgen die v1-TCN-
+  Regression und der kombinierte variable Regressionstest; Testsplit-APIs
+  wurden vom neuen Runner nicht eingeführt oder geöffnet.
+
+- **Datum:** 2026-08-20
+- **Fragestellung/Reasoning:** Abschlussregression des variablen temporalen
+  TCN/BiLSTM-Pfads gegen den bestehenden vier-Takt-TCN/BiLSTM-Checkpoint-
+  und Training-Runnerpfad.
+- **Setup/Eingaben:** Ausschließlich vorhandene synthetische Test-Fixtures;
+  kein realer Datensatz, keine Audio-/Cache-/Run-Artefakte; W&B nicht aktiv;
+  `.venv\Scripts\python.exe`.
+- **Befehl/Testumfang:**
+  `.venv\Scripts\python.exe -m pytest -q tests/test_tcn_bilstm_model.py tests/test_ml_training_runner.py tests/test_variable_ml.py tests/test_variable_dataset.py tests/test_variable_tcn_bilstm.py`
+- **Ergebnis inklusive Fehlern:** `33 passed in 7.48s`; zwei bekannte CUDA-
+  Determinismus-Warnungen aus dem bestehenden v1-Runner-Test, keine Fehler.
+- **Schlussfolgerung/nächster Schritt:** Der v1-
+  `tcn_bilstm_transition_control_v1`-Checkpointpfad bleibt testbar, während
+  das neue Modell-/Runnerformat separat arbeitet. Es folgen nur noch
+  statische Diff-/Arbeitsbaumprüfungen; kein Commit und kein Großtraining.
+
+- **Datum:** 2026-08-20
+- **Fragestellung/Reasoning:** Vor der Materialisierung des realen Dataset-2-
+  Bestands wurde geprüft, ob die vorhandene Analyseumgebung ein strikt
+  erkanntes Beat-/Downbeat-Grid (`fallback_used=false`) liefern kann. Das ist
+  eine harte Voraussetzung der Kandidatenstufe; ein approximatives 4/4-
+  Fallback darf nicht als striktes Grid ausgegeben werden.
+- **Setup/Eingaben:** Reeller Track
+  `musik/01 - LESS_IS_MORE.flac`; frischer, eindeutiger Pre-Analysis-
+  Prüfpfad `output/_preflight_strict_grid_20260820`; keine vorhandenen Audio-,
+  Dataset- oder Cache-Artefakte überschrieben; `.venv\Scripts\python.exe`.
+- **Befehl/Testumfang:**
+  `.venv\Scripts\python.exe -` mit `PreAnalysis` und Ausgabe von
+  `grid_source`, `fallback_used`, `is_verified_detection` und
+  `beat_grid_sha256`.
+- **Ergebnis inklusive Fehlern:** reproduzierbar fehlgeschlagen:
+  `grid_source='fallback_from_detected_beats'`, `fallback_used=True`,
+  `is_verified_detection=False`; die aufgerufene AUFTAKT-Komponente war nicht
+  verfügbar bzw. endete mit `[WinError 5] Zugriff verweigert`. Der Prozess
+  endete mit `STRICT_GRID_UNAVAILABLE`. Zusätzlich zeigen die vorhandenen
+  Feature-Protocol-1-Manifeste 72 Demucs-Caches und keinen RoFormer-
+  Featurecache; vorhandene RoFormer-Stem-Artefakte allein erfüllen diesen
+  Featurecache-Vertrag nicht.
+- **Schlussfolgerung/nächster Schritt:** Die reale Materialisierung darf
+  unter den geforderten strikten Grid- und RoFormer-Provenienzbedingungen
+  nicht begonnen werden. Es wurde kein Produktivcode geändert und kein
+  Dataset-2-Output angelegt. Nächster Schritt ist die Bereitstellung bzw.
+  Freigabe einer funktionierenden, reproduzierbar identifizierten AUFTAKT-
+  Umgebung und anschließend die erneute Vorprüfung; Qualitätsfilter werden
+  nicht gelockert.
+
+- **Datum:** 2026-08-20
+- **Fragestellung/Reasoning:** Prompt 7 verlangte eine erneute isolierte
+  Strict-Grid-Prüfung mit dem nun verifizierten Repository-Binary. Zuerst
+  wurde derselbe Ein-Track-Lauf in der Prozess-Sandbox wiederholt. Danach
+  wurde ausschließlich für dieses konkrete Binary eine externe Ausführung
+  angefordert, weil `WinError 5` als Sandbox-Ausführungsverweigerung nicht
+  als fehlendes oder unbrauchbares Werkzeug interpretiert werden darf.
+- **Setup/Eingaben:** Arbeitsverzeichnis
+  `D:\Documents\00Uni\00master\BeatBridge`; Eingabe
+  `musik\01 - LESS_IS_MORE.flac`; Binary
+  `D:\Documents\00Uni\00master\BeatBridge\aufTAKTCl.exe`; verifizierte
+  SHA-256
+  `35f9149cfef66df9b7ac7716953f859f2d37d34af1beb2d2db231062a4a1b523`;
+  neuer Analysepfad
+  `output\_preflight_strict_grid_20260820_rerun_01` beziehungsweise für
+  den freigegebenen Wiederholungslauf
+  `output\_preflight_strict_grid_20260820_rerun_01_escalated`;
+  `.venv\Scripts\python.exe`.
+- **Befehl/Testumfang:** Sandbox-Lauf und anschließend freigegebener Lauf
+  mit dem vollständigen Befehl:
+  `.venv\Scripts\python.exe -` aus dem genannten Arbeitsverzeichnis. Der
+  Python-Aufruf prüfte zuerst die Binary-SHA und rief anschließend
+  `PreAnalysis(str(analysis_root) + "\\")(str(track))` auf. Für den FLAC-
+  Track verwendet `PreAnalysis` intern den vollständigen aufTAKT-Aufruf
+  `D:\Documents\00Uni\00master\BeatBridge\aufTAKTCl.exe -i
+  tmp\audio-<uuid>.wav -r tmp\auftakt-output-<uuid>.txt`; danach werden
+  `grid_source`, `fallback_used`, `is_verified_detection`,
+  `backend_version`, `analysis_id` und `beat_grid_sha256` geprüft.
+- **Ergebnis inklusive Fehlern:** Der Sandbox-Lauf bestätigte die Binary-
+  SHA, scheiterte beim Prozessstart erneut mit `[WinError 5] Zugriff
+  verweigert` und erzeugte nur
+  `grid_source='fallback_from_detected_beats'`, `fallback_used=True` und
+  `is_verified_detection=False`. Die ausdrücklich angeforderte externe
+  Ausführung startete aufTAKT nachweislich: Der Prozess
+  `D:\Documents\00Uni\00master\BeatBridge\aufTAKTCl.exe` war während des
+  Laufs mit `Responding=True` vorhanden. Sie lieferte jedoch innerhalb des
+  120-Sekunden-Limits kein Ergebnis; der Wrapper endete mit `Exit code 124`
+  nach `124047 ms`. Der freigegebene Analyse-Outputpfad wurde nicht erzeugt,
+  und im `tmp`-Verzeichnis lag keine fertige
+  `auftakt-output-<uuid>.txt`-Datei vor. Damit ist der Fehler nicht der
+  Prozessstart, sondern ein Hängen während oder nach dem gestarteten
+  aufTAKT-Prozess; ein späterer Datei- oder Lizenzzugriff lässt sich aus dem
+  fehlenden aufTAKT-Diagnoseoutput nicht weiter unterscheiden. Der noch
+  laufende, exakt zu diesem Preflight gehörende aufTAKT-Prozess wurde danach
+  beendet. Kein Produktivcode, Qualitätsfilter, Audio-, Dataset- oder Cache-
+  Artefakt wurde geändert.
+- **Schlussfolgerung/nächster Schritt:** Der Strict-Grid-Preflight ist auch
+  nach der genehmigten Ausführung nicht erfolgreich. Gemäß Prompt 7 wird
+  erneut gestoppt; Kandidaten- und Dataset-2-Materialisierung, RoFormer-
+  Featurecache-Export und Training werden nicht gestartet. Es gibt weiterhin
+  keinen belastbaren Nachweis für `fallback_used=false`,
+  `is_verified_detection=true` und einen gültigen Strict-Grid-Hash. Die
+  Qualitätsfilter wurden nicht gelockert.
+
+## Verifiziert am 2026-08-20 (additive Multi-Song-Variable-Length-Anbindung)
+
+- **Fragestellung/Reasoning:** Der Multi-Song-Batchpfad sollte additiv die
+  Candidate-v2-Längen `2/4/6/8` an jedes Paar weiterreichen, ohne den
+  bisherigen v1-Default `(2, 4)` zu verändern. Geprüft wurden CLI-Parsing,
+  zentrale Längenvalidierung, Paarweitergabe, Root-Manifest und unabhängige
+  Rejection fehlender 8-Takt-Abdeckung. Alle Eingaben waren synthetisch;
+  kein realer Batch und kein Dataset wurden erzeugt.
+- **Setup:** Repository `D:\Documents\00Uni\00master\BeatBridge`,
+  `.venv\Scripts\python.exe`, synthetische WAVs bzw. synthetische Beat-/Grid-
+  Fixtures in pytest-Tempordnern; bestehende Nutzeränderungen und Artefakte
+  blieben erhalten.
+- **Befehl/Testumfang und Ergebnisse:**
+  - `.venv\Scripts\python.exe -m pytest -q tests\test_multi_batch_render.py`:
+    zunächst `2 passed, 2 failed`. Die beiden Fehler waren Test-Fixture-
+    Annahmen: identische Nullsignale wurden korrekt per Audio-SHA dedupliziert
+    und ein 12-Takt-Fixture bot keinen ausreichenden 6-Takt-Kontext.
+  - Derselbe Lauf nach Fixturekorrektur: `4 passed`.
+  - Nach additiver Wiederherstellung der zuvor vorhandenen Regressionstests:
+    `8 failed, 4 passed`; alle acht Fehler waren vorübergehende `NameError`
+    durch noch fehlende historische Testimporte, kein Produktionsfehler.
+  - Derselbe Lauf nach Importkorrektur: `12 passed in 2.64s`.
+  - `.venv\Scripts\python.exe -m pytest -q tests\test_multi_batch_render.py tests\test_batch_render.py tests\test_candidates.py`:
+    `30 passed in 4.08s`; zwei bekannte `aifc`-/`sunau`-Deprecation-Warnungen
+    aus dem bestehenden Audio-Regressionstest.
+  - `.venv\Scripts\python.exe -m src.multi_batch_render --help | Select-String
+    -Pattern '--transition-bars|transition lengths'` sowie bytefreie
+    Konfigurationssonde mit
+    `.venv\Scripts\python.exe -B -c ...`: Hilfe zeigt
+    `--transition-bars {2,4,6,8}`, Normalisierung von `(8,2,6,4)` ergibt
+    `(2,4,6,8)`, erfolgreich.
+  - Abschließende Wiederholung desselben Regressionstests nach der rein
+    formatierenden Testdatei-Korrektur: `30 passed in 4.08s`, dieselben zwei
+    Deprecation-Warnungen.
+  - Abschließendes `git diff --check`: keine Whitespace-Fehler; nur die
+    bekannten LF/CRLF-Hinweise der Windows-Arbeitskopie.
+- **Schlussfolgerung/nächster Schritt:** `generate_multi_song_batch()` nimmt
+  nun additiv `transition_lengths_bars=(2, 4)` an, validiert über
+  `VariableCandidateGenerationConfig`, verwendet für 6/8 den v2-Konfigurations-
+  pfad und schreibt die sortierten Längen in das Root-Manifest. Bei `(2,4)`
+  bleibt der v1-Konfigurationspfad erhalten. Die synthetische Paarprüfung
+  bestätigt Candidate-v2-Kandidaten für 2/4/6/8 sowie den Erhalt kürzerer
+  Kandidaten bei fehlendem 8-Takt-Kontext. Kein Commit, kein realer Batch und
+  kein Training.
+
+- **Datum:** 2026-08-20
+- **Fragestellung/Reasoning:** Isolierte aufTAKT-Differentialdiagnose nach dem
+  vorherigen 120-Sekunden-Abbruch. Unterschieden werden sollten regulär lange
+  Verarbeitung, track-/WAV-abhängiges Verhalten, Arbeitsverzeichnis-/Pfad-
+  und Schreibprobleme, ein möglicher Lizenz-/GUI-Dialog sowie ein genereller
+  Binary-Hänger. Gemäß Diagnoseauftrag wurden keine Kandidaten, Featurecaches,
+  Datasets oder Trainingsartefakte materialisiert und kein Produktivcode
+  geändert.
+- **Setup/Vorabprüfung:** Ausschließlich neuer Ordner
+  `output/_auftakt_diagnostic_20260820_01`; Arbeitsverzeichnis
+  `D:\Documents\00Uni\00master\BeatBridge`; Binary
+  `D:\Documents\00Uni\00master\BeatBridge\aufTAKTCl.exe`; Eingabe
+  `D:\Documents\00Uni\00master\BeatBridge\musik\01 - LESS_IS_MORE.flac`.
+  Die Binary-SHA-256 war vor jedem direkten Lauf
+  `35f9149cfef66df9b7ac7716953f859f2d37d34af1beb2d2db231062a4a1b523`, die
+  Binary war 7.195.648 Bytes groß. Die Eingabe existierte, war lesbar und
+  hatte 33.552.633 Bytes; der Diagnoseordner wurde neu angelegt und ein
+  Schreibprobe-Byte erfolgreich geschrieben. Alle aufTAKT-Eingaben und
+  Resultatpfade waren absolut.
+- **Werkzeug-/Konvertierungslauf:** Der zunächst gefundene
+  `C:\Program Files\SteelSeries\GG\apps\moments\ffmpeg.exe` war ein
+  eingeschränkter Capture-Build ohne FLAC-Demuxer und ohne ffprobe; drei
+  Konvertierungsversuche scheiterten deshalb mit `Invalid data found when
+  processing input` und erzeugten keine WAV. Der gültige FLAC wurde separat
+  mit `soundfile` bestätigt (44.100 Hz, Stereo, 4:23,430). Danach wurde ein
+  vollwertiges FFmpeg/ffprobe-Paar (`Gyan.FFmpeg.Shared` 9.0.1) verwendet.
+  Der Befehl lautete je Ausschnitt `ffmpeg -nostdin -i <absoluter FLAC>
+  [-t 10|60] -ar 44100 -ac 2 -c:a pcm_s16le -map_metadata -1 <absoluter WAV>`;
+  für den Volltrack entfiel `-t`. `ffprobe` bestätigte für
+  `01_10s.wav`, `02_60s.wav` und `03_full.wav` jeweils `sample_rate=44100`,
+  `channels=2`, `sample_fmt=s16` und Dauern `10.000000 s`, `60.000000 s`
+  beziehungsweise `263.429569 s`. Die Konvertierung schrieb ausschließlich
+  in den neuen Diagnoseordner.
+- **Befehl/Testumfang – 10-Sekunden-Lauf:** Direkter Aufruf über den isolierten
+  Monitor mit maximal 60 Sekunden und 5-Sekunden-Polls:
+  `aufTAKTCl.exe -i
+  D:\Documents\00Uni\00master\BeatBridge\output\_auftakt_diagnostic_20260820_01\01_10s.wav
+  -r
+  D:\Documents\00Uni\00master\BeatBridge\output\_auftakt_diagnostic_20260820_01\10s_result.txt`.
+  Der Monitor prüfte SHA, PID, Startzeit, CPU-Zeit, Working Set,
+  Threadanzahl, `Responding`, stdout/stderr sowie Existenz/Größe und
+  Parsebarkeit der Resultatdatei.
+- **Ergebnis 10-Sekunden-Lauf:** PID `15880`, Start `16:28:08.162 +02:00`,
+  Ende nach `30,347 s`, kein Timeout und kein Kill. CPU-Zeit: `0 ms` beim
+  Start, maximal `24.484,375 ms`; Working Set maximal `22.401.024 Bytes`;
+  Threads `1–4`; `Responding=True` bei allen lebenden Polls. Die getrennten
+  Logs sind `10s.stdout.log` (2.913 Bytes) und `10s.stderr.log` (0 Bytes).
+  `10s_result.txt` existierte am Ende mit 240 Bytes und war gemäß dem
+  bestehenden drei-spaltigen aufTAKT-Format parsebar.
+- **Schlussfolgerung 10-Sekunden-Lauf:** Erfolgreicher Kurztest. Kein
+  genereller Binary-Hänger, kein sichtbarer Hinweis auf einen blockierenden
+  Lizenz-/GUI-Dialog und kein Ausgabepfadfehler. Deshalb wurden die
+  60-Sekunden- und Volltrack-Läufe gemäß Auftrag gestartet; Windows-
+  Application-Events und ein sichtbarer manueller Lauf waren nach Regel 9
+  nicht erforderlich.
+- **Befehl/Testumfang – 60-Sekunden-Lauf:** Derselbe direkte Aufruf mit
+  `02_60s.wav`, Resultat `60s_result.txt` und maximal 180 Sekunden;
+  Pollintervall 5 Sekunden. Die Binary-SHA wurde vor dem Start erneut
+  geprüft.
+- **Ergebnis 60-Sekunden-Lauf:** PID `35904`, Start `16:28:49.222 +02:00`,
+  Ende nach `55,350 s`, kein Timeout und kein Kill. CPU-Zeit: `0 ms` beim
+  Start, maximal `49.578,125 ms`; Working Set maximal `53.194.752 Bytes`;
+  Threads `1–4`; `Responding=True` bei allen lebenden Polls. Die getrennten
+  Logs sind `60s.stdout.log` (15.946 Bytes) und `60s.stderr.log` (0 Bytes).
+  `60s_result.txt` existierte am Ende mit 1.231 Bytes und war parsebar.
+- **Schlussfolgerung 60-Sekunden-Lauf:** Erfolgreiche, längere reguläre
+  Verarbeitung. Das Verhalten skaliert mit der Eingangslänge und zeigt
+  weiterhin CPU-Fortschritt statt eines Hängers.
+- **Befehl/Testumfang – vollständiger Track:** Derselbe direkte Aufruf mit
+  `03_full.wav`, Resultat `full_result.txt` und maximal 600 Sekunden;
+  Pollintervall 5 Sekunden. Fortschritt wurde in `full.polls.ndjson`
+  gespeichert; die Binary-SHA wurde vor dem Start erneut geprüft.
+- **Ergebnis vollständiger Track:** PID `40328`, Start `16:29:56.948 +02:00`,
+  Ende nach ungefähr `156,040 s`, kein Timeout und kein Kill. CPU-Zeit stieg
+  von `15,625 ms` beim ersten Snapshot auf maximal `149.250 ms`; Working Set
+  maximal `182.337.536 Bytes`; Threads `1–4`; `Responding=True` bei allen
+  lebenden Polls. Die getrennten Logs sind `full.stdout.log` (73.308 Bytes)
+  und `full.stderr.log` (0 Bytes). `full_result.txt` existierte am Ende mit
+  9.863 Bytes und war parsebar.
+- **Schlussfolgerung vollständiger Track:** Der vollständige Track benötigt
+  in dieser Umgebung rund 2:36 Minuten. Der frühere äußere Abbruch nach
+  120 Sekunden war daher nachweislich zu kurz; er war kein Beleg für einen
+  Hänger. Qualitätsfilter und Timeouts im Produktivcode wurden nicht
+  geändert.
+- **Eindeutige Differentialdiagnose:** (1) **Lange reguläre Verarbeitung** ist
+  bestätigt: 10 s Audio → 30,347 s, 60 s Audio → 55,350 s, Volltrack →
+  156,040 s, jeweils mit CPU-Fortschritt und parsebarer Ausgabe. (2) Ein
+  track-/WAV-formatabhängiger Hänger ist für diesen gültigen PCM-WAV-Pfad
+  nicht beobachtet; andere Tracks/Formate sind damit nicht pauschal
+  freigegeben. (3) Falsches Arbeitsverzeichnis bzw. relative Pfade sind für
+  den direkten Lauf mit absolutem Input/Output und dokumentiertem Repository-
+  Arbeitsverzeichnis ausgeschlossen. (4) Ein nicht beschreibbarer
+  Ausgabepfad ist ausgeschlossen: Schreibprobe und Resultatdateien waren
+  erfolgreich. (5) Ein versteckter Lizenz-/GUI-Dialog wurde in den drei
+  Läufen nicht beobachtet; der Prozess blieb responsiv und beendete sich
+  selbst, daher war kein ungefragter sichtbarer manueller Lauf nötig. (6) Ein
+  genereller Hänger des geprüften Binaries ist in dieser Umgebung
+  ausgeschlossen. Der bisherige Strict-Grid-/PreAnalysis-Befund ist damit
+  als **zu kurzer äußerer Timeout bei regulär langer aufTAKT-Verarbeitung**
+  klassifiziert, nicht als Binary-Hänger. Keine Lizenzumgehung, kein Dataset
+  und kein Training wurden gestartet.
+
+## Verifiziert am 2026-08-20 (finaler vollständiger Strict-Grid-Preflight)
+
+- **Fragestellung/Reasoning:** Nach der isolierten aufTAKT-Diagnose sollte der
+  vollständige `PreAnalysis`-Vertrag auf einem neuen, bisher unbenutzten
+  Analysepfad geprüft werden. Der äußere Lauf durfte nicht nach 120 Sekunden
+  abbrechen; deshalb wurde die freigegebene Session mit 900 Sekunden Timeout
+  und regulärem Polling gestartet. Kandidaten-, Feature- und Datasetpfade
+  durften erst nach `auftakt_matched_to_librosa` fortgesetzt werden.
+- **Setup/Eingaben:** Arbeitsverzeichnis
+  `D:\Documents\00Uni\00master\BeatBridge`; Track
+  `musik\01 - LESS_IS_MORE.flac`; neuer Analysepfad
+  `output\pre_analysis_strict_final_20260820_01`; Binary
+  `D:\Documents\00Uni\00master\BeatBridge\aufTAKTCl.exe`; erwartete und
+  geprüfte Binary-SHA-256
+  `35f9149cfef66df9b7ac7716953f859f2d37d34af1beb2d2db231062a4a1b523`;
+  `.venv\Scripts\python.exe`; externe Ausführung des konkreten Binaries war
+  freigegeben.
+- **Vollständiger Befehl/Testumfang:**
+  `.venv\Scripts\python.exe -u -` mit Prüfung der Binary-SHA und
+  `PreAnalysis(str(Path('output/pre_analysis_strict_final_20260820_01')) + '\\')(str(Path('musik/01 - LESS_IS_MORE.flac')))`;
+  die interne aufTAKT-Stufe lief mit
+  `aufTAKTCl.exe -i tmp\audio-<uuid>.wav -r tmp\auftakt-output-<uuid>.txt`.
+  Der äußere freigegebene Prozess lief als fortlaufende Session; aufTAKT war
+  währenddessen responsiv und wurde nicht vorzeitig beendet. Gesamtdauer bis
+  zum regulären Abschluss: ca. `162,9 s`.
+- **Ergebnis inklusive Fehlern:** Die Binary-SHA und die vollständige
+  Analyse-Identität wurden gespeichert. Der gespeicherte Analyseeintrag ist
+  `output\pre_analysis_strict_final_20260820_01\v2\<audio-sha>\<analysis-id>\analysis.json`
+  (die vollständige Datei liegt dort; die tatsächliche
+  `analysis_id` lautet
+  `f703964b74ab78cb6a3ffcc518c0b66014cb721b528e1d7e1d8bee9efe31d3933dc`).
+  Der Binary-SHA im Analysevertrag stimmt. Der Merge ergab jedoch
+  `grid_source='fallback_from_detected_beats'`, `fallback_used=true`,
+  `is_verified_detection=false`, `confidence=0`, 533 Beatframes,
+  `missing_librosa=5` und `missing_auftakt=105`. Der erzeugte
+  `beat_grid_sha256` lautet
+  `b4ae1803b36bce3dfc749d3453fdf785b5f5a030ef838d63ed68ea5aaae28f27`.
+  Der Hash ist syntaktisch gültig, belegt aber wegen des Fallbacks kein
+  strikt erkanntes Downbeat-Grid. Der Preflight endete deshalb mit
+  `STRICT_GRID_SOURCE_MISMATCH`; es trat kein äußerer Timeout und kein
+  Prozessstartfehler auf.
+- **Schlussfolgerung/nächster Schritt:** Der vollständige PreAnalysis-
+  Vertrag ist fachlich nicht erfüllt. Gemäß Vorgabe wird hier gestoppt;
+  `output/pre_analysis_variable_v2_strict_20260820`, ein neuer Multi-Song-
+  Batch, neue RoFormer-Featurecaches und Datasetformat 2 wurden nicht
+  angelegt. Keine Qualitätsfilter wurden gelockert, kein Produktivcode und
+  kein bestehendes Audio-, Dataset-, Cache- oder Run-Artefakt wurde geändert.
+  Training und Prompt 8 bleiben ausgesetzt.
+## Verifiziert am 2026-08-20 (Merge-v2-Syntaxcheck, Versuch 1)
+
+- **Fragestellung/Reasoning:** Vor dem ersten synthetischen Merge-v2-Test sollte
+  geprüft werden, ob die neuen Analyse- und Candidate-Dateien syntaktisch
+  kompilieren. Der Standardcheck wurde gewählt, weil er Importfehler früh
+  sichtbar macht.
+- **Setup/Eingaben:** Repository `D:\Documents\00Uni\00master\BeatBridge`;
+  ausschließlich `.venv\Scripts\python.exe`; geprüft wurden
+  `src\analysis\pre_analysis.py`, `src\candidates\generation.py`,
+  `src\candidates\variable.py` und `tests\test_partial_merge.py`.
+- **Befehl/Testumfang:**
+  `.venv\Scripts\python.exe -m py_compile src\analysis\pre_analysis.py src\candidates\generation.py src\candidates\variable.py tests\test_partial_merge.py`
+- **Ergebnis einschließlich Fehlern:** Der Check startete nicht bis zur
+  Codeauswertung. Python erhielt beim Ersetzen der vorhandenen Datei
+  `src\analysis\__pycache__\pre_analysis.cpython-314.pyc` den Fehler
+  `[WinError 5] Zugriff verweigert` beim Rename der temporären `.pyc`.
+  Es wurden keine Produktivdateien, Audio-, Dataset-, Cache- oder Run-Artefakte
+  verändert.
+- **Schlussfolgerung/nächster Schritt:** Der Fehler ist ein Schreibschutz des
+  bestehenden Bytecode-Caches und kein Nachweis eines Syntaxfehlers. Kein Cache
+  wird gelöscht oder überschrieben; der nächste Check liest die Quellen
+  schreibfrei per AST und führt anschließend die synthetischen Tests aus.
+
+## Verifiziert am 2026-08-20 (Merge-v2-Syntaxcheck, schreibfrei)
+
+- **Fragestellung/Reasoning:** Nach dem schreibgeschützten `py_compile`-Fehler
+  wurde derselbe Syntaxumfang ohne Bytecode-Erzeugung geprüft, damit bestehende
+  `__pycache__`-Artefakte unangetastet bleiben.
+- **Setup/Eingaben:** `.venv\Scripts\python.exe -B`; vier neue/geänderte
+  Python-Quellen wie im vorherigen Lauf.
+- **Befehl/Testumfang:**
+  `.venv\Scripts\python.exe -B -c "import ast, pathlib; paths=[pathlib.Path(r'src/analysis/pre_analysis.py'), pathlib.Path(r'src/candidates/generation.py'), pathlib.Path(r'src/candidates/variable.py'), pathlib.Path(r'tests/test_partial_merge.py')]; [ast.parse(p.read_text(encoding='utf-8'), filename=str(p)) for p in paths]; print('AST_OK', len(paths))"`
+- **Ergebnis einschließlich Fehlern:** Erfolgreich; Ausgabe `AST_OK 4`.
+  Keine Dateien wurden geschrieben.
+- **Schlussfolgerung/nächster Schritt:** Die vier Quellen sind syntaktisch
+  parsebar. Danach folgt der gezielte synthetische pytest-Lauf für Merge-v2 und
+  lückenbewusste Candidate-v2-Generierung.
+
+## Verifiziert am 2026-08-20 (Merge-v2-Synthesetests, Versuch 1)
+
+- **Fragestellung/Reasoning:** Der neue monotone Merge, seine Acceptance-
+  Diagnostik und die lückenbewusste Candidate-v2-Prüfung sollten gegen die
+  geforderten synthetischen Grenzfälle sowie die vorhandenen v1-Analyse- und
+  Candidate-Regressionen geprüft werden.
+- **Setup/Eingaben:** Ausschließlich im Test erzeugte Beat-/Taktfolgen; kein
+  Audio, kein Analysecache und kein Dataset. Der pytest-Cacheprovider wurde
+  deaktiviert. Tests: `tests/test_partial_merge.py`,
+  `tests/test_pre_analysis.py`, `tests/test_candidates.py`.
+- **Befehl/Testumfang:**
+  `.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider tests/test_partial_merge.py tests/test_pre_analysis.py tests/test_candidates.py`
+- **Ergebnis einschließlich Fehlern:** 24 Tests bestanden, 3 Tests schlugen
+  fehl. Die Fehler waren Testfixture-/Erwartungsfehler: Das Missing-Librosa-
+  Fixture entfernte die Librosa- statt der aufTAKT-Beats; ein Gleichabstands-
+  Match erzwingt keine bestimmte der zwei gleichwertigen Librosa-Indizes; und
+  ein Shift um genau einen Beat erzeugte wegen der regelmäßigen Folge weiterhin
+  Matches. Es gab keinen Produktivartefakt- oder Cachefehler.
+- **Schlussfolgerung/nächster Schritt:** Die synthetischen Daten werden so
+  korrigiert, dass sie tatsächlich fünf unbeantwortete Librosa-Beats, eine
+  gleichwertige eindeutige Zuordnung und einen Shift außerhalb von `0.2 s`
+  darstellen. Danach wird derselbe Testumfang wiederholt.
+
+## Verifiziert am 2026-08-20 (Merge-v2-Synthesetests, Versuch 2)
+
+- **Fragestellung/Reasoning:** Nach der Korrektur der drei Testfixtures sollte
+  derselbe Grenzfallumfang ohne Änderung an v1-Verträgen erneut vollständig
+  geprüft werden.
+- **Setup/Eingaben:** Nur synthetische In-Memory-Beatfolgen; v1-Tests und
+  Candidate-v2-Lückentest wie im vorherigen Lauf; pytest-Cacheprovider
+  deaktiviert; Python ausschließlich `.venv\Scripts\python.exe`.
+- **Befehl/Testumfang:**
+  `.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider tests/test_partial_merge.py tests/test_pre_analysis.py tests/test_candidates.py`
+- **Ergebnis einschließlich Fehlern:** Erfolgreich: `27 passed in 2.89s`.
+  Abgedeckt sind exakter Vollmatch, Randbeats, fünf fehlende Librosa-Matches,
+  doppelte unabhängige Nearest-Neighbor-Gefahr, vollständiger Mismatch,
+  monotone eindeutige Paarung, Count-/Zeitlücke ohne Kandidatenüberquerung,
+  spätere 2/4/6/8-Bar-Kandidaten sowie die vorhandenen v1-Analyse- und
+  Candidate-Tests.
+- **Schlussfolgerung/nächster Schritt:** Der synthetische Merge-v2- und
+  Candidate-v2-Kern ist bestanden. Als nächstes werden Cache-Roundtrip und
+  vollständiger bestehender Analyse-/Candidate-Regressionstest geprüft, bevor
+  der Drei-Track-Real-Audit beginnt.
+
+## Verifiziert am 2026-08-20 (Merge-v2-Cache-Roundtrip, Versuch 1)
+
+- **Fragestellung/Reasoning:** Der tatsächliche `PartialPreAnalysis`-Aufruf
+  sollte mit synthetischem aufTAKT-Output eine neue Cacheidentität, v2-
+  Provenienz und einen wiederladbaren Analyse-Cache erzeugen, ohne v1-Caches zu
+  berühren.
+- **Setup/Eingaben:** Synthetische Beatfolge und ein temporärer Platzhaltertrack;
+  aufTAKT wurde im Test gezielt simuliert. Tests weiterhin nur
+  `tests/test_partial_merge.py`, `tests/test_pre_analysis.py` und
+  `tests/test_candidates.py`; pytest-Cacheprovider deaktiviert.
+- **Befehl/Testumfang:**
+  `.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider tests/test_partial_merge.py tests/test_pre_analysis.py tests/test_candidates.py`
+- **Ergebnis einschließlich Fehlern:** 27 Tests bestanden, 1 Test schlug fehl.
+  Der Stub ersetzte global `subprocess.run` und fing deshalb beim Lazy-Import
+  von Librosa/Numba zusätzlich den internen `ver`-Aufruf mit unerwarteten
+  Keyword-Argumenten ab. Das ist ein Testharness-Fehler; der Produktivcode
+  und keine bestehenden Artefakte wurden verändert.
+- **Schlussfolgerung/nächster Schritt:** Der Stub wird auf den konkreten
+  aufTAKT-Befehl beschränkt und delegiert fremde Subprocess-Aufrufe an die
+  Originalfunktion. Danach wird derselbe Umfang wiederholt.
+
+## Verifiziert am 2026-08-20 (Merge-v2-Cache-Roundtrip, Versuch 2)
+
+- **Fragestellung/Reasoning:** Nach der Isolierung des aufTAKT-Stubs sollte der
+  tatsächliche v2-Aufruf einschließlich Cache-Roundtrip vollständig bestehen.
+- **Setup/Eingaben:** Nur synthetischer Platzhaltertrack, synthetischer
+  aufTAKT-Text und temporärer Analyse-Root; kein realer Track, Batch,
+  Featurecache oder Dataset.
+- **Befehl/Testumfang:**
+  `.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider tests/test_partial_merge.py tests/test_pre_analysis.py tests/test_candidates.py`
+- **Ergebnis einschließlich Fehlern:** Erfolgreich: `28 passed in 2.95s`.
+  Der Test bestätigt neue Merge-v2-Analyse-ID und Cachepfad, SHA-Provenienz,
+  `fallback_used=false`, gespeicherte Merge-Diagnostik sowie Wiederladen des
+  v2-Caches ohne zweiten aufTAKT-Aufruf. Die v1-Analyse- und Candidate-Tests
+  bleiben ebenfalls erfolgreich.
+- **Schlussfolgerung/nächster Schritt:** Der additive synthetische Pfad ist
+  inklusive Cache-Roundtrip bestanden. Vor dem Real-Audit folgt noch ein
+  breiterer read-only Regressionstest der direkt betroffenen Analyse-,
+  Candidate- und Pipeline-Tests.
+
+## Verifiziert am 2026-08-20 (direkte Merge-v2-Regressionen)
+
+- **Fragestellung/Reasoning:** Der neue Pfad darf die bestehenden v1-
+  Analyse-, Candidate-, Batch-, Multi-Batch-, Rendering- und
+  Song-Compatibility-Verträge nicht verändern. Deshalb wurden die direkt
+  importierenden/verbrauchenden Testgruppen gemeinsam ausgeführt.
+- **Setup/Eingaben:** Synthetische Fixtures der bestehenden Tests und die neuen
+  synthetischen Merge-v2-Fixtures; pytest-Cacheprovider deaktiviert; keine
+  realen Musikdateien oder bestehenden Outputpfade als Schreibziel.
+- **Befehl/Testumfang:**
+  `.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider tests/test_partial_merge.py tests/test_pre_analysis.py tests/test_candidates.py tests/test_batch_render.py tests/test_multi_batch_render.py tests/test_rendering.py tests/test_song_compatibility.py`
+- **Ergebnis einschließlich Fehlern:** Erfolgreich: `65 passed, 2 warnings in
+  6.79s`. Die einzigen Hinweise sind bekannte DeprecationWarnings aus
+  `audioread` zu `aifc`/`sunau`; kein Testfehler und keine Artefaktänderung.
+- **Schlussfolgerung/nächster Schritt:** Der additive Merge-v2-Pfad ist gegen
+  die direkt abhängigen synthetischen v1-Verträge regressionsfrei. Der nächste
+  Schritt ist der geforderte kleine Audit auf drei realen Tracks mit neuen,
+  eindeutigen Analysepfaden; Batch-, Feature- und Datasetexport bleiben dabei
+  ausdrücklich gesperrt.
+## Verifiziert am 2026-08-20 (Merge-v2-Real-Audit, Sessionstarts und Blockaden)
+
+- **Fragestellung/Reasoning:** Vor einer späteren Dataset-2-Freigabe musste der
+  neue monotone partielle Merge auf `LESS_IS_MORE`, `HELP_LESS` und einem
+  repräsentativen Intro/Outro-Track mit dem realen aufTAKT-Binary geprüft
+  werden. Der Lauf sollte als fortlaufende Session ohne äußeren 120-Sekunden-
+  Timeout arbeiten und pro Track Matchstatistik, Provenienz, vollständige
+  Taktblöcke und die verfügbaren 2/4/6/8-Takt-Längen speichern.
+- **Setup:** Arbeitsverzeichnis
+  `D:\Documents\00Uni\00master\BeatBridge`; Python ausschließlich
+  `.venv\Scripts\python.exe`; aufTAKT-Binary
+  `D:\Documents\00Uni\00master\BeatBridge\aufTAKTCl.exe`, SHA-256
+  `35f9149cfef66df9b7ac7716953f859f2d37d34af1beb2d2db231062a4a1b523`;
+  `approximate_grid_policy=reject`; Kandidaten nur als In-Memory-Self-Pair-
+  Verfügbarkeitsdiagnose, kein Batch, Featurecache oder Dataset.
+- **Lauf 1:** Neuer Root
+  `output\pre_analysis_merge_v2_audit_20260820_01`, getrennte
+  `audit.stdout.log`/`audit.stderr.log`, Eingaben
+  `musik\01 - LESS_IS_MORE.flac`, `musik\05 - HELP_LESS.flac` und
+  `musik\10 - END_OF_THE_STORY.flac`. Der Startbefehl verwendete einen
+  fortlaufenden `Start-Process`-Wrapper für `.venv\Scripts\python.exe -c`.
+  **Ergebnis:** Der Wrapper übergab nur `import`; Python meldete in
+  `audit.stderr.log` `SyntaxError: Expected one or more names after 'import'`.
+  aufTAKT wurde in diesem Lauf nicht gestartet. Der Fehler liegt in der
+  Prozessargument-Quotierung, nicht in Sandbox, Binary oder Analyse.
+- **Lauf 2:** Neuer Root
+  `output\pre_analysis_merge_v2_audit_20260820_02`, gleicher logischer
+  Auditbefehl. Nach dem Polling wurde der Lauf vollständig abgeschlossen;
+  die anfängliche Startausgabe war wegen des äußeren Wrappers leer. Die beiden
+  gültigen Tracks wurden analysiert; der dritte Pfad war falsch geschrieben
+  (`musik\10 - END_OF_THE_STORY.flac`) und erzeugte den aufgezeichneten
+  `FileNotFoundError`. Die beiden erfolgreichen Ergebnisse wurden nicht als
+  vollständiger Drei-Track-Audit gewertet.
+- **Lauf 3:** Neuer Root
+  `output\pre_analysis_merge_v2_audit_20260820_03`; der Base64-PowerShell-
+  Wrapper erreichte Python nicht, weil der expandierte Interpreterpfad als
+  `python.exe.Path` endete. `audit.stderr.log` enthält den
+  `CommandNotFoundException`; aufTAKT wurde in diesem Lauf nicht gestartet.
+- **Lauf 4:** Neuer Root
+  `output\pre_analysis_merge_v2_audit_20260820_04`; korrigierter Wrapper,
+  fortlaufend gestartet und regelmäßig gepollt. Der vollständige aufTAKT-
+  Aufruf für LESS_IS_MORE und HELP_LESS lief jeweils mehrere Minuten ohne
+  äußeren 120-Sekunden-Timeout. Der dritte Eintrag hatte erneut den falschen
+  Dateinamen und wurde als `FileNotFoundError` isoliert. Die beiden korrekten
+  Trackresultate und drei atomare v2-`analysis.json`-Caches (zwei Trackcaches
+  plus der spätere gültige Intro/Outro-Cache) wurden separat validiert.
+- **Lauf 5:** Neuer Root
+  `output\pre_analysis_merge_v2_audit_20260820_05`, nur mit dem korrekten
+  Intro/Outro-Track `musik\10 - END OF THE STORY.flac`. Der Prozess wurde als
+  fortlaufende Session gestartet und gepollt; FLAC→WAV und aufTAKT liefen ohne
+  Prozessstartfehler durch. Das Ergebnis wurde in
+  `output\pre_analysis_merge_v2_audit_20260820_05\audit.json` geschrieben.
+- **Schlussfolgerung:** Die Wrapperfehler waren vollständig vor dem Binary-
+  bzw. Analysevertrag isoliert. Der finale fachliche Audit besteht aus den
+  erfolgreichen LESS_IS_MORE-/HELP_LESS-Records aus `_04` und dem korrekten
+  END-OF-THE-STORY-Record aus `_05`; kein Sandbox- oder Binary-Fehler wurde
+  als Analyseergebnis fehlinterpretiert.
+
+## Verifiziert am 2026-08-20 (Merge-v2-Real-Audit, fachliche Ergebnisse)
+
+- **Fragestellung/Reasoning:** Verifiziert wurden die neue `grid_source`,
+  `fallback_used`, Matchabdeckungen, Distanzquantile, vollständige Taktblöcke,
+  Candidate-Längen, aufTAKT-SHA, Beat-Grid-SHA und Cachekonsistenz. Für die
+  Kandidatenzahl wurde je Track ein synthetisch nicht verändernder Self-Pair
+  auf dem realen analysierten Grid verwendet; dies ist keine Multi-Song-
+  Batchmaterialisierung.
+- **Befehl/Testumfang:**
+  `.venv\Scripts\python.exe -B -c "... liest ausschließlich die beiden neuen audit.json-Roots und deren analysis.json, berechnet Beat-Grid-SHAs und prüft die v2-Mergekennung ..."`
+  mit den Roots `output\pre_analysis_merge_v2_audit_20260820_04` und
+  `output\pre_analysis_merge_v2_audit_20260820_05`.
+- **Ergebnis einschließlich Fehlern:** Erfolgreich: Ausgabe
+  `AUDIT_VALIDATION_OK 3 records 3 caches`. Alle drei Records melden die
+  dokumentierte Binary-SHA und vollständige 3-Tupel; alle drei Cachedateien
+  tragen `librosa_auftakt_monotonic_partial_v2`, passende
+  `diagnostics.merge`-Daten, konsistente `beat_grid_sha256`-Werte und keine
+  temporären Geschwisterdateien.
+
+  | Track | Librosa / aufTAKT | Matches | Coverage Librosa / aufTAKT im gemeinsamen Bereich | Grid/Fallback | vollständige Takte; längster Block | Self-Pair-Längen |
+  |---|---:|---:|---:|---|---:|---|
+  | `01 - LESS_IS_MORE.flac` | 533 / 632 | 527 | 0,988743 / 1,0 | `auftakt_matched_to_librosa_partial_v2` / `false` | 131; 93 | 2, 4, 6, 8 |
+  | `05 - HELP_LESS.flac` | 451 / 491 | 449 | 0,995556 / 1,0 | `auftakt_matched_to_librosa_partial_v2` / `false` | 113; 113 | 2, 4, 6, 8 |
+  | `10 - END OF THE STORY.flac` | 601 / 316 | 300 | 0,499168 / 1,0 | `fallback_from_detected_beats` / `true` | 75; 75 (nur Diagnostik) | keine, strikt abgelehnt |
+
+  Für LESS_IS_MORE wurden zusätzlich `unmatched aufTAKT before/inside/after =
+  64/0/41`, `unmatched Librosa inside = 6`, Distanz `p50/p95/max =
+  0,022653/0,142331/0,183923 s` und gemeinsamer Bereich
+  `48,297506..247,780136 s` verifiziert. HELP_LESS meldet `unmatched aufTAKT =
+  0/0/42`, `unmatched Librosa inside = 2`, Distanz
+  `0,025646/0,163664/0,181791 s` und gemeinsamen Bereich
+  `0,14..168,460771 s`. END OF THE STORY meldet wegen der realen
+  Librosa-/aufTAKT-Differenz `0,499168` Librosa-Abdeckung und bleibt deshalb
+  korrekt im Fallback; es wurden keine Metadaten erfunden.
+- **Schlussfolgerung/nächster Schritt:** Der neue Mergepfad ist auf zwei der
+  drei repräsentativen Tracks strikt partiell verifiziert und liefert dort
+  alle Kandidatenlängen. Der dritte Track ist ein ehrlicher, reproduzierbarer
+  Fallback und blockiert eine pauschale Drei-Track-Freigabe. Es werden daher
+  weiterhin kein Multi-Song-Batch, kein Featurecache, kein Dataset und kein
+  Training gestartet; die Abweichung muss im Review bewertet werden.
+
+## Verifiziert am 2026-08-20 (Merge-v2-Regression nach Diagnostikpräzisierung)
+
+- **Fragestellung/Reasoning:** Die zusätzliche Kennzeichnung eines disjunkten
+  gemeinsamen Zeitbereichs (`overlap=false`) sollte die v2-Diagnostik verbessern,
+  ohne den monotone Merge, die Candidate-Lückenprüfung oder bestehende v1-
+  Pfade zu verändern.
+- **Setup/Eingaben:** Synthetische Merge-/Lückenfixtures sowie die bestehenden
+  v1-Analyse-, Candidate-, Batch-, Multi-Batch-, Rendering- und
+  Song-Compatibility-Tests; pytest-Cacheprovider deaktiviert.
+- **Befehl/Testumfang:**
+  `.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider tests/test_partial_merge.py tests/test_pre_analysis.py tests/test_candidates.py tests/test_batch_render.py tests/test_multi_batch_render.py tests/test_rendering.py tests/test_song_compatibility.py`
+- **Ergebnis einschließlich Fehlern:** Erfolgreich: `66 passed, 2 warnings in
+  5.86s`. Die zwei bekannten `audioread`-DeprecationWarnings zu `aifc` und
+  `sunau` blieben ohne Testfehler.
+- **Schlussfolgerung/nächster Schritt:** Der Merge-v2-Pfad und die direkten
+  v1-Regressionen bleiben bestanden. Wegen des ehrlichen END-OF-THE-STORY-
+  Fallbacks wird weiterhin kein realer Multi-Song-Batch, Featurecache oder
+  Dataset erzeugt.
+## Verifiziert am 2026-08-20 (Materialisierung-Preflight: v2-Runner-Blocker)
+
+- **Fragestellung/Reasoning:** Vor der realen Korpusinventur wurde geprüft, ob
+  der bestehende Multi-Song-Runner den bereits verifizierten Merge-v2-Pfad
+  verwenden kann, ohne v1-Verträge umzudeuten.
+- **Setup/Eingaben:** Repository-Arbeitsbaum, `src\multi_batch_render.py`,
+  `src\batch_render.py` und die vorhandenen v2-Analyse-/Candidate-Verträge;
+  Korpusprüfung unter `musik\`.
+- **Befehl/Testumfang:** Read-only-Inspektion mit `rg`/PowerShell sowie
+  `Get-ChildItem musik -Recurse`; festgestellt wurden 119 Audio-Dateien und
+  der bisher nicht vorhandene Zielpfad
+  `output\pre_analysis_variable_v2_strict_20260820`.
+- **Ergebnis einschließlich Blockade:** `src\multi_batch_render.py` importiert
+  und instanziiert fest `PreAnalysis` (auch in den Analyseworker-Threads).
+  Es gibt keinen Parameter oder CLI-Schalter für `PartialPreAnalysis` bzw.
+  `librosa_auftakt_monotonic_partial_v2`. Ein unveränderter CLI-Aufruf würde
+  deshalb v1-Analysegrids erzeugen und ist für Phase 2 nicht vertragskonform.
+  Das ist ein reproduzierbarer Integrationsblocker, kein Analyse- oder
+  Binaryfehler. Es wurde noch kein Batch und kein Dataset gestartet.
+- **Schlussfolgerung/nächster Schritt:** Phase 1 läuft zunächst über einen
+  separaten, reproduzierbaren v2-Corpus-Worker mit maximal vier Analyseworkern.
+  Ein additiver Runner-Anschluss wird erst nach der Inventur und nur falls für
+  Phase 2 erforderlich vorgenommen; v1-Standardverhalten bleibt unverändert.
+## Verifiziert am 2026-08-20 (Materialisierung-Preflight: Inventurstart 01)
+
+- Fragestellung/Reasoning: Die corpusweite Merge-v2-Inventur sollte unter `output/pre_analysis_variable_v2_strict_20260820` mit vier Workern und ausschließlich neuen Artefakten starten.
+- Setup: 119 Musikdateien; fortlaufender PowerShell-Worker; `.venv\\Scripts\\python.exe` vorgesehen; aufTAKTCl-Merge-v2; noch keine Kandidaten-, Feature- oder Datasetstufe.
+- Befehl/Testumfang: Start-Process mit eingebettetem Python-Inventurskript. Der PowerShell-String verlor beim Aufbau des Pfads die Backslashes und resolvte `'.venvScriptspython.exe'` statt `.venv\\Scripts\\python.exe`.
+- Ergebnis inklusive Fehlern: Der Worker wurde nicht mit Python gestartet. Es entstand ausschließlich der neue leere Zielpfad mit `inventory.stdout.log` und `inventory.stderr.log`; kein Analysecache und keine Nutzerartefakte wurden überschrieben. Der Fehler trat vor dem Prozessstart des Python-Workers auf; aufTAKTCl wurde nicht erreicht.
+- Schlussfolgerung/nächster Schritt: Der exakte, nun belegte Zielpfad wird nicht wiederverwendet. Die Inventur wird reproduzierbar unter einem neuen eindeutigen Suffixpfad gestartet; der Pfadfehler wird nicht als Analyse- oder aufTAKT-Fehler gewertet.
+## Verifiziert am 2026-08-20 (Materialisierung-Preflight: Inventurstart 02)
+
+- Fragestellung/Reasoning: Die korrigierte Inventur sollte mit dem korrekten `.venv\\Scripts\\python.exe` im neuen Retry-Analysepfad starten.
+- Setup: `output/pre_analysis_variable_v2_strict_20260820_retry01`; vier Worker; Merge-v2; keine Kandidaten-/Feature-/Datasetstufe.
+- Befehl/Testumfang: `Start-Process` mit `.venv\\Scripts\\python.exe -u output/pre_analysis_variable_v2_strict_20260820_retry01/inventory_worker.py`.
+- Ergebnis inklusive Fehlern: Der Python-Prozess startete, scheiterte aber vor jeder Analyse mit `ModuleNotFoundError: No module named 'src'`, weil das Skriptverzeichnis und nicht der Repository-Root im Importpfad lag. Es wurde kein aufTAKTCl-Prozess gestartet und kein Analysecache geschrieben.
+- Schlussfolgerung/nächster Schritt: Der Fehler liegt im Einmal-Wrapper, nicht im Analysewerkzeug. Der Wrapper wurde additiv um den Repository-Root ergänzt und wird im selben noch cachefreien Retrypfad erneut gestartet; der Lauf wird separat als korrigierter Versuch protokolliert.
+## Verifiziert am 2026-08-20 (Materialisierung Phase 1: Merge-v2-Korpusinventur)
+
+- Fragestellung/Reasoning: Der vollständige Musikbestand wurde mit Merge-v2 inventarisiert, bevor Kandidaten, Features oder Dataset v2 erzeugt werden. Zulässig sind nur `fallback_used=false` und `is_verified_detection=true`; BPM- und bestehende Policy-Ausschlüsse bleiben ausgeschlossen.
+- Setup: neuer Analysepfad `output/pre_analysis_variable_v2_strict_20260820_retry01` (der ursprünglich angeforderte Pfad war durch zwei dokumentierte Wrapper-Fehlstarts reserviert); 119 Audio-Dateien, 118 kanonische Audio-SHAs, 4 Analyseworker; `.venv\\Scripts\\python.exe`; Binary-SHA gemäß `docs/EXTERNAL_TOOLS.md`; BPM 145..165; `approximate_grid_policy=reject`; Merge-Algorithmus `librosa_auftakt_monotonic_partial_v2`.
+- Befehl/Testumfang: corpusweiter atomarer Worker mit aufTAKT-Aufruf pro kanonischer Audio-SHA, v2-Analysecache sowie Self-Pair-Kandidatenprüfung für 2/4/6/8 Takte. Anschließend atomarer Cache-Join zu `inventory_verified.json` mit Cache-Dateihashes.
+- Ergebnis inklusive Fehlern: 119 Inventurdatensätze: 87 `strict_accepted`, 24 `fallback_rejected`, 7 `BPM-/Policy-ausgeschlossen`, 1 `Audio-SHA-Duplikat`, 0 `analysis_failed`. Alle 87 strikt akzeptierten Tracks bieten Self-Pair-Kandidaten für 2, 4, 6 und 8 Takte; Matrix: 2=87, 4=87, 6=87, 8=87. Alle akzeptierten Datensätze tragen `grid_source=auftakt_matched_to_librosa_partial_v2`, `fallback_used=false`, `is_verified_detection=true`, eine `analysis_id` und einen `beat_grid_sha256`. Die Cache-Join-Prüfung fand 119/119 passende Analysecaches mit Hash.
+- Schlussfolgerung/nächster Schritt: Die Stop-Bedingung wegen fehlender Längen oder unzureichender Trackanzahl ist nicht erfüllt. Die Kandidatenstufe darf ausschließlich mit den 87 Strict-Accepted-Pfaden beginnen; die 24 ehrlichen Fallbacks und 7 BPM/Policy-Ausschlüsse werden nicht weitergereicht. `inventory.json` bleibt als atomarer Rohinventar erhalten; `inventory_verified.json` ist die verifizierte, um Cache-/Taktblockdaten ergänzte Inventur.
+## Verifiziert am 2026-08-20 (Materialisierung-Preflight: Batchstart 01)
+
+- Fragestellung/Reasoning: Der Multi-Song-Kandidatenlauf sollte ausschließlich die 87 Strict-Accepted-Tracks verwenden und v2 explizit an den bestehenden Runner anbinden.
+- Setup: neues Ziel `output/batch_variable_v2_strict_20260820_run01`; Wrapper mit `PartialPreAnalysis`, 2/4/6/8 Takten, BPM 145..165, vier Workern, `approximate_grid_policy=reject`.
+- Befehl/Testumfang: Start des Wrappers mit `.venv\\Scripts\\python.exe -u` als fortlaufender Prozess.
+- Ergebnis inklusive Fehlern: Python startete, aber der Wrapper scheiterte vor dem Runnerimport mit `ModuleNotFoundError: No module named 'src'`, da bei einem Skript unter `output/` der Repository-Root nicht automatisch im Importpfad liegt. Kein Multi-Batch-Ziel, keine Kandidaten und keine Renderartefakte wurden geschrieben.
+- Schlussfolgerung/nächster Schritt: Reproduzierbarer Wrapperfehler vor Produktivcode und vor Kandidatenexport; der Wrapper erhält ausschließlich den fehlenden Repository-Root im Importpfad und wird erneut gestartet.
+## Verifiziert am 2026-08-21 (Materialisierung Fortsetzung: abgeleitete Top-k-Auswahl)
+
+- Fragestellung/Reasoning: Der vorherige Dataset-v2-Exporter wurde durch den PC-Neustart während der Auswahlphase beendet. Der bestehende Batch ist vollständig, aber 87 Paarmanifeste umfassen 6,15 GB JSON; die Auswahlfunktion sortiert dabei alle 1.922.730 Ranking-Einträge erneut. Zur reproduzierbaren Fortsetzung wird nur ein neues, abgeleitetes Auswahlmanifest erzeugt.
+- Setup: Quelle `output/batch_variable_v2_strict_20260820_run01`; neuer Zielpfad `output/batch_variable_v2_strict_20260820_selected_top3_run01`; keine Änderung an Produktivcode, Quellbatch oder Audio-/Featureartefakten.
+- Befehl/Testumfang: `.venv\\Scripts\\python.exe output/batch_variable_v2_strict_20260820/materialize_topk_selection.py`; pro abgeschlossenem Paar werden anhand der bereits verifizierten monotonen Ranking-Reihenfolge die besten drei Kandidaten je Länge 2/4/6/8 ausgewählt. Quellmanifest- und Paarhashes werden in `selection_provenance.json` gebunden.
+- Ergebnis inklusive Fehlern: Lauf gestartet; Ergebnis wird nach Abschluss mit Paaranzahl, Längenzählung und Hashbindung geprüft. Der frühere Exportabbruch durch Neustart wird nicht als fachlicher Datasetfehler gewertet.
+- Schlussfolgerung/nächster Schritt: Nach erfolgreicher Auswahl wird der v2-Exporter ausschließlich gegen dieses abgeleitete, kleine Manifest gestartet; der finale Datasetpfad bleibt neu und atomar. Kein Training.
+- Verifiziertes Ergebnis des Auswahlruns: 87/87 Paarmanifeste, exakt 261 Kandidaten je Länge (2/4/6/8), 1.044 eindeutige Candidate-IDs, keine `None`-Beatlängen und ausschließlich Merge-v2-Grids mit `fallback_used=false`. Die maschinelle Prüfung jedes reduzierten Paarmanifests ist bestanden.
+## Verifiziert am 2026-08-21 (Materialisierung: RoFormer-Cache-Schreibblocker)
+
+- Fragestellung/Reasoning: Der Dataset-v2-Export gegen das kompakte Auswahlmanifest sollte vorhandene passende RoFormer-Stems wiederverwenden und neue v2-Featurecaches schreiben.
+- Setup: `.venv\\Scripts\\python.exe output/batch_variable_v2_strict_20260820/export_dataset_v2_selected.py`; neues Datasetziel; `cache_root=output/feature_cache`; `vocal_backend=roformer`; Merge-v2-Analyse.
+- Befehl/Testumfang: Exportstart mit 1.044 ausgewählten Kandidaten.
+- Ergebnis inklusive Fehlern: Vor dem ersten neuen Featurecache scheiterte der Lauf reproduzierbar mit `PermissionError: [WinError 5]` beim Anlegen von `output\\feature_cache\\model_artifacts\\roformer_vocal_v1\\006a6624a23b6193`. Es wurde kein Datasetziel finalisiert. Die bestehende Cachehierarchie wurde nicht verändert; der Fehler liegt am Schreibzugriff auf den bestehenden Cache-Root, nicht an fehlender RoFormer-Provenienz.
+- Schlussfolgerung/nächster Schritt: Der Export wird nicht mit erzwungenem Überschreiben oder ACL-Änderung fortgesetzt. Ein neuer eindeutiger v2-Cache-Root wird angelegt; passende vorhandene RoFormer-Artefakte werden read-only anhand ihrer SHA/Modellprovenienz in den neuen Root übernommen, danach schreibt der Export nur neue Cache-IDs und Datasetartefakte.
+## Verifiziert am 2026-08-21 (Materialisierung: RoFormer-Prefill partiell)
+
+- Fragestellung/Reasoning: Die passenden bestehenden RoFormer-Stems sollten read-only in den neuen v2-Cache-Root übernommen werden, damit der Export weder den geschützten alten Root noch Demucs-Artefakte verwendet.
+- Setup: Quelle `output/feature_cache/model_artifacts/roformer_vocal_v1`; neuer Root `output/feature_cache_variable_v2_roformer_20260821`; 87 Strict-Accepted-Audio-SHAs; Modell `roformer-model-bs-roformer-sw-by-jarredou`.
+- Befehl/Testumfang: `.venv\\Scripts\\python.exe output/batch_variable_v2_strict_20260820/prefill_roformer_cache_v2.py`; Manifest-/Datenhashprüfung je kopiertem Stem.
+- Ergebnis inklusive Fehlern: 44 passende RoFormer-Artefakte wurden in den neuen Root kopiert und provenancegebunden. 43 Strict-Accepted-SHAs haben keinen passenden bestehenden RoFormer-Stem; der Lauf brach ehrlich mit `RuntimeError: Missing matching RoFormer stems for 43 strict tracks` ab. Keine Demucs-Artefakte wurden akzeptiert oder verändert.
+- Schlussfolgerung/nächster Schritt: Der partielle Prefill ist verwendbar; für die 43 fehlenden Tracks muss der neue Root die vertragsgemäße RoFormer-Extraktion mit neuer Cacheidentität ausführen. Der alte Cache bleibt unverändert.
+## Verifiziert am 2026-08-21 (Materialisierung: RoFormer-Extraktionsstart)
+
+- Fragestellung/Reasoning: Die 43 fehlenden RoFormer-Stems sollten im neuen v2-Cache-Root erzeugt werden; die 44 Prefill-Hits sollten unverändert als Cache-Hits dienen.
+- Setup: neuer Cache-Root `output/feature_cache_variable_v2_roformer_20260821`, 44 Prefill-Hits, Datasetziel `output/datasets/variable_v2_strict_20260820_selected_roformer_run01`, Modell `roformer-model-bs-roformer-sw-by-jarredou`.
+- Befehl/Testumfang: `.venv\\Scripts\\python.exe -u output/batch_variable_v2_strict_20260820/export_dataset_v2_roformer_prefilled.py`.
+- Ergebnis inklusive Fehlern: Der Export erreichte die RoFormer-Assetvorbereitung, scheiterte aber vor der Extraktion mit `UnicodeEncodeError` beim bs_roformer-Downloadbanner (`cp1252` kann `📦` nicht ausgeben). Kein Dataset wurde finalisiert; der neue Cache-Root wurde nicht als Demucs-Root verwendet.
+- Schlussfolgerung/nächster Schritt: Der Fehler ist eine reproduzierbare Konsolen-Encoding-Blockade, kein fehlender RoFormer-Vertrag. Der gleiche Lauf wird mit explizitem UTF-8-IO fortgesetzt; keine Qualitätsfilter werden gelockert.
+## Verifiziert am 2026-08-21 (Materialisierung Phase 4: Dataset v2 abgeschlossen)
+
+- Fragestellung/Reasoning: Der reale variable Dataset-v2-Export sollte nach der PC-Unterbrechung mit einem reproduzierbar verkleinerten Top-k-Auswahlmanifest, strikt getrennten Audio-SHA-Splits und RoFormer-Provenienz abgeschlossen werden.
+- Setup: Auswahlmanifest `output/batch_variable_v2_strict_20260820_selected_top3_run01`; 87 Paarmanifeste; je Paar und Länge top-k=3; Analyse-Root `output/pre_analysis_variable_v2_strict_20260820_retry01`; neuer RoFormer-Cache-Root `output/feature_cache_variable_v2_roformer_20260821`; Dataset `output/datasets/variable_v2_strict_20260820_selected_roformer_run01`; kein Training und kein ML-Runner.
+- Befehl/Testumfang: `.venv\\Scripts\\python.exe -u output/batch_variable_v2_strict_20260820/export_dataset_v2_roformer_prefilled.py` mit UTF-8-IO; danach `.venv\\Scripts\\python.exe output/batch_variable_v2_strict_20260820/verify_real_dataset_v2.py`.
+- Ergebnis inklusive Fehlern: RoFormer-Checkpoint wurde einmalig in den neuen Cache-Root geladen; 44 passende bestehende RoFormer-Stems wurden wiederverwendet, weitere benötigte Stems wurden mit neuer Cacheidentität erzeugt. Dataset `dataset_id=2a9679f687c50696692b`, Format/Feature Protocol 2. Verifizierte Matrix je Länge: 2 Takte T=16: train=105, validation=12, test=21; 4 Takte T=32: 105/12/21; 6 Takte T=48: 105/12/21; 8 Takte T=64: 105/12/21. Insgesamt 552 eindeutige Example-IDs und 53 tatsächlich in exportierten Beispielen verwendete Tracks. Die gemeinsame Split-Autorität enthält alle 87 ausgewählten Track-SHAs: train=61, validation=13, test=13; Audio-SHA-Isolation und Längenkonstanz bestanden.
+- Verifikation: `DATASET_V2_VALIDATION_OK`; alle NPZ-/JSONL-Dateihashes stimmen mit dem Datasetmanifest überein; alle Werte sind endlich; `transition_position` entspricht je T exakt `(i+0.5)/T`; keine None-/inkonsistenten Beatlängen; alle Quellen-/Zielgrids sind `auftakt_matched_to_librosa_partial_v2` mit `fallback_used=false`; 54 verwendete Featurecache-Manifeste und deren RoFormer-Stemdateien wurden auf Manifest-/Artefakthash geprüft; keine Demucs-Provenienz.
+- Schlussfolgerung/nächster Schritt: Dataset v2 ist vollständig und reproduzierbar verifiziert. Es wird kein Training und kein Prompt 8 gestartet, solange dies nicht separat beauftragt wird. Der lange, durch Neustart abgebrochene Exportlauf gegen 6,15 GB Rohmanifeste bleibt als abgebrochener Lauf dokumentiert; die abgeleitete Auswahl ist hashgebunden und ändert die Rohbatchartefakte nicht.
+
+## Verifiziert am 2026-08-21 (frisches End-to-End-Review Variable-Length)
+
+- **Fragestellung/Reasoning:** Die gesamte additive Variable-Length-Kette sollte
+  nach der realen Datasetmaterialisierung noch einmal von Code und Protokollen
+  bis zu Loader, Training, Inferenz, Rendering, Checkpoint/Resume und
+  Längenmetriken geprüft werden. Der Testsplit musste vollständig außerhalb
+  von Training und Modellentwicklung bleiben; eine lange Trainingskampagne war
+  nicht erlaubt.
+- **Setup:** Repository mit den vorbestehenden Nutzeränderungen; Pflichtlektüre
+  von `AGENTS.md`, `docs/STATUS.md`,
+  `docs/Projekt-Gesamtuebersicht.md`, `.agents/AGENT.md`,
+  `.agents/multi-session-project-discipline.skill` und den relevanten
+  Candidate-, Analysis-, Feature-, Dataset-, Rendering-, ML-, W&B- und
+  Variable-Length-Protokollen. Python ausschließlich über
+  `.venv\Scripts\python.exe`; keine Commits; Audio-, Dataset-, Cache- und
+  bestehende Runartefakte wurden nicht überschrieben oder gelöscht.
+
+### Code- und gezielte Regressionstests
+
+- **Befehl/Testumfang:**
+  `.venv\Scripts\python.exe -m pytest -q tests/test_variable_features.py tests/test_variable_ml.py tests/test_variable_tcn_bilstm.py tests/test_partial_merge.py tests/test_candidates.py tests/test_variable_dataset.py -k "not export_writes_all_lengths_and_reuses_one_split_map and not documents_empty_length_shards"`
+- **Ergebnis inklusive Fehlern:** `47 passed, 2 deselected in 25.58s`.
+  Die zwei ausgelassenen synthetischen Tests erzeugen beziehungsweise prüfen
+  Test-Shards; sie wurden in diesem Review nicht ausgeführt.
+- **Schlussfolgerung/nächster Schritt:** Variable Geometrie, Features,
+  Objective-v5, MLP-/TCN/BiLSTM-Kurven, Candidate-v2, Partial-Merge und der
+  testsplitfreie ausgewählte Dataset-Umfang waren gezielt grün.
+
+- **Befehl/Testumfang:**
+  `.venv\Scripts\python.exe -m pytest -q tests/test_feature_control_model.py tests/test_vocal_control_model.py tests/test_ml_data.py tests/test_ml_training_runner.py`
+- **Ergebnis inklusive Fehlern:** `15 passed in 16.43s`; zwei erwartete CUDA-
+  Determinismuswarnungen aus dem bestehenden v1-Runner.
+- **Schlussfolgerung/nächster Schritt:** Die bisherige Vier-Takt-MLP-, Vocal-,
+  Loader- und v1-Runner-Suite bleibt rückwärtskompatibel.
+
+- **Befehl/Testumfang:**
+  `.venv\Scripts\python.exe -m pytest -q tests/test_multi_batch_render.py tests/test_batch_render.py tests/test_candidates.py`
+- **Ergebnis inklusive Fehlern:** `30 passed in 6.99s`; zwei bekannte
+  `aifc`-/`sunau`-Deprecationwarnungen aus dem bestehenden Audio-Regressionstest.
+- **Schlussfolgerung/nächster Schritt:** Bestehende Batch-/Candidate-/Rendering-
+  Pfade und die additive Mehrlängen-Konfiguration bleiben gemeinsam testbar.
+
+### Reale Train-/Validation-Loaderprüfung
+
+- **Befehl/Testumfang:** Erste read-only Python-Sonde mit
+  `VariableFeatureDatasetCollection(..., lengths=(2,4,6,8))` gegen
+  `output/datasets/variable_v2_strict_20260820_selected_roformer_run01`.
+- **Ergebnis inklusive Fehlern:** Die Sonde scheiterte mit einem
+  Prüfskriptfehler `TypeError: ... unexpected keyword argument 'lengths'`; der
+  Loader hatte korrekt nur das Datasetmanifest gelesen, kein Test-Shard wurde
+  geöffnet.
+- **Schlussfolgerung/nächster Schritt:** API-Aufruf auf den tatsächlichen
+  Parameter `transition_length_bars` korrigiert; kein Produktionsfehler.
+
+- **Befehl/Testumfang:** Korrigierte `.venv\Scripts\python.exe -B -c`-Sonde mit
+  `VariableFeatureDataset` und `VariableFeatureDatasetCollection` für nur
+  `train` und `validation`, alle Längen, NPZ-/JSONL-Loader, Finite-Prüfung,
+  `VariableLengthBatchSampler` und Collation.
+- **Ergebnis inklusive Fehlern:** Train `420` Beispiele (`105` je Länge),
+  Validation `48` (`12` je Länge); Shapes T=16/32/48/64, `float32`, finite,
+  `length_condition` 0,25/0,5/0,75/1,0 und alle Batches homogen. Kein
+  Testsplit geladen.
+- **Schlussfolgerung/nächster Schritt:** Der reale v2-Loader ist für den
+  vorgesehenen Train-/Validation-Einstieg funktionsfähig.
+
+### Reproduzierte v2-Fehler und Hardening
+
+- **Befehl/Testumfang:** Read-only Negativsonden mit `.venv\Scripts\python.exe
+  -B -c` für manipulierte Split-SHA, `VariableCandidateGenerationConfig`
+  mit `2.5` und gleichartigen 3/4-Grids.
+- **Ergebnis inklusive Fehlern:** Eine falsche deklarierte Split-Mapping-SHA
+  wurde zunächst akzeptiert; `2.5` wurde zunächst zu `2` gecastet; ein
+  gleichartiges 3/4-Raster erzeugte zunächst einen v2-Kandidaten. Das gemischte
+  4/4-gegen-3/4-Raster wurde bereits korrekt wegen inkompatibler Beatanzahl
+  abgelehnt.
+- **Schlussfolgerung/nächster Schritt:** Reproduzierbare Fehler im neuen Pfad
+  wurden additiv behoben: deklarierte Split-SHA wird jetzt geprüft, Längen
+  werden strikt validiert, v2-Candidates verlangen 4/4, und der Renderer prüft
+  L/Beat vor Audio-I/O.
+
+- **Befehl/Testumfang:** Erster Hardeningtest nach der Änderung:
+  `.venv\Scripts\python.exe -m pytest -q tests/test_variable_contract_hardening.py tests/test_candidates.py tests/test_variable_features.py tests/test_variable_tcn_bilstm.py -k "not test_variable_generation_keeps_short_candidates_when_eight_bars_are_unavailable"`.
+- **Ergebnis inklusive Fehlern:** Collectionfehler wegen eines von der ersten
+  Hardeningfassung eingeführten zirkulären Imports über den `src.features`-
+  Package-Initializer. Kein Audio-/Datasetartefakt betroffen.
+- **Schlussfolgerung/nächster Schritt:** Der Candidate-Check wurde lokal ohne
+  Package-Querimport umgesetzt.
+
+- **Befehl/Testumfang:** Derselbe Hardeningumfang nach der Korrektur.
+- **Ergebnis inklusive Fehlern:** `30 passed, 1 deselected in 11.81s`.
+  Danach isoliert: `.venv\Scripts\python.exe -m pytest -q
+  tests/test_variable_contract_hardening.py` → `4 passed in 3.28s`.
+- **Schlussfolgerung/nächster Schritt:** Split-Hash-, Integer-, Meter- und
+  Renderer-Geometrie-Härtung ist regressionsgeprüft; v1 bleibt unberührt.
+
+### Reales Rendering und Dauerprüfung
+
+- **Befehl/Testumfang:** Erster v2-Renderlauf mit je dem ersten Validation-
+  Beispiel, `PreAnalysis`-v2-Cache, Equal-Power, 44.100 Hz und neuem
+  Outputpfad `output/review_variable_v2_e2e_20260821_run01`.
+- **Ergebnis inklusive Fehlern:** Der Lauf wurde beim ersten Beispiel ehrlich
+  mit `ValueError: ... different sample lengths: source=135680,
+  target=136704` abgelehnt; es gab keine WAV-Ausgabe. Das ist ein neuer
+  Grid-/Dauerbefund, kein Librosa-/Numba-Problem und keine stille Kürzung.
+
+- **Befehl/Testumfang:** Read-only Sonde über die 12 realen Validation-
+  Beispiele je Länge gegen die vorhandenen v2-Analysis-Caches, um Kandidaten
+  mit samplegleichem Source-/Target-Fenster zu bestimmen.
+- **Ergebnis inklusive Fehlern:** Samplegleiche Kandidaten verfügbar: 2 Takte
+  `2/12`, 4 Takte `3/12`, 6 Takte `5/12`, 8 Takte `2/12`; die übrigen werden
+  durch den strikten v2-Renderer abgelehnt.
+- **Schlussfolgerung/nächster Schritt:** Für die E2E-Abnahme wird je Länge
+  genau ein samplegleicher Validation-Kandidat verwendet; die Ablehnung der
+  übrigen Fälle bleibt dokumentiert.
+
+- **Befehl/Testumfang:** Equal-Power-Renderings in neuen Pfaden
+  `...run02`, `...run03` und abschließend `...run04`; WAV-Export als Float32,
+  `soundfile.info`, endliche Samples, Transition-Grenzen und exakte
+  Source-/Target-Samplegleichheit.
+- **Ergebnis inklusive Fehlern:** `run02` renderte 2/4/6 Takte, scheiterte
+  danach nur wegen zu kurzer 12-Sekunden-Previewgrenze beim 8-Takt-Beispiel;
+  die drei WAVs blieben erhalten. `run03` renderte alle vier WAVs, hatte aber
+  einen Fehler im Hilfsreport (`sequence_length = L*16` statt `L*8`). Der
+  kanonische Lauf `output/review_variable_v2_e2e_20260821_run04` bestand für
+  alle vier Längen: T=16/32/48/64, 44.100 Hz, Stereo, finite Samples und
+  Bridge-Samples `136704/268288/401920/546304`; WAV-Framezahl und Sample-Rate
+  stimmen mit dem Renderergebnis überein.
+- **Schlussfolgerung/nächster Schritt:** Vier neue reale Validation-WAVs sind
+  technisch gültig. Der v2-Pfad kürzt ungleiche Fenster nicht und behandelt
+  den BPM-Idealwert getrennt von der tatsächlich verifizierten Grid-
+  Samplegeometrie.
+
+### Training, Checkpoint/Resume, Inferenz und Metriken
+
+- **Befehl/Testumfang:** `.venv\Scripts\python.exe -B -c`-Smoke gegen die realen
+  Train-/Validation-Feature-Shards, ein Beispiel je Länge, deterministische
+  synthetische explizite Waveforms, TCN/BiLSTM v2, CPU, W&B disabled,
+  `max_epochs=1`, anschließend Resume mit `max_epochs=2`. Kein Testsplit.
+- **Ergebnis inklusive Fehlern:** Training Epoch 1: Gesamt-Train-Loss
+  `0,3691570163`, Validation `0,2956906296`; Resume Epoch 2: Train
+  `0,3675513119`, Validation `0,2944503240`. Checkpoint wurde vor und nach
+  Resume mit Manifest-SHA, Contract und `weights_only=True` sicher geladen.
+  Das erste Hilfsskript scheiterte erst nach erfolgreichem Resume beim Lesen
+  von `manifest['history']` (`KeyError`); die History liegt korrekt in
+  `history.json`.
+- **Schlussfolgerung/nächster Schritt:** Runner, Objective, atomare
+  Checkpoints, Resume und Gesamt-/Per-L-Metriken funktionieren. Der korrigierte
+  Report `output/review_variable_v2_training_smoke_20260821_run01/e2e_review_report.json`
+  bestätigt `test_split_loaded=false`.
+
+- **Befehl/Testumfang:** Korrigierte read-only Report-/Inferenzsonde mit sicherem
+  Latest-Load, je einem Validationbeispiel für 2/4/6/8 Takte und Prüfung von
+  `controls` `(T,10)`, Endpunkten, Monotonie, Wertebereich und Finiteheit.
+- **Ergebnis inklusive Fehlern:** Alle vier Inferenzfälle bestanden mit
+  T=16/32/48/64; alle Controls und Gains waren finite, die drei
+  Positionskurven je Beispiel waren streng monoton mit Endpunkten 0/1.
+- **Schlussfolgerung/nächster Schritt:** Technischer E2E-Smoke ist bestanden;
+  dies ist kein Hörqualitätsnachweis und keine lange Trainingskampagne.
+
+### Gesamtsuite und Altprobleme
+
+- **Befehl/Testumfang:** `.venv\Scripts\python.exe -m pytest -q`, innerhalb
+  einer 120-Sekunden-Timeout-Sonde, ohne Testsplitzugriff im neuen Runner.
+- **Ergebnis inklusive Fehlern:** `199 passed, 4 warnings in 46.34s`. Die
+  Warnungen sind zwei `aifc`-/`sunau`-Deprecations und zwei bekannte CUDA-
+  Determinismuswarnungen; die Suite hing in diesem Lauf nicht.
+- **Bekannte alte Probleme, getrennt:** Historische Librosa-/Numba-JIT-
+  Initialisierungsprobleme sowie der bekannte `librosa.resample`-/Numba-Fehler
+  bleiben als Altprobleme dokumentiert. Sie traten in diesem bounded Lauf nicht
+  auf und wurden nicht dem neuen Variable-Length-Pfad zugerechnet.
+- **Schlussfolgerung/nächster Schritt:** Der frische aktuelle Testlauf ist
+  vollständig grün; daraus folgt nicht, dass die bekannten historischen
+  Librosa-/Numba-Probleme behoben sind. `git diff --check` war ohne
+  Whitespacefehler. Es wurde kein Commit erstellt. Nächster sinnvoller Schritt
+  ist ein versionierter realer v2-Waveform-Cache samt eigenem CLI-Einstieg;
+  erst danach darf der vollständige CUDA-Befehl ausgeführt werden.
+
+## Verifiziert am 2026-08-21 (Alignment-Gate für Waveform-Cache-v2 — blockiert)
+
+- **Fragestellung und Reasoning:** Vor einer neuen Waveform-Cache-, Loader-
+  und CLI-Implementierung musste ausschließlich auf Train und Validation
+  geprüft werden, ob Source-Mix, tempoangepasster Target-Mix sowie die beiden
+  RoFormer-Vocal-Bridges auf eine wissenschaftlich vertretbare kanonische
+  Samplelänge gebracht werden können. Die Regel darf keine stille
+  `min(source_length, target_length)`-Kürzung enthalten; die kanonische Länge
+  muss aus `transition_length_beats`, BPM und der Trainings-Samplerate
+  reproduzierbar sein. Größere lokale Grid-Abweichungen müssen abgelehnt
+  werden, statt sie zu normalisieren.
+- **Eingaben/Setup:** Ausschließlich
+  `output/datasets/variable_v2_strict_20260820_selected_roformer_run01/metadata/*/(train|validation).jsonl`
+  und die darin referenzierten RoFormer-Featurecaches unter
+  `output/feature_cache_variable_v2_roformer_20260821`. Gelesen wurden 420
+  Train- und 48 Validation-Beispiele, also 468 Beispiele je 117 für 2, 4, 6
+  und 8 Takte. Der Test-Shard, Test-Metadaten, Test-Features und Test-Audio
+  wurden nicht geöffnet. Die geplante Trainings-Samplerate war 11.025 Hz;
+  die vorhandenen Feature-/Grid-Caches liegen bei 44.100 Hz. Die Vocalprüfung
+  umfasste 46 eindeutige RoFormer-Stem-Manifeste mit Backend `roformer`,
+  Modellkennung `roformer-model-bs-roformer-sw-by-jarredou` und vorhandener
+  Stem-Provenienz.
+- **Testumfang bzw. Befehl:** Read-only-Python-Sonden mit
+  `.venv\Scripts\python.exe -B -c ...` luden pro Train-/Validation-Metadatei
+  nur `bin_boundaries`, Cachemanifeste und die referenzierten RoFormer-
+  Stemmanifeste. Für jede Länge wurden die vollständigen Source-Postroll- und
+  Target-Preroll-Fenster anhand von Cue, `T=16/32/48/64` und den gespeicherten
+  Gridgrenzen vermessen; zusätzlich wurde die erwartete tempoangepasste
+  Vocal-Gesamtlänge gegen die aligned Audio-Gesamtlänge geprüft.
+- **Ergebnis — Bridge-Längen bei 44.100 Hz:**
+
+  | Länge | T | Source-Bereich | Target-Bereich | Differenzbereich Target−Source | exakt gleich | `|Diff|≤512` |
+  |---:|---:|---:|---:|---:|---:|---:|
+  | 2 Takte | 16 | 126.976–142.848 | 119.808–139.776 | −12.288…+8.704 | 15/117 | 37/117 |
+  | 4 Takte | 32 | 257.536–282.112 | 256.000–276.480 | −8.192…+10.752 | 22/117 | 52/117 |
+  | 6 Takte | 48 | 388.608–423.936 | 388.096–417.792 | −9.216…+12.288 | 24/117 | 44/117 |
+  | 8 Takte | 64 | 520.704–565.248 | 520.704–553.472 | −15.360…+14.848 | 24/117 | 51/117 |
+
+  Bei 11.025 Hz entsprechen die maximalen Differenzen −3.840…+3.712
+  Samples. Über alle Längen waren nur 85/468 Bridge-Paare exakt gleich;
+  383/468 wiesen bereits bei einem strengen Rundungskriterium von mehr als
+  2 Samples auf 44,1 kHz eine größere Abweichung auf. Die Verteilung ist
+  damit nicht durch eine einzelne Ausreißerdatei erklärbar.
+- **Vocalbefund:** Für alle 468 geprüften Beispiele war die erwartete,
+  BPM-angepasste RoFormer-Stem-Gesamtlänge identisch zur aligned Audio-
+  Gesamtlänge (`0` Differenz in allen Fällen). Die vier Vocal-Bridge-Slices
+  würden bei identischer Transformation dieselben Längen wie ihre Mix-
+  Gegenstücke haben; sie lösen die Source/Target-Grid-Diskrepanz nicht.
+- **Deterministische Alignment-Entscheidung:** Der einzig zulässige Vertrag
+  für die nächste Implementierungsstufe ist derzeit ein Reject-Vertrag:
+  `N_canonical = round(transition_length_beats * 60 / source_bpm *
+  training_sample_rate)`, mit expliziter symmetrischer Korrektur nur für
+  echte Sample-Rundung und mit identischer Korrektur für Mix und Vocal. Jede
+  darüber hinausgehende Source/Target-Abweichung muss mit Example-ID,
+  Längenset, Grid-Hashes und gemessenen Roh-/kanonischen Längen abgelehnt
+  werden. Eine produktive Cropping-, Padding- oder Resampling-Regel für die
+  beobachteten Abweichungen ist wissenschaftlich nicht begründbar und wurde
+  daher nicht eingebaut.
+- **Fehler/Blockade:** Der reale Waveform-Cache
+  `output/ml_cache/variable_bridge_waveform_v2` wurde nicht erzeugt
+  (Verzeichnis war nicht vorhanden). Es wurden kein neuer Cachevertrag, kein
+  Materialisierungs-CLI, kein CUDA-Training und kein Resume ausgeführt. Die
+  explizite Stopbedingung der Aufgabe ist wegen der großen, systematischen
+  lokalen Grid-Abweichungen erfüllt.
+- **Schlussfolgerung und nächster Schritt:** Vor der Freigabe des neuen
+  Produktionspfads muss die Daten-/Grid-Autorität geklärt werden: entweder
+  müssen Kandidaten bereits auf ein gemeinsames, samplegleiches
+  Source/Target-Beatfenster mit ausreichender Qualitätsgarantie beschränkt
+  werden, oder es braucht eine fachlich begründete, separat versionierte
+  Zeitnormalisierung. Erst danach sind Cachevertrag, Cache-Hits,
+  Waveform-Shape-Tests, vollständige Suite und der reale CUDA-Smoke-Test
+  sinnvoll. Bestehende v1-Caches und der Testsplit blieben unangetastet.
+- **Dokumentationsintegritätscheck:** Anschließend wurde
+  `git diff --check` gegen den vorhandenen Nutzerarbeitsbaum ausgeführt; der
+  Check meldete keine Whitespacefehler. Es wurde kein Commit erstellt.
+
+## Verifiziert am 2026-08-21 (Alignment-/Cache-v2-Synthetikregression)
+
+- **Fragestellung und Reasoning:** Nach der additiven Implementierung des
+  Vertrags `local_grid_target_to_source_v1` musste zuerst ausgeschlossen
+  werden, dass die bestehende variable Dataset-/ML-Schicht durch die neuen
+  Cache- und Runner-Imports regressiert. Dieser Lauf prüfte ausschließlich
+  synthetische v2-Fixtures; ein vollständiger Lauf und reale Audioartefakte
+  waren für diese Stufe bewusst noch nicht Teil des Setups.
+- **Eingaben/Setup:** Repository-Arbeitsbaum am 2026-08-21, ausschließlich
+  `.venv\Scripts\python.exe`, die bestehenden synthetischen Fixtures der
+  Variable-Length-Tests; kein Testsplit des realen Datensatzes.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -B -m pytest -q tests/test_variable_contract_hardening.py tests/test_variable_dataset.py tests/test_variable_ml.py tests/test_variable_tcn_bilstm.py`
+- **Ergebnis inklusive Fehlern:** `23 passed in 11.62s`; keine Testfehler und
+  keine Blockade.
+- **Schlussfolgerung und nächster Schritt:** Die bestehenden v2-Verträge,
+  homogenen Batchsampler, variable TCN/BiLSTM-Geometrien und Resume-
+  Regressionen bleiben grün. Als nächstes folgen eigene Cache-Vertragstests
+  einschließlich Korruption, Provenienz-Mismatch und grenzenerhaltender
+  Rundungskorrektur sowie ein kleiner realer Train-/Validation-Cache.
+
+## Verifiziert am 2026-08-21 (Waveform-Cache-v2-Vertragstests)
+
+- **Fragestellung und Reasoning:** Der neue Alignmentkern musste die vier
+  Längen, gemeinsame Mix-/Vocal-Transformation, exakte Shapes,
+  grenzenerhaltende Korrekturen, Rejects bei großen Restfehlern und die
+  Unveränderlichkeit des Caches nachweisen, bevor reale Audiofenster geöffnet
+  werden.
+- **Eingaben/Setup:** Ausschließlich synthetische In-Memory-Waveforms und
+  temporäre Cacheverzeichnisse; `.venv\Scripts\python.exe`; kein realer
+  Datensatz und kein Testsplit.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -B -m pytest -q tests/test_variable_waveform_cache.py`
+- **Ergebnis inklusive Fehlern:** `10 passed in 25.88s`; Cache-Hit/Miss,
+  Payloadkorruption, Root-Provenienz-Mismatch, atomare Veröffentlichung,
+  vier Längen, CLI-Parsing und Alignment-Rejects bestanden.
+- **Schlussfolgerung und nächster Schritt:** Der synthetische Vertrag ist
+  isoliert prüfbar. Die nächste Verifikation ist ein Read-only-Inspektionslauf
+  über ausschließlich Train/Validation, gefolgt von einem kleinen realen
+  Cache mit je einem Beispiel pro Länge und Split.
+
+## Verifiziert am 2026-08-21 (kleiner realer Waveform-Cache und Hörproben)
+
+- **Fragestellung und Reasoning:** Die erste reale Freigabe sollte zeigen,
+  dass der lokale Grid-Vertrag nicht nur synthetisch, sondern mit den
+  vorhandenen RoFormer-Featurecaches und Audio-SHAs für alle vier Längen
+  materialisierbar ist. Ein initialer Lauf ohne Kontext wurde absichtlich
+  nicht akzeptiert: FFmpeg/Rubber-Band lieferte bei zwei Beispielen Rohreste
+  von `-3.640` beziehungsweise `-3.423` Samples und wurde daher korrekt
+  abgelehnt. Eine Train-Window-Sonde mit 0/1/2/4 Sekunden Guard-Kontext
+  zeigte, dass die transformierten gespeicherten Grenzen im Kontextoutput
+  exakt die gewünschte lokale Länge abdecken; daraus wurde der additive
+  Kontextpfad abgeleitet.
+- **Eingaben/Setup:** Ausschließlich
+  `output/datasets/variable_v2_strict_20260820_selected_roformer_run01`, die
+  referenzierten Train-/Validation-Metadaten, reale Mix-Audios und die
+  RoFormer-Stempayloads aus
+  `output/feature_cache_variable_v2_roformer_20260821`; 11.025-Hz-Training,
+  44.100-Hz-Rendergitter, Toleranz 2 Samples; Testsplit nicht geöffnet.
+- **Testumfang bzw. Befehle:** Kleine Materialisierung mit
+  `.venv\Scripts\python.exe -u -m src.ml cache-variable-waveforms ... --transition-bars 2 4 6 8 --limit 1 --training-sample-rate 11025 --render-sample-rate 44100 --rounding-tolerance-samples 2`; danach erneuter Cache-Hit-Lauf. Die Guard-Kontext-Sonde verwendete nur ein Train-Beispiel und
+  FFmpeg/Rubber-Band; anschließend wurden vier Equal-Power-Technik-Hörproben
+  unter `output/ml_cache/variable_bridge_waveform_v2/technical_listen/`
+  erzeugt.
+- **Ergebnis inklusive Fehlern:** Der finale kleine Bericht meldet 8/8
+  Cache-Hits (Train 1/1 und Validation 1/1 je 2/4/6/8), 0 Rejects und 0
+  temporäre Verzeichnisse. Alle vier Waveforms je Eintrag sind finite
+  Float32-Stereoarrays in exakt gleicher Form; die Hörproben haben bei 11.025
+  Hz exakt `N=32384/65536/99456/132480` Samples für 2/4/6/8 Takte. Die
+  technische Korrekturstatistik ist für diese acht Einträge überall 0 Samples;
+  lokale Ratios liegen je nach Länge zwischen `0,9806201550` und
+  `1,0038759690`, globale BPM-Ratio jeweils `1,0`. Die sechs Einträge ohne
+  Guard-Kontext und die zwei mit Guard-Kontext sind im jeweiligen Manifest
+  provenancegebunden; keine Mix-/Vocal-Shape-Abweichung wurde gefunden.
+- **Schlussfolgerung und nächster Schritt:** Der neue Vertrag ist auf realen
+  Beispielen für alle vier Längen freigegeben. Vor dem CUDA-Test muss der
+  vollständige Train-/Validation-Cache materialisiert und auf 468 Einträge
+  sowie Ausschlüsse/Ratioverteilung geprüft werden.
+
+## Verifiziert am 2026-08-21 (vollständiger realer Waveform-Cache-Audit)
+
+- **Fragestellung und Reasoning:** Nach dem langen Real-Lauf musste unabhängig
+  vom Materialisierungszähler geprüft werden, dass jedes Train-/Validation-
+  Beispiel genau einen v2-Entry besitzt und dass Payload-SHA, Array-SHA,
+  Float32-Dtype, Finite-Werte und vierfache Shape-Gleichheit tatsächlich
+  stimmen. Der Audit las ausschließlich die 420 Train- und 48
+  Validation-Metadaten; Testdateien wurden nicht geöffnet.
+- **Eingaben/Setup:** Dataset
+  `output/datasets/variable_v2_strict_20260820_selected_roformer_run01`,
+  Cache `output/ml_cache/variable_bridge_waveform_v2`, exakt der verifizierte
+  Root-Manifest-SHA `b86d0c46329c653a6984d9a3eed59b1f763165bee308b9c67925cf8727bed5cd`.
+- **Testumfang bzw. Befehle:** Vollmaterialisierung mit
+  `.venv\Scripts\python.exe -u -m src.ml cache-variable-waveforms ...` ohne
+  `--limit`; danach ein `.venv\Scripts\python.exe -B -c ...`-Audit über die
+  Train-/Validation-JSONL und alle 468 Cachepayloads.
+- **Ergebnis inklusive Fehlern:** `468/468` geprüft, davon Train
+  `105/105/105/105` und Validation `12/12/12/12` für 2/4/6/8 Takte;
+  Materialisierungsbericht: 468 angefordert, 0 Rejects. `bad_count=0`, alle
+  vier Arrays je Entry exakt gleich geformt, Float32 und finite; 377 Entries
+  nutzten Guard-Kontext, 91 konnten direkt gestretcht werden. Die Ratio-
+  Bereiche stimmen mit dem Bericht überein: 2 Takte `0,935849…–1,102564…`,
+  4 `0,96–1,032`, 6 `0,969349…–1,023747…`, 8 `0,973148…–1,027933…`.
+- **Schlussfolgerung und nächster Schritt:** Der vollständige reale
+  Train-/Validation-Cache ist technisch freigegeben. Jetzt folgt der echte
+  CUDA-Smoke-Lauf mit einer Epoche und anschließendem Resume auf zwei
+  Epochen; ein vollständiger Trainingslauf bleibt ausgeschlossen.
+
+## Verifiziert am 2026-08-21 (CUDA-Smoke, Resume und Gesamtregression)
+
+- **Fragestellung und Reasoning:** Die reale Freigabe musste nun den
+  tatsächlich verwendeten CUDA-Pfad, Resume-Verhalten, finite Losses und
+  Gradienten, SHA-geprüfte Checkpoints, längenstratifizierte Metriken und die
+  vier Kontrollgeometrien nachweisen. Danach sollte die vollständige Suite
+  sicherstellen, dass die additive Pipeline keine v1-Regression erzeugt.
+- **Eingaben/Setup:** Reale Dataset-2-Features sowie ausschließlich die 468
+  zuvor veröffentlichten Train-/Validation-Cacheentries; Run
+  `output/training_runs/variable_tcn_bilstm_waveform_v2_cuda_smoke_20260821`;
+  `cuda:0`, Seed `20260821`, Sample-Rate 11.025 Hz, Batchgröße 4, W&B
+  disabled. Der Runner instanziiert nur Train und Validation; der Testsplit
+  wurde nicht geöffnet.
+- **Testumfang bzw. Befehle:** Erster Lauf:
+  `.venv\Scripts\python.exe -u -m src.ml train-variable-tcn-bilstm ... --device cuda:0 --max-epochs 1 --batch-size 4 --wandb-mode disabled`; anschließend Resume mit `--max-epochs 2 --resume`. Danach CUDA-/Checkpoint-/Metrik-Sonde mit `.venv\Scripts\python.exe -u -B -c ...` und vollständige Suite mit `.venv\Scripts\python.exe -B -m pytest -q`.
+- **Ergebnis inklusive Fehlern:** Epoch 1 Train/Validation `0,310062/0,260667`,
+  Epoch 2 `0,303663/0,265043`; beide CLI-Läufe meldeten jeweils `cache_hits=468`.
+  CUDA war tatsächlich verfügbar und aktiv: Gerät 0, `NVIDIA GeForce RTX 5070 Ti`.
+  Checkpoint-SHAs für `latest.pt` und `best.pt` stimmten, historische Losses
+  und Probe-Losses waren finite, alle Probegradienten finite. Controls waren
+  für 2/4/6/8 Takte exakt `(1,16,10)`, `(1,32,10)`, `(1,48,10)`, `(1,64,10)`;
+  per-Length-Validation-Metriken lagen für alle vier Längen vor. Die
+  Gesamtregression bestand mit `209 passed, 4 warnings in 42.88s`; Warnungen
+  waren bekannte `aifc`-/`sunau`-Deprecations und zwei PyTorch-CUDA-
+  Determinismuswarnungen, keine Fehler.
+- **Schlussfolgerung und nächster Schritt:** Alignment, vollständiger Cache,
+  Loader, CUDA-Smoke und Resume sind verifiziert. Der angeforderte
+  100-Epochen-Lauf wurde nicht gestartet; nach Status-/Protokollpflege bleibt
+  nur die fachliche Nachsichtung der Hörproben und die bewusste Entscheidung,
+  ob der empfohlene Volltrainingsbefehl ausgeführt werden soll.
+
+## Verifiziert am 2026-08-21 (abschließende Suite nach Cache-Hit-Härtung)
+
+- **Fragestellung und Reasoning:** Nach dem Real-Lauf wurde die Cache-Hit-
+  Validierung zusätzlich verschärft: ein Payload mit falschem Dtype darf nicht
+  durch stilles Casten als Float32-Hit gelten; technische Sample-Raten- und
+  Shape-Felder müssen ebenfalls mit dem Manifest übereinstimmen. Danach war
+  eine letzte Gesamtregression erforderlich.
+- **Eingaben/Setup:** Repository-Arbeitsbaum mit unveränderten realen v2-
+  Cachepayloads; `.venv\Scripts\python.exe`; keine neue Materialisierung,
+  kein Testsplit und kein Training.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -B -m pytest -q; git diff --check`
+- **Ergebnis inklusive Fehlern:** `209 passed, 4 warnings in 38.06s` und
+  `git diff --check` ohne Whitespacefehler. Die vier Warnungen entsprechen
+  den bereits dokumentierten aifc-/sunau-Deprecations und PyTorch-CUDA-
+  Determinismuswarnungen; keine Fehler oder Blockaden.
+- **Schlussfolgerung und nächster Schritt:** Der finale Code- und
+  Dokumentationsstand ist regressionsfrei geprüft. Der empfohlene
+  100-Epochen-Befehl ist dokumentiert, aber nicht ausgeführt.

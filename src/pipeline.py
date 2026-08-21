@@ -22,6 +22,9 @@ from src.analysis.pre_analysis import (
 )
 from src.candidates import CandidateGenerationConfig, TrackReference
 from src.candidates.generation import generate_candidates as generate_candidates_from_grids
+from src.candidates.variable import (
+    generate_variable_candidates_from_grids,
+)
 from src.cutting.equal_power_fade_cut import EqualPowerFadeCut
 from src.cutting.fade_cut import FadeCut
 from src.cutting.simple_cut import SimpleCut
@@ -58,6 +61,8 @@ class RenderResult:
     format_version: int = RENDER_RESULT_FORMAT_VERSION
     source_grid: BeatGridMetadata | None = None
     target_grid: BeatGridMetadata | None = None
+    transition_length_bars: int | None = None
+    transition_length_beats: int | None = None
 
 
 class BeatBridgePipeline:
@@ -426,7 +431,12 @@ def generate_transition_candidates(
         beat_frames2,
         int(target_sample_rate) / float(sample_rate2),
     )
-    return generate_candidates_from_grids(
+    generator = (
+        generate_variable_candidates_from_grids
+        if int(getattr(config, "format_version", 1)) == 2
+        else generate_candidates_from_grids
+    )
+    return generator(
         TrackReference(str(song1_path), _file_sha256(song1_path)),
         bpm1,
         beat_frames1,

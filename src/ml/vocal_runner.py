@@ -47,6 +47,7 @@ from .model import (
 )
 from .runner import TrainingRunResult
 from .training import vocal_self_supervised_batch_loss
+from .wandb_logging import WandbConfig, WandbLogger
 
 
 VOCAL_TRAINING_RUN_FORMAT_VERSION = 2
@@ -105,6 +106,7 @@ def run_vocal_feature_control_training(
     vocal_model=DEFAULT_ROFORMER_MODEL,
     resume=False,
     progress=print,
+    wandb_config: WandbConfig | None = None,
 ):
     """Materialize train/validation mix-plus-vocal caches and train model v2."""
     config = _resolve_training_device(config or VocalTrainingConfig())
@@ -154,6 +156,7 @@ def run_vocal_feature_control_training(
         vocal_model=vocal_model,
         resume=resume,
         progress=progress,
+        wandb_config=wandb_config,
     )
 
 
@@ -169,6 +172,7 @@ def train_vocal_feature_control_model(
     vocal_model=DEFAULT_ROFORMER_MODEL,
     resume=False,
     progress=print,
+    wandb_config: WandbConfig | None = None,
 ):
     """Train model v2 from materialized examples and persist restartable artifacts."""
     config = _resolve_training_device(config or VocalTrainingConfig())
@@ -261,9 +265,20 @@ def train_vocal_feature_control_model(
         stale_epochs = 0
         created_at = _now_utc()
 
+    wandb_logger = WandbLogger.start(
+        wandb_config,
+        run_id=run_id,
+        runner_name=VOCAL_TRAINING_RUNNER_NAME,
+        contract=immutable_contract,
+        output_directory=output_directory,
+        resume=resume,
+    )
+
     previous_deterministic = torch.are_deterministic_algorithms_enabled()
     previous_warn_only = torch.is_deterministic_algorithms_warn_only_enabled()
     torch.use_deterministic_algorithms(True, warn_only=device.type == "cuda")
+    status = "running"
+    last_epoch = start_epoch - 1
     try:
         if not history:
             initial_train = _run_epoch(
@@ -322,9 +337,16 @@ def train_vocal_feature_control_model(
                 f"epoch=0 vocal_initialization train={initial_train['loss']:.6f} "
                 f"validation={initial_validation['loss']:.6f}"
             )
+            wandb_logger.log_epoch(
+                0,
+                initial_train,
+                initial_validation,
+                best_validation_loss=best_validation_loss,
+                stale_epochs=stale_epochs,
+                improved=False,
+            )
 
         status = "completed"
-        last_epoch = start_epoch - 1
         for epoch in range(start_epoch, config.max_epochs + 1):
             train_metrics = _run_epoch(
                 model,
@@ -392,6 +414,14 @@ def train_vocal_feature_control_model(
                 f"validation={validation_loss:.6f} best={best_validation_loss:.6f} "
                 f"stale={stale_epochs}/{config.patience}"
             )
+            wandb_logger.log_epoch(
+                epoch,
+                train_metrics,
+                validation_metrics,
+                best_validation_loss=best_validation_loss,
+                stale_epochs=stale_epochs,
+                improved=improved,
+            )
             if stale_epochs >= config.patience:
                 status = "early_stopped"
                 break
@@ -412,7 +442,14 @@ def train_vocal_feature_control_model(
             best_path,
             completed_at=_now_utc(),
         )
-    except Exception:
+        wandb_logger.finish(
+            status=status,
+            last_epoch=last_epoch,
+            best_epoch=best_epoch,
+            best_validation_loss=best_validation_loss,
+            output_directory=output_directory,
+        )
+    except Exception as error:
         if output_directory.exists():
             _write_run_files(
                 manifest_path,
@@ -430,6 +467,14 @@ def train_vocal_feature_control_model(
                 best_path,
                 completed_at=_now_utc(),
             )
+        wandb_logger.finish(
+            status="failed",
+            last_epoch=last_epoch,
+            best_epoch=best_epoch,
+            best_validation_loss=best_validation_loss,
+            output_directory=output_directory,
+            error=error,
+        )
         raise
     finally:
         torch.use_deterministic_algorithms(

@@ -55,6 +55,33 @@ def build_argument_parser():
         "--track-exclusions",
         default="config/track_exclusions.json",
     )
+    variable_parser = subparsers.add_parser(
+        "export-dataset-v2",
+        help="Export homogeneous variable-length Feature Protocol 2 shards.",
+    )
+    variable_parser.add_argument("source_manifest")
+    variable_parser.add_argument("output_directory")
+    variable_parser.add_argument("--cache-root", default="output/feature_cache")
+    variable_parser.add_argument("--analysis-root", default="output/pre_analysis")
+    variable_parser.add_argument("--sample-rate", type=int, default=44_100)
+    variable_parser.add_argument("--top-k-per-pair", type=int, default=3)
+    variable_parser.add_argument("--transition-bars", nargs="+", type=int, default=(2, 4, 6, 8))
+    variable_parser.add_argument("--split-map")
+    variable_parser.add_argument("--train-ratio", type=float, default=0.70)
+    variable_parser.add_argument("--validation-ratio", type=float, default=0.15)
+    variable_parser.add_argument("--test-ratio", type=float, default=0.15)
+    variable_parser.add_argument("--split-seed", type=int, default=20260731)
+    variable_parser.add_argument("--split-search-attempts", type=int, default=4096)
+    variable_parser.add_argument("--max-pairs", type=int)
+    variable_parser.add_argument("--min-bpm", type=float)
+    variable_parser.add_argument("--max-bpm", type=float)
+    variable_parser.add_argument(
+        "--vocal-backend",
+        choices=("disabled", "demucs", "roformer"),
+        default=DEFAULT_VOCAL_BACKEND,
+    )
+    variable_parser.add_argument("--vocal-model", default=DEFAULT_ROFORMER_MODEL)
+    variable_parser.add_argument("--track-exclusions", default="config/track_exclusions.json")
     return parser
 
 
@@ -101,6 +128,41 @@ def main():
                 indent=2,
             )
         )
+        return 0
+
+    if args.command == "export-dataset-v2":
+        from .dataset_export import SplitConfig
+        from .variable_dataset_export import export_variable_feature_dataset
+
+        result = export_variable_feature_dataset(
+            args.source_manifest,
+            args.output_directory,
+            cache_root=args.cache_root,
+            analysis_root=args.analysis_root,
+            sample_rate=args.sample_rate,
+            top_k_per_pair=args.top_k_per_pair,
+            transition_lengths_bars=tuple(args.transition_bars),
+            split_map_path=args.split_map,
+            split_config=SplitConfig(
+                train=args.train_ratio,
+                validation=args.validation_ratio,
+                test=args.test_ratio,
+                seed=args.split_seed,
+                search_attempts=args.split_search_attempts,
+            ),
+            vocal_backend=args.vocal_backend,
+            vocal_model=args.vocal_model,
+            track_exclusions_path=args.track_exclusions,
+            minimum_bpm=args.min_bpm,
+            maximum_bpm=args.max_bpm,
+            max_pairs=args.max_pairs,
+        )
+        print(json.dumps({
+            "output_directory": str(result.output_directory),
+            "manifest_path": str(result.manifest_path),
+            "example_count": result.example_count,
+            "split_counts": result.split_counts,
+        }, ensure_ascii=False, indent=2))
         return 0
 
     from .extract_track import extract_or_load_track_features

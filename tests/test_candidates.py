@@ -4,7 +4,12 @@ import soundfile as sf
 
 from src.analysis.models import AnalysisResult, BeatGridMetadata
 from src.analysis.pre_analysis import ensure_bar_metadata_with_provenance
-from src.candidates import CandidateGenerationConfig, TrackReference, generate_candidates
+from src.candidates import (
+    CandidateGenerationConfig,
+    TrackReference,
+    VariableCandidateGenerationConfig,
+    generate_candidates,
+)
 from src.pipeline import generate_transition_candidates
 
 
@@ -257,3 +262,66 @@ def test_fallback_builds_a_beat_grid_from_bpm_when_no_beats_are_detected():
     assert metadata.to_dict()["grid_source"] == "fallback_from_bpm"
     assert metadata.fallback_used is True
     assert metadata.confidence == 0.0
+
+
+def test_variable_generation_keeps_short_candidates_when_eight_bars_are_unavailable():
+    result = generate_candidates(
+        _track("source"),
+        120.0,
+        _four_four_grid(bar_count=12),
+        _track("target"),
+        120.0,
+        _four_four_grid(bar_count=12),
+        **_detected_grid_kwargs(),
+        config=VariableCandidateGenerationConfig(
+            transition_lengths_bars=(2, 4, 8),
+        ),
+    )
+
+    assert result.format_version == 2
+    assert {candidate.transition_length_bars for candidate in result.candidates} == {2, 4}
+    assert all(candidate.transition_length_beats == candidate.transition_length_bars * 4 for candidate in result.candidates)
+    assert all(candidate.transition_length_beats is not None for candidate in result.candidates)
+    assert any(
+        rejection.code == "insufficient_source_bars"
+        and rejection.transition_length_bars == 8
+        for rejection in result.rejections
+    )
+    assert any(
+        rejection.code == "insufficient_target_preroll"
+        and rejection.transition_length_bars == 8
+        for rejection in result.rejections
+    )
+
+
+def test_variable_generation_validates_each_length_and_derives_consistent_beats():
+    result = generate_candidates(
+        _track("source"),
+        120.0,
+        _four_four_grid(bar_count=24),
+        _track("target"),
+        120.0,
+        _four_four_grid(bar_count=24),
+        **_detected_grid_kwargs(),
+        config=VariableCandidateGenerationConfig(
+            transition_lengths_bars=(2, 4, 6, 8),
+            source_boundary_count=1,
+            target_boundary_count=1,
+        ),
+    )
+
+    assert not result.rejections
+    assert {candidate.transition_length_bars for candidate in result.candidates} == {2, 4, 6, 8}
+    assert len(result.candidates) == 4
+    for candidate in result.candidates:
+        assert candidate.transition_length_bars in {2, 4, 6, 8}
+        assert candidate.transition_length_beats == candidate.transition_length_bars * 4
+        assert candidate.source_cutpoint is not None
+        assert candidate.target_cutpoint is not None
+        assert candidate.generator == "bar_grid_v2_length_specific"
+        assert candidate.format_version == 2
+
+
+def test_variable_config_rejects_lengths_outside_the_additive_contract():
+    with pytest.raises(ValueError, match="one of"):
+        VariableCandidateGenerationConfig(transition_lengths_bars=(1, 2))

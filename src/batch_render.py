@@ -11,6 +11,7 @@ import soundfile as sf
 
 from src.analysis.pre_analysis import PreAnalysis
 from src.candidates import CandidateGenerationConfig, CandidateGenerationResult, TransitionCandidate
+from src.candidates.variable import VariableCandidateGenerationConfig
 from src.pipeline import (
     CUTTERS,
     DEFAULT_SAMPLE_RATE,
@@ -29,6 +30,7 @@ from src.ranking import (
     rank_candidates,
     rank_rendered_transitions,
 )
+from src.variable_rendering import render_variable_transition
 
 
 BATCH_MANIFEST_FORMAT_VERSION = 1
@@ -49,9 +51,11 @@ class RenderedVariant:
     candidate_score: float | None
     transition_rank: int | None = None
     transition_score: float | None = None
+    transition_length_bars: int | None = None
+    transition_length_beats: int | None = None
 
     def to_dict(self):
-        return {
+        payload = {
             "candidate_id": self.candidate_id,
             "renderer": self.renderer,
             "output_file": self.output_file,
@@ -66,6 +70,10 @@ class RenderedVariant:
             "transition_score": self.transition_score,
             "status": "rendered",
         }
+        if self.transition_length_bars is not None:
+            payload["transition_length_bars"] = int(self.transition_length_bars)
+            payload["transition_length_beats"] = int(self.transition_length_beats)
+        return payload
 
 
 @dataclass(frozen=True)
@@ -171,21 +179,32 @@ def render_candidate_batch(
         for renderer in renderers:
             output_path = rendered_directory / _rendered_filename(index, candidate, renderer)
             try:
-                result = render_transition(
-                    candidate.source_track.path,
-                    candidate.target_track.path,
-                    candidate.source_cutpoint.sample,
-                    candidate.target_cutpoint.sample,
-                    renderer=renderer,
-                    fade_beats=candidate.transition_length_beats,
-                    target_sample_rate=target_sample_rate,
-                    analysis=analysis,
-                    analysis_location=analysis_location,
-                    source_bpm=candidate.source_bpm,
-                    target_bpm=candidate.target_bpm,
-                    preview_seconds_before=preview_seconds_before,
-                    preview_seconds_after=preview_seconds_after,
-                )
+                if int(getattr(candidate, "format_version", 1)) == 2:
+                    result = render_variable_transition(
+                        candidate,
+                        renderer=renderer,
+                        target_sample_rate=target_sample_rate,
+                        analysis=analysis,
+                        analysis_location=analysis_location,
+                        preview_seconds_before=preview_seconds_before,
+                        preview_seconds_after=preview_seconds_after,
+                    )
+                else:
+                    result = render_transition(
+                        candidate.source_track.path,
+                        candidate.target_track.path,
+                        candidate.source_cutpoint.sample,
+                        candidate.target_cutpoint.sample,
+                        renderer=renderer,
+                        fade_beats=candidate.transition_length_beats,
+                        target_sample_rate=target_sample_rate,
+                        analysis=analysis,
+                        analysis_location=analysis_location,
+                        source_bpm=candidate.source_bpm,
+                        target_bpm=candidate.target_bpm,
+                        preview_seconds_before=preview_seconds_before,
+                        preview_seconds_after=preview_seconds_after,
+                    )
                 _write_audio_atomic(output_path, result.audio, result.sample_rate)
                 rendered_variants.append(
                     RenderedVariant(
@@ -202,6 +221,16 @@ def render_candidate_batch(
                         ),
                         candidate_score=(
                             None if candidate_score is None else candidate_score.total_score
+                        ),
+                        transition_length_bars=(
+                            int(candidate.transition_length_bars)
+                            if int(getattr(candidate, "format_version", 1)) == 2
+                            else None
+                        ),
+                        transition_length_beats=(
+                            int(candidate.transition_length_beats)
+                            if int(getattr(candidate, "format_version", 1)) == 2
+                            else None
                         ),
                     )
                 )
@@ -379,9 +408,10 @@ def _temporary_path(path):
 
 
 def _manifest_payload(batch_result, renderers):
+    variable_contract = int(batch_result.candidate_generation.format_version) == 2
     return {
-        "format_version": BATCH_MANIFEST_FORMAT_VERSION,
-        "render_protocol_version": RENDER_RESULT_FORMAT_VERSION,
+        "format_version": 2 if variable_contract else BATCH_MANIFEST_FORMAT_VERSION,
+        "render_protocol_version": 6 if variable_contract else RENDER_RESULT_FORMAT_VERSION,
         "renderers": list(renderers),
         "candidate_generation": batch_result.candidate_generation.to_dict(),
         "candidate_ranking": batch_result.candidate_ranking.to_dict(),
@@ -488,7 +518,7 @@ def build_argument_parser():
 
 def main():
     args = build_argument_parser().parse_args()
-    candidate_config = CandidateGenerationConfig(
+    candidate_config = VariableCandidateGenerationConfig(
         transition_lengths_bars=tuple(args.transition_bars),
         source_boundary_count=args.source_boundaries,
         target_boundary_count=args.target_boundaries,

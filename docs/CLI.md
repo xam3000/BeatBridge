@@ -176,7 +176,7 @@ Wichtige Batch-Optionen:
 |---|---:|---|
 | `--output-dir ORDNER` | – | Erforderlicher Zielordner für Manifest und WAV-Dateien |
 | `--renderers ...` | alle vier Baselines | Eine oder mehrere Renderer-Varianten |
-| `--transition-bars ...` | `2 4` | Kandidatenlängen in Takten |
+| `--transition-bars ...` | `2 4` | Variable Kandidatenlängen in Takten; v2 unterstützt ausschließlich `2`, `4`, `6` und `8`, jede Länge wird unabhängig validiert |
 | `--source-boundaries N` | alle | Optionales Limit auf die letzten N nutzbaren Source-Grenzen |
 | `--target-boundaries N` | alle | Optionales Limit auf die ersten N nutzbaren Zielgrenzen; ohne Option wird der ganze Song B durchsucht |
 | `--max-tempo-difference X` | `0.15` | Maximale symmetrische relative BPM-Differenz (`0.15` = 15 %) |
@@ -184,6 +184,22 @@ Wichtige Batch-Optionen:
 | `--overwrite` | aus | Erlaubt ausschließlich auf expliziten Wunsch das Ersetzen gleichnamiger Exportdateien |
 
 Ein vorhandener Export wird standardmäßig nicht überschrieben. Für einen weiteren Versuch deshalb einen neuen Ordner wählen; `--overwrite` nur bewusst einsetzen. Der ausführliche Exportvertrag steht in [`BATCH_RENDERING_PROTOCOL.md`](./BATCH_RENDERING_PROTOCOL.md).
+
+Ein variabler Batch kann alle vier Längen gemeinsam anfordern:
+
+```powershell
+.venv\Scripts\python.exe -m src.batch_render `
+  "musik\source.flac" `
+  "musik\target.flac" `
+  --output-dir "output\batches\variable_lengths" `
+  --renderers fade equal_power `
+  --transition-bars 2 4 6 8
+```
+
+Die 2-/4-Takt-Standardsuche bleibt inhaltlich kompatibel. Ein fehlendes
+8-Takt-Fenster entfernt keinen gültigen 2-/4-Takt-Kandidaten. Variable
+Candidate-v2-Manifeste und Rendervarianten sind als Format 2 beziehungsweise
+Rendering 6 gekennzeichnet; alte Batch-Manifeste bleiben Format 1.
 
 ## Batch im Notebook anhören
 
@@ -243,6 +259,28 @@ Kandidatengenerierung erzwungen werden:
   --max-bpm 165 `
   --analysis-workers 4
 ```
+
+Variable Candidate-v2-Längen können im selben Multi-Song-Lauf angefordert
+werden. Jede Länge wird je Paar unabhängig geprüft; das Root-Manifest speichert
+die normalisierte Liste. Ohne diese Option bleibt der historische v1-Default
+`2 4` unverändert:
+
+```powershell
+.venv\Scripts\python.exe -m src.multi_batch_render `
+  musik `
+  --output-dir output\batches\all_music_variable_20260820 `
+  --top-targets 1 `
+  --top-transitions 1 `
+  --renderers equal_power `
+  --transition-bars 2 4 6 8 `
+  --min-bpm 145 `
+  --max-bpm 165
+```
+
+Für `--transition-bars` sind ausschließlich `2`, `4`, `6` und `8` zulässig.
+Sobald 6 oder 8 angefordert wird, tragen die Paar-Manifeste den additiven
+Candidate-v2-Vertrag; eine fehlende lange Abdeckung entfernt keine gültigen
+kürzeren Kandidaten.
 
 Das Root-Manifest dokumentiert Policy-Ausschlüsse, Audio-Duplikate,
 BPM-Ausschlüsse, Analysefehler und die Workerzahl getrennt. Die Worker teilen
@@ -652,6 +690,42 @@ Die angegebenen Cutpoints sind nur Ausgangspunkte für die Suche nach dem nächs
 ### Der Batch erzeugt keine WAV-Dateien
 
 Prüfen Sie zuerst `manifest.json` im angegebenen Zielordner. Unter `candidate_generation.rejections` steht, welcher harte Filter die Kandidaten verhindert hat, etwa fehlende Downbeat-Metadaten, zu wenig Pre-Roll oder eine zu große BPM-Differenz. Der Befehl beendet sich in diesem Fall mit Exit-Code `2` und erzeugt bewusst keine stillen Ersatz-Cutpoints.
+
+## Variable-v2-Waveform-Cache und Training
+
+Der reale Variable-v2-Pfad öffnet ausschließlich Train und Validation. Zuerst
+wird der vollständige Cache materialisiert:
+
+```powershell
+.venv\Scripts\python.exe -m src.ml cache-variable-waveforms `
+  output\datasets\variable_v2_strict_20260820_selected_roformer_run01 `
+  --cache-root output\ml_cache\variable_bridge_waveform_v2 `
+  --feature-cache-root output\feature_cache_variable_v2_roformer_20260821 `
+  --transition-bars 2 4 6 8 `
+  --training-sample-rate 11025 `
+  --render-sample-rate 44100
+```
+
+Der strikt cache-hit-only Trainingsbefehl ist:
+
+```powershell
+.venv\Scripts\python.exe -m src.ml train-variable-tcn-bilstm `
+  output\datasets\variable_v2_strict_20260820_selected_roformer_run01 `
+  output\training_runs\variable_tcn_bilstm_waveform_v2_full_20260821 `
+  --cache-root output\ml_cache\variable_bridge_waveform_v2 `
+  --transition-bars 2 4 6 8 `
+  --device cuda:0 `
+  --max-epochs 100 `
+  --batch-size 4 `
+  --patience 6 `
+  --seed 20260821 `
+  --training-sample-rate 11025 `
+  --wandb-mode disabled
+```
+
+Der Befehl ist nur die empfohlene spätere Volltrainingssonde; sie wurde am
+2026-08-21 ausdrücklich noch nicht gestartet. Für Resume muss `--resume` und
+ein höheres `--max-epochs` im selben Run verwendet werden.
 
 ## Tests ausführen
 

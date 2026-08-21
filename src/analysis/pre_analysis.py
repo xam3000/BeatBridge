@@ -28,6 +28,10 @@ ANALYSIS_ALGORITHM_VERSION = "beatbridge_pre_analysis_v2"
 BEAT_BACKEND_NAME = "librosa.beat.beat_track"
 BAR_BACKEND_NAME = "zplane_AUFTAKT_aufTAKTCl"
 MERGE_ALGORITHM_VERSION = "librosa_auftakt_merge_v1"
+MERGE_ALGORITHM_VERSION_V2 = "librosa_auftakt_monotonic_partial_v2"
+PARTIAL_GRID_SOURCE_V2 = "auftakt_matched_to_librosa_partial_v2"
+PARTIAL_MIN_COMMON_MATCH_COVERAGE = 0.98
+PARTIAL_MIN_COMPLETE_BAR_BLOCK_BARS = 8
 AUFTAKT_EXECUTABLE_NAME = "aufTAKTCl.exe"
 
 
@@ -164,7 +168,22 @@ def _describe_auftakt_binary(executable):
     }
 
 
-def _analysis_config(auftakt_binary):
+def _analysis_config(auftakt_binary, merge_algorithm=MERGE_ALGORITHM_VERSION):
+    merge = {
+        "algorithm": merge_algorithm,
+        "maximum_match_distance_seconds": MAX_BEAT_MATCH_DISTANCE_SECONDS,
+    }
+    if merge_algorithm == MERGE_ALGORITHM_VERSION_V2:
+        merge.update(
+            {
+                "sequence_assignment": "monotone_unique_dynamic_programming",
+                "partial_acceptance": {
+                    "minimum_common_match_coverage": PARTIAL_MIN_COMMON_MATCH_COVERAGE,
+                    "minimum_complete_bar_block_bars": PARTIAL_MIN_COMPLETE_BAR_BLOCK_BARS,
+                },
+                "gap_detection": "median_interbeat_interval_factor_1_5",
+            }
+        )
     return {
         "analysis_algorithm": ANALYSIS_ALGORITHM_VERSION,
         "beat_backend": {
@@ -175,10 +194,7 @@ def _analysis_config(auftakt_binary):
             "beat_units": "samples",
         },
         "bar_backend": dict(auftakt_binary),
-        "merge": {
-            "algorithm": MERGE_ALGORITHM_VERSION,
-            "maximum_match_distance_seconds": MAX_BEAT_MATCH_DISTANCE_SECONDS,
-        },
+        "merge": merge,
         "fallback": {
             "algorithm": FALLBACK_BACKEND_VERSION,
             "beats_per_bar": FALLBACK_BEATS_PER_BAR,
@@ -206,17 +222,23 @@ def _write_json_atomic(path, payload):
 
 
 class PreAnalysis:
-    def __init__(self,analysis_location):
+    def __init__(self, analysis_location, *, merge_algorithm=MERGE_ALGORITHM_VERSION):
         self.analysis_location = Path(analysis_location)
         self.missing_beats = {"librosa": [], "auftakt": []}
+        self.merge_diagnostics = None
+        self.merge_algorithm = merge_algorithm
         self.auftakt_executable = _resolve_auftakt_executable()
         self.auftakt_binary = _describe_auftakt_binary(self.auftakt_executable)
-        self.analysis_config = _analysis_config(self.auftakt_binary)
+        self.analysis_config = _analysis_config(
+            self.auftakt_binary,
+            merge_algorithm=merge_algorithm,
+        )
         self.analysis_id = _analysis_id(self.analysis_config)
 
     def __call__(self,song_path):
         self.song_path = Path(song_path)
         self.missing_beats = {"librosa": [], "auftakt": []}
+        self.merge_diagnostics = None
         self.song_hash = _file_sha256(self.song_path)
         self.cache_directory = (
             self.analysis_location
@@ -327,6 +349,7 @@ class PreAnalysis:
             self.missing_beats = payload.get(
                 "diagnostics", {}
             ).get("missing_beats", {"librosa": [], "auftakt": []})
+            self.merge_diagnostics = payload.get("diagnostics", {}).get("merge")
         except (IndexError, KeyError, TypeError, ValueError, json.JSONDecodeError):
             return False
         return True
@@ -364,6 +387,9 @@ class PreAnalysis:
 
     def save_previous_analysis(self):
         analysis_path = self.cache_directory / ANALYSIS_CACHE_FILENAME
+        diagnostics = {"missing_beats": self.missing_beats}
+        if self.merge_diagnostics is not None:
+            diagnostics["merge"] = self.merge_diagnostics
         payload = {
             "format_version": ANALYSIS_CACHE_FORMAT_VERSION,
             "analysis_id": self.analysis_id,
@@ -379,7 +405,7 @@ class PreAnalysis:
                 ],
                 "grid_metadata": self.grid_metadata.to_dict(),
             },
-            "diagnostics": {"missing_beats": self.missing_beats},
+            "diagnostics": diagnostics,
         }
         _write_json_atomic(analysis_path, payload)
         self.previous_analysis = analysis_path
@@ -545,3 +571,486 @@ class PreAnalysis:
         )
         distance = abs(float(beat_times[closest_index]) - target_time)
         return closest_index, distance
+
+
+def _strict_time_array(values, name):
+    array = np.asarray(values, dtype=float)
+    if array.ndim != 1:
+        raise ValueError(f"{name} beat times must be one-dimensional")
+    if array.size and (
+        not np.all(np.isfinite(array))
+        or (array.size > 1 and np.any(np.diff(array) <= 0))
+    ):
+        raise ValueError(f"{name} beat times must be finite and strictly increasing")
+    return array
+
+
+def monotone_unique_beat_matches(
+    librosa_times,
+    auftakt_times,
+    *,
+    maximum_distance_seconds=MAX_BEAT_MATCH_DISTANCE_SECONDS,
+):
+    """Return the globally best monotone one-to-one beat assignment.
+
+    The dynamic program optimizes the number of matches first and the summed
+    absolute time distance second.  Skipping either sequence is allowed, but a
+    match can never reuse an index from either input sequence.
+    """
+    librosa_times = _strict_time_array(librosa_times, "librosa")
+    auftakt_times = _strict_time_array(auftakt_times, "aufTAKT")
+    if maximum_distance_seconds < 0 or not np.isfinite(maximum_distance_seconds):
+        raise ValueError("maximum_distance_seconds must be finite and non-negative")
+    if not len(librosa_times) or not len(auftakt_times):
+        return []
+
+    librosa_count = len(librosa_times)
+    auftakt_count = len(auftakt_times)
+    match_counts = np.zeros((librosa_count + 1, auftakt_count + 1), dtype=np.int32)
+    match_costs = np.zeros((librosa_count + 1, auftakt_count + 1), dtype=np.float64)
+    actions = np.zeros((librosa_count + 1, auftakt_count + 1), dtype=np.int8)
+
+    def is_better(candidate_count, candidate_cost, best_count, best_cost, candidate_action, best_action):
+        if candidate_count != best_count:
+            return candidate_count > best_count
+        if candidate_cost < best_cost - 1e-12:
+            return True
+        if abs(candidate_cost - best_cost) <= 1e-12:
+            # Prefer a concrete match on an exact tie for deterministic output.
+            return candidate_action == 3 and best_action != 3
+        return False
+
+    for librosa_index in range(1, librosa_count + 1):
+        for auftakt_index in range(1, auftakt_count + 1):
+            best_count = int(match_counts[librosa_index - 1, auftakt_index])
+            best_cost = float(match_costs[librosa_index - 1, auftakt_index])
+            best_action = 1  # skip the current librosa beat
+
+            candidate_count = int(match_counts[librosa_index, auftakt_index - 1])
+            candidate_cost = float(match_costs[librosa_index, auftakt_index - 1])
+            if is_better(
+                candidate_count,
+                candidate_cost,
+                best_count,
+                best_cost,
+                2,
+                best_action,
+            ):
+                best_count, best_cost, best_action = candidate_count, candidate_cost, 2
+
+            distance = abs(float(librosa_times[librosa_index - 1]) - float(auftakt_times[auftakt_index - 1]))
+            if distance <= maximum_distance_seconds:
+                candidate_count = int(match_counts[librosa_index - 1, auftakt_index - 1]) + 1
+                candidate_cost = (
+                    float(match_costs[librosa_index - 1, auftakt_index - 1]) + distance
+                )
+                if is_better(
+                    candidate_count,
+                    candidate_cost,
+                    best_count,
+                    best_cost,
+                    3,
+                    best_action,
+                ):
+                    best_count, best_cost, best_action = candidate_count, candidate_cost, 3
+
+            match_counts[librosa_index, auftakt_index] = best_count
+            match_costs[librosa_index, auftakt_index] = best_cost
+            actions[librosa_index, auftakt_index] = best_action
+
+    matches = []
+    librosa_index = librosa_count
+    auftakt_index = auftakt_count
+    while librosa_index > 0 and auftakt_index > 0:
+        action = int(actions[librosa_index, auftakt_index])
+        if action == 3:
+            left_index = librosa_index - 1
+            right_index = auftakt_index - 1
+            distance = abs(float(librosa_times[left_index]) - float(auftakt_times[right_index]))
+            matches.append((left_index, right_index, distance))
+            librosa_index -= 1
+            auftakt_index -= 1
+        elif action == 1:
+            librosa_index -= 1
+        elif action == 2:
+            auftakt_index -= 1
+        else:
+            # Only the zero row/column can have no predecessor action.
+            if librosa_index > 0:
+                librosa_index -= 1
+            else:
+                auftakt_index -= 1
+    matches.reverse()
+    return matches
+
+
+def _nearest_distance(times, target_time):
+    if not len(times):
+        return None
+    return float(np.min(np.abs(np.asarray(times, dtype=float) - float(target_time))))
+
+
+def _common_time_range(librosa_times, auftakt_times):
+    if not len(librosa_times) or not len(auftakt_times):
+        return None
+    start = max(float(librosa_times[0]), float(auftakt_times[0]))
+    end = min(float(librosa_times[-1]), float(auftakt_times[-1]))
+    return {"start": start, "end": end, "overlap": start <= end}
+
+
+def _time_region(value, common_range):
+    if common_range is None:
+        return "inside"
+    if value < common_range["start"]:
+        return "before"
+    if value > common_range["end"]:
+        return "after"
+    return "inside"
+
+
+def _unmatched_region_counts(times, matched_indices, common_range):
+    result = {"before": 0, "inside": 0, "after": 0}
+    matched_indices = set(matched_indices)
+    for index, value in enumerate(times):
+        if index not in matched_indices:
+            result[_time_region(float(value), common_range)] += 1
+    return result
+
+
+def _bar_completeness_diagnostics(beat_frames):
+    runs = []
+    current = []
+    for frame in beat_frames:
+        sample, count_in_bar, beats_in_bar = (int(value) for value in frame)
+        if current and count_in_bar == 1:
+            runs.append(current)
+            current = []
+        current.append((sample, count_in_bar, beats_in_bar))
+    if current:
+        runs.append(current)
+
+    samples = [int(frame[0]) for frame in beat_frames]
+    intervals = np.diff(np.asarray(samples, dtype=float)) if len(samples) > 1 else np.array([])
+    median_interval = float(np.median(intervals)) if len(intervals) else None
+    maximum_contiguous_interval = (
+        None
+        if median_interval is None
+        else median_interval * 1.5
+    )
+
+    complete_bars = 0
+    incomplete_bars = 0
+    longest_block = 0
+    current_block = 0
+    previous_complete_end = None
+    for run in runs:
+        meter = run[0][2]
+        complete = (
+            len(run) == meter
+            and [frame[1] for frame in run] == list(range(1, meter + 1))
+            and all(frame[2] == meter for frame in run)
+        )
+        if not complete:
+            incomplete_bars += 1
+            current_block = 0
+            previous_complete_end = None
+            continue
+
+        complete_bars += 1
+        contiguous = (
+            previous_complete_end is not None
+            and maximum_contiguous_interval is not None
+            and run[0][0] - previous_complete_end <= maximum_contiguous_interval
+        )
+        current_block = current_block + 1 if contiguous else 1
+        longest_block = max(longest_block, current_block)
+        previous_complete_end = run[-1][0]
+
+    return {
+        "complete_bars": complete_bars,
+        "incomplete_bars": incomplete_bars,
+        "longest_contiguous_complete_bar_block": longest_block,
+        "median_interbeat_interval_samples": median_interval,
+        "maximum_contiguous_interval_samples": maximum_contiguous_interval,
+        "bar_run_count": len(runs),
+    }
+
+
+def _partial_merge_diagnostics(librosa_times, auftakt_times, matches, matched_frames):
+    common_range = _common_time_range(librosa_times, auftakt_times)
+    matched_librosa_indices = {match[0] for match in matches}
+    matched_auftakt_indices = {match[1] for match in matches}
+
+    if common_range is None or not common_range.get("overlap", True):
+        common_librosa_indices = set()
+        common_auftakt_indices = set()
+    else:
+        common_librosa_indices = {
+            index
+            for index, value in enumerate(librosa_times)
+            if common_range["start"] <= float(value) <= common_range["end"]
+        }
+        common_auftakt_indices = {
+            index
+            for index, value in enumerate(auftakt_times)
+            if common_range["start"] <= float(value) <= common_range["end"]
+        }
+
+    matched_common_librosa = len(matched_librosa_indices & common_librosa_indices)
+    matched_common_auftakt = len(matched_auftakt_indices & common_auftakt_indices)
+    librosa_coverage = (
+        matched_common_librosa / len(common_librosa_indices)
+        if common_librosa_indices
+        else 0.0
+    )
+    auftakt_coverage = (
+        matched_common_auftakt / len(common_auftakt_indices)
+        if common_auftakt_indices
+        else 0.0
+    )
+    distances = np.asarray([match[2] for match in matches], dtype=float)
+    if len(distances):
+        distance_stats = {
+            "p50": float(np.quantile(distances, 0.50)),
+            "p95": float(np.quantile(distances, 0.95)),
+            "max": float(np.max(distances)),
+        }
+    else:
+        distance_stats = {"p50": None, "p95": None, "max": None}
+
+    bars = _bar_completeness_diagnostics(matched_frames)
+    reasons = []
+    if not matches:
+        reasons.append("no_valid_matches")
+    if librosa_coverage < PARTIAL_MIN_COMMON_MATCH_COVERAGE:
+        reasons.append("librosa_common_match_coverage_below_threshold")
+    if auftakt_coverage < PARTIAL_MIN_COMMON_MATCH_COVERAGE:
+        reasons.append("auftakt_common_match_coverage_below_threshold")
+    if bars["longest_contiguous_complete_bar_block"] < PARTIAL_MIN_COMPLETE_BAR_BLOCK_BARS:
+        reasons.append("insufficient_contiguous_complete_bar_block")
+    samples = np.asarray([frame[0] for frame in matched_frames], dtype=float)
+    if (
+        not len(samples)
+        or not np.all(np.isfinite(samples))
+        or (len(samples) > 1 and np.any(np.diff(samples) <= 0))
+    ):
+        reasons.append("matched_samples_not_finite_and_strictly_increasing")
+
+    return {
+        "algorithm": MERGE_ALGORITHM_VERSION_V2,
+        "sequence_counts": {
+            "librosa": int(len(librosa_times)),
+            "auftakt": int(len(auftakt_times)),
+        },
+        "common_time_range_seconds": common_range,
+        "matches": {"count": int(len(matches))},
+        "match_coverage": {
+            "librosa_inside_common_range": float(librosa_coverage),
+            "auftakt_inside_common_range": float(auftakt_coverage),
+        },
+        "unmatched": {
+            "librosa": _unmatched_region_counts(
+                librosa_times,
+                matched_librosa_indices,
+                common_range,
+            ),
+            "auftakt": _unmatched_region_counts(
+                auftakt_times,
+                matched_auftakt_indices,
+                common_range,
+            ),
+        },
+        "distance_seconds": distance_stats,
+        "bars": bars,
+        "acceptance": {
+            "accepted": not reasons,
+            "minimum_common_match_coverage": PARTIAL_MIN_COMMON_MATCH_COVERAGE,
+            "minimum_complete_bar_block_bars": PARTIAL_MIN_COMPLETE_BAR_BLOCK_BARS,
+            "reasons": reasons,
+        },
+    }
+
+
+def _partial_merge(librosa_samples, librosa_times, auftakt_beats):
+    librosa_samples = [int(sample) for sample in librosa_samples]
+    librosa_times = _strict_time_array(librosa_times, "librosa")
+    if len(librosa_samples) != len(librosa_times):
+        raise ValueError("librosa samples and times must have equal lengths")
+    if any(sample < 0 for sample in librosa_samples) or any(
+        right <= left for left, right in zip(librosa_samples, librosa_samples[1:])
+    ):
+        raise ValueError("librosa samples must be finite and strictly increasing")
+
+    auftakt_times = _strict_time_array(
+        [beat[0] for beat in auftakt_beats],
+        "aufTAKT",
+    )
+    for index, beat in enumerate(auftakt_beats):
+        if int(beat[1]) < 1 or int(beat[2]) < 1 or int(beat[1]) > int(beat[2]):
+            raise ValueError(f"aufTAKT beat {index} has invalid bar metadata")
+
+    matches = monotone_unique_beat_matches(librosa_times, auftakt_times)
+    matched_frames = [
+        (
+            librosa_samples[librosa_index],
+            int(auftakt_beats[auftakt_index][1]),
+            int(auftakt_beats[auftakt_index][2]),
+        )
+        for librosa_index, auftakt_index, _distance in matches
+    ]
+    diagnostics = _partial_merge_diagnostics(
+        librosa_times,
+        auftakt_times,
+        matches,
+        matched_frames,
+    )
+
+    missing_beats = {"librosa": [], "auftakt": []}
+    matched_librosa_indices = {match[0] for match in matches}
+    matched_auftakt_indices = {match[1] for match in matches}
+    common_range = diagnostics["common_time_range_seconds"]
+    for index, (sample, time_seconds) in enumerate(zip(librosa_samples, librosa_times)):
+        if index not in matched_librosa_indices:
+            missing_beats["librosa"].append(
+                {
+                    "sample": int(sample),
+                    "time_seconds": float(time_seconds),
+                    "region": _time_region(float(time_seconds), common_range),
+                    "nearest_auftakt_distance_seconds": _nearest_distance(
+                        auftakt_times,
+                        time_seconds,
+                    ),
+                }
+            )
+    for index, (time_seconds, count_in_bar, beats_in_bar) in enumerate(auftakt_beats):
+        if index not in matched_auftakt_indices:
+            missing_beats["auftakt"].append(
+                {
+                    "time_seconds": float(time_seconds),
+                    "count_in_bar": int(count_in_bar),
+                    "beats_in_bar": int(beats_in_bar),
+                    "region": _time_region(float(time_seconds), common_range),
+                    "nearest_librosa_distance_seconds": _nearest_distance(
+                        librosa_times,
+                        time_seconds,
+                    ),
+                }
+            )
+    return matched_frames, diagnostics, missing_beats
+
+
+class PartialPreAnalysis(PreAnalysis):
+    """Additive analysis path using the monotone partial Merge-v2 contract."""
+
+    def __init__(self, analysis_location):
+        super().__init__(
+            analysis_location,
+            merge_algorithm=MERGE_ALGORITHM_VERSION_V2,
+        )
+
+    def auftakt_analysis_comparison(self):
+        tmp_folder.mkdir(parents=True, exist_ok=True)
+        token = uuid.uuid4().hex
+        temp_wav_path = None
+        auftakt_output_path = tmp_folder / f"auftakt-output-{token}.txt"
+        original_frames = list(self.beat_frames)
+        try:
+            if self.song_path.suffix.lower() != ".wav":
+                temp_wav_path = tmp_folder / f"audio-{token}.wav"
+                subprocess.run(
+                    ["ffmpeg", "-y", "-i", str(self.song_path), str(temp_wav_path)],
+                    check=True,
+                )
+                song_to_analyze = temp_wav_path
+            else:
+                song_to_analyze = self.song_path
+
+            command = [
+                (
+                    str(self.auftakt_executable)
+                    if self.auftakt_executable is not None
+                    else AUFTAKT_EXECUTABLE_NAME
+                ),
+                "-i",
+                str(song_to_analyze),
+                "-r",
+                str(auftakt_output_path),
+            ]
+            subprocess.run(command, check=True)
+            backend_version = self._auftakt_backend_version()
+            auftakt_beats = []
+            for line in auftakt_output_path.read_text(encoding="utf-8").splitlines()[1:]:
+                if not line.strip():
+                    continue
+                time_seconds, count_in_bar, beats_in_bar = [part.strip() for part in line.split(",")]
+                auftakt_beats.append(
+                    (float(time_seconds), int(count_in_bar), int(beats_in_bar))
+                )
+
+            librosa_samples = [
+                int(frame[0]) if isinstance(frame, (tuple, list)) else int(frame)
+                for frame in original_frames
+            ]
+            librosa_times = librosa.samples_to_time(
+                np.asarray(librosa_samples),
+                sr=self.sr,
+            )
+            matched_frames, diagnostics, missing_beats = _partial_merge(
+                librosa_samples,
+                librosa_times,
+                auftakt_beats,
+            )
+            self.merge_diagnostics = diagnostics
+            self.missing_beats = missing_beats
+            if diagnostics["acceptance"]["accepted"]:
+                self.beat_frames = matched_frames
+                matched_distances = [
+                    distance
+                    for _librosa_index, _auftakt_index, distance in monotone_unique_beat_matches(
+                        librosa_times,
+                        [beat[0] for beat in auftakt_beats],
+                    )
+                ]
+                confidence = float(
+                    np.mean(
+                        [
+                            max(0.0, 1.0 - distance / MAX_BEAT_MATCH_DISTANCE_SECONDS)
+                            for distance in matched_distances
+                        ]
+                    )
+                )
+                self.grid_metadata = BeatGridMetadata(
+                    grid_source=PARTIAL_GRID_SOURCE_V2,
+                    fallback_used=False,
+                    backend_version=(
+                        f"librosa={librosa.__version__};aufTAKTCl={backend_version}"
+                    ),
+                    confidence=confidence,
+                )
+            else:
+                # The fallback is built from the original librosa positions;
+                # unmatched beats never receive fabricated bar metadata.
+                self.beat_frames = original_frames
+                self.grid_metadata = None
+        except (OSError, subprocess.SubprocessError, ValueError) as error:
+            self.merge_diagnostics = {
+                "algorithm": MERGE_ALGORITHM_VERSION_V2,
+                "status": "error",
+                "error_type": type(error).__name__,
+                "error": str(error),
+            }
+            self.beat_frames = original_frames
+            self.grid_metadata = None
+            logger.warning(
+                "aufTAKT Merge-v2 failed for %s; falling back to inferred 4/4 bar metadata: %s",
+                self.song_path,
+                error,
+            )
+        finally:
+            auftakt_output_path.unlink(missing_ok=True)
+            if temp_wav_path is not None:
+                temp_wav_path.unlink(missing_ok=True)
+
+
+# Explicit alias for callers that prefer the versioned class name.
+PreAnalysisV2 = PartialPreAnalysis
