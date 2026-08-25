@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import uuid
+import sys
 
 import soundfile as sf
 
@@ -29,12 +30,15 @@ from src.ranking import (
     RenderedTransitionRankingResult,
     rank_candidates,
     rank_rendered_transitions,
+    load_learned_cue_ranker,
+    rank_candidates_learned,
 )
 from src.variable_rendering import render_variable_transition
 
 
 BATCH_MANIFEST_FORMAT_VERSION = 1
 DEFAULT_RENDERERS = ("simple", "fade", "equal_power", "tempo_fade")
+RANKING_METHODS = ("feature_baseline_v3", "learned_cue_ranker_v1")
 
 
 @dataclass(frozen=True)
@@ -53,6 +57,9 @@ class RenderedVariant:
     transition_score: float | None = None
     transition_length_bars: int | None = None
     transition_length_beats: int | None = None
+    selection_rank: int | None = None
+    selection_score: float | None = None
+    selection_method: str = "feature_baseline_v3"
 
     def to_dict(self):
         payload = {
@@ -68,6 +75,9 @@ class RenderedVariant:
             "candidate_score": self.candidate_score,
             "transition_rank": self.transition_rank,
             "transition_score": self.transition_score,
+            "selection_rank": self.selection_rank,
+            "selection_score": self.selection_score,
+            "selection_method": self.selection_method,
             "status": "rendered",
         }
         if self.transition_length_bars is not None:
@@ -105,6 +115,8 @@ class BatchRenderResult:
     top_k: int | None
     preview_seconds_before: float | None
     preview_seconds_after: float | None
+    ranking_method: str = "feature_baseline_v3"
+    cue_ranking: object | None = None
 
 
 def render_candidate_batch(
@@ -121,6 +133,14 @@ def render_candidate_batch(
     overwrite=False,
     preview_seconds_before=DEFAULT_PREVIEW_SECONDS_BEFORE,
     preview_seconds_after=DEFAULT_PREVIEW_SECONDS_AFTER,
+    ranking_method="feature_baseline_v3",
+    cue_ranker_run=None,
+    cue_ranker_dataset=None,
+    cue_ranker_feature_cache_root="output/feature_cache",
+    cue_ranker_analysis_root="output/pre_analysis",
+    cue_ranker_vocal_backend="disabled",
+    cue_ranker_vocal_model=None,
+    cue_ranker=None,
 ) -> BatchRenderResult:
     """Rank candidates and render all or the requested top K with each baseline.
 
@@ -129,6 +149,12 @@ def render_candidate_batch(
     overwritten unless ``overwrite=True`` is explicitly requested.
     """
     renderers = _validate_renderers(renderers)
+    ranking_method = _validate_ranking_method(ranking_method)
+    if ranking_method == "learned_cue_ranker_v1":
+        if int(candidate_generation.format_version) != 2:
+            raise ValueError("learned_cue_ranker_v1 requires Candidate-v2 generation")
+        if candidate_generation.approximate_grid_policy != "reject":
+            raise ValueError("learned_cue_ranker_v1 requires approximate_grid_policy='reject'")
     if top_k is not None and int(top_k) <= 0:
         raise ValueError("top_k must be greater than 0")
     top_k = None if top_k is None else int(top_k)
@@ -137,32 +163,62 @@ def render_candidate_batch(
     if transition_metric_config is None:
         transition_metric_config = RenderedTransitionMetricConfig()
     _validate_preview_durations(preview_seconds_before, preview_seconds_after)
+    loaded_ranker = None
+    if ranking_method == "learned_cue_ranker_v1":
+        loaded_ranker = cue_ranker or load_learned_cue_ranker(
+            cue_ranker_run,
+            dataset_manifest_path=cue_ranker_dataset,
+        )
 
     candidate_ranking = rank_candidates(
         candidate_generation.candidates,
         target_sample_rate=target_sample_rate,
         config=ranking_config,
     )
+    cue_ranking = None
+    if ranking_method == "learned_cue_ranker_v1":
+        cue_ranking = rank_candidates_learned(
+            candidate_generation.candidates,
+            loaded_ranker=loaded_ranker,
+            target_sample_rate=target_sample_rate,
+            analysis=analysis,
+            analysis_root=cue_ranker_analysis_root,
+            feature_cache_root=cue_ranker_feature_cache_root,
+            vocal_backend=cue_ranker_vocal_backend,
+            vocal_model=cue_ranker_vocal_model,
+        )
+        selection_ranking = cue_ranking
+    else:
+        selection_ranking = candidate_ranking
     rank_by_id = {score.candidate_id: score for score in candidate_ranking.scores}
+    selection_by_id = {score.candidate_id: score for score in selection_ranking.scores}
     candidate_by_id = {
         candidate.candidate_id: candidate for candidate in candidate_generation.candidates
     }
     ranked_candidates = [
-        candidate_by_id[score.candidate_id] for score in candidate_ranking.scores
+        candidate_by_id[score.candidate_id] for score in selection_ranking.scores
     ]
     ranked_ids = {candidate.candidate_id for candidate in ranked_candidates}
-    ranked_candidates.extend(
-        candidate
-        for candidate in candidate_generation.candidates
-        if candidate.candidate_id not in ranked_ids
-    )
+    if ranking_method == "feature_baseline_v3":
+        ranked_candidates.extend(
+            candidate
+            for candidate in candidate_generation.candidates
+            if candidate.candidate_id not in ranked_ids
+        )
     selected_candidates = ranked_candidates if top_k is None else ranked_candidates[:top_k]
+    # The learned contract backfills a candidate that cannot be rendered.  A
+    # baseline batch keeps its historical fixed top-K behaviour unchanged.
+    candidates_to_attempt = (
+        ranked_candidates
+        if ranking_method == "learned_cue_ranker_v1"
+        else selected_candidates
+    )
 
     output_directory = Path(output_directory)
     manifest_path = output_directory / "manifest.json"
     output_targets = [
         output_directory / "rendered" / _rendered_filename(index, candidate, renderer)
-        for index, candidate in enumerate(selected_candidates, start=1)
+        for index, candidate in enumerate(candidates_to_attempt, start=1)
         for renderer in renderers
     ]
     _preflight_output_paths([manifest_path, *output_targets], overwrite=overwrite)
@@ -174,7 +230,18 @@ def render_candidate_batch(
     rendered_variants = []
     rendered_transition_inputs = []
     failures = []
-    for index, candidate in enumerate(selected_candidates, start=1):
+    learned_selected_candidate_ids = []
+    learned_attempted_candidate_ids = []
+    learned_skipped_candidate_ids = []
+    learned_renderability = []
+    for index, candidate in enumerate(candidates_to_attempt, start=1):
+        if (
+            ranking_method == "learned_cue_ranker_v1"
+            and top_k is not None
+            and len(learned_selected_candidate_ids) >= top_k
+        ):
+            break
+        rendered_before_candidate = len(rendered_variants)
         candidate_score = rank_by_id.get(candidate.candidate_id)
         for renderer in renderers:
             output_path = rendered_directory / _rendered_filename(index, candidate, renderer)
@@ -232,6 +299,17 @@ def render_candidate_batch(
                             if int(getattr(candidate, "format_version", 1)) == 2
                             else None
                         ),
+                        selection_rank=(
+                            None
+                            if selection_by_id.get(candidate.candidate_id) is None
+                            else selection_by_id[candidate.candidate_id].rank
+                        ),
+                        selection_score=(
+                            None
+                            if selection_by_id.get(candidate.candidate_id) is None
+                            else selection_by_id[candidate.candidate_id].total_score
+                        ),
+                        selection_method=ranking_method,
                     )
                 )
                 rendered_transition_inputs.append(
@@ -254,6 +332,18 @@ def render_candidate_batch(
                         error_type=type(error).__name__,
                         message=str(error),
                     )
+                )
+        if ranking_method == "learned_cue_ranker_v1":
+            learned_attempted_candidate_ids.append(candidate.candidate_id)
+            if len(rendered_variants) > rendered_before_candidate:
+                learned_selected_candidate_ids.append(candidate.candidate_id)
+                learned_renderability.append(
+                    {"candidate_id": candidate.candidate_id, "status": "rendered"}
+                )
+            else:
+                learned_skipped_candidate_ids.append(candidate.candidate_id)
+                learned_renderability.append(
+                    {"candidate_id": candidate.candidate_id, "status": "render_failed"}
                 )
 
     rendered_transition_ranking = rank_rendered_transitions(
@@ -290,6 +380,41 @@ def render_candidate_batch(
         top_k=top_k,
         preview_seconds_before=preview_seconds_before,
         preview_seconds_after=preview_seconds_after,
+        ranking_method=ranking_method,
+        cue_ranking=(
+            None
+            if cue_ranking is None
+            else cue_ranking.with_selection(
+                learned_selected_candidate_ids,
+                renderability_preflight=learned_renderability
+                + [
+                    {
+                        "candidate_id": candidate.candidate_id,
+                        "status": "not_attempted_after_top_k",
+                    }
+                    for candidate in ranked_candidates
+                    if candidate.candidate_id not in learned_attempted_candidate_ids
+                ]
+                + [
+                    {
+                        "candidate_id": failure.candidate_id,
+                        "status": "score_failed",
+                        "error_type": failure.error_type,
+                        "message": failure.message,
+                    }
+                    for failure in cue_ranking.failures
+                ],
+                backfill={
+                    "requested_top_k": top_k,
+                    "selected_count": len(learned_selected_candidate_ids),
+                    "partial": len(learned_selected_candidate_ids) < (
+                        len(candidate_generation.candidates) if top_k is None else top_k
+                    ),
+                    "attempted_candidate_ids": learned_attempted_candidate_ids,
+                    "skipped_candidate_ids": learned_skipped_candidate_ids,
+                },
+            )
+        ),
     )
     _write_json_atomic(manifest_path, _manifest_payload(batch_result, renderers))
     return batch_result
@@ -311,10 +436,27 @@ def generate_and_render_batch(
     overwrite=False,
     preview_seconds_before=DEFAULT_PREVIEW_SECONDS_BEFORE,
     preview_seconds_after=DEFAULT_PREVIEW_SECONDS_AFTER,
+    ranking_method="feature_baseline_v3",
+    cue_ranker_run=None,
+    cue_ranker_dataset=None,
+    cue_ranker_feature_cache_root="output/feature_cache",
+    cue_ranker_analysis_root="output/pre_analysis",
+    cue_ranker_vocal_backend="disabled",
+    cue_ranker_vocal_model=None,
 ) -> BatchRenderResult:
     """Generate, rank, and render accepted candidate variants."""
+    ranking_method = _validate_ranking_method(ranking_method)
     if candidate_config is None:
-        candidate_config = CandidateGenerationConfig()
+        candidate_config = (
+            VariableCandidateGenerationConfig(transition_lengths_bars=(2, 4))
+            if ranking_method == "learned_cue_ranker_v1"
+            else CandidateGenerationConfig()
+        )
+    if ranking_method == "learned_cue_ranker_v1" and int(getattr(candidate_config, "format_version", 1)) != 2:
+        raise ValueError(
+            "learned_cue_ranker_v1 requires Candidate-v2 generation; use "
+            "VariableCandidateGenerationConfig with transition lengths 2/4/6/8"
+        )
     if analysis is None:
         cache_path = Path("output") / "pre_analysis" if analysis_location is None else Path(analysis_location)
         analysis = PreAnalysis(str(cache_path) + os.sep)
@@ -338,6 +480,13 @@ def generate_and_render_batch(
         overwrite=overwrite,
         preview_seconds_before=preview_seconds_before,
         preview_seconds_after=preview_seconds_after,
+        ranking_method=ranking_method,
+        cue_ranker_run=cue_ranker_run,
+        cue_ranker_dataset=cue_ranker_dataset,
+        cue_ranker_feature_cache_root=cue_ranker_feature_cache_root,
+        cue_ranker_analysis_root=cue_ranker_analysis_root,
+        cue_ranker_vocal_backend=cue_ranker_vocal_backend,
+        cue_ranker_vocal_model=cue_ranker_vocal_model,
     )
 
 
@@ -351,6 +500,15 @@ def _validate_renderers(renderers):
     if len(set(renderers)) != len(renderers):
         raise ValueError("Renderers must not contain duplicates")
     return renderers
+
+
+def _validate_ranking_method(ranking_method):
+    ranking_method = str(ranking_method)
+    if ranking_method not in RANKING_METHODS:
+        raise ValueError(
+            f"Unknown ranking method {ranking_method!r}; choose one of {', '.join(RANKING_METHODS)}"
+        )
+    return ranking_method
 
 
 def _validate_preview_durations(seconds_before, seconds_after):
@@ -409,10 +567,11 @@ def _temporary_path(path):
 
 def _manifest_payload(batch_result, renderers):
     variable_contract = int(batch_result.candidate_generation.format_version) == 2
-    return {
+    payload = {
         "format_version": 2 if variable_contract else BATCH_MANIFEST_FORMAT_VERSION,
         "render_protocol_version": 6 if variable_contract else RENDER_RESULT_FORMAT_VERSION,
         "renderers": list(renderers),
+        "ranking_method": batch_result.ranking_method,
         "candidate_generation": batch_result.candidate_generation.to_dict(),
         "candidate_ranking": batch_result.candidate_ranking.to_dict(),
         "rendered_transition_ranking": batch_result.rendered_transition_ranking.to_dict(),
@@ -431,6 +590,9 @@ def _manifest_payload(batch_result, renderers):
         "rendered_variants": [variant.to_dict() for variant in batch_result.rendered_variants],
         "failures": [failure.to_dict() for failure in batch_result.failures],
     }
+    if batch_result.cue_ranking is not None:
+        payload["cue_ranking"] = batch_result.cue_ranking.to_dict()
+    return payload
 
 
 def build_argument_parser():
@@ -443,6 +605,31 @@ def build_argument_parser():
         "--output-dir",
         required=True,
         help="New or empty directory for rendered WAV files and manifest.json.",
+    )
+    parser.add_argument(
+        "--ranking-method",
+        choices=RANKING_METHODS,
+        default="feature_baseline_v3",
+        help="Candidate selection method (default: feature_baseline_v3).",
+    )
+    parser.add_argument(
+        "--cue-ranker-run",
+        help="Completed learned_cue_ranker_v1 run directory or best checkpoint.",
+    )
+    parser.add_argument(
+        "--cue-ranker-dataset",
+        help="SHA-bound Cue-Ranker Dataset-3 manifest required for learned inference.",
+    )
+    parser.add_argument(
+        "--cue-ranker-feature-cache-root",
+        default="output/feature_cache",
+        help="Feature-cache root for learned inference.",
+    )
+    parser.add_argument(
+        "--cue-ranker-vocal-backend",
+        choices=("disabled", "demucs", "roformer"),
+        default="disabled",
+        help="Vocal feature backend for learned inference (default: disabled).",
     )
     parser.add_argument(
         "--renderers",
@@ -484,7 +671,7 @@ def build_argument_parser():
         "--top-k",
         type=int,
         default=5,
-        help="Render only the top K feature-ranked candidates (default: 5).",
+        help="Render only the top K candidates selected by --ranking-method (default: 5).",
     )
     parser.add_argument(
         "--target-sample-rate",
@@ -525,19 +712,34 @@ def main():
         max_tempo_relative_difference=args.max_tempo_difference,
         approximate_grid_policy=args.approximate_grid_policy,
     )
-    result = generate_and_render_batch(
-        args.song1,
-        args.song2,
-        args.output_dir,
-        candidate_config=candidate_config,
-        renderers=tuple(args.renderers),
-        target_sample_rate=args.target_sample_rate,
-        analysis_location=args.analysis_location,
-        top_k=args.top_k,
-        overwrite=args.overwrite,
-        preview_seconds_before=args.preview_before_seconds,
-        preview_seconds_after=args.preview_after_seconds,
-    )
+    try:
+        result = generate_and_render_batch(
+            args.song1,
+            args.song2,
+            args.output_dir,
+            candidate_config=candidate_config,
+            renderers=tuple(args.renderers),
+            target_sample_rate=args.target_sample_rate,
+            analysis_location=args.analysis_location,
+            top_k=args.top_k,
+            overwrite=args.overwrite,
+            ranking_method=args.ranking_method,
+            cue_ranker_run=args.cue_ranker_run,
+            cue_ranker_dataset=args.cue_ranker_dataset,
+            cue_ranker_feature_cache_root=args.cue_ranker_feature_cache_root,
+            cue_ranker_analysis_root=args.analysis_location or "output/pre_analysis",
+            cue_ranker_vocal_backend=args.cue_ranker_vocal_backend,
+            preview_seconds_before=args.preview_before_seconds,
+            preview_seconds_after=args.preview_after_seconds,
+        )
+    except (FileNotFoundError, ValueError) as error:
+        if args.ranking_method != "learned_cue_ranker_v1":
+            raise
+        print(
+            f"learned_cue_ranker_v1 preflight failed: {type(error).__name__}: {error}",
+            file=sys.stderr,
+        )
+        return 1
     print(
         f"Generated {len(result.candidate_generation.candidates)} candidates; "
         f"rendered {len(result.rendered_variants)} WAV files; "
@@ -552,7 +754,7 @@ def main():
             f"Rendered rank {score.rank}: {score.variant_id} "
             f"(score={score.total_score:.3f})"
         )
-    if result.failures or result.rendered_transition_ranking.failures:
+    if result.failures or result.rendered_transition_ranking.failures or (result.cue_ranking and result.cue_ranking.failures):
         return 1
     if not result.candidate_generation.candidates:
         return 2

@@ -83,6 +83,15 @@ from .variable_split import (
     canonical_mapping_sha256,
     load_variable_split_authority,
 )
+from .cue_ranker_universe import (
+    CUE_RANKER_DATASET_FORMAT_VERSION,
+    CueRankerUniverseResult,
+    build_cue_ranker_universe,
+    canonical_json_sha256,
+    load_cue_ranker_universe_rows,
+    write_cue_ranker_pair_index,
+)
+from .cue_ranker_dataset import CueRankerDatasetExportResult, export_cue_ranker_dataset
 
 __all__ = [
     "ANALYSIS_CONTEXT_BARS_AFTER",
@@ -150,4 +159,12 @@ __all__ = [
     "build_variable_split_authority",
     "canonical_mapping_sha256",
     "load_variable_split_authority",
+    "CUE_RANKER_DATASET_FORMAT_VERSION",
+    "CueRankerUniverseResult",
+    "build_cue_ranker_universe",
+    "canonical_json_sha256",
+    "load_cue_ranker_universe_rows",
+    "write_cue_ranker_pair_index",
+    "CueRankerDatasetExportResult",
+    "export_cue_ranker_dataset",
 ]

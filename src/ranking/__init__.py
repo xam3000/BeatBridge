@@ -15,6 +15,14 @@ from .rendered_transition import (
     RenderedTransitionScore,
     rank_rendered_transitions,
 )
+from .learned_cue_ranker import (
+    LEARNED_CUE_RANKER_FORMAT_VERSION,
+    LEARNED_CUE_RANKER_NAME,
+    LearnedCueRankingResult,
+    LoadedCueRanker,
+    load_learned_cue_ranker,
+    rank_candidates_learned,
+)
 
 __all__ = [
     "CandidateRankingResult",
@@ -28,4 +36,10 @@ __all__ = [
     "RenderedTransitionScore",
     "rank_candidates",
     "rank_rendered_transitions",
+    "LEARNED_CUE_RANKER_FORMAT_VERSION",
+    "LEARNED_CUE_RANKER_NAME",
+    "LearnedCueRankingResult",
+    "LoadedCueRanker",
+    "load_learned_cue_ranker",
+    "rank_candidates_learned",
 ]

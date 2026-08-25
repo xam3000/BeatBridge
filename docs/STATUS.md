@@ -1,6 +1,104 @@
 # BeatBridge – Stand & Next Steps
 
-_Stand: 2026-08-21_
+_Stand: 2026-08-25_
+
+**Verifiziert am 2026-08-25 (frischer unabhängiger Cuepoint-Ranker-Audit):**
+Der Review begann mit gezielten synthetischen Vertrags-/Negativtests und lief
+anschließend vollständig mit `239 passed, 4 warnings in 36.37s` (Exit-Code 0;
+`-B -p no:cacheprovider`). Vier eindeutig reproduzierte Fehler wurden
+additiv behoben: (1) `guard_rejected` wird nun trotz endlicher hoher
+Objective-Utility immer als relativer negativer Teacher-Anker in Loss **und**
+Validation-Metriken behandelt; (2) der Loader übergibt für
+`candidate_context_v1` die vollständige Universumsgröße statt nur die
+gelabelte Stichprobengröße; (3) Learned-Top-K versucht bei einem vollständigen
+Renderfehler deterministisch den nächsten Modellkandidaten und manifestiert
+Auslassung/Backfill; (4) der Teacher-Sealer/-Verifier/-Loader akzeptiert nur
+den hashgebundenen `best_checkpoint` eines abgeschlossenen Variable-TCN-Runs
+mit passendem Checkpointvertrag. Testsplit und reales Training blieben
+ungeöffnet beziehungsweise ungestartet.
+
+Der größere reale Validation-Lauf ist **noch nicht freigegeben**: Es fehlt ein
+testfrei veröffentlichter echter Format-3-Teacher-Snapshot samt sicherem
+End-to-End-Feature-/Waveformresolver; außerdem fehlen die im Architekturplan
+vorgesehenen `src.ml`-CLIs für Teacher-Labeling und Ranker-Training. Die
+vollständige Testdokumentation einschließlich vorheriger Fixture-Korrekturen
+und Warnungen steht in [`Bemerkungen.md`](./Bemerkungen.md). Teacher-Agreement
+bleibt ohne unabhängige Renderer-/Hörstudie kein Musikqualitätsnachweis.
+
+**Verifiziert am 2026-08-25 (additive Batch-/CLI-Integration von
+`learned_cue_ranker_v1`):** Batch und Multi-Batch akzeptieren explizit
+`ranking_method=feature_baseline_v3|learned_cue_ranker_v1`; ohne Auswahl bleibt
+`feature_baseline_v3` der Default. Der Learned-Pfad lädt ausschließlich einen
+SHA-geprüften abgeschlossenen Run mit Best-Checkpoint und ein SHA-gebundenes
+Format-3-Dataset mit Teacher-/train-only-Normalizervertrag. Er sortiert alle
+bereits akzeptierten Candidate-v2-Entries deterministisch nach Modellscore,
+übergibt nur `selection_candidate_ids` an die unveränderten Renderer und
+schreibt additiv `cue_ranking` mit Modell-/Format-/Checkpoint-/Dataset-/Teacher-
+Provenienz, Scores, Preflight und Backfill. `candidate_ranking` bleibt die
+historische `feature_baseline_v3`-Struktur. Fehlende/ungültige Runs, unzulässige
+Candidate-Formate, Fallback-Grids und `allow`-Provenienz werden klar abgelehnt;
+es gibt keinen stillen Ranking-Fallback. Die fokussierte synthetische Suite
+bestand mit `40 passed, 2 warnings`; kein Testsplit und kein umfangreicher
+Realbatch wurden verwendet.
+
+**Verifiziert am 2026-08-25 (learned_cue_ranker_v1, reproduzierbare
+Train-/Validation-Auswertung):** Der gruppierte Runner protokolliert jetzt
+epochweise Listwise-Ranking-Loss, Top-1-/Top-K-Teacher-Agreement, NDCG,
+Score-Korrelation und Top-1-Teacher-Utility, jeweils global sowie getrennt
+für 2/4/6/8 Takte. Validation vergleicht auf demselben eingefrorenen
+Label-Snapshot deterministischen Zufall, `feature_baseline_v3`, BPM-only,
+Harmonie-only, Ranker und Teacher-Oracle. Der Loader lässt die vollständige
+Universumsprovenienz auditierbar, führt aber ausschließlich die eingefrorene
+gelabelte Stichprobe mit positiver Einschlusswahrscheinlichkeit in den
+IPW-Loss. Ein CPU-Synthetik-Smoke mit allen vier Längen lief eine Epoche;
+Manifest-, History-, Best- und Latest-SHAs wurden maschinell bestätigt und
+der Testsplit blieb `sealed_not_materialized`. Teacher-Agreement ist
+ausdrücklich kein Hörqualitätsnachweis. Es wurde kein Produktionsdefault
+geändert und kein realer Train-/Validation-Smoke gestartet, weil noch kein
+testfrei veröffentlichter Format-3-Teacher-Snapshot mit echten Labels
+vorliegt.
+
+**Verifiziert am 2026-08-25 (learned_cue_ranker_v1, nur Modell-/Trainingsstufe):**
+Der additive Cue-Ranker ist auf dem freigegebenen Format-3-Gruppendataset
+implementiert. `CueRankerTemporalModel` verwendet den planfestgelegten
+geteilten A/B-TCN, globale Features, die separate `length_condition`,
+`candidate_context_v1`, Grid-Embeddings, masked Mean/Max-Pooling und einen
+skalaren Candidate-Score. Der gruppierte Runner verwendet ausschließlich
+explizit gelieferte Train-/Validation-Loader, den maskierten
+IPW-Soft-Target-Listwise-Loss und behandelt Ein-Kandidaten-Gruppen als
+insufficient support. Initialisierung/Training sind deterministisch; Best- und
+Latest-Checkpoints werden atomar geschrieben und vor dem einzigen
+`weights_only=True`-Resume-Load SHA-geprüft. Die synthetische kombinierte Suite
+bestand mit 41 Tests und 2 bekannten, bestehenden PyTorch-CUDA-Warnings.
+Die zuvor isolierte Modell-/Trainingsstufe ist nun additiv über
+`batch_render.py` und `multi_batch_render.py` an den verifizierten
+Ranker angebunden; Auswahl bestehender Candidate-IDs und alle Control-Modelle
+bleiben unverändert. Es wurde kein reales Training und kein Testsplitzugriff
+ausgeführt.
+
+**Verifiziert am 2026-08-25 (Cue-Ranker Dataset-/Teacher-Stufe, nur
+Synthetik):** Der neue additive Format-3-Pfad liegt getrennt neben
+Candidate-/Dataset-v1/v2. Ein SHA-geprüfter `pair_index` filtert ausschließlich
+gleichsplitige Train-/Validation-Paare, bevor Pair-Manifeste geöffnet werden;
+es gibt keinen Legacy-Discovery-Fallback und keinerlei Test-Artifact,
+Testcount oder Testloader. Der vollständige v2-Kandidatenindex bildet stabile,
+nichtzirkuläre Gruppen-IDs aus den vollen Cue-/Grid-Identitäten, behält alle
+akzeptierten Kandidaten statt `feature_baseline_v3`-Top-K und führt dessen
+Wert nur als Baseline/Stratifizierung. Das stratifizierte Sampling, variable
+Ragged-Gruppen, Einschlusswahrscheinlichkeiten und die fehlende
+candidatespezifische Hard-Negative-Nachauswahl sind manifestiert.
+
+Die Teacher-Stufe akzeptiert nur einen SHA-gebundenen, eval-only Release mit
+`weights_only=True`, Objective-v5-/Renderer-/Alignment-/Normalizer- und
+Backendvertrag. Guard-Rejections und technische Failures werden je Kandidat
+auditierbar geschrieben und blockieren andere Gruppen nicht. Der finale
+Datasetexport schreibt ausschließlich Train/Validation, gruppierte Indexe,
+Teacher-Label und Trainings-only-Normalizerprovenienz. Die fokussierte
+synthetische Suite bestand mit 6 neuen Tests; 17 bestehende Candidate- und
+Dataset-v2-Tests bestanden separat. Es gab weder reale Materialisierung noch
+Training noch Zugriff auf Test-Audio/-Manifeste. Die damalige Dataset-/Teacher-
+Stufe war zu diesem Zeitpunkt noch nicht an Batch-Rendering angebunden; die
+heutige additive Integration steht im aktuellen Verifizierungsblock oben.
 
 **Verifiziert am 2026-08-21 (Variable-v2 Waveform-Alignment, Cache und CUDA-
 Smoke):** Der blockierende Source-/Target-Samplelängenfehler ist additiv durch

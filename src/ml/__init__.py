@@ -110,6 +110,41 @@ from .vocal_runner import (
     train_vocal_feature_control_model,
 )
 from .wandb_logging import WANDB_MODES, WandbConfig, WandbLogger
+from .cue_ranker_teacher import (
+    CueRankerTeacherLabelResult,
+    TeacherEvaluation,
+    label_cue_ranker_teacher,
+    load_frozen_teacher,
+    seal_teacher_release,
+    teacher_cache_key,
+    verify_teacher_release,
+)
+from .cue_ranker_model import (
+    CUE_RANKER_CONTEXT_DIMENSION,
+    CUE_RANKER_CONTEXT_VERSION,
+    CUE_RANKER_GRID_SOURCE_VOCAB_SIZE,
+    CUE_RANKER_MODEL_FORMAT_VERSION,
+    CUE_RANKER_MODEL_NAME,
+    CueRankerTemporalConfig,
+    CueRankerTemporalModel,
+    CueRankerModelConfig,
+    CueRankerModel,
+    LearnedCueRankerV1,
+)
+from .cue_ranker_context import build_candidate_context
+from .cue_ranker_data import CueRankerGroupLoader, CueRankerGroupedDataset, collate_cue_ranker_groups
+from .cue_ranker_runner import (
+    CUE_RANKER_RUN_FORMAT_VERSION,
+    CUE_RANKER_RUNNER_NAME,
+    CueRankerRunResult,
+    CueRankerTrainingConfig,
+    cue_ranker_listwise_loss,
+    grouped_soft_target_listwise_loss,
+    load_cue_ranker_checkpoint_for_resume,
+    masked_pairwise_logistic_loss,
+    pairwise_listwise_loss,
+    train_cue_ranker,
+)
 
 __all__ = [
     "BRIDGE_WAVEFORM_CACHE_FORMAT_VERSION",
@@ -204,4 +239,35 @@ __all__ = [
     "WANDB_MODES",
     "WandbConfig",
     "WandbLogger",
+    "CueRankerTeacherLabelResult",
+    "TeacherEvaluation",
+    "label_cue_ranker_teacher",
+    "load_frozen_teacher",
+    "seal_teacher_release",
+    "teacher_cache_key",
+    "verify_teacher_release",
+    "CUE_RANKER_CONTEXT_DIMENSION",
+    "CUE_RANKER_CONTEXT_VERSION",
+    "CUE_RANKER_GRID_SOURCE_VOCAB_SIZE",
+    "CUE_RANKER_MODEL_FORMAT_VERSION",
+    "CUE_RANKER_MODEL_NAME",
+    "CueRankerTemporalConfig",
+    "CueRankerTemporalModel",
+    "CueRankerModelConfig",
+    "CueRankerModel",
+    "LearnedCueRankerV1",
+    "build_candidate_context",
+    "CueRankerGroupLoader",
+    "CueRankerGroupedDataset",
+    "collate_cue_ranker_groups",
+    "CUE_RANKER_RUN_FORMAT_VERSION",
+    "CUE_RANKER_RUNNER_NAME",
+    "CueRankerRunResult",
+    "CueRankerTrainingConfig",
+    "cue_ranker_listwise_loss",
+    "grouped_soft_target_listwise_loss",
+    "load_cue_ranker_checkpoint_for_resume",
+    "masked_pairwise_logistic_loss",
+    "pairwise_listwise_loss",
+    "train_cue_ranker",
 ]

@@ -183,6 +183,28 @@ Wichtige Batch-Optionen:
 | `--top-k N` | `5` | Rendert nur die N bestbewerteten Kandidaten; alle Scores bleiben im Manifest |
 | `--overwrite` | aus | Erlaubt ausschließlich auf expliziten Wunsch das Ersetzen gleichnamiger Exportdateien |
 
+`--ranking-method feature_baseline_v3` ist der unveränderte Default. Der
+verifizierte Learned-Ranker ist ein expliziter Opt-in und benötigt neben dem
+abgeschlossenen Run auch das SHA-gebundene Dataset-3-Manifest:
+
+```powershell
+.venv\Scripts\python.exe -m src.batch_render `
+  "musik\source.flac" "musik\target.flac" `
+  --output-dir output\batches\learned_preview `
+  --ranking-method learned_cue_ranker_v1 `
+  --cue-ranker-run output\training_runs\cue_ranker_run01 `
+  --cue-ranker-dataset output\datasets\cue_ranker_v3\manifest.json `
+  --renderers equal_power --top-k 3
+```
+
+Dieser Pfad erzwingt Candidate-v2 mit `approximate_grid_policy=reject` und
+prüft Runmanifest, Best-Checkpoint-SHA, Dataset-/Teachervertrag sowie die
+Trainings-only-Normalisierung vor der Inferenz. Ein fehlender oder ungültiger
+Checkpoint beendet den Lauf mit einer sichtbaren Preflight-Fehlermeldung; es
+gibt keinen Fallback auf die Feature-Baseline. Das Paarmanifest behält
+`candidate_ranking` als `feature_baseline_v3` und ergänzt `cue_ranking` mit
+Learned-Scores und `selection_candidate_ids`.
+
 Ein vorhandener Export wird standardmäßig nicht überschrieben. Für einen weiteren Versuch deshalb einen neuen Ordner wählen; `--overwrite` nur bewusst einsetzen. Der ausführliche Exportvertrag steht in [`BATCH_RENDERING_PROTOCOL.md`](./BATCH_RENDERING_PROTOCOL.md).
 
 Ein variabler Batch kann alle vier Längen gemeinsam anfordern:
@@ -281,6 +303,12 @@ Für `--transition-bars` sind ausschließlich `2`, `4`, `6` und `8` zulässig.
 Sobald 6 oder 8 angefordert wird, tragen die Paar-Manifeste den additiven
 Candidate-v2-Vertrag; eine fehlende lange Abdeckung entfernt keine gültigen
 kürzeren Kandidaten.
+
+Auch im Multi-Batch gilt für Learned-Ranking derselbe explizite Opt-in:
+`--ranking-method learned_cue_ranker_v1 --cue-ranker-run RUN
+--cue-ranker-dataset DATASET\manifest.json`. Der Run wird einmal vor dem
+Output-Preflight geprüft und anschließend unverändert an alle Paar-Batches
+weitergereicht.
 
 Das Root-Manifest dokumentiert Policy-Ausschlüsse, Audio-Duplikate,
 BPM-Ausschlüsse, Analysefehler und die Workerzahl getrennt. Die Worker teilen

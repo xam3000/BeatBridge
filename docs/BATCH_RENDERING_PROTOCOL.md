@@ -26,8 +26,10 @@ Das Manifest hat `format_version = 1` und enthält:
 |---|---|
 | `renderers` | In diesem Lauf angeforderte Renderer |
 | `render_protocol_version` | Semantik der gerenderten Audiodateien; aktuell Version 5 mit Bridge-Crossfade, Rubber-Band-Tempoanpassung und kurzer Vorschau |
+| `ranking_method` | Auswahlmethode; ohne explizite Auswahl `feature_baseline_v3` |
 | `candidate_generation` | Vollständiges Ergebnis nach `CANDIDATE_PROTOCOL.md`, einschließlich abgelehnter Kandidaten |
 | `candidate_ranking` | Feature-Ränge, Einzelkomponenten, Messwerte und Rankingfehler nach `RANKING_PROTOCOL.md` |
+| `cue_ranking` | Additives Format 1 für `learned_cue_ranker_v1`, einschließlich Checkpoint-/Run-/Dataset-/Teacher-SHAs, Candidate-Scores, Auswahl-IDs und Preflight/Backfill |
 | `rendered_transition_ranking` | Rangfolge der tatsächlich gerenderten Varianten samt Teilwerten und Fehlern nach `RENDERED_TRANSITION_METRIC_PROTOCOL.md` |
 | `render_selection` | Gerenderte Kandidaten-IDs und optionales `top_k` |
 | `render_preview` | Vorschau-Kontext in Sekunden vor/nach dem Source-Cutpoint |
@@ -42,6 +44,24 @@ akzeptierte Kandidaten erzeugt trotzdem ein Manifest. So bleiben harte
 Filterentscheidungen nachvollziehbar. Einzelne fehlgeschlagene Render- oder
 Metrikvarianten brechen die übrigen unabhängigen Exporte nicht ab, werden aber
 sichtbar im Manifest erfasst und führen in der CLI zu Exit-Code `1`.
+
+Bei `learned_cue_ranker_v1` bleibt `candidate_ranking` semantisch die
+historische `feature_baseline_v3`. Die Learned-Auswahl steht ausschließlich in
+`cue_ranking.selection_candidate_ids`; `selection_rank`, `selection_score` und
+`selection_method` werden additiv pro gerenderter Variante geführt. Harte
+Candidate-Filter werden vor der Learned-Inferenz geprüft und können vom Modell
+nicht umgangen werden.
+
+Für die gelernte Auswahl werden nach Modellscore geordnete Kandidaten so lange
+versucht, bis `top_k` Kandidaten mindestens eine angeforderte Renderervariante
+erfolgreich exportiert haben. Schlägt für einen Kandidaten jeder angeforderte
+Renderer fehl, wird er als `render_failed` übersprungen und der nächste Score
+deterministisch als Backfill versucht. Das Feld
+`cue_ranking.renderability_preflight` dokumentiert dafür `rendered`,
+`render_failed`, `not_attempted_after_top_k` und `score_failed`; `backfill`
+enthält die versuchten und übersprungenen IDs sowie einen sichtbaren
+Partial-Status. Der historische `feature_baseline_v3`-Pfad behält seine feste
+Top-K-Auswahl ohne dieses Learned-Backfill.
 
 Für `src.multi_batch_render` gilt dieselbe Prozesssemantik additiv auf der
 Wurzelebene: Alle unabhängigen Sources und Paare werden soweit möglich

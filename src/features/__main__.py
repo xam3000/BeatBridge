@@ -82,6 +82,22 @@ def build_argument_parser():
     )
     variable_parser.add_argument("--vocal-model", default=DEFAULT_ROFORMER_MODEL)
     variable_parser.add_argument("--track-exclusions", default="config/track_exclusions.json")
+    cue_universe_parser = subparsers.add_parser(
+        "build-cue-ranker-universe",
+        help="Build a sealed train/validation Candidate-v2 universe from a pair index.",
+    )
+    cue_universe_parser.add_argument("pair_index")
+    cue_universe_parser.add_argument("output_directory")
+    cue_universe_parser.add_argument("--split-map", required=True)
+    cue_universe_parser.add_argument("--sampling-seed", type=int, default=20260825)
+    cue_dataset_parser = subparsers.add_parser(
+        "export-cue-ranker-dataset",
+        help="Publish a sealed Cue-Ranker Dataset-3 from universe and frozen labels.",
+    )
+    cue_dataset_parser.add_argument("universe_directory")
+    cue_dataset_parser.add_argument("label_directory")
+    cue_dataset_parser.add_argument("output_directory")
+    cue_dataset_parser.add_argument("--train-only-normalizer", required=True)
     return parser
 
 
@@ -163,6 +179,28 @@ def main():
             "example_count": result.example_count,
             "split_counts": result.split_counts,
         }, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.command == "build-cue-ranker-universe":
+        from .cue_ranker_universe import build_cue_ranker_universe
+        result = build_cue_ranker_universe(
+            args.pair_index,
+            args.output_directory,
+            split_map=args.split_map,
+            sampling_seed=args.sampling_seed,
+        )
+        print(json.dumps({"output_directory": str(result.output_directory), "group_counts": result.group_counts, "candidate_counts": result.candidate_counts}, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.command == "export-cue-ranker-dataset":
+        from .cue_ranker_dataset import export_cue_ranker_dataset
+        result = export_cue_ranker_dataset(
+            args.universe_directory,
+            args.label_directory,
+            args.output_directory,
+            train_only_normalizer=args.train_only_normalizer,
+        )
+        print(json.dumps({"output_directory": str(result.output_directory), "group_counts": result.group_counts, "candidate_counts": result.candidate_counts}, ensure_ascii=False, indent=2))
         return 0
 
     from .extract_track import extract_or_load_track_features

@@ -1,5 +1,576 @@
 # Beobachtungen, Entscheidungen und Gelerntes
 
+## Testlauf am 2026-08-25 (frischer Cuepoint-Ranker-Audit, gezielte Kernprüfung)
+
+- **Fragestellung und Reasoning:** Als unabhängiger Reviewer sollten zunächst
+  die neuen, sicherheitskritischen Cue-Ranker-Grenzen isoliert geprüft werden:
+  versiegelter Testsplit, v2-/Grid-Preflight, Split-/Gruppenisolation,
+  Teacher-/Checkpointvertrag, variable Gruppen, Resume sowie additive
+  Batch-/Renderer-Manifeste. Dies ist kein Nachweis für einen realen
+  Trainings- oder Hörlauf.
+- **Eingaben/Setup:** Aktueller uncommitteter Arbeitsbaum,
+  `.venv\Scripts\python.exe -B`, ausschliesslich Pytest-Temporary- und
+  synthetische Fixture-Daten (einschliesslich temporärer Test-WAVs),
+  `-p no:cacheprovider`. Kein realer Batch, kein reales Training und kein
+  Zugriff auf einen realen Testsplit.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests/test_cue_ranker_universe.py tests/test_cue_ranker_dataset.py tests/test_cue_ranker_teacher.py tests/test_cue_ranker_model.py tests/test_cue_ranker_runner.py tests/test_learned_cue_ranker_integration.py`.
+- **Ergebnis einschliesslich Fehlern oder Blockaden:** Exit-Code 0;
+  `26 passed, 2 warnings in 11.32s`. Die Warnungen sind
+  `audioread`-Deprecations für `aifc` und `sunau` im synthetischen
+  Integrationsrender-Test; keine Cue-Ranker-Fehler oder Blockaden.
+- **Schlussfolgerung und nächster Schritt:** Die vorhandene gezielte Suite
+  bestätigt die abgedeckten Verträge, ersetzt aber keinen Quell-/Negativ-Audit.
+  Als Nächstes folgen statische Datenflussprüfung und zusätzliche gezielte
+  Negativsonden; nur bei eindeutig reproduziertem Contract-Verstoss wird Code
+  geändert.
+
+## Testlauf am 2026-08-25 (Audit-Negativsonde, erster Guard-/Gruppenkontextversuch)
+
+- **Fragestellung und Reasoning:** Zwei statisch gefundene Grenzfälle sollten
+  vor jedem Fix gegen den unveränderten Code reproduziert werden: ein
+  `guard_rejected`-Label mit endlicher hoher Utility und die Kontextgröße einer
+  gegenüber dem vollständigen Universum kleineren Labelstichprobe.
+- **Eingaben/Setup:** Neue, rein In-Memory-synthetische Regressionstests;
+  `.venv\Scripts\python.exe -B`, `-p no:cacheprovider`; kein Audio,
+  Testsplit, Cache oder Training.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests/test_cue_ranker_runner.py::test_guard_rejection_is_always_a_negative_anchor_even_with_finite_utility tests/test_cue_ranker_dataset.py::test_grouped_loader_context_uses_full_universe_size_not_label_sample_size`.
+- **Ergebnis einschliesslich Fehlern oder Blockaden:** Exit-Code 1,
+  `2 failed in 3.55s`. Der Guard-Test zeigte bereits den Contract-Verstoss
+  (Gradient für den abgelehnten Kandidaten `-0.5` statt negativer Anker).
+  Der Kontext-Test erreichte seine Assertion noch nicht, weil die neue
+  Fixture die verpflichtende `transition_position`-Feature-Invariante nicht
+  gesetzt hatte.
+- **Schlussfolgerung und nächster Schritt:** Der Fixturefehler ist kein
+  Produktfehler und wurde vor der Wiederholung korrigiert; am unveränderten
+  Produktcode wurde nichts geändert.
+
+## Testlauf am 2026-08-25 (Audit-Negativsonde, Fixture-Nachkorrektur)
+
+- **Fragestellung und Reasoning:** Nach Setzen der normierten
+  `transition_position` sollte die Gruppenkontextsonde bis zur beabsichtigten
+  Contract-Assertion gelangen; der Guard-Befund wurde parallel erneut geprüft.
+- **Eingaben/Setup:** Ausschliesslich die zwei In-Memory-synthetischen
+  Regressionstests mit `.venv\Scripts\python.exe -B` und deaktiviertem
+  Pytest-Cacheprovider; kein Testsplit, Audio oder Training.
+- **Testumfang bzw. Befehl:** Derselbe gezielte Pytest-Befehl wie im
+  unmittelbar vorherigen Testlauf.
+- **Ergebnis einschliesslich Fehlern oder Blockaden:** Exit-Code 1,
+  `2 failed in 3.35s`. Der Guard-Befund blieb unverändert. Die zweite Fixture
+  erreichte wegen eines fehlenden lokalen `split`-Attributs des absichtlich
+  minimal konstruierten Dataset-Objekts noch nicht die Soll-Assertion.
+- **Schlussfolgerung und nächster Schritt:** Auch dies war ein Testsetupfehler,
+  nicht ein Produktbefund; `split="train"` wurde gesetzt und die Sonde ohne
+  Codeänderung wiederholt.
+
+## Testlauf am 2026-08-25 (Audit-Negativsonde, zwei reproduzierte Contract-Verstösse)
+
+- **Fragestellung und Reasoning:** Die bereinigte Sonde sollte die zwei
+  vermuteten Datenflussfehler eindeutig vom Testsetup trennen.
+- **Eingaben/Setup:** Rein synthetische In-Memory-Inputs,
+  `.venv\Scripts\python.exe -B`, `-p no:cacheprovider`; kein Audio,
+  Testsplit, Cache oder Training.
+- **Testumfang bzw. Befehl:** Derselbe gezielte Pytest-Befehl wie in den zwei
+  vorherigen Testläufen.
+- **Ergebnis einschliesslich Fehlern oder Blockaden:** Exit-Code 1,
+  `2 failed in 3.18s`. Ein `guard_rejected` mit Utility `100` erhielt im
+  Listwise-Loss einen bevorzugenden Gradienten (`-0.5` gegenüber `+0.5` für
+  den gültigen Kandidaten). Die Loader-Kontextkomponente
+  `log1p(group_size)` war `log1p(1)=0.693147…` statt
+  `log1p(600)=6.398594…`; Training und Inferenz hätten damit unterschiedliche
+  Kandidatenraumgrößen gesehen.
+- **Schlussfolgerung und nächster Schritt:** Beide Fehler sind reproduziert
+  und widersprechen dem festgelegten negativen Guard-Anker beziehungsweise dem
+  vollständigen Gruppenkontext. Sie werden jetzt mit Regressionstests behoben;
+  keine anderen statischen Beobachtungen werden vorsorglich geändert.
+
+## Testlauf am 2026-08-25 (Audit-Regression, Guard-Anker und vollständiger Gruppenkontext)
+
+- **Fragestellung und Reasoning:** Nach den zwei minimalen Fixes musste
+  bestätigt werden, dass ein `guard_rejected` immer gegenüber einer endlichen
+  hohen Utility negativ verankert wird und dass der Loader im Training die
+  vollständige statt der nur gelabelten Gruppengröße an den Kontext übergibt.
+- **Eingaben/Setup:** Die zwei neuen In-Memory-synthetischen
+  Regressionstests mit `.venv\Scripts\python.exe -B` und
+  `-p no:cacheprovider`; kein Audio, Testsplit, Cache oder Training.
+- **Testumfang bzw. Befehl:** Derselbe gezielte Pytest-Befehl wie in den drei
+  vorherigen Testläufen.
+- **Ergebnis einschliesslich Fehlern oder Blockaden:** Exit-Code 0;
+  `2 passed in 3.31s`. Kein Warning, Fehler oder Blockade.
+- **Schlussfolgerung und nächster Schritt:** Der Loss ersetzt jetzt jede
+  Guard-Rejection durch den festen relativen Negativanker; die
+  Validation-Auswertung verwendet dieselbe Semantik. Die Kontextdichte ist
+  zwischen gelabelter Trainingsstichprobe und vollständiger Inferenzgruppe
+  konsistent. Als Nächstes wird der separate Render-Backfill-Vertrag
+  reproduziert und geprüft.
+
+## Testlauf am 2026-08-25 (Audit-Negativsonde, Learned-Render-Backfill)
+
+- **Fragestellung und Reasoning:** Der explizite Inferenzvertrag verlangt bei
+  einem technischen Renderfehler eines Top-K-Kandidaten einen deterministischen
+  Backfill mit dem nächsten gelernten Kandidaten. Die Sonde isoliert genau
+  diesen Fall mit Top-K 1.
+- **Eingaben/Setup:** Synthetische Temporary-WAVs und Candidate-v2-Fixture;
+  ein Mock lässt nur den topgerankten Kandidaten beim variablen Renderer
+  kontrolliert fehlschlagen. `.venv\Scripts\python.exe -B`,
+  `-p no:cacheprovider`; kein Testsplit, Realbatch oder Training.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests/test_learned_cue_ranker_integration.py::test_learned_render_failure_backfills_next_ranked_candidate`.
+- **Ergebnis einschliesslich Fehlern oder Blockaden:** Exit-Code 1;
+  `1 failed, 2 warnings in 7.66s`. Der erste Kandidat erhielt den erwarteten
+  synthetischen Renderfehler, aber es wurde kein Fallback-Kandidat gerendert
+  (`rendered_variants=[]`). Die zwei Warnings sind die bekannten
+  `audioread`-Deprecations `aifc`/`sunau`.
+- **Schlussfolgerung und nächster Schritt:** Der dokumentierte Backfill war
+  tatsächlich nicht implementiert; die bestehenden Manifestfelder meldeten
+  stattdessen alle vorher ausgewählten Kandidaten pauschal als `eligible`.
+  Der Fehler wird nun gezielt im Learned-Pfad behoben und danach gegen diese
+  Regression verifiziert.
+
+## Testlauf am 2026-08-25 (Audit-Regression, Learned-Render-Backfill)
+
+- **Fragestellung und Reasoning:** Nach der punktuellen Inferenzkorrektur
+  musste derselbe Top-K-1-Failurefall den nächsten erfolgreichen Kandidaten
+  selektieren, ohne die etablierte additive Manifestsemantik zu verändern.
+- **Eingaben/Setup:** Synthetische Temporary-WAV-/Candidate-v2-Fixtures;
+  deterministischer Renderer-Mock für genau den ersten Learned-Kandidaten;
+  `.venv\Scripts\python.exe -B`, `-p no:cacheprovider`. Kein Testsplit,
+  Realbatch oder Training.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests/test_learned_cue_ranker_integration.py::test_learned_render_failure_backfills_next_ranked_candidate tests/test_learned_cue_ranker_integration.py::test_learned_selection_is_additive_and_renderer_manifest_compatible`.
+- **Ergebnis einschliesslich Fehlern oder Blockaden:** Exit-Code 0;
+  `2 passed, 2 warnings in 7.33s`. Der Fallback wurde gerendert und als
+  einzige `selection_candidate_id` manifestiert; der verworfene Kandidat steht
+  in `backfill.skipped_candidate_ids`. Die Warnings sind unverändert die
+  `audioread`-Deprecations `aifc`/`sunau`.
+- **Schlussfolgerung und nächster Schritt:** Learned-Rendering versucht nun
+  deterministisch die absteigende Score-Reihenfolge, füllt renderunfähige
+  Kandidaten auf und dokumentiert `rendered`, `render_failed` sowie nach
+  erreichter Top-K-Grenze nicht gestartete Kandidaten. Der historische
+  `feature_baseline_v3`-Pfad bleibt unverändert. Als Nächstes folgen die
+  restlichen gezielten Regressionen und ein Sicherheits-/Teacher-Audit.
+
+## Testlauf am 2026-08-25 (Audit-Sonde, Cue-Ranker-CLI-Erreichbarkeit)
+
+- **Fragestellung und Reasoning:** Die im verbindlichen Implementierungsplan
+  aufgeführten Offline-Schritte `label-cue-ranker-teacher` und
+  `train-cue-ranker` müssen als echte CLI-Einstiegspunkte auffindbar sein,
+  damit der sichere Format-3-Pfad nicht nur über Test-APIs existiert.
+- **Eingaben/Setup:** Ausschliesslich `--help` und textuelle Quellsuche mit
+  `.venv\Scripts\python.exe -B`; keine Dataset-, Audio-, Cache-, Testsplit-
+  oder Trainingsoperation.
+- **Testumfang bzw. Befehle:**
+  `.venv\Scripts\python.exe -B -m src.ml --help`;
+  `.venv\Scripts\python.exe -B -m src.features --help`; sowie `rg` nach den
+  beiden geplanten CLI-Kommandos und den exportierten Cue-Ranker-APIs.
+- **Ergebnis einschliesslich Fehlern oder Blockaden:** Beide Help-Aufrufe
+  endeten mit Exit-Code 0. `src.features` bietet Universe- und Datasetexport,
+  aber `src.ml` listet weder `label-cue-ranker-teacher` noch
+  `train-cue-ranker`; die Suche fand nur Python-APIs und Testaufrufe. Es gab
+  keine Warnings.
+- **Schlussfolgerung und nächster Schritt:** Der produktionsnahe Offline-
+  Label-/Train-CLI-Pfad aus dem Plan ist nicht implementiert. Da die nötige
+  reale Format-3-Feature-/Waveformauflösung ebenfalls keinen sicheren
+  End-to-End-CLI-Vertrag besitzt, wird dies als verbleibender Freigabeblocker
+  dokumentiert statt mit einem spekulativen CLI-Wrapper zu überdecken.
+
+## Testlauf am 2026-08-25 (Audit-Negativsonde, Teacher-Run-/Best-Checkpoint-Bindung)
+
+- **Fragestellung und Reasoning:** Ein eingefrorener Teacher darf nicht aus
+  einem beliebigen Checkpoint plus einem nur nebenstehenden Runmanifest
+  zusammengesetzt werden. Der Test übergibt deshalb einen Checkpoint, während
+  das als abgeschlossen deklarierte Variable-TCN-Runmanifest einen anderen
+  `best_checkpoint` mit gültigem SHA nennt.
+- **Eingaben/Setup:** Zwei rein synthetische `weights_only`-Checkpointdateien
+  und ein synthetisches Runmanifest im Pytest-Temporary-Verzeichnis;
+  `.venv\Scripts\python.exe -B`, `-p no:cacheprovider`. Kein Testsplit,
+  Audio, Cache oder Training.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests/test_cue_ranker_teacher.py::test_teacher_release_rejects_checkpoint_not_declared_as_completed_run_best`.
+- **Ergebnis einschliesslich Fehlern oder Blockaden:** Exit-Code 1;
+  `1 failed in 3.89s`. `seal_teacher_release()` akzeptierte die ungebundene
+  Kombination und erzeugte trotz abweichendem Best-Pfad einen Release.
+- **Schlussfolgerung und nächster Schritt:** Die reine SHA-Aufzeichnung war
+  kein ausreichender Freeze-Vertrag. Der Sealer/Verifier/Loader wird auf
+  abgeschlossenes Variable-TCN-Runformat, deklarierten Best-Pfad/-SHA und
+  Checkpoint-Run-/Modellvertrag gehärtet.
+
+## Testlauf am 2026-08-25 (Audit-Regression, Teacher-Run-/Best-Checkpoint-Bindung)
+
+- **Fragestellung und Reasoning:** Nach der Härtung müssen der neue
+  Mismatch-Reject, bestehendes eval-only Teacher-Loading, Failure-Isolation
+  sowie der Format-3-Export gemeinsam funktionieren.
+- **Eingaben/Setup:** Nur synthetische Variable-TCN-State-Dicts, abgeschlossene
+  synthetische Runmanifeste und Temporary-Format-3-Artefakte;
+  `.venv\Scripts\python.exe -B`, `-p no:cacheprovider`. Kein Testsplit,
+  Audio, Cache oder Training.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests/test_cue_ranker_teacher.py tests/test_cue_ranker_dataset.py`.
+- **Ergebnis einschliesslich Fehlern oder Blockaden:** Exit-Code 0;
+  `5 passed in 4.61s`, ohne Warnings oder Blockaden.
+- **Schlussfolgerung und nächster Schritt:** Der Teacher-Sealer, -Verifier und
+  -Loader akzeptieren jetzt nur den `best_checkpoint` eines abgeschlossenen
+  `variable_tcn_bilstm_transition_control_v1`-Runs, dessen Hash und
+  Checkpointvertrag zusammenpassen. Die Objective-/Rendererbindung bleibt
+  releasegebunden; die fehlenden End-to-End-CLIs bleiben davon getrennt ein
+  offener Freigabeblocker.
+
+## Testlauf am 2026-08-25 (frischer Cuepoint-Ranker-Audit, betroffene Regression)
+
+- **Fragestellung und Reasoning:** Nach den vier reproduzierten Fixes musste
+  der gesamte betroffene Umfang gemeinsam prüfen: v2-/Grid-/Splitgrenzen,
+  Volluniversum/Sampling, Teacher-Release, variable Gruppen, Listenloss und
+  Resume, Learned-Inferenz/Backfill sowie die historischen Batch-, Multi-Batch-
+  und Variable-Control-Verträge.
+- **Eingaben/Setup:** Ausschliesslich Pytest-Temporary- und synthetische
+  Fixture-Daten, `.venv\Scripts\python.exe -B`, deaktivierter Cacheprovider.
+  Kein reales Training, kein Realbatch und kein Zugriff auf einen realen
+  Testsplit.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests/test_cue_ranker_universe.py tests/test_cue_ranker_dataset.py tests/test_cue_ranker_teacher.py tests/test_cue_ranker_model.py tests/test_cue_ranker_runner.py tests/test_learned_cue_ranker_integration.py tests/test_batch_render.py tests/test_multi_batch_render.py tests/test_candidates.py tests/test_variable_dataset.py tests/test_variable_ml.py tests/test_tcn_bilstm_model.py`.
+- **Ergebnis einschliesslich Fehlern oder Blockaden:** Exit-Code 0;
+  `82 passed, 2 warnings in 17.03s`. Die Warnings sind die bekannten
+  `audioread`-Deprecations `aifc`/`sunau` im Integrationsrender-Test; keine
+  Fehler oder Blockaden.
+- **Schlussfolgerung und nächster Schritt:** Die behobenen Datenfluss-,
+  Teacher- und Renderfehler regressieren nicht gegen die unmittelbaren
+  Verträge. Die vollständige Suite kann nun gemäß Auftrag gestartet werden;
+  sie ist weiterhin kein Ersatz für den fehlenden realen, testfrei
+  materialisierten Format-3-CLI-Validierungspfad.
+
+## Testlauf am 2026-08-25 (frischer Cuepoint-Ranker-Audit, vollständige Suite)
+
+- **Fragestellung und Reasoning:** Nach den gezielten Korrekturen musste die
+  gesamte Repository-Suite auf Querregressionen in Candidate-, Rendering-,
+  Feature-, Dataset-, Control- und Batchpfaden geprüft werden.
+- **Eingaben/Setup:** Aktueller Arbeitsbaum mit den Audit-Regressionstests,
+  `.venv\Scripts\python.exe -B`, `-p no:cacheprovider`; die Suite nutzte
+  nur ihre bestehenden synthetischen beziehungsweise Temporary-Fixtures. Kein
+  reales Training und kein Zugriff auf einen realen Cue-Ranker-Testsplit.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider`.
+- **Ergebnis einschliesslich Fehlern oder Blockaden:** Exit-Code 0;
+  `239 passed, 4 warnings in 36.37s`. Zwei bekannte `audioread`-
+  DeprecationWarnings betreffen `aifc`/`sunau` im Batch-Render-Test. Zwei
+  bekannte PyTorch-CUDA-Warnings melden nichtdeterministische Backwards für
+  `upsample_linear1d` und `adaptive_avg_pool2d` im bestehenden
+  Control-Runner-Test. Keine Fehler oder Blockaden.
+- **Schlussfolgerung und nächster Schritt:** Der Arbeitsbaum ist vollständig
+  regressionsgrün. Die CUDA-Warnings erlauben weiterhin keine bitgenaue GPU-
+  Reproduzierbarkeitsbehauptung für den älteren Control-Runner. Für den
+  Cue-Ranker bleiben ein testfrei materialisierter echter Format-3-
+  Teacher-Snapshot, sichere End-to-End-Label-/Train-CLIs und eine unabhängige
+  Hörstudie die nächsten Freigabegates.
+
+## Verifiziert am 2026-08-25 (additive Learned-Cue-Ranker-Integration)
+
+- **Fragestellung und Reasoning:** Vor der Integration musste geprüft werden,
+  ob Syntax/Importe und die bestehenden Batch-, Multi-Batch- und Ranking-
+  Verträge unverändert funktionieren. Der Syntax-Teil sollte ohne Realbatch
+  laufen; die Tests verwenden ausschließlich synthetische Daten.
+- **Eingaben/Setup:** Repository-Arbeitsbaum, `.venv\Scripts\python.exe`,
+  neue `src/ranking/learned_cue_ranker.py`-Schnittstelle und additive CLI-/
+  Manifeständerungen. Kein Testsplit, kein realer Batch und keine bestehenden
+  Audio-/Output-Artefakte wurden geöffnet oder überschrieben.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -m py_compile src\ranking\learned_cue_ranker.py src\batch_render.py src\multi_batch_render.py src\features\cue_ranker_dataset.py; .venv\Scripts\python.exe -m pytest -q tests\test_batch_render.py tests\test_multi_batch_render.py tests\test_ranking.py`.
+- **Ergebnis einschließlich Fehlern oder Blockaden:** Der `py_compile`-Teil
+  scheiterte an einer Windows-PyCache-Berechtigung (`Errno 13` beim Schreiben
+  einer temporären `.pyc`); der anschließende Testlauf lief unabhängig davon
+  mit `18 passed, 2 warnings` durch.
+- **Schlussfolgerung und nächster Schritt:** Kein Quellsyntaxfehler wurde im
+  Testimportpfad sichtbar; für weitere Prüfungen wurde korrekt
+  `python -B` verwendet, damit kein PyCache-Schreibzugriff erforderlich ist.
+
+## Verifiziert am 2026-08-25 (erste Learned-Integrationssuite, Korrekturlauf)
+
+- **Fragestellung und Reasoning:** CLI-Defaults/Opt-in, fehlender Run,
+  Candidate-Hard-Filter, additive Manifeststruktur und Rendererübergabe
+  sollten zunächst mit synthetischen Fixtures geprüft werden.
+- **Eingaben/Setup:** `tests/test_learned_cue_ranker_integration.py` sowie die
+  vorhandenen Cue-Ranker-Modell-, Dataset- und Runner-Tests; `.venv` mit
+  `python -B`; kein Testsplit und kein umfangreicher Realbatch.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -B -m pytest -q tests\test_learned_cue_ranker_integration.py tests\test_cue_ranker_model.py tests\test_cue_ranker_dataset.py tests\test_cue_ranker_runner.py`.
+- **Ergebnis einschließlich Fehlern oder Blockaden:** Erster Lauf: `16
+  passed, 2 errors`; beide Fehler waren fehlende lokale `batch_inputs`-
+  Fixture-Definitionen in der neuen Testdatei. Nach Ergänzung einer eigenen
+  synthetischen Fixture: `18 passed, 2 warnings`.
+- **Schlussfolgerung und nächster Schritt:** Die Fixture-Isolation war die
+  einzige Blockade; danach waren die neuen CLI-/Fehlerpfad-Grundprüfungen
+  reproduzierbar grün.
+
+## Verifiziert am 2026-08-25 (Learned-Manifest-End-to-End-Korrektur)
+
+- **Fragestellung und Reasoning:** Der synthetische End-to-End-Test musste die
+  echte v2-Renderroute verwenden, damit Auswahl-IDs, Learned-Scores und
+  bestehende Renderer gemeinsam geprüft werden.
+- **Eingaben/Setup:** Synthetische WAVs, Candidate-v2-Metadaten mit verifizierter
+  Grid-Provenienz und ein deterministischer Learned-Score-Stub; kein
+  Modelltraining, Testsplitzugriff oder Realbatch.
+- **Testumfang bzw. Befehl:** Erneut
+  `.venv\Scripts\python.exe -B -m pytest -q tests\test_learned_cue_ranker_integration.py`.
+- **Ergebnis einschließlich Fehlern oder Blockaden:** Ein Zwischenlauf mit
+  v1-/1-Takt-Fixture endete mit `1 failed, 4 passed`, weil die v2-Rendereroute
+  die nicht unterstützte 1-Takt-Länge korrekt ablehnte. Nach Umstellung auf
+  eine gültige 2-Takt-v2-Fixture bestanden der fokussierte Test und danach der
+  Einzeltest mit `1 passed`.
+- **Schlussfolgerung und nächster Schritt:** Der Fehler bestätigte den
+  gewünschten Hard-Filter-/Längenvertrag; die korrigierte E2E-Fixture prüft
+  nun echte v2-Auswahl und Rendering-Kompatibilität.
+
+## Verifiziert am 2026-08-25 (Learned-Preflight und CLI-Sonden)
+
+- **Fragestellung und Reasoning:** Beschädigte oder fehlende Checkpoints müssen
+  vor Output-Erzeugung klar scheitern; CLI-Optionen müssen sichtbar sein und
+  der Default darf nicht kippen.
+- **Eingaben/Setup:** Synthetische Run-/Dataset-3-Manifeste, absichtlich
+  beschädigte `best.pt`, `python -B`; nur Manifest-/Hash-Dateien in temporären
+  Testverzeichnissen, kein Audio- oder Testsplitzugriff.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -B -m pytest -q tests\test_learned_cue_ranker_integration.py`;
+  `.venv\Scripts\python.exe -B -c "import src.batch_render, src.multi_batch_render, src.ranking.learned_cue_ranker; print('IMPORTS_OK')"`;
+  `.venv\Scripts\python.exe -B -m src.batch_render --help | Select-String -Pattern 'ranking-method|cue-ranker-run|feature_baseline_v3|learned_cue_ranker_v1'`;
+  entsprechender `src.multi_batch_render --help`-Aufruf.
+- **Ergebnis einschließlich Fehlern oder Blockaden:** `6 passed, 2 warnings`;
+  `IMPORTS_OK`; beide Help-Sonden zeigen `feature_baseline_v3` als Default und
+  `learned_cue_ranker_v1` sowie `--cue-ranker-run`. Keine Outputartefakte
+  entstanden.
+- **Schlussfolgerung und nächster Schritt:** Fehlerpfad, Manifestvertrag,
+  CLI-Opt-in und Importgrenzen sind maschinell bestätigt; anschließend folgt
+  die gemeinsame Regression.
+
+## Verifiziert am 2026-08-25 (gemeinsame Batch-/Cue-Ranker-Regression)
+
+- **Fragestellung und Reasoning:** Die additive Integration darf bestehende
+  Renderer, Multi-Batch-Fehlersemantik, Feature-Ranking und die bisherige
+  Cue-Ranker-Modell-/Dataset-/Teacher-/Runner-Suite nicht brechen.
+- **Eingaben/Setup:** Ausschließlich synthetische Pytest-Fixtures und die
+  betroffenen Quellmodule; `.venv\Scripts\python.exe -B`; kein Testsplit und
+  kein umfangreicher Realbatch.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -B -m pytest -q tests\test_learned_cue_ranker_integration.py tests\test_batch_render.py tests\test_multi_batch_render.py tests\test_ranking.py tests\test_cue_ranker_model.py tests\test_cue_ranker_dataset.py tests\test_cue_ranker_runner.py tests\test_cue_ranker_teacher.py`.
+- **Ergebnis einschließlich Fehlern oder Blockaden:** `40 passed, 2
+  warnings in 12.60s`. Die Warnings sind die bekannten Python-3.14-
+  `aifc`/`sunau`-Deprecations aus `audioread`; keine Testfehler oder
+  Blockaden.
+- **Schlussfolgerung und nächster Schritt:** Die Learned-Auswahl ist additiv
+  verifiziert: `candidate_ranking` bleibt `feature_baseline_v3`,
+  `cue_ranking` trägt Learned-Provenienz/Scores/Selection-IDs, harte v2-
+  Filter bleiben vorgeschaltet und Top-K-Rendering bleibt kompatibel.
+
+## Verifiziert am 2026-08-25 (vollständige synthetische Regression)
+
+- **Fragestellung und Reasoning:** Nach der fokussierten Abnahme musste
+  ausgeschlossen werden, dass Import-, API- oder Modellregressionen außerhalb
+  der direkt betroffenen Batch-/Cue-Ranker-Tests verbleiben.
+- **Eingaben/Setup:** Gesamtes Repository-Testset mit `.venv\Scripts\python.exe
+  -B`; Pytest-Fixtures und temporäre synthetische Artefakte, kein
+  Testsplitzugriff und kein umfangreicher Realbatch.
+- **Testumfang bzw. Befehl:** `.venv\Scripts\python.exe -B -m pytest -q`.
+- **Ergebnis einschließlich Fehlern oder Blockaden:** `235 passed, 4
+  warnings in 34.95s`. Die vier bekannten Warnings sind zwei
+  `aifc`/`sunau`-Deprecations aus `audioread` und zwei bestehende PyTorch-
+  CUDA-Determinismus-Warnings; keine Fehler oder Blockaden.
+- **Schlussfolgerung und nächster Schritt:** Die additive Integration ist gegen
+  die vollständige synthetische Regression abgesichert. Es bleibt nur die
+  Übergabe ohne Commit; reale Learned-Batches und Testsplitzugriff wurden
+  bewusst nicht gestartet.
+
+## Verifiziert am 2026-08-25 (vollständige Regression nach Manifest-Audit)
+
+- **Fragestellung und Reasoning:** Nach den expliziten Manifestfeldern für
+  Modellname, Checkpoint-/Dataset-SHA und Teachervertrag musste die vollständige
+  Suite erneut laufen, damit genau diese letzte Änderung keine Regression
+  erzeugt.
+- **Eingaben/Setup:** Aktueller Arbeitsbaum, `.venv\Scripts\python.exe -B`,
+  unveränderte synthetische Testfixtures; kein Testsplit und kein Realbatch.
+- **Testumfang bzw. Befehl:** `.venv\Scripts\python.exe -B -m pytest -q`.
+- **Ergebnis einschließlich Fehlern oder Blockaden:** `235 passed, 4
+  warnings in 36.04s`; dieselben bekannten `aifc`/`sunau`- und PyTorch-CUDA-
+  Determinismus-Warnings, keine Fehler oder Blockaden.
+- **Schlussfolgerung und nächster Schritt:** Der finale Arbeitsbaum ist
+  synthetisch vollständig regressionsgeprüft und bereit zur Übergabe; es wurde
+  kein Commit erstellt.
+
+## Verifiziert am 2026-08-22 (Repository-Audit: Feature-Manifest-Hashsemantik)
+
+- **Fragestellung und Reasoning:** Ein erster Vergleich des in erlaubten
+  Train-Metadaten deklarierten `source_feature_cache.manifest_sha256` mit dem
+  Bytehash der referenzierten Datei war unterschiedlich. Vor einer
+  Fehlklassifikation als Artefaktkorruption musste geprüft werden, welche
+  Hashsemantik der Exporter tatsächlich verwendet.
+- **Eingaben/Setup:** Nur die erste Zeile von
+  `metadata/2bar/train.jsonl` des realen Dataset-2 und das darin referenzierte
+  Source-Feature-`manifest.json`; `.venv\Scripts\python.exe -B`. Kein
+  Testsplit und keine Feature-NPZ wurden geöffnet.
+- **Testumfang bzw. Befehl:** Read-only Berechnung (a) des SHA-256 über die
+  kanonische, sortierte JSON-Darstellung analog
+  `variable_dataset_export._artifact_metadata()` und (b) des SHA-256 über die
+  tatsächlichen Manifestbytes; Vergleich mit dem deklarierten Feld.
+- **Ergebnis einschließlich Fehlern oder Blockaden:** Exit-Code 0. Der
+  deklarierte Hash
+  `fd85363714601bbfe66c322d61569eae5d67523033770e4274052000a5812efe`
+  stimmt exakt mit dem kanonischen JSON-Hash überein. Der Datei-Bytehash ist
+  erwartungsgemäß ein anderer Wert
+  (`f60f3cb3793fd0724d0b2bd8a08330a28a909378a80d9d9e53fba3cf2eb7cfde`).
+  Es liegt damit in dieser Sonde keine Manifestkorruption vor.
+- **Schlussfolgerung und nächster Schritt:** Das Feld ist ein kanonischer
+  Inhalts-Hash, obwohl der Name keine Semantik unterscheidet. Relevant für
+  das Audit bleibt, dass der spätere variable Waveform-Loader diesen im
+  Dataset gespeicherten Hash nicht vergleicht und der Track-Feature-Payload
+  selbst keinen manifestierten Datei-/Arrayhash besitzt. Keine Reparatur
+  wurde vorgenommen.
+
+## Verifiziert am 2026-08-22 (Repository-Audit: Diff- und Statusabschluss)
+
+- **Fragestellung und Reasoning:** Nach allen Auditprüfungen musste bestätigt
+  werden, dass keine unerlaubten Produktions-, Test-, Konfigurations-,
+  Vertrags-, Audio- oder Artefaktänderungen entstanden sind und der erlaubte
+  Dokumentationsdiff keine Whitespacefehler enthält.
+- **Eingaben/Setup:** Arbeitsbaum nach den vier vorgeschriebenen
+  Audit-Testeinträgen in `docs/Bemerkungen.md`; keine weiteren geplanten
+  Dateischreibzugriffe.
+- **Testumfang bzw. Befehl:** `git diff --check` und
+  `git status --short --branch`.
+- **Ergebnis einschließlich Fehlern oder Blockaden:** Exit-Code 0; keine
+  Whitespacefehler. Git meldete lediglich den erwarteten LF/CRLF-Hinweis für
+  `docs/Bemerkungen.md`. Der Status war `main...origin/main` mit genau dieser
+  einen geänderten Datei.
+- **Schlussfolgerung und nächster Schritt:** Der Audit-Arbeitsbaum enthält nur
+  die laut Auftrag erlaubte Testdokumentation; es wurde kein Commit erstellt.
+  Es folgen keine Reparaturen, sondern ausschließlich der Abschlussbericht.
+
+## Verifiziert am 2026-08-22 (Repository-Audit: reale erlaubte Artefakte)
+
+- **Fragestellung und Reasoning:** Die zentralen aktuellen Claims zu
+  Dataset-2-Train/Validation, Binärprovenienz, Cachebindung und den zwei
+  vorhandenen variablen Run-Verzeichnissen sollten gegen die gespeicherten
+  Artefakte geprüft werden, ohne einen Test-Shard, Test-Metadaten oder
+  Checkpoint-Inhalt zu öffnen.
+- **Eingaben/Setup:** Dataset
+  `output/datasets/variable_v2_strict_20260820_selected_roformer_run01`, nur
+  dessen `train`- und `validation`-NPZ/JSONL-Dateien; Cache-Rootmanifest
+  `output/ml_cache/variable_bridge_waveform_v2/manifest.json`; öffentliche
+  Manifeste und manifestierte Dateihashes der variablen CUDA-Smoke- und
+  20-Epochen-Runs; `aufTAKTCl.exe` plus versionierte Provenienzdatei.
+  Python lief ausschließlich über `.venv\Scripts\python.exe -B`.
+- **Testumfang bzw. Befehle:** Read-only Laden aller acht erlaubten
+  Dataset-2-Shards mit `VariableFeatureDataset` und Finite-/Shapeprüfung;
+  anschließend PowerShell-SHA-256-Prüfung des aufTAKT-Binaries, der 16
+  Train-/Validation-Dateien, der Datasetbindung im Cache-Rootmanifest und der
+  sechs manifestierten History-/Best-/Latest-Dateien beider variablen Runs.
+- **Ergebnis einschließlich Fehlern oder Blockaden:** Die erste kompakte
+  Python-Reportform gab wegen einer ungeeigneten
+  List-Comprehension-Ausdrucksform nur den Erfolgsmarker, aber keine Zeilen
+  aus; sie wurde ohne Artefaktschreibzugriff klarer wiederholt. Die
+  Wiederholung bestätigte Train `105` und Validation `12` je Länge, Shapes
+  `(N,16/32/48/64,54)`, globale Shapes `(N,16)`, endliche Werte und
+  `length_condition=0,25/0,5/0,75/1,0`. Der erste PowerShell-Hashcheck brach
+  vor der Prüfung mit einem Parserfehler an `"run:$run:$name"` ab; die
+  korrigierte Wiederholung endete mit Exit-Code 0 und `BAD_COUNT=0`.
+  Verifiziert wurden aufTAKT-SHA
+  `35f9149cfef66df9b7ac7716953f859f2d37d34af1beb2d2db231062a4a1b523`
+  bei 7.195.648 Bytes, Datasetmanifest-SHA
+  `b86d0c46329c653a6984d9a3eed59b1f763165bee308b9c67925cf8727bed5cd`,
+  Cache-Rootmanifest-SHA
+  `5dc9982e167b1b8610fde4b2b4e3e01899eae3ba255dc69c4e5080233b313a2e`
+  sowie alle 16 beziehungsweise sechs geprüften Dateihashes.
+- **Schlussfolgerung und nächster Schritt:** Die erlaubten realen
+  Train-/Validation-Artefakte und ihre unmittelbaren Hashbindungen sind
+  intakt. Nicht geprüft wurden bewusst alle Test-Shard-Bytes, Test-Metadaten,
+  Answer Keys und die numerischen Inhalte der Checkpoints. Der Arbeitsbaum
+  wird abschließend auf unerlaubte Änderungen und Diff-Whitespace geprüft.
+
+## Verifiziert am 2026-08-22 (Repository-Audit: vollständige Regression)
+
+- **Fragestellung und Reasoning:** Nach vollständig gelesenen Tests, grüner
+  gezielter Regression und drei isolierten Negativsonden sollte die gesamte
+  vorhandene Testsuite auf Regressionen geprüft werden. Die Suite war nach
+  dem dokumentierten Laufumfang von rund 40 Sekunden verhältnismäßig; sie
+  ersetzt keine Prüfung der im Audit identifizierten ungetesteten Pfade.
+- **Eingaben/Setup:** Aktueller Arbeitsbaum mit ausschließlich den für dieses
+  Audit vorgeschriebenen Einträgen in `docs/Bemerkungen.md`;
+  `.venv\Scripts\python.exe -B`; pytest-Cacheprovider deaktiviert. Die Tests
+  verwendeten ihre synthetischen beziehungsweise temporären Fixtures; der
+  reale Testsplit, Originalaudio und bestehende Output-Artefakte wurden nicht
+  als Audit-Eingabe geöffnet oder verändert.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider`
+- **Ergebnis einschließlich Fehlern oder Blockaden:** `209 passed, 4 warnings
+  in 44.81s`; Exit-Code 0. Die Warnungen waren die zwei bekannten
+  `aifc`-/`sunau`-DeprecationWarnings aus `audioread` sowie zwei
+  PyTorch-Hinweise, dass CUDA-Backwards für `upsample_linear1d` und
+  `adaptive_avg_pool2d` trotz `torch.use_deterministic_algorithms(...,
+  warn_only=True)` keine deterministische Implementierung besitzen. Keine
+  Testfehler oder Blockaden.
+- **Schlussfolgerung und nächster Schritt:** Die aktuelle Regression ist
+  vollständig grün und reproduziert den dokumentierten Umfang von 209 Tests.
+  Wegen der beiden CUDA-Warnungen ist daraus keine bitgenaue
+  GPU-Reproduzierbarkeit ableitbar. Zudem bleiben die durch Negativsonden und
+  statische Analyse belegten, in der Suite nicht behaupteten Grenzfälle echte
+  Audit-Findings. Es folgen nur noch Artefakt-/Hash- und Arbeitsbaumchecks.
+
+## Verifiziert am 2026-08-22 (Repository-Audit: drei read-only Negativsonden)
+
+- **Fragestellung und Reasoning:** Drei statisch gefundene, von der grünen
+  Regression nicht abgedeckte Pfade sollten ohne Artefaktschreibzugriff
+  reproduziert werden: Wiederverwendung eines aufTAKT-Beats im historischen
+  Merge-v1 trotz erfolgreichem Struktur-Gate, Rekonstruktion der
+  A/B-Zuordnung aus dem öffentlichen Blind-Seed sowie eine Kollision der
+  variablen Trainings-Run-ID bei unterschiedlichen vorhandenen Läufen.
+- **Eingaben/Setup:** `.venv\Scripts\python.exe -B`; ausschließlich
+  In-Memory-Beatzeiten sowie die öffentlichen
+  `manifest.json`-Dateien des abgeschlossenen v4-Hörsatzes und der vorhandenen
+  variablen CUDA-Smoke-/20-Epochen-Run-Verzeichnisse. Kein
+  `answer_key.json`, kein Dataset-Shard, kein Testsplit und kein Checkpoint
+  wurde geöffnet; es wurden keine Dateien geschrieben.
+- **Testumfang bzw. Befehl:** Read-only Python-Sonde mit
+  `PreAnalysis._find_closest_beat_index()` und
+  `_has_complete_bar_metadata()`, `random.Random(blind_seed)` aus dem
+  öffentlichen Studienmanifest sowie Vergleich von `run_id`, vollständigem
+  Run-Vertrag, Epochenzahl und manifestierten Latest-Checkpoint-SHAs der zwei
+  variablen Run-Manifeste.
+- **Ergebnis einschließlich Fehlern oder Blockaden:** Exit-Code 0. Merge-v1
+  ordnete vier Librosa-Zeiten den aufTAKT-Indizes `[0, 1, 1, 2]` zu und das
+  Struktur-Gate akzeptierte die daraus gebildeten 3-Tupel trotzdem. Aus dem
+  öffentlichen Seed `20260730` ließ sich für die acht öffentlichen Paare die
+  Baseline-Label-Folge `ABAABAAB` bestimmen. Die zwei variablen Runs tragen
+  denselben `run_id=80978bbff5046b30f53c` und denselben Vertrag, aber
+  `last_epoch=2` beziehungsweise `20` sowie unterschiedliche
+  Latest-Checkpoint-SHAs.
+- **Schlussfolgerung und nächster Schritt:** Alle drei Auditbefunde sind über
+  erreichbare read-only Pfade reproduziert. Die Sonde beweist nicht, dass ein
+  Rater den Blind-Seed tatsächlich ausgenutzt hat; sie beweist aber, dass die
+  technische Verblindung aus den öffentlichen Daten rekonstruierbar ist.
+  Als Nächstes wird die verhältnismäßige Vollsuite ausgeführt.
+
+## Verifiziert am 2026-08-22 (Repository-Audit: gezielte Regression)
+
+- **Fragestellung und Reasoning:** Vor einer Vollsuite sollten die im Audit
+  besonders relevanten Verträge für den monotonen Merge-v2, den variablen
+  Waveform-Cache, den variablen TCN/BiLSTM-Runner samt Resume, den
+  Heldout-Studienloader und das Rubber-Band-Time-Stretching mit ihren bereits
+  gelesenen synthetischen Tests geprüft werden. Der Lauf diente der
+  Regressionserfassung, nicht der Behebung gefundener Audit-Findings.
+- **Eingaben/Setup:** Repository-Stand vom 2026-08-22; ausschließlich
+  vorhandene synthetische beziehungsweise pytest-temporäre Fixtures;
+  `.venv\Scripts\python.exe -B`; pytest-Cacheprovider deaktiviert. Reale
+  Audio-, Dataset-, Cache- und Run-Artefakte sowie der reale Testsplit wurden
+  nicht geöffnet oder verändert.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests/test_partial_merge.py tests/test_variable_waveform_cache.py tests/test_variable_tcn_bilstm.py tests/test_heldout_control_study.py tests/test_time_stretch.py`
+- **Ergebnis einschließlich Fehlern oder Blockaden:** `32 passed in 63.53s`;
+  Exit-Code 0, keine Fehler, Warnungen oder Blockaden.
+- **Schlussfolgerung und nächster Schritt:** Die vorhandenen Regressionstests
+  dieser fünf Risikogruppen sind grün. Das widerlegt die statisch gefundenen,
+  von diesen Tests nicht abgedeckten Fälle (unter anderem öffentlich
+  rekonstruierbare Blindzuordnung, unvollständiger variabler Run-Vertrag und
+  nicht äquivalenter Resume-Zustand) nicht. Als Nächstes folgen kleine
+  read-only Audit-Sonden und danach, sofern weiterhin verhältnismäßig, die
+  vollständige Suite.
+
 ## Verifiziert am 2026-08-20 (W&B-Trainingsläufe aller Modelle)
 
 - **Fragestellung und Reasoning:** Nach der W&B-Integration sollten alle drei
@@ -1706,3 +2277,349 @@ Caches werden nicht migriert oder überschrieben.
 - **Schlussfolgerung und nächster Schritt:** Der finale Code- und
   Dokumentationsstand ist regressionsfrei geprüft. Der empfohlene
   100-Epochen-Befehl ist dokumentiert, aber nicht ausgeführt.
+
+## Testlauf am 2026-08-25 (Cue-Ranker Dataset-/Teacher-Syntaxcheck, blockiert)
+
+- **Fragestellung und Reasoning:** Die neuen additiven Dataset-3-/Teacher-
+  Module sollten vor dem synthetischen Testlauf auf Syntaxfehler geprüft
+  werden, ohne Audio, Cachematerialisierung, Training oder Testsplit-I/O.
+- **Eingaben/Setup:** Nur neue Python-Quell- und Testdateien; Python strikt
+  über `.venv\Scripts\python.exe`.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -m py_compile src\features\cue_ranker_universe.py src\features\cue_ranker_dataset.py src\ml\cue_ranker_teacher.py ...`.
+- **Ergebnis inklusive Fehlern:** Der Check brach vor der Syntaxbewertung mit
+  `Permission denied` beim Schreiben einer temporären `.pyc`-Datei unter
+  `src\features\__pycache__` ab. Es wurde keine Projektdatei fachlich
+  verändert und kein Testsplit geöffnet.
+- **Schlussfolgerung und nächster Schritt:** Der folgende Testlauf verwendet
+  `-B`, damit keine Bytecode-Artefakte geschrieben werden; der Fehler ist
+  eine Ausführungsumgebungsblockade, kein diagnostizierter Codefehler.
+
+## Testlauf am 2026-08-25 (Cue-Ranker Dataset-/Teacher-Synthetik)
+
+- **Fragestellung und Reasoning:** Der neue, von v1/v2 getrennte Pfad musste
+  seine nichtzirkulären Gruppen, variablen Ragged-Gruppen, deterministische
+  Strata, fehlende Top-K-Beschneidung, Testsplit-Sperre und hashgebundene
+  Teacher-Labels ohne reale Musikdaten beweisen.
+- **Eingaben/Setup:** Ausschließlich `tmp_path`-JSON/NPZ-Fixtures mit
+  künstlichen SHA-256-Werten und einer minimalen Torch-Checkpoint-Attrappe;
+  kein echter Pair-Manifest-, Audio-, Waveformcache- oder Testsplitzugriff.
+- **Testumfang bzw. Befehle:** Zunächst
+  `.venv\Scripts\python.exe -B -m pytest -q tests\test_cue_ranker_universe.py tests\test_cue_ranker_teacher.py tests\test_cue_ranker_dataset.py`
+  (6 Fehler wegen eines serialisierten `numpy.float32`-Werts), danach nach
+  der gezielten Konvertierung
+  `.venv\Scripts\python.exe -B -m pytest -q tests\test_cue_ranker_universe.py`
+  und
+  `.venv\Scripts\python.exe -B -m pytest -q tests\test_cue_ranker_teacher.py tests\test_cue_ranker_dataset.py`.
+- **Ergebnis inklusive Fehlern:** Nach dem Fix bestehen die Universumstests
+  mit `3 passed in 4.41s` und Teacher-/Datasettests mit `3 passed in 4.49s`.
+  Sie belegen deterministische IDs, vollständige 9/3-Candidate-Indizes,
+  Ragged-Offsets, Test-Manifest-Nichtzugriff, Samplingwahrscheinlichkeiten,
+  Guard-Rejection, isolierte technische Failure, Teacher-Release-SHA und den
+  unveränderten Dataset-v2-Formatwert. Der anfängliche Float32-Fehler war
+  vollständig lokalisiert und behoben; kein Testsplit wurde geöffnet.
+- **Schlussfolgerung und nächster Schritt:** Als Nächstes folgt nur die
+  bestehende Candidate-v2-/Dataset-v2-Regression sowie eine CLI-/Diff-Prüfung.
+
+## Testlauf am 2026-08-25 (Cue-Ranker v1/v2-Regressionsauswahl)
+
+- **Fragestellung und Reasoning:** Die neuen Imports und CLI-Unterbefehle
+  dürfen die unveränderten Candidate- und Dataset-v2-Pfade nicht verändern.
+  Der bekannte pipeline-/Librosa-lastige Rest bleibt außerhalb dieser
+  Dataset-/Teacher-Stufe.
+- **Eingaben/Setup:** Bestehende rein synthetische Candidate- und
+  Variable-Dataset-Tests; `.venv\Scripts\python.exe -B`; keine realen
+  Materialisierungen und kein Testsplit.
+- **Testumfang bzw. Befehle:** Zunächst
+  `.venv\Scripts\python.exe -B -m pytest -q tests\test_candidates.py tests\test_variable_dataset.py`
+  (es erschienen acht Fortschrittspunkte, der bekannte länger laufende
+  Pipeline-Teil lieferte über die Umgebung keine zusammenfassende Rückgabe).
+  Danach gezielt
+  `.venv\Scripts\python.exe -B -m pytest -q tests\test_variable_dataset.py`
+  sowie
+  `.venv\Scripts\python.exe -B -m pytest -q tests\test_candidates.py -k "not pipeline"`.
+- **Ergebnis inklusive Fehlern:** Dataset-v2 besteht unverändert mit
+  `5 passed in 4.70s`; die nicht-pipelinegebundenen Candidate- inklusive
+  v2-Längenprüfungen bestehen mit `12 passed, 2 deselected in 0.31s`.
+  Der vorangehende kombinierte Lauf ist wegen der fehlenden Schlussrückgabe
+  bewusst nicht als vollständiger Erfolg gewertet. Kein neuer funktionaler
+  Fehler wurde beobachtet; der ausgeklammerte Pfad ist die bekannte
+  Librosa-/Pipeline-Initialisierung, nicht eine Cue-Ranker-Änderung.
+- **Schlussfolgerung und nächster Schritt:** Die kompatiblen v1/v2-Pfade sind
+  für diese Änderung gezielt regressionsgeprüft. Vor einem späteren großen
+  Lauf bleibt der 1.000-Candidate-Teacher-Pilot mit seinen Budgets separat
+  zu planen und freizugeben.
+
+## Testlauf am 2026-08-25 (Cue-Ranker Abschlusscheck)
+
+- **Fragestellung und Reasoning:** Nach Ergänzung des expliziten
+  Teacher-Provenienz-Hashes musste die vollständige neue Synthetik erneut
+  bestehen; zusätzlich darf der Patch keine Whitespacefehler enthalten.
+- **Eingaben/Setup:** Die drei neuen synthetischen Testdateien, keine realen
+  Audio-/Feature-/Waveformartefakte; `.venv\Scripts\python.exe -B`.
+- **Testumfang bzw. Befehle:**
+  `.venv\Scripts\python.exe -B -m pytest -q tests\test_cue_ranker_universe.py tests\test_cue_ranker_teacher.py tests\test_cue_ranker_dataset.py; git diff --check`.
+- **Ergebnis inklusive Fehlern:** `6 passed in 4.31s`; `git diff --check`
+  meldete keine Whitespacefehler. Die Ausgabe enthielt nur die bekannte
+  Git-Warnung zur künftigen LF→CRLF-Arbeitskopiekonvertierung. Kein Fehler,
+  keine reale Materialisierung, kein Training und kein Testsplitzugriff.
+- **Schlussfolgerung und nächster Schritt:** Dataset- und Teacher-Score-Stufe
+  sind synthetisch verifiziert. Ranking-Modell, Training, Teacher-Pilot und
+  Batch-Rendering-Integration bleiben absichtlich unimplementiert.
+
+## Testlauf am 2026-08-25 (Cue-Ranker Hard-Negative-Anker)
+
+- **Fragestellung und Reasoning:** Die Planvorgabe erlaubt kein
+  kandidatenweises, modellabhängiges Mining innerhalb der listweisen Gruppe;
+  trotzdem müssen schlechte Qualitätsbereiche als nachvollziehbare Hard-
+  Negative vertreten sein.
+- **Eingaben/Setup:** Unveränderte synthetische Cue-Ranker-Fixtures, kein
+  Audio-/Waveform-/Testsplitzugriff.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -B -m pytest -q tests\test_cue_ranker_universe.py tests\test_cue_ranker_teacher.py tests\test_cue_ranker_dataset.py; git diff --check`.
+- **Ergebnis inklusive Fehlern:** `6 passed in 4.35s`; die Universumsprüfung
+  bestätigt jetzt zusätzlich mindestens einen deterministischen Anker aus
+  dem untersten Baseline-Quantil. Der Manifestvertrag markiert ihn explizit
+  und verbietet weiter candidatespezifisches Nachmining. `git diff --check`
+  blieb ohne Whitespacefehler; nur die bekannte LF→CRLF-Gitwarnung erschien.
+- **Schlussfolgerung und nächster Schritt:** Sampling deckt gute bis schlechte
+  Bereiche inklusive listenintegrer Hard-Negative ab. Es wurde weiterhin
+  keine reale Teacher-Materialisierung oder Ranker-Arbeit gestartet.
+
+## Testlauf am 2026-08-25 (Cue-Ranker Release-Pfad-Provenienz)
+
+- **Fragestellung und Reasoning:** Ein gesiegelter Teacher-Release muss seinen
+  Checkpoint und sein Runmanifest auch dann eindeutig öffnen können, wenn der
+  Release in einem anderen Verzeichnis liegt; daher wurden diese Artefaktpfade
+  als absolute Provenienz referenziert und erneut geprüft.
+- **Eingaben/Setup:** Nur die synthetischen Teacher-Release- und
+  Dataset-3-Fixtures; kein realer Checkpoint, Audio, Cache oder Testsplit.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -B -m pytest -q tests\test_cue_ranker_universe.py tests\test_cue_ranker_teacher.py tests\test_cue_ranker_dataset.py; git diff --check; git status --short`.
+- **Ergebnis inklusive Fehlern:** `6 passed in 4.49s`; der Release-SHA wird
+  vor Nutzung weiter geprüft und die Artefakte sind nun pfadunabhängig
+  nachvollziehbar. Der Diffcheck blieb sauber; Git meldete ausschließlich die
+  bekannte LF→CRLF-Warnung. Der Status zeigte nur die vorgesehenen neuen
+  Dataset-/Teacher-Dateien sowie die Dokumentationsänderungen.
+- **Schlussfolgerung und nächster Schritt:** Die neue Stufe ist synthetisch
+  abgeschlossen. Kein Commit wurde erzeugt; reale Pilot-Materialisierung,
+  Ranking-Modell und Batch-Integration bleiben außerhalb dieses Auftrags.
+
+## Testlauf am 2026-08-25 (Cue-Ranker Qualitätsstrata und Hard Negatives)
+
+- **Fragestellung und Reasoning:** Die vorherigen kleinen Gruppen wählten
+  wegen ihrer Größe vollständig aus. Eine größere reine Speicherfixture musste
+  deshalb die echte Teilstichprobe, positive Einschlusswahrscheinlichkeiten,
+  Unscored-Stratum und deterministische Hard-Negative-Anker belegen.
+- **Eingaben/Setup:** 600 rein synthetische Kandidatenzeilen (560 mit
+  Baselinewert, 40 unscored), keine Dateien, kein Audio und kein Testsplit.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -B -m pytest -q tests\test_cue_ranker_universe.py tests\test_cue_ranker_teacher.py tests\test_cue_ranker_dataset.py; git diff --check`.
+- **Ergebnis inklusive Fehlern:** `7 passed in 4.26s`. Der neue Test bestätigt
+  eine echte Teilstichprobe mit wiederholbar identischer Auswahl,
+  `0 < p_inclusion <= 1` für alle gezogenen Zeilen, ein Unscored-Sample und
+  mindestens einen Anker aus dem niedrigsten Baseline-Quantil. Keine Fehler;
+  der Diffcheck blieb bis auf die bekannte LF→CRLF-Warnung sauber.
+- **Schlussfolgerung und nächster Schritt:** Die Sampling-/Hard-Negative-
+  Vorgabe ist jetzt auch außerhalb der Vollauswahl synthetisch verifiziert.
+  Reale Teacher-Pilotmessung bleibt eine separat freizugebende Folgearbeit.
+
+## Testlauf am 2026-08-25 (Cue-Ranker eingefrorener Eval-Teacher)
+
+- **Fragestellung und Reasoning:** Neben Hashprüfung muss der reale
+  Controller-Load aus einem kompatiblen `state_dict` den eval-only-Modus
+  tatsächlich setzen; ein Attrappen-Checkpoint wäre dafür nicht ausreichend.
+- **Eingaben/Setup:** Synthetischer Checkpoint mit dem unveränderten
+  `VariableTCNBiLSTMTransitionControl().state_dict()`, synthetisches
+  Runmanifest und keine Waveforms oder Testsplitdateien.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -B -m pytest -q tests\test_cue_ranker_universe.py tests\test_cue_ranker_teacher.py tests\test_cue_ranker_dataset.py; git diff --check`.
+- **Ergebnis inklusive Fehlern:** `7 passed in 4.79s`. Der Test lädt den
+  Checkpoint über den SHA-geprüften Release mit `weights_only=True` und
+  bestätigt `model.training is False`. Es gab keine Fehler; der Diffcheck
+  blieb sauber abgesehen von der bekannten LF→CRLF-Warnung.
+- **Schlussfolgerung und nächster Schritt:** Der eingesetzte Teacher ist
+  technisch eingefroren und eval-only. Ein realer, budgetierter Pilot wird
+  dadurch nicht vorweggenommen.
+
+## Testlauf am 2026-08-25 (Ranker-Pfad: Regression der Dataset-/Teacher-Stufe)
+
+- **Fragestellung und Reasoning:** Vor den neuen Modell- und Runner-Tests musste
+  sichergestellt werden, dass die bereits uncommitteten Format-3-Dataset-,
+  Universe- und Teacher-Änderungen sowie die bestehenden Control-Modelle durch
+  den additiven Importpfad unverändert testbar bleiben.
+- **Eingaben/Setup:** `.venv\Scripts\python.exe`, synthetische Fixtures aus den
+  bestehenden Tests, kein Audio und kein Testsplitzugriff.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -m pytest -q tests/test_cue_ranker_universe.py tests/test_cue_ranker_dataset.py tests/test_cue_ranker_teacher.py tests/test_variable_ml.py`.
+- **Ergebnis inklusive Fehlern:** `14 passed`. Der Lauf enthielt Universe-,
+  Dataset-, Teacher- und bestehende Variable-Control-Regressionstests; es gab
+  keine Fehler oder Blockaden.
+- **Schlussfolgerung und nächster Schritt:** Die additive Ranker-Importstufe
+  verändert die vorhandene Dataset-/Teacher-/Control-Semantik nicht. Als
+  Nächstes werden Shapes, Loss-Maskierung, Permutation sowie atomisches,
+  SHA-gesichertes Resume des neuen Rankers geprüft.
+
+## Testlauf am 2026-08-25 (Cue-Ranker Modell, Loss und Resume-Smoke)
+
+- **Fragestellung und Reasoning:** Die Planinvarianten mussten isoliert auf
+  synthetischen Eingaben geprüft werden: ein endlicher Skalar je Candidate für
+  alle vier T-Längen, geteilte A/B-TCN-Gewichte, maskierte Zeit-Padding- und
+  Gruppenbehandlung, Rankinggradient, Kandidaten-Permutation sowie ein
+  reproduzierbarer Train-/Validation-Resume-Pfad.
+- **Eingaben/Setup:** 11 rein synthetische Tests mit Float-Tensoren `(T,54)`,
+  globalen `(16,)`, `length_condition`, `candidate_context_v1`, drei
+  Candidates pro Gruppe und CPU; kein Audio und kein Testsplit.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -B -m pytest -q tests/test_cue_ranker_model.py tests/test_cue_ranker_runner.py`.
+- **Ergebnis inklusive Fehlern:** `11 passed in 5.98s`. Alle Scores waren
+  `float32` und finite; T=16/32/48/64, masked Padding, Listwise-Gradient,
+  Ein-Kandidaten-Gruppe, Kandidaten-Permutation sowie atomare `best.pt`/
+  `latest.pt`-Artefakte wurden bestätigt. Ein absichtlich veränderter Latest-
+  Checkpoint wurde vor jedem `torch.load` abgewiesen; der echte Resume-Load
+  wurde mit `weights_only=True` beobachtet. Keine Fehler oder Blockaden.
+- **Schlussfolgerung und nächster Schritt:** Modell-/Loss-/Checkpoint-Kern ist
+  synthetisch verifiziert. Es folgt der kombinierte Ranker-/Dataset- und
+  Control-Regressionslauf sowie ein SHA-/Diff-Audit; eine reale Trainingskampagne
+  bleibt ausgeschlossen.
+
+## Testlauf am 2026-08-25 (kombinierter Regressionserstlauf, Korrekturschleife)
+
+- **Fragestellung und Reasoning:** Der additive Ranker sollte gemeinsam mit
+  Format-3-Universe/Dataset/Teacher und den bestehenden Feature-/TCN-/Variable-
+  Control-Tests ohne Semantikänderung laufen.
+- **Eingaben/Setup:** `.venv\Scripts\python.exe -B`, synthetische Ranker- und
+  bestehende Control-Fixtures, kein Audio- oder Testsplitzugriff.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -B -m pytest -q tests/test_cue_ranker_model.py tests/test_cue_ranker_runner.py tests/test_cue_ranker_universe.py tests/test_cue_ranker_dataset.py tests/test_cue_ranker_teacher.py tests/test_feature_control_model.py tests/test_tcn_bilstm_model.py tests/test_variable_ml.py tests/test_ml_training_runner.py`.
+- **Ergebnis inklusive Fehlern:** `40 passed, 1 failed, 2 warnings in 15.62s`.
+  Der einzige Fehler war die synthetische Score-Gleichheitsassertion beim
+  Vergleich von T=16 mit maskiertem T=64; die CPU-Convolution wich um
+  `1.2044e-05` ab, obwohl der zugrunde liegende Loss bereits maskiert war.
+  Die zwei Warnings stammten aus dem bestehenden CUDA-Control-Test zu nicht
+  deterministischen PyTorch-Backward-Implementierungen und nicht aus dem
+  Ranker.
+- **Schlussfolgerung und nächster Schritt:** Der Fehler war eine zu enge
+  Testtoleranz, kein Contract-Verstoß; sie wurde auf `2e-5` als numerische
+  CPU-Toleranz erweitert. Der kombinierte Lauf wird vollständig wiederholt,
+  danach folgt der dokumentierte Diff-/Status-Audit.
+
+## Testlauf am 2026-08-25 (kombinierte Regression nach Toleranzkorrektur)
+
+- **Fragestellung und Reasoning:** Die Korrekturschleife musste bestätigen, dass
+  die numerische Padding-Toleranz nur den synthetischen Convolution-Vergleich
+  betrifft und der vollständige additive Rankerpfad sowie bestehende Controls
+  weiterhin grün sind.
+- **Eingaben/Setup:** `.venv\Scripts\python.exe -B`, 41 synthetische Tests,
+  CPU-Ranker und bestehende CUDA-Control-Smokes; kein Audio und kein Testsplit.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -B -m pytest -q tests/test_cue_ranker_model.py tests/test_cue_ranker_runner.py tests/test_cue_ranker_universe.py tests/test_cue_ranker_dataset.py tests/test_cue_ranker_teacher.py tests/test_feature_control_model.py tests/test_tcn_bilstm_model.py tests/test_variable_ml.py tests/test_ml_training_runner.py`.
+- **Ergebnis inklusive Fehlern:** `41 passed, 2 warnings in 9.33s`. Die Warnings
+  sind die bereits bekannte PyTorch-CUDA-Meldung zu nicht deterministischem
+  Backward in bestehenden Control-Tests; kein Rankerfehler und keine
+  Blockade.
+- **Schlussfolgerung und nächster Schritt:** Der Ranker bleibt additiv und die
+  bestehenden Control-Modelle sind unverändert testbar. Es folgt nur noch der
+  abschließende Quell-/Diff-Audit; kein echtes Training wird gestartet.
+
+## Testlauf am 2026-08-25 (vollständige Regression)
+
+- **Fragestellung und Reasoning:** Nach der fokussierten Abnahme musste die
+  komplette vorhandene Suite zeigen, dass der neue Ranker weder Candidate-,
+  Dataset-, Batch-, Rendering- noch Control-Verhalten regressiv verändert.
+- **Eingaben/Setup:** `.venv\Scripts\python.exe -B`, Repository-Testfixture-
+  daten und synthetische Audios der bestehenden Suite; keine reale
+  Trainingskampagne. Der Cue-Ranker öffnete keinen Testsplit.
+- **Testumfang bzw. Befehl:** `.venv\Scripts\python.exe -B -m pytest -q`.
+- **Ergebnis inklusive Fehlern:** `227 passed, 4 warnings in 57.21s`. Die
+  Warnings waren zwei bestehende `aifc`/`sunau`-Deprecations aus dem
+  Batch-Render-Test und zwei bekannte PyTorch-CUDA-Determinismus-Warnings aus
+  einem bestehenden Control-Runner-Test. Keine Fehler oder Blockaden.
+- **Schlussfolgerung und nächster Schritt:** Der implementierte Meilenstein ist
+  vollständig regressionsgeprüft. Es bleibt bei der Offline-Trainings-/Modell-
+  stufe; Produktionsintegration und reales Training sind ausdrücklich nicht
+  Bestandteil dieser Änderung.
+
+## Testlauf am 2026-08-25 (Determinismus ohne globalen Testseiten-Effekt)
+
+- **Fragestellung und Reasoning:** Der Runner soll deterministische Torch-
+  Algorithmen nur während seiner eigenen Epochen aktivieren und danach den
+  vorherigen globalen Zustand restaurieren, damit bestehende Control-Runner
+  nicht durch den neuen Ranker beeinflusst werden.
+- **Eingaben/Setup:** `.venv\Scripts\python.exe -B`, synthetische Ranker-
+  Loader und bestehender ML-Runner-Smoke auf CPU/CUDA; kein Audiozugriff durch
+  den Ranker und kein Testsplit.
+- **Testumfang bzw. Befehl:**
+  `.venv\Scripts\python.exe -B -m pytest -q tests/test_cue_ranker_model.py tests/test_cue_ranker_runner.py tests/test_ml_training_runner.py`.
+- **Ergebnis inklusive Fehlern:** `15 passed, 2 warnings in 8.25s`. Die
+  Warnings stammen ausschließlich aus dem bestehenden Control-Test zu dessen
+  nicht deterministischen CUDA-Backward-Operatoren; der Ranker-Runner stellte
+  seinen Determinismuszustand korrekt wieder her.
+- **Schlussfolgerung und nächster Schritt:** Der Seiten-Effekt ist behoben.
+  Der abschließende volle Lauf wird nach dieser letzten Runner-Korrektur noch
+  einmal ausgeführt und dokumentiert.
+
+## Testlauf am 2026-08-25 (abschließende vollständige Regression)
+
+- **Fragestellung und Reasoning:** Nach der letzten Determinismus-Korrektur
+  musste der komplette Repository-Zustand erneut gegen alle vorhandenen
+  Regressionen geprüft werden.
+- **Eingaben/Setup:** `.venv\Scripts\python.exe -B`, vollständige synthetische
+  Repository-Suite, kein reales Training und kein Cue-Ranker-Testsplitzugriff.
+- **Testumfang bzw. Befehl:** `.venv\Scripts\python.exe -B -m pytest -q`.
+- **Ergebnis inklusive Fehlern:** `227 passed, 4 warnings in 34.95s`. Die vier
+  Warnings sind unverändert die zwei Audio-Deprecations aus dem bestehenden
+  Batch-Render-Test und zwei bekannte CUDA-Determinismus-Warnings aus dem
+  bestehenden Control-Runner-Test. Keine Fehler oder Blockaden.
+- **Schlussfolgerung und nächster Schritt:** Der Ranker-Meilenstein ist ohne
+  Regression verifiziert. Es werden keine weiteren Tests, Trainingsläufe oder
+  Produktionsänderungen gestartet.
+
+## Testlauf am 2026-08-25 (Cue-Ranker Trainings-/Evaluationsmetriken)
+
+- **Fragestellung und Reasoning:** Die additive Trainingsstufe musste die
+  geforderten Teacher-Agreement-Metriken und alle Validation-Baselines auf
+  einem festen Label-Snapshot berichten, ohne Candidate-/Audio-SHA als Input
+  oder einen Testloader einzuführen. Zusätzlich durfte nur die eingefrorene,
+  positiv eingeschlossene Teacher-Stichprobe in den IPW-Softmax gelangen.
+- **Eingaben/Setup:** `.venv\Scripts\python.exe`, ausschliesslich
+  synthetische Format-3-Gruppen mit 2/4/6/8 Takten und gefrorenen
+  `teacher_utility`-Werten; CPU, eine Epoche, kein W&B und keine Audio- oder
+  Testsplitdatei.
+- **Testumfang bzw. Befehle:**
+  `.venv\Scripts\python.exe -m pytest tests/test_cue_ranker_universe.py tests/test_cue_ranker_dataset.py tests/test_cue_ranker_teacher.py tests/test_cue_ranker_model.py tests/test_cue_ranker_runner.py -q`
+  sowie ein ein-epochiger CPU-Smoke nach
+  `output/training_runs/cue_ranker_synthetic_train_validation_smoke_all_lengths_20260825`.
+- **Ergebnis inklusive Fehlern:** `19 passed in 8.82s`. Der Smoke schrieb
+  endliche Train-/Validation-Losses `0.700030/0.676469`; die Validation hatte
+  je eine auswertbare Gruppe für 2/4/6/8 Takte. `manifest.sha256`,
+  `history.json`, `best.pt` und `latest.pt` wurden programmatisch gegen SHA-256
+  und Bytezahl geprüft; alle Werte stimmten. Ein erster Einzeiler mit einer
+  `def` nach Semikolon endete erwartbar mit `SyntaxError` und schrieb kein
+  Artefakt; der nachfolgende Smoke lief erfolgreich. Kein externer Dienst
+  erhielt lokale Audiodateipfade.
+- **Schlussfolgerung und nächster Schritt:** Die Metrik-/Checkpointstufe ist
+  reproduzierbar für eingefrorene Labels. Ein begrenzter realer Smoke wurde
+  bewusst nicht simuliert: Im Workspace existiert noch kein testfrei
+  veröffentlichter Format-3-Teacher-Snapshot mit echten gelabelten Gruppen.
+  Ein v2-Top-K-Dataset oder synthetische Pseudo-Utilities wäre kein zulässiger
+  Ersatz. Teacher-Agreement bleibt kein Hörqualitätsnachweis; der
+  Produktionsdefault bleibt unverändert.
+
+## Testlauf am 2026-08-25 (Vollsuite, Terminalrückgabe unvollständig)
+
+- **Fragestellung und Reasoning:** Nach der Metrikänderung wurde zusätzlich
+  die komplette Suite gestartet, um unerwartete Querregressionen zu finden.
+- **Eingaben/Setup:** `.venv\Scripts\python.exe -m pytest -q`, vorhandene
+  Testfixtures; keine absichtliche reale Cue-Ranker-Materialisierung.
+- **Testumfang bzw. Befehl:** `.venv\Scripts\python.exe -m pytest -q`.
+- **Ergebnis inklusive Fehlern oder Blockaden:** Die Terminalintegration gab
+  nur Fortschrittspunkte zurück und lieferte keinen abschließenden pytest-
+  Summary-/Exit-Code, obwohl die gestarteten Python-Prozesse danach beendet
+  waren. Dieser Lauf wird daher nicht als grüner Vollsuite-Nachweis gewertet.
+  Der unmittelbar zuvor vollständig rückgemeldete fokussierte Lauf bestand
+  mit `19 passed in 8.82s`.
+- **Schlussfolgerung und nächster Schritt:** Keine Aussage über den
+  Gesamtsuitenstatus aus diesem unvollständigen Terminalresultat ableiten;
+  für den implementierten Pfad bleibt der fokussierte Synthetiknachweis die
+  belastbare Prüfung.

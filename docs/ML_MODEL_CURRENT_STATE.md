@@ -63,6 +63,38 @@ Der aktuelle Vocal-Lauf verwendet den RoFormer-Stem-Backend
 Trainings- und Featurepfad nutzt die verifizierte RoFormer-Separation. Die 60
 Testbeispiele des erweiterten Datensatzes bleiben vom Training ausgeschlossen.
 
+## Additiver Cuepoint-Ranker v1 (Auditstand 2026-08-25)
+
+`learned_cue_ranker_v1` ist ein separater, nicht als Default aktivierter
+Kandidatenranker vor Controller und Renderer. Er akzeptiert ausschließlich
+bereits akzeptierte Candidate-v2-Einträge mit 4/4-Downbeats,
+`approximate_grid_policy=reject` und verifizierter Grid-Provenienz. Die
+historische `feature_baseline_v3` bleibt Batch-/CLI-Default und bleibt im
+Manifest unter `candidate_ranking` unverändert; der Learned-Opt-in schreibt
+seine Scores und Auswahl getrennt unter `cue_ranking`.
+
+Ein frischer unabhängiger Audit bestätigte mit synthetischen Fixtures
+vollständige Split-/Gruppenisolation, variable Ragged-Gruppen,
+Samplingwahrscheinlichkeiten, `weights_only`-Checkpointloads,
+deterministisches Resume und Learned-Render-Backfill. Dabei wurden vier echte
+Datenfluss-/Sicherheitsfehler korrigiert: Guard-Rejections sind nun immer
+negative Teacher-Anker; der Gruppenkontext verwendet die vollständige
+Kandidatenmenge; Renderfehler füllen deterministisch auf; der Teacher ist an
+einen abgeschlossenen Variable-TCN-Run und dessen deklarierten Best-Checkpoint
+gebunden. Die betroffene Regression bestand mit `82 passed, 2 warnings`, die
+vollständige Suite mit `239 passed, 4 warnings`; Testsplit und reales Training
+blieben geschlossen.
+
+Der Pfad ist dennoch **nicht für einen größeren realen Validation-Lauf
+freigegeben**. Es existiert weder ein testfrei veröffentlichter Format-3-
+Teacher-Snapshot mit echten Labels noch ein sicherer End-to-End-CLI-Einstieg
+für `label-cue-ranker-teacher` und `train-cue-ranker`. Alle gegenwärtigen
+Ranker-Metriken messen nur Agreement mit dem eingefrorenen Objective-v5-
+Teacher; sie belegen weder Überlegenheit über `feature_baseline_v3` auf realen
+Validation-Gruppen noch hörbare Übergangsqualität. Dafür ist anschließend ein
+vorab festgelegter Vergleich auf demselben echten Validation-Snapshot und ein
+unabhängiges menschliches Hör-Gate erforderlich.
+
 ## Additiver Variable-Length-Stand (2026-08-21)
 
 Der neue, nicht als Default aktivierte Pfad

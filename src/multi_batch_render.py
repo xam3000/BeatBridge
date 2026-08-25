@@ -13,7 +13,8 @@ import sys
 import uuid
 
 from src.analysis.pre_analysis import PreAnalysis
-from src.batch_render import DEFAULT_RENDERERS, generate_and_render_batch
+from src.batch_render import DEFAULT_RENDERERS, RANKING_METHODS, generate_and_render_batch
+from src.ranking import load_learned_cue_ranker
 from src.candidates import CandidateGenerationConfig, VariableCandidateGenerationConfig
 from src.dataset import (
     DEFAULT_TRACK_EXCLUSIONS_PATH,
@@ -43,6 +44,11 @@ def generate_multi_song_batch(
     analysis_workers=1,
     approximate_grid_policy="reject",
     transition_lengths_bars=DEFAULT_TRANSITION_LENGTHS_BARS,
+    ranking_method="feature_baseline_v3",
+    cue_ranker_run=None,
+    cue_ranker_dataset=None,
+    cue_ranker_feature_cache_root="output/feature_cache",
+    cue_ranker_vocal_backend="disabled",
 ):
     """Rank targets per source, then render the best transition candidates.
 
@@ -62,6 +68,15 @@ def generate_multi_song_batch(
     if int(analysis_workers) <= 0:
         raise ValueError("analysis_workers must be greater than 0")
     transition_lengths_bars = _normalise_transition_lengths(transition_lengths_bars)
+    ranking_method = _validate_ranking_method(ranking_method)
+    learned_ranker = None
+    if ranking_method == "learned_cue_ranker_v1":
+        # Fail before creating the output root: a missing/corrupt checkpoint
+        # must never turn into a set of per-pair silent fallbacks.
+        learned_ranker = load_learned_cue_ranker(
+            cue_ranker_run,
+            dataset_manifest_path=cue_ranker_dataset,
+        )
 
     output_directory = Path(output_directory)
     _preflight_output_directory(output_directory)
@@ -84,6 +99,7 @@ def generate_multi_song_batch(
     candidate_config = _candidate_generation_config(
         transition_lengths_bars,
         approximate_grid_policy=approximate_grid_policy,
+        ranking_method=ranking_method,
     )
     output_directory.mkdir(parents=True, exist_ok=True)
     manifest_path = output_directory / "manifest.json"
@@ -104,6 +120,10 @@ def generate_multi_song_batch(
         "top_targets_per_source": int(top_targets),
         "top_transitions_per_pair": int(top_transitions),
         "renderers": list(renderers),
+        "ranking_method": ranking_method,
+        "cue_ranker_run": (
+            None if learned_ranker is None else learned_ranker.provenance
+        ),
         "target_sample_rate": int(target_sample_rate),
         "approximate_grid_policy": approximate_grid_policy,
         "transition_lengths_bars": list(transition_lengths_bars),
@@ -156,6 +176,13 @@ def generate_multi_song_batch(
                         analysis=analysis,
                         candidate_config=candidate_config,
                         top_k=top_transitions,
+                        ranking_method=ranking_method,
+                        cue_ranker=learned_ranker,
+                        cue_ranker_run=cue_ranker_run,
+                        cue_ranker_dataset=cue_ranker_dataset,
+                        cue_ranker_feature_cache_root=cue_ranker_feature_cache_root,
+                        cue_ranker_analysis_root=str(cache_path),
+                        cue_ranker_vocal_backend=cue_ranker_vocal_backend,
                     )
                     pair_entry.update(
                         {
@@ -211,9 +238,17 @@ def _normalise_transition_lengths(transition_lengths_bars):
     return variable_config.transition_lengths_bars
 
 
-def _candidate_generation_config(transition_lengths_bars, *, approximate_grid_policy):
+def _candidate_generation_config(
+    transition_lengths_bars,
+    *,
+    approximate_grid_policy,
+    ranking_method="feature_baseline_v3",
+):
     """Keep the historical v1 default while enabling v2 lengths additively."""
-    if tuple(transition_lengths_bars) == DEFAULT_TRANSITION_LENGTHS_BARS:
+    if (
+        tuple(transition_lengths_bars) == DEFAULT_TRANSITION_LENGTHS_BARS
+        and ranking_method == "feature_baseline_v3"
+    ):
         return CandidateGenerationConfig(
             transition_lengths_bars=tuple(transition_lengths_bars),
             approximate_grid_policy=approximate_grid_policy,
@@ -222,6 +257,15 @@ def _candidate_generation_config(transition_lengths_bars, *, approximate_grid_po
         transition_lengths_bars=tuple(transition_lengths_bars),
         approximate_grid_policy=approximate_grid_policy,
     )
+
+
+def _validate_ranking_method(ranking_method):
+    ranking_method = str(ranking_method)
+    if ranking_method not in RANKING_METHODS:
+        raise ValueError(
+            f"Unknown ranking method {ranking_method!r}; choose one of {', '.join(RANKING_METHODS)}"
+        )
+    return ranking_method
 
 
 def _expand_song_paths(songs):
@@ -388,6 +432,26 @@ def build_argument_parser():
     )
     parser.add_argument("songs", nargs="+", help="Source and target tracks; every track is a source.")
     parser.add_argument("--output-dir", required=True)
+    parser.add_argument(
+        "--ranking-method",
+        choices=RANKING_METHODS,
+        default="feature_baseline_v3",
+        help="Candidate selection method (default: feature_baseline_v3).",
+    )
+    parser.add_argument(
+        "--cue-ranker-run",
+        help="Completed learned_cue_ranker_v1 run directory or best checkpoint.",
+    )
+    parser.add_argument(
+        "--cue-ranker-dataset",
+        help="SHA-bound Cue-Ranker Dataset-3 manifest required for learned inference.",
+    )
+    parser.add_argument("--cue-ranker-feature-cache-root", default="output/feature_cache")
+    parser.add_argument(
+        "--cue-ranker-vocal-backend",
+        choices=("disabled", "demucs", "roformer"),
+        default="disabled",
+    )
     parser.add_argument("--top-targets", type=int, default=3)
     parser.add_argument("--top-transitions", type=int, default=3)
     parser.add_argument(
@@ -434,21 +498,35 @@ def _recorded_failure_count(manifest):
 
 def main(argv=None):
     args = build_argument_parser().parse_args(argv)
-    manifest_path = generate_multi_song_batch(
-        args.songs,
-        args.output_dir,
-        top_targets=args.top_targets,
-        top_transitions=args.top_transitions,
-        renderers=tuple(args.renderers),
-        target_sample_rate=args.target_sample_rate,
-        analysis_location=args.analysis_location,
-        track_exclusions_path=args.track_exclusions,
-        minimum_bpm=args.min_bpm,
-        maximum_bpm=args.max_bpm,
-        analysis_workers=args.analysis_workers,
-        approximate_grid_policy=args.approximate_grid_policy,
-        transition_lengths_bars=tuple(args.transition_bars),
-    )
+    try:
+        manifest_path = generate_multi_song_batch(
+            args.songs,
+            args.output_dir,
+            top_targets=args.top_targets,
+            top_transitions=args.top_transitions,
+            renderers=tuple(args.renderers),
+            target_sample_rate=args.target_sample_rate,
+            analysis_location=args.analysis_location,
+            track_exclusions_path=args.track_exclusions,
+            minimum_bpm=args.min_bpm,
+            maximum_bpm=args.max_bpm,
+            analysis_workers=args.analysis_workers,
+            approximate_grid_policy=args.approximate_grid_policy,
+            transition_lengths_bars=tuple(args.transition_bars),
+            ranking_method=args.ranking_method,
+            cue_ranker_run=args.cue_ranker_run,
+            cue_ranker_dataset=args.cue_ranker_dataset,
+            cue_ranker_feature_cache_root=args.cue_ranker_feature_cache_root,
+            cue_ranker_vocal_backend=args.cue_ranker_vocal_backend,
+        )
+    except (FileNotFoundError, ValueError) as error:
+        if args.ranking_method != "learned_cue_ranker_v1":
+            raise
+        print(
+            f"learned_cue_ranker_v1 preflight failed: {type(error).__name__}: {error}",
+            file=sys.stderr,
+        )
+        return 1
     print(manifest_path)
     manifest = json.loads(Path(manifest_path).read_text(encoding="utf-8"))
     failure_count = _recorded_failure_count(manifest)
