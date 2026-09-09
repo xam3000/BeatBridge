@@ -7,7 +7,7 @@ import torch
 
 from src.features import VARIABLE_DATASET_FORMAT_VERSION
 from src.features.contract import feature_index
-from src.features.cue_ranker_dataset import export_cue_ranker_dataset
+from src.features.cue_ranker_dataset import _normalizer_record, export_cue_ranker_dataset
 from src.features.cue_ranker_universe import build_cue_ranker_universe, write_cue_ranker_pair_index
 from src.ml.cue_ranker_data import CueRankerGroupedDataset
 from src.ml.cue_ranker_teacher import TEACHER_MODEL_NAME, TeacherEvaluation, label_cue_ranker_teacher, seal_teacher_release
@@ -46,13 +46,35 @@ def test_dataset_v3_keeps_old_dataset_contracts_and_writes_only_train_validation
     }), encoding="utf-8")
     release = seal_teacher_release(run, checkpoint, tmp_path / "release.json", renderer_config={"sample_rate": 11025}, objective_config={}, normalizer_sha256=_sha("normalizer"), backend_provenance={"rubberband_backend_sha256": _sha("backend")})
     labels = label_cue_ranker_teacher(universe, release, tmp_path / "labels", evaluator=lambda row, release: TeacherEvaluation(-float(row["transition_length_bars"]), .9, {"alignment_contract": "local_grid_target_to_source_v1"})).output_directory
-    result = export_cue_ranker_dataset(universe, labels, tmp_path / "dataset", train_only_normalizer={"fit_scope": "training_tracks_only", "stats_id": "synthetic"})
+    result = export_cue_ranker_dataset(universe, labels, tmp_path / "dataset", train_only_normalizer={
+        "fit_scope": "training_tracks_only", "stats_id": "synthetic",
+        "spectral_flux_log1p_p99": 1.0, "onset_strength_log1p_p99": 1.0,
+        "training_audio_sha256": [source, target],
+        "input_universe_manifest_sha256": hashlib.sha256((universe / "manifest.json").read_bytes()).hexdigest(),
+    })
     manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
     assert VARIABLE_DATASET_FORMAT_VERSION == 2
     assert manifest["format_version"] == 3
     assert manifest["test"] == {"state": "sealed_not_materialized"}
     assert set(manifest["counts"]) == {"train", "validation"}
     assert not (result.output_directory / "test").exists()
+
+
+def test_normalizer_record_rejects_a_different_input_universe():
+    source, target = _sha("source"), _sha("target")
+    with pytest.raises(ValueError, match="input universe differs"):
+        _normalizer_record(
+            {
+                "fit_scope": "training_tracks_only",
+                "stats_id": "synthetic",
+                "spectral_flux_log1p_p99": 1.0,
+                "onset_strength_log1p_p99": 1.0,
+                "training_audio_sha256": [source, target],
+                "input_universe_manifest_sha256": _sha("other-universe"),
+            },
+            universe_manifest_sha256=_sha("current-universe"),
+            training_audio_sha256=[source, target],
+        )
 
 
 def test_grouped_loader_context_uses_full_universe_size_not_label_sample_size():

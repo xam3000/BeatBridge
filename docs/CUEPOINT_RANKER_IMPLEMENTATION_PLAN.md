@@ -1,8 +1,11 @@
 # Implementierungsplan: `learned_cue_ranker_v1`
 
 **Stand:** 2026-08-25  
-**Status:** verbindlicher Architekturplan, **nicht implementiert**. Dieser Plan
-ändert keine bestehenden Modelle, Datensätze, Caches oder Checkpoints.  
+**Status:** verbindlicher Architekturplan; Pair-Index/Universe, Teacher,
+Format-3-Export, echter Featureloader sowie Train-/Validation-CLI sind
+additiv implementiert und synthetisch verifiziert (2026-08-26). Ein realer
+Pilot bleibt explizit freigabepflichtig. Dieser Plan ändert keine bestehenden
+Modelle, Datensätze, Caches oder Checkpoints.
 **Geltungsbereich:** additive erste Stufe zur Auswahl von Source-Cuepoint,
 Target-Cuepoint und – bei mehreren angeforderten Längen –
 `transition_length_bars`.
@@ -598,11 +601,10 @@ Audit-/Hör-Evaluation auf später freigegebenen neuen Audio-SHAs. Ein
 Produktivtraining oder eine Änderung des Teachers vor dem Pilot wäre eine
 Abweichung vom Plan.
 
-`docs/STATUS.md` wird in dieser Session nicht ergänzt: Es liegt eine geplante
-Architekturentscheidung, aber kein ausgeführter oder verifizierter
-Implementierungsmeilenstein vor. Die Plan-Datei ist die persistente
-Entscheidungs- und Begründungsquelle, bis ein späterer Schritt tatsächlich
-implementiert und geprüft ist.
+`docs/STATUS.md` wird erst nach einem tatsächlich ausgeführten und
+verifizierten Implementierungsmeilenstein ergänzt. Für den am 2026-08-26
+verifizierten Pair-Index-/Universe-Datenanfang steht der Nachweis jetzt dort
+und in `docs/Bemerkungen.md`; die übrigen Pakete bleiben offen.
 
 ## 11. Strenges Architektur-Review vom 2026-08-25
 

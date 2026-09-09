@@ -11,6 +11,8 @@ import uuid
 
 import numpy as np
 
+from .extract_track import FeatureNormalizationStats
+
 from .cue_ranker_universe import (
     CUE_RANKER_DATASET_FORMAT_VERSION,
     CUE_RANKER_UNIVERSE_FORMAT_VERSION,
@@ -46,16 +48,32 @@ def export_cue_ranker_dataset(universe_directory, label_directory, output_direct
     universe_directory, label_directory, output_directory = map(Path, (universe_directory, label_directory, output_directory))
     if output_directory.exists():
         raise FileExistsError(f"Dataset output already exists: {output_directory}")
-    universe_manifest = _read_json(universe_directory / "manifest.json")
+    universe_manifest_path = universe_directory / "manifest.json"
+    label_manifest_path = label_directory / "manifest.json"
+    universe_manifest = _read_json(universe_manifest_path)
     if universe_manifest.get("format_version") != CUE_RANKER_UNIVERSE_FORMAT_VERSION:
         raise ValueError("Unsupported Cue-Ranker universe format")
-    label_manifest = _read_json(label_directory / "manifest.json")
-    universe_sha = _file_sha256(universe_directory / "manifest.json")
+    label_manifest = _read_json(label_manifest_path)
+    universe_sha = _file_sha256(universe_manifest_path)
     if label_manifest.get("universe_manifest_sha256") != universe_sha:
         raise ValueError("teacher_labels_universe_manifest_sha256_mismatch")
-    normalizer = _normalizer_record(train_only_normalizer)
     labels = {split: _load_labels(label_directory, label_manifest, split) for split in _ALLOWED_SPLITS}
     records = {split: load_cue_ranker_universe_rows(universe_directory, split) for split in _ALLOWED_SPLITS}
+    for split in _ALLOWED_SPLITS:
+        for row in records[split]:
+            row["split"] = split
+        for label in labels[split]:
+            label["split"] = split
+    training_tracks = sorted({
+        str(row[name]).lower()
+        for row in records["train"]
+        for name in ("source_audio_sha256", "target_audio_sha256")
+    })
+    normalizer = _normalizer_record(
+        train_only_normalizer,
+        universe_manifest_sha256=universe_sha,
+        training_audio_sha256=training_tracks,
+    )
     groups = {split: _load_groups(universe_directory, universe_manifest, split) for split in _ALLOWED_SPLITS}
     for split in _ALLOWED_SPLITS:
         _merge_labels(records[split], labels[split])
@@ -86,12 +104,17 @@ def export_cue_ranker_dataset(universe_directory, label_directory, output_direct
         manifest = {
             "format_version": CUE_RANKER_DATASET_FORMAT_VERSION,
             "universe_manifest_sha256": universe_sha,
-            "teacher_manifest_sha256": _file_sha256(label_directory / "manifest.json"),
+            "teacher_manifest_sha256": _file_sha256(label_manifest_path),
             "teacher_release_sha256": label_manifest["teacher_release_sha256"],
             "teacher_contract_sha256": label_manifest.get("teacher_contract_sha256"),
             "teacher_alignment_contract": label_manifest.get("alignment_contract"),
             "split_map_sha256": universe_manifest["split_map_sha256"],
-            "normalization": {"fit_scope": "training_tracks_only", "sha256": files["train_only_normalizer"]["sha256"], "source_sha256": normalizer["sha256"]},
+            "normalization": {"fit_scope": "training_tracks_only", "stats_id": normalizer["stats_id"], "sha256": files["train_only_normalizer"]["sha256"], "source_sha256": normalizer["source_sha256"]},
+            "inputs": {
+                "universe_manifest": {"path": str(universe_manifest_path.resolve()), "sha256": universe_sha},
+                "teacher_manifest": {"path": str(label_manifest_path.resolve()), "sha256": _file_sha256(label_manifest_path)},
+                "train_only_normalizer_source": normalizer["source"],
+            },
             "counts": {split: {"candidates": len(records[split]), "groups": len(groups[split]), "loss_eligible_groups": sum(group["group_status"] == "teacher_supported" for group in groups[split])} for split in _ALLOWED_SPLITS},
             "files": files,
             "sampling": universe_manifest["sampling"],
@@ -105,7 +128,7 @@ def export_cue_ranker_dataset(universe_directory, label_directory, output_direct
     return CueRankerDatasetExportResult(output_directory, output_directory / "manifest.json", {s: len(records[s]) for s in _ALLOWED_SPLITS}, {s: len(groups[s]) for s in _ALLOWED_SPLITS})
 
 
-def _normalizer_record(value):
+def _normalizer_record(value, *, universe_manifest_sha256, training_audio_sha256):
     if isinstance(value, (str, Path)):
         path = Path(value)
         payload = _read_json(path)
@@ -115,9 +138,47 @@ def _normalizer_record(value):
         source_sha = canonical_json_sha256(payload)
     else:
         raise ValueError("train_only_normalizer is required")
-    if payload.get("fit_scope") != "training_tracks_only":
+    values = payload.get("statistics", payload)
+    if not isinstance(values, dict) or values.get("fit_scope") != "training_tracks_only":
         raise ValueError("Cue-Ranker normalizer must be training_tracks_only")
-    return {"format_version": 1, "fit_scope": "training_tracks_only", "sha256": source_sha, "statistics": payload}
+    try:
+        stats = FeatureNormalizationStats(
+            spectral_flux_log1p_p99=float(values["spectral_flux_log1p_p99"]),
+            onset_strength_log1p_p99=float(values["onset_strength_log1p_p99"]),
+            stats_id=str(values["stats_id"]),
+        )
+    except (KeyError, TypeError, ValueError) as error:
+        raise ValueError("Cue-Ranker normalizer is incomplete or non-finite") from error
+    train_tracks = values.get("training_audio_sha256")
+    if not isinstance(train_tracks, (list, tuple)) or not train_tracks or any(
+        not isinstance(item, str) or len(item) != 64 for item in train_tracks
+    ):
+        raise ValueError("Cue-Ranker normalizer training_audio_sha256 is required")
+    if set(item.lower() for item in train_tracks) != set(training_audio_sha256):
+        raise ValueError("Cue-Ranker normalizer training scope differs from the universe train tracks")
+    # The published copy is deliberately self-contained.  ``source_sha256``
+    # preserves the independently supplied/fitted artifact identity.
+    input_universe_manifest_sha256 = values.get("input_universe_manifest_sha256")
+    if not isinstance(input_universe_manifest_sha256, str) or (
+        input_universe_manifest_sha256.lower() != universe_manifest_sha256
+    ):
+        raise ValueError(
+            "Cue-Ranker normalizer input universe differs from the exported universe"
+        )
+    return {
+        "format_version": 1,
+        "fit_scope": "training_tracks_only",
+        "stats_id": stats.stats_id,
+        "spectral_flux_log1p_p99": stats.spectral_flux_log1p_p99,
+        "onset_strength_log1p_p99": stats.onset_strength_log1p_p99,
+        "input_universe_manifest_sha256": input_universe_manifest_sha256.lower(),
+        "training_audio_sha256": sorted(set(item.lower() for item in train_tracks)),
+        "source_sha256": source_sha,
+        "source": {
+            "path": str(Path(value).resolve()) if isinstance(value, (str, Path)) else None,
+            "sha256": source_sha,
+        },
+    }
 
 
 def _load_labels(root, manifest, split):

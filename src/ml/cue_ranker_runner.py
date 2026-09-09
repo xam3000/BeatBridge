@@ -16,6 +16,7 @@ import numpy as np
 import torch
 
 from .cue_ranker_model import CUE_RANKER_CONTEXT_DIMENSION, CUE_RANKER_MODEL_FORMAT_VERSION, CUE_RANKER_MODEL_NAME, CueRankerTemporalConfig, CueRankerTemporalModel
+from .wandb_logging import WandbConfig, WandbLogger
 
 
 CUE_RANKER_RUN_FORMAT_VERSION = 1
@@ -204,6 +205,7 @@ def train_cue_ranker(
     model_config: CueRankerTemporalConfig | None = None,
     resume=False,
     progress=print,
+    wandb_config: WandbConfig | None = None,
 ):
     """Train using only the explicitly supplied train and validation loaders."""
 
@@ -220,12 +222,23 @@ def train_cue_ranker(
     history_path = output_directory / "history.json"
     latest_path = output_directory / "latest.pt"
     best_path = output_directory / "best.pt"
+    if not resume and output_directory.exists():
+        raise FileExistsError(f"Training output already exists; use resume=True: {output_directory}")
     contract = _training_contract(dataset_manifest_sha256, config, model_config)
     run_id = hashlib.sha256(_canonical_json(contract)).hexdigest()[:20]
-    device = torch.device(config.device)
-    model = CueRankerTemporalModel(model_config).to(device=device, dtype=torch.float32)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay)
-    if resume:
+    wandb_logger = WandbLogger.start(
+        wandb_config, run_id=run_id, runner_name=CUE_RANKER_RUNNER_NAME,
+        contract=contract, output_directory=output_directory, resume=resume,
+    )
+    last_epoch = 0
+    best_epoch = 0
+    best_loss = math.inf
+    error = None
+    try:
+      device = torch.device(config.device)
+      model = CueRankerTemporalModel(model_config).to(device=device, dtype=torch.float32)
+      optimizer = torch.optim.AdamW(model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay)
+      if resume:
         checkpoint, manifest = _load_resume(manifest_path, manifest_sha_path, latest_path, expected_contract=contract, expected_run_id=run_id)
         model.load_state_dict(checkpoint["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
@@ -235,13 +248,12 @@ def train_cue_ranker(
         best_loss = float(checkpoint.get("best_validation_loss", math.inf))
         if config.max_epochs < start_epoch:
             raise ValueError("max_epochs must extend beyond the latest checkpoint")
-    else:
-        if output_directory.exists():
-            raise FileExistsError(f"Training output already exists; use resume=True: {output_directory}")
-        output_directory.mkdir(parents=True)
+      else:
+        # Offline W&B may have created the run's telemetry directory already.
+        output_directory.mkdir(parents=True, exist_ok=True)
         history, start_epoch, best_epoch, best_loss = [], 1, 0, math.inf
-    stale_epochs = 0
-    for epoch in range(start_epoch, config.max_epochs + 1):
+      stale_epochs = 0
+      for epoch in range(start_epoch, config.max_epochs + 1):
         train_metrics = _run_deterministic_epoch(model, train_batches, optimizer, config, device, training=True)
         validation_metrics = _run_deterministic_epoch(model, validation_batches, None, config, device, training=False)
         validation_loss = float(validation_metrics["loss"])
@@ -268,11 +280,23 @@ def train_cue_ranker(
         if improved:
             _atomic_torch_save(best_path, payload)
         _write_run_files(manifest_path, manifest_sha_path, history_path, latest_path, best_path, run_id, contract, history, status="running")
+        wandb_logger.log_epoch(epoch, train_metrics, validation_metrics, best_validation_loss=best_loss, stale_epochs=stale_epochs, improved=improved)
         progress(f"epoch={epoch} train={train_metrics['loss']:.6f} validation={validation_loss:.6f}")
         if stale_epochs >= config.patience:
             break
-    _write_run_files(manifest_path, manifest_sha_path, history_path, latest_path, best_path, run_id, contract, history, status="completed")
-    return CueRankerRunResult(output_directory, "completed", int(history[-1]["epoch"]), best_epoch, best_loss, tuple(history))
+      _write_run_files(manifest_path, manifest_sha_path, history_path, latest_path, best_path, run_id, contract, history, status="completed")
+      last_epoch = int(history[-1]["epoch"])
+      return CueRankerRunResult(output_directory, "completed", last_epoch, best_epoch, best_loss, tuple(history))
+    except Exception as caught:
+      error = caught
+      raise
+    finally:
+      wandb_logger.finish(
+          status="failed" if error else "completed", last_epoch=last_epoch,
+          best_epoch=best_epoch, best_validation_loss=best_loss,
+          output_directory=output_directory, error=error,
+          artifact_paths=("best.pt", "latest.pt", "history.json", "manifest.json"),
+      )
 
 
 def _run_epoch(model, batches, optimizer, config, device, *, training):

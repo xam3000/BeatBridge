@@ -27,12 +27,11 @@ class CueRankerGroupedDataset(Dataset):
     manifests, opens audio, or accepts a test split.
     """
 
-    def __init__(self, dataset_directory, split, *, feature_loader: Callable | Mapping | None = None):
+    def __init__(self, dataset_directory, split, *, feature_loader: Callable | Mapping | None = None, feature_cache_root="output/feature_cache"):
         self.dataset_directory = Path(dataset_directory)
         self.split = str(split)
         if self.split not in _ALLOWED_SPLITS:
             raise ValueError("Cue-Ranker dataset exposes only train and validation")
-        self.feature_loader = feature_loader
         self.manifest_path = self.dataset_directory / "manifest.json"
         self.manifest = _read_verified_json(self.manifest_path)
         if int(self.manifest.get("format_version", -1)) != 3:
@@ -40,6 +39,15 @@ class CueRankerGroupedDataset(Dataset):
         if self.manifest.get("test") != {"state": "sealed_not_materialized"}:
             raise ValueError("Cue-Ranker dataset is not sealed against test materialization")
         self.manifest_sha256 = _sha256(self.manifest_path)
+        # Format 3 never embeds tensors in production.  The default is the
+        # sealed resolver; injectable loaders remain a narrow synthetic-test
+        # seam and are not a legacy discovery fallback.
+        if feature_loader is None:
+            from .cue_ranker_feature_loader import CueRankerFeatureLoader
+            feature_loader = CueRankerFeatureLoader(
+                self.dataset_directory, feature_cache_root=feature_cache_root
+            )
+        self.feature_loader = feature_loader
         self.rows = _load_rows(self.dataset_directory, self.manifest, self.split)
         self.groups = _load_groups(self.dataset_directory, self.manifest, self.split)
         _validate_ragged_index(self.dataset_directory, self.manifest, self.split, self.rows, self.groups)

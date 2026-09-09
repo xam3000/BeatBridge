@@ -763,3 +763,51 @@ ein höheres `--max-epochs` im selben Run verwendet werden.
 ```
 
 Der programmatische Python-Vertrag hinter der CLI steht in [`RENDERING_PROTOCOL.md`](./RENDERING_PROTOCOL.md).
+# Geblendeter Hörvergleich aller kompatiblen Control-Modelle
+
+Der folgende Export sucht für den angegebenen Dataset-v1-Datensatz je einen
+repräsentativen abgeschlossenen Checkpoint von `time_shared_mlp_v1`,
+`vocal_time_shared_mlp_v2` und `tcn_bilstm_transition_control_v1`. Zusätzlich
+wird Equal Power als Referenz gerendert. Alle Varianten eines Paars teilen
+Cuepoint, Kontext und Peak-Gain; die Zuordnung zu A/B/C/D bleibt bis zum Öffnen
+von `answer_key.json` verborgen.
+
+```powershell
+.venv\Scripts\python.exe -m src.evaluation.all_models_control_study `
+  output\datasets\feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 `
+  output\control_studies\blind_all_models_validation_20260904 `
+  --pair-count 5
+```
+
+Danach `index.html` im Ausgabeordner öffnen. Bewertungen werden im Browser
+lokal zwischengespeichert und über **Bewertungen herunterladen** als JSON
+exportiert. Mit wiederholtem `--run <Run-Ordner>` lassen sich die Checkpoints
+explizit festlegen.
+
+Nicht Teil desselben Hörsatzes sind `learned_cue_ranker_v1` (wählt Cuepoints,
+rendert keine Controls) und Variable-Length-Modelle auf Dataset-/Feature-
+Protokoll 2. Diese benötigen einen separaten protokollgleichen Vergleich.
+
+## Separate Beispiele für Variable-TCN und Cue-Ranker
+
+Der folgende Befehl rendert für das Variable-TCN je ein geblendetes A/B-
+Beispiel über 2/4/6/8 Takte gegen seine eigene Equal-Power-Referenz. Danach
+entsteht eine Vergleichszentrale, die beide Hörsätze getrennt verlinkt und die
+vorhandenen synthetischen Cue-Ranker-Metriken als nicht hörbare Demo zeigt.
+
+```powershell
+.venv\Scripts\python.exe -m src.evaluation.nontrivial_model_examples `
+  output\datasets\variable_v2_strict_20260820_selected_roformer_run01 `
+  output\training_runs\variable_tcn_bilstm_v2_wandb_20260826 `
+  output\control_studies\blind_variable_tcn_lengths_20260904 `
+  output\control_studies\model_comparison_hub_20260904 `
+  --main-study-directory output\control_studies\blind_all_models_validation_20260904 `
+  --cue-ranker-run-directory output\training_runs\cue_ranker_synthetic_train_validation_smoke_all_lengths_20260825
+```
+
+Variable-TCN-Audio wird aus dem unveränderlichen 11.025-Hz-Waveformcache
+gerendert und enthält nur das exakt ausgerichtete Übergangsfenster. Diese
+Ratings dürfen wegen des anderen Daten- und Alignmentvertrags nicht mit dem
+Dataset-v1-Vierfachvergleich gepoolt werden. Ein echter Cue-Ranker-Hörtest ist
+erst mit einem realen freigegebenen Ranker plus nachgelagertem Controller und
+Renderer möglich.

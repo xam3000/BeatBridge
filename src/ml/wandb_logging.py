@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import math
+import numbers
 import os
 from pathlib import Path
 import warnings
@@ -31,7 +32,10 @@ class WandbConfig:
     project: str = "beatbridge"
     entity: str | None = None
     group: str | None = None
+    name: str | None = None
+    tags: tuple[str, ...] = ()
     log_checkpoints: bool = True
+    artifact_paths: tuple[str, ...] | None = None
 
     def __post_init__(self):
         if self.mode not in WANDB_MODES:
@@ -50,6 +54,8 @@ class WandbConfig:
             project=os.environ.get("WANDB_PROJECT", "beatbridge"),
             entity=os.environ.get("WANDB_ENTITY") or None,
             group=os.environ.get("WANDB_GROUP") or None,
+            name=os.environ.get("WANDB_NAME") or None,
+            tags=tuple(tag for tag in os.environ.get("WANDB_TAGS", "").split(",") if tag),
             log_checkpoints=os.environ.get("WANDB_LOG_CHECKPOINTS", "1")
             not in {"0", "false", "no"},
         )
@@ -97,7 +103,7 @@ class WandbLogger:
         ).hexdigest()[:20]
         init_kwargs = {
             "project": config.project,
-            "name": f"{runner_name}-{run_id}",
+            "name": config.name or f"{runner_name}-{run_id}",
             "id": wandb_run_id,
             "mode": config.mode,
             "job_type": "train",
@@ -108,6 +114,8 @@ class WandbLogger:
             init_kwargs["entity"] = config.entity
         if config.group:
             init_kwargs["group"] = config.group
+        if config.tags:
+            init_kwargs["tags"] = list(config.tags)
         # W&B supports server-side resume for online runs. Offline runs are
         # intentionally independent local records and the SDK ignores this
         # option there.
@@ -143,6 +151,7 @@ class WandbLogger:
         best_validation_loss: float,
         output_directory,
         error: Exception | None = None,
+        artifact_paths=None,
     ):
         if not self.enabled:
             return
@@ -158,12 +167,10 @@ class WandbLogger:
 
         if error is None and self.config.log_checkpoints:
             output_directory = Path(output_directory)
-            artifact_paths = [
-                output_directory / "checkpoints" / "best.pt",
-                output_directory / "checkpoints" / "latest.pt",
-                output_directory / "history.json",
-                output_directory / "manifest.json",
-            ]
+            relative_paths = artifact_paths or self.config.artifact_paths or (
+                "checkpoints/best.pt", "checkpoints/latest.pt", "history.json", "manifest.json"
+            )
+            artifact_paths = [(output_directory / relative).resolve() for relative in relative_paths]
 
             def log_artifact():
                 artifact = self._wandb.Artifact(
@@ -196,12 +203,48 @@ class WandbLogger:
 
 
 def _flatten_metrics(prefix: str, metrics: dict) -> dict[str, float]:
+    """Flatten nested metric mappings in sorted key order.
+
+    Missing optional metrics (``None``) are omitted.  All other non-scalars,
+    including strings and sequences, are rejected instead of being stringified
+    or accidentally passed to ``float``.
+    """
+    if not isinstance(metrics, dict):
+        raise TypeError(f"metrics at {prefix!r} must be a dict")
     result = {}
-    for name, value in metrics.items():
-        scalar = float(value)
-        if not math.isfinite(scalar):
-            continue
-        result[f"{prefix}/{name}"] = scalar
+
+    def visit(path, value):
+        if isinstance(value, dict):
+            for key in sorted(value, key=lambda item: str(item)):
+                if not isinstance(key, str):
+                    raise TypeError(f"metric key at {path!r} must be a string")
+                visit(f"{path}/{key}", value[key])
+            return
+        if value is None:
+            return
+        if isinstance(value, bool):
+            scalar = float(value)
+        elif isinstance(value, numbers.Real):
+            scalar = float(value)
+        else:
+            # Support scalar tensor/NumPy values without accepting arrays.
+            try:
+                if getattr(value, "ndim", None) == 0 or getattr(value, "numel", lambda: -1)() == 1:
+                    scalar = float(value)
+                else:
+                    raise TypeError
+            except (TypeError, ValueError, RuntimeError, OverflowError) as error:
+                raise TypeError(
+                    f"metric {path!r} must be a finite scalar, mapping, or None; "
+                    f"got {type(value).__name__}"
+                ) from error
+        if math.isfinite(scalar):
+            result[path] = scalar
+
+    for name in sorted(metrics):
+        if not isinstance(name, str):
+            raise TypeError(f"metric key at {prefix!r} must be a string")
+        visit(f"{prefix}/{name}", metrics[name])
     return result
 
 

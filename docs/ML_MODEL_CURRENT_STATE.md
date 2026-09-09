@@ -1,6 +1,38 @@
 # Aktuelle Form der ML-Modelle
 
-_Stand: 2026-08-21_
+_Stand: 2026-09-04_
+
+## Ergänzung aus lokaler Artefaktprüfung am 2026-09-07
+
+Für die angefragte Repository-/Modellübersicht wurden Code, Runmanifeste und
+Trainingshistorien gelesen. Die älteren Aussagen weiter unten, Variable-TCN
+sei ausschließlich über zwei Epochen gesmoked worden, sind inzwischen überholt:
+
+- `output/training_runs/variable_tcn_bilstm_waveform_v2_full_20260821/`:
+  Manifeststatus `completed`, letzte Epoche 20; kleinstes protokolliertes
+  Validation-Loss in Epoche 14: `0.24643995364507038`.
+- `output/training_runs/variable_tcn_bilstm_v2_wandb_20260826/`:
+  Manifeststatus `completed`, letzte Epoche 29; kleinstes protokolliertes
+  Validation-Loss in Epoche 23: `0.24559853225946426`.
+- In beiden Runs stimmen die neu berechneten SHA-256-Werte von `history.json`
+  und dem deklarierten Best-Checkpoint mit dem Runmanifest überein. Es wurde
+  kein Checkpoint deserialisiert, kein Training und kein Audio-Hörtest gestartet.
+- Der Variable-TCN-Trainingspfad nutzt den stem-fähigen
+  `DifferentiableVocalAwareRenderer` mit Mix-/Low-End-/Vocal-Position und
+  getrenntem Vocal-Ducking. Seine zehn Diagnose-Controlkanäle bedeuten nicht,
+  dass hier derselbe Drei-Band-EQ-Pfad wie beim festen Full-Band-TCN trainiert
+  wird (siehe `src/ml/variable_training.py`).
+- Zusätzlich ist `variable_time_shared_mlp_v1` als kleine, vocal-aware
+  Variable-Length-Baseline in `src/ml/variable_model.py` implementiert; im
+  inspizierten `output/training_runs/` wurde kein eigener Run identifiziert.
+- Die Cue-Ranker-CLIs für Teacher-Labeling und Training sind inzwischen
+  implementiert (`src/ml/__main__.py`, Status-Audits vom 2026-08-26/27).
+  Frühere Aussagen über fehlende CLIs sind historisch. Ein real trainierter
+  Ranker und eine unabhängige musikalische Qualitätsfreigabe bleiben unbelegt.
+
+Die Zahlen sind Proxy-Losses innerhalb ihrer jeweiligen Protokolle und keine
+vergleichbare Rangliste der Hörqualität. Prüfprotokoll: `Bemerkungen.md`,
+Eintrag vom 2026-09-07.
 
 Diese Übersicht trennt den aktuell verwendeten Modellpfad von den historischen
 Baselines und dem bereits implementierten, aber noch experimentellen größeren
@@ -146,12 +178,22 @@ global_features float32 (B, 16)
 
 Technisch ist der aktuelle RoFormer-Lauf reproduzierbar materialisiert und der
 Best-Checkpoint wurde manifest- und SHA-geprüft geladen. Der Validation-Loss
-belegt jedoch nur Lernen gegen den eingefrorenen Proxy. Der nächste fachliche
-Gate ist der noch offene geblendete Hörvergleich des gelernten Vocal-v2-
-Checkpoints gegen die ungelernte Initialisierung auf fünf vocal-aktiven
-Paaren; derzeit liegen dafür `0/5` Ratings vor. Erst danach sollte entschieden
-werden, ob Objective-Gewichte, Vocal-Ducking oder die Architektur verändert
-werden.
+belegt jedoch nur Lernen gegen den eingefrorenen Proxy. Seit 2026-09-04 liegt
+unter `output/control_studies/blind_all_models_validation_20260904/` ein
+gemeinsamer geblendeter Hörsatz für Equal Power, Time-shared MLP v1, Vocal-MLP
+v2 und den Full-Band-TCN/BiLSTM v1 bereit: fünf identische Validation-Paare,
+vier Varianten je Paar und eine lokale HTML-Bewertungsoberfläche. Das nächste
+fachliche Gate sind die noch offenen `0/5` Mehrmodell-Ratings. Erst danach
+sollte entschieden werden, ob Objective-Gewichte, Vocal-Ducking oder die
+Architektur verändert werden. Variable-TCN v2 benötigt wegen seines
+Dataset-/Feature-Protokolls 2 einen getrennten protokollgleichen Hörsatz. Ein
+solcher Satz liegt seit 2026-09-04 unter
+`output/control_studies/blind_variable_tcn_lengths_20260904/` mit je einem
+A/B-Beispiel für 2/4/6/8 Takte bereit. Beide Studien sind ohne Zusammenlegung
+ihrer Ratings über
+`output/control_studies/model_comparison_hub_20260904/index.html` erreichbar;
+der Cue-Ranker erscheint dort ausschließlich als ausdrücklich synthetische,
+nicht hörbare Funktionsdemo.
 
 ## Quellen im Repository
 

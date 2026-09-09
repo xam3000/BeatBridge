@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from src.ml import WandbConfig, WandbLogger
 from src.ml.wandb_logging import _public_contract
 
@@ -78,9 +80,9 @@ def test_online_logger_tracks_metrics_and_run_artifact(tmp_path, monkeypatch):
     fake_wandb = _FakeWandb()
     monkeypatch.setitem(__import__("sys").modules, "wandb", fake_wandb)
     output = tmp_path / "run"
-    (output / "checkpoints").mkdir(parents=True)
-    (output / "checkpoints" / "best.pt").write_bytes(b"best")
-    (output / "checkpoints" / "latest.pt").write_bytes(b"latest")
+    output.mkdir()
+    (output / "best.pt").write_bytes(b"best")
+    (output / "latest.pt").write_bytes(b"latest")
     (output / "history.json").write_text("{}", encoding="utf-8")
     (output / "manifest.json").write_text("{}", encoding="utf-8")
 
@@ -100,8 +102,8 @@ def test_online_logger_tracks_metrics_and_run_artifact(tmp_path, monkeypatch):
     )
     logger.log_epoch(
         2,
-        {"loss": 1.0, "objective_term": 0.25},
-        {"loss": 0.5},
+        {"loss": 1.0, "ranking": {"all": {"ranker": {"ndcg": 0.25}}}},
+        {"loss": 0.5, "ranking": {"8": {"teacher_oracle": {"ndcg": 1.0}}}},
         best_validation_loss=0.5,
         stale_epochs=0,
         improved=True,
@@ -112,6 +114,7 @@ def test_online_logger_tracks_metrics_and_run_artifact(tmp_path, monkeypatch):
         best_epoch=2,
         best_validation_loss=0.5,
         output_directory=output,
+        artifact_paths=("best.pt", "latest.pt", "history.json", "manifest.json"),
     )
 
     assert fake_wandb.init_kwargs["mode"] == "offline"
@@ -120,10 +123,51 @@ def test_online_logger_tracks_metrics_and_run_artifact(tmp_path, monkeypatch):
     assert "path" not in fake_wandb.init_kwargs["config"]["dataset"]
     assert "path" not in fake_wandb.init_kwargs["config"]["dataset"]["cache_manifests"][0]
     assert fake_wandb.run.logged[0][0]["train/loss"] == 1.0
+    assert fake_wandb.run.logged[0][0]["train/ranking/all/ranker/ndcg"] == 0.25
+    assert fake_wandb.run.logged[0][0]["validation/ranking/8/teacher_oracle/ndcg"] == 1.0
     assert fake_wandb.run.logged[0][0]["validation/loss"] == 0.5
     assert fake_wandb.run.logged[0][1] == 2
     assert len(fake_wandb.run.artifacts) == 1
     assert fake_wandb.run.finished
+
+
+def test_flatten_rejects_non_scalar_metrics():
+    from src.ml.wandb_logging import _flatten_metrics
+
+    with pytest.raises(TypeError, match="finite scalar"):
+        _flatten_metrics("train", {"ranking": [1.0, 2.0]})
+
+
+def test_finish_uses_instance_artifact_paths_when_no_call_override(tmp_path, monkeypatch):
+    fake_wandb = _FakeWandb()
+    monkeypatch.setitem(__import__("sys").modules, "wandb", fake_wandb)
+    output = tmp_path / "run"
+    output.mkdir()
+    artifact = output / "ranker-best.pt"
+    artifact.write_bytes(b"best")
+    logger = WandbLogger.start(
+        WandbConfig(
+            mode="offline",
+            project="beatbridge-test",
+            artifact_paths=("ranker-best.pt",),
+        ),
+        run_id="run-id",
+        runner_name="runner",
+        contract={},
+        output_directory=output,
+        resume=False,
+    )
+
+    logger.finish(
+        status="completed",
+        last_epoch=1,
+        best_epoch=1,
+        best_validation_loss=0.1,
+        output_directory=output,
+    )
+
+    assert fake_wandb.run.finished
+    assert fake_wandb.run.artifacts[0][0].files == [(str(artifact.resolve()), "ranker-best.pt")]
 
 
 def test_public_contract_is_json_serializable_and_redacts_dataset_path():

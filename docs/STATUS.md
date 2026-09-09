@@ -1,6 +1,161 @@
 # BeatBridge – Stand & Next Steps
 
-_Stand: 2026-08-25_
+**Artefaktabgleich am 2026-09-07 (Repository-/Modellübersicht):** Die lokalen
+Variable-TCN-Runmanifeste dokumentieren mittlerweile abgeschlossene Läufe mit
+20 Epochen (`variable_tcn_bilstm_waveform_v2_full_20260821`) beziehungsweise
+29 Epochen (`variable_tcn_bilstm_v2_wandb_20260826`). Die jeweiligen minimalen
+History-Validation-Losses liegen in Epoche 14 bei `0.24643995364507038` und
+Epoche 23 bei `0.24559853225946426`. History- und Best-Checkpoint-SHAs stimmen
+in beiden Runs mit ihren Manifesten überein. Frühere Zwei-Epochen-Smoke-
+Aussagen beschreiben damit nur den damaligen Stand. Dies ist keine neue
+Hörqualitätsfreigabe und kein Nachweis eines 100-Epochen-Laufs. Details und
+die Abgrenzung des Variable-Vocal-Renderers vom festen Full-Band-TCN stehen
+in `ML_MODEL_CURRENT_STATE.md`; die Prüfung steht in `Bemerkungen.md`.
+
+**Verifiziert am 2026-09-04 (separate Beispiele für inkompatible
+Modellpfade):** Das Variable-TCN/BiLSTM-v2 besitzt jetzt einen eigenen
+geblendeten Hörsatz auf seinem Dataset-/Feature-/Waveform-Protokoll 2. Unter
+`output/control_studies/blind_variable_tcn_lengths_20260904/` liegen je ein
+Validation-Beispiel für 2/4/6/8 Takte, jeweils Variable-TCN-Best-Checkpoint
+gegen eine identisch gerenderte Equal-Power-Referenz. Alle 8 WAVs sind
+SHA-geprüft, finite, paarweise samplegleich, auf Peak ≤ 0,98 begrenzt und
+verwenden die Cache-Samplerate 11.025 Hz; sie enthalten bewusst nur das
+ausgerichtete Übergangsfenster. Die Vergleichszentrale
+`output/control_studies/model_comparison_hub_20260904/index.html` verlinkt
+diesen Satz und den Dataset-v1-Mehrmodellvergleich getrennt. Zusätzlich zeigt
+sie die 2/4/6/8-Takt-Metriken des ausschließlich synthetischen Cue-Ranker-
+Smokes als nicht hörbare Funktionsdemo mit expliziter Warnung vor einer
+Qualitätsinterpretation. Die fokussierte Regression bestand mit `27 passed in
+12.98s`; ein kontrollierter Browser-DOM-Test lokaler `file:`-URLs blieb durch
+die Browser-Sicherheitsrichtlinie blockiert und ist manuell zu prüfen.
+
+**Verifiziert am 2026-09-04 (geblendeter Hörvergleich der kompatiblen
+Control-Modelle):** Der neue Exporter
+`src.evaluation.all_models_control_study` rendert auf identischen
+Dataset-v1-Validation-Kandidaten Equal Power sowie je einen SHA-geprüften
+repräsentativen Best-Checkpoint von `time_shared_mlp_v1`,
+`vocal_time_shared_mlp_v2` und dem Full-Band-
+`tcn_bilstm_transition_control_v1`. Cuepoint, Kontext und Peak-Gain sind je
+Paar gemeinsam; A/B/C/D werden deterministisch neu gemischt und die
+Methodenzuordnung bleibt ausschließlich im Antwortschlüssel. Der fertige Satz
+unter `output/control_studies/blind_all_models_validation_20260904/` enthält
+5 Paare und 20 geprüfte Float32-WAVs bei 44,1 kHz. Alle Audio-SHAs, endlichen
+Samples, paarweisen Shapes und Peaks ≤ 0,98 wurden bestätigt; die fokussierte
+Regression bestand mit `21 passed in 8.88s`. `index.html` bietet lokale
+Audioplayer, persistente Eingaben und Ratings-Download. Die Auswertung ist
+noch offen. Variable-TCN v2 bleibt wegen Dataset-/Feature-Protokoll 2 in einem
+separaten Vergleich; die ausschließlich synthetischen Cue-Ranker wählen
+Cuepoints und sind keine direkt renderbare Control-Variante.
+
+**Frischer unabhängiger Cuepoint-Ranker-Audit am 2026-08-27 (nur
+synthetisch, Realpilot weiterhin gesperrt):** Der vollständige aktuelle Diff,
+die Cue-Ranker-Protokolle und die Änderungen der vorigen Tasks wurden gegen
+die gesamte Kette Pair-Index → Candidate-v2-Universe → eingefrorener Teacher
+→ Resolver/Waveformcache → Labels → train-only-Normalizer → Format-3 →
+gruppierter Ranker → Offline-W&B → Learned-Inferenz → Render-Backfill
+geprüft. Vier klar reproduzierte Grenzdefekte sind behoben und regressions-
+getestet: `WandbLogger.finish()` verwendet nun die Instanzkonfiguration;
+Format-3 verweigert eine fremde Normalizer-Universe-SHA; die Inferenz prüft
+die tatsächlich gelesene Normalizerpayload einschließlich Scope-, Universe-,
+Source- und Track-SHAs; und der fortsetzbare Teacher-Candidate-Cache bindet
+jede Zeile nun an kanonische Label- und Provenance-SHAs (Format 2) und bricht
+bei Manipulation vor jedem Finalshard fail-closed ab.
+
+Der neue dauerhafte synthetische E2E-Smoke belegt Pair-Index bis zweimal
+deterministische Learned-Inferenz: Candidate-v2 mit echten 4/4-Metadaten und
+`approximate_grid_policy=reject`, ein `guard_rejected`-Anker, train-only
+Format-3-Normalisierung, ausschließlich vorhandene Featurecache-Attrappen,
+Offline-Epoche 1 und SHA-geprüftes `weights_only`-Resume auf Epoche 2 sowie
+Manifest-/History-/Best-/Latest-SHAs. Der getrennte Teacher-Unterbrechungs-
+und Resume-Test belegt Cache-Hits nach Failure-/Candidate-Budget-Abbruch.
+Die fokussierte Kette bestand mit `72 passed, 6 warnings in 27.62 s`; die
+vollständige Suite lieferte maschinell im finalen temporären JUnit-Protokoll `266
+tests, 0 failures, 0 errors, 0 skipped in 48.370 s`. Der wortgetreu
+angeforderte Optionsaufbau `python -m pytest -q -B` ist technisch ungültig,
+weil `-B` eine Interpreteroption ist; die semantisch identische, erfolgreiche
+Form war `python -B -m pytest -q -p no:cacheprovider`. Alle Testläufe,
+einschließlich der abgewiesenen Variante, stehen in
+[`Bemerkungen.md`](./Bemerkungen.md).
+
+Damit besteht eine **bedingte Codefreigabe für den synthetisch verifizierten
+Pfad**, aber **keine Freigabe eines realen Pilotlaufs**. Vor dessen Start
+müssen ein testfrei veröffentlichter Pair-Index/Universe-Root samt
+Split-Autorität, ein abgeschlossener Variable-TCN-Best-Checkpoint als
+vollständiger Teacher-Release, ein exakt daran gebundener train-only
+Normalizer, vollständige und SHA-verifizierbare Feature-/Vocal-/Analysis-
+und Waveformcache-Artefakte sowie die festgelegte Rubber-Band-
+Backendprovenienz vorliegen. Erst danach sind ein ausdrücklich autorisierter
+Train-/Validation-Labeling- und Offline-Trainingslauf sowie eine unabhängige
+musikalische Qualitäts-/Agreementprüfung zulässig. Weder Test-Pair-Manifeste,
+Testaudio, Testfeatures, Testcounts noch Testloader wurden im Cue-Ranker-Pfad
+geöffnet oder materialisiert; reales Teacher-Labeling und reales Training
+blieben ungestartet.
+
+**Verifiziert am 2026-08-26 (Cuepoint-Ranker-W&B-Integration, nur lokal):**
+`train-cue-ranker` unterstützt `--wandb-mode disabled|offline|online` sowie
+Projekt, Entity, Gruppe, Tags und Run-Name. Verschachtelte Train-/Validation-
+Rankingmetriken werden deterministisch in skalare W&B-Keys abgeflacht; die
+Metriken umfassen global und für 2/4/6/8 Takte sämtliche Baseline-, Ranker-
+und Oracle-Felder. Der Runner startet, loggt epochweise und beendet W&B auch
+auf kontrollierten Fehlerpfaden. Ranker-Artefakte werden explizit aus dem
+Run-Root (`best.pt`, `latest.pt`, `history.json`, `manifest.json`) veröffentlicht;
+Control-Runner behalten `output/checkpoints/...`. Ein synthetischer Offline-
+CLI-Smoke und die vollständige Suite liefen erfolgreich mit `261 passed, 8
+warnings`; kein Login, Upload, reales Training oder bestehender Run wurde
+verändert.
+
+_Stand: 2026-08-26_
+
+**Verifiziert am 2026-08-26 (realer Format-3-Cue-Ranker-Trainingspfad,
+nur Synthetik):** `CueRankerGroupedDataset` verwendet ohne injizierte
+Testseams nun einen produktiven, fail-closed Featureloader. Er verfolgt die
+Dataset→Universe→Teacher-Label-Kette über Manifest-/Shard-SHAs, akzeptiert
+nur die bestehende, passend gehashte Feature-Protocol-2-Cachepayload und
+extrahiert Fenster, Globalfeatures und train-only Normalisierung exakt wie
+der Teacher. T=16/32/48/64, 54 Featurekanäle, 16 Globals, length condition,
+Grid-Kontext, volle Universumsgröße und endliche Float32-Werte sind geprüft.
+Der Export bindet ein eigenständiges train-only Normalizerartefakt samt
+stats_id/Input-SHAs an die Datasetprovenienz. Der offizielle Einstieg
+`python -m src.ml train-cue-ranker` konstruiert ausschliesslich explizite
+Train-/Validation-Loader; Batchgröße, Epochen, Seed, Device, Runpfad und
+SHA-geprüftes `weights_only`-Resume sind verfügbar, ein Testsplit weder
+Option noch Codepfad. Die CPU-Synthetik inklusive echter Loader-Training- und
+Validation-Epoche, Manipulationsfällen und CLI bestand mit `48 passed, 6
+warnings`; kein CUDA- oder Realtraining wurde gestartet.
+
+**Verifiziert am 2026-08-26 (produktionsfähiger Cue-Ranker-Teacher-Pfad,
+nur Synthetik):** `python -m src.ml seal-cue-ranker-teacher` verlangt jetzt
+einen explizit übergebenen, abgeschlossenen Variable-TCN-Run und akzeptiert
+allein dessen hashgebundenen `best_checkpoint` per `weights_only=True`. Der
+Release bindet Run/Checkpoint, State-dict-Schema, Modellvertrag, Renderer,
+Objective v5 und Alignment zusätzlich mit einzelnen SHA-Verträgen sowie
+Render-Guard, trainings-only Normalizer, Backend, Code und Umgebung.
+`python -m src.ml label-cue-ranker-teacher` verarbeitet
+nur SHA-geprüfte Train-/Validation-Universe-Shards gegen eine explizite
+Split-Autorität. Der neue Resolver verwendet die bestehenden Feature-/Vocal-
+Artefakte und exakt `local_grid_target_to_source_v1`; ein eigener
+unveränderlicher Waveformcache und ein atomarer Candidate-Labelcache erlauben
+verifizierte Resume-Hits. `guard_rejected` bleibt ein negativer Anker,
+technische Fehler bleiben aus dem Loss. Die synthetische Regression bestand
+mit `44 passed, 4 warnings`; Testsplit, reales Teacher-Release und großer
+Labeling-Lauf blieben unmaterialisiert. Für einen echten Pilot fehlen noch
+ein ausdrücklich veröffentlichter trainings-only Normalizer, gebundene
+Rubber-Band-Backend-Provenienz sowie ein freigegebener echter Universe-Root.
+
+**Verifiziert am 2026-08-26 (produktionsfähiger Cue-Ranker-Datenanfang):**
+Der additive Einstieg `python -m src.features build-cue-ranker-pair-index`
+erzeugt aus einem Producer-Root-Manifest und der SHA-geprüften Split-Autorität
+einen reproduzierbaren, testfreien Pair-Index. Der Batch-Producer schreibt
+dafür geordnete Source-/Target-Audio-SHAs, Pair-Manifest-SHA, Candidate-v2-
+Generator sowie die vollständige Request-Konfiguration. Der Index delegiert
+seine Vertragserstellung an `write_cue_ranker_pair_index()` und bindet Root-
+Manifest-, optionale Dataset-Manifest- und Split-Map-SHAs. Der Universe-CLI
+verifiziert diese Kette vor dem Öffnen eines gleichsplitigen Pair-Manifests;
+Test-Pair-Manifeste werden schon durch die Split-Autorität ausgesiebt.
+Historische Roots ohne Producer-Provenienz werden fail-closed abgelehnt.
+Die fokussierte synthetische Datenanfangs-/Regression bestand mit `67 passed,
+2 warnings`; kein großer realer Universe-Lauf, kein Training und kein
+Testsplitzugriff wurden gestartet.
 
 **Verifiziert am 2026-08-25 (frischer unabhängiger Cuepoint-Ranker-Audit):**
 Der Review begann mit gezielten synthetischen Vertrags-/Negativtests und lief

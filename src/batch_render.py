@@ -2,6 +2,7 @@
 
 import argparse
 from dataclasses import dataclass, replace
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -117,6 +118,7 @@ class BatchRenderResult:
     preview_seconds_after: float | None
     ranking_method: str = "feature_baseline_v3"
     cue_ranking: object | None = None
+    candidate_request_config: dict | None = None
 
 
 def render_candidate_batch(
@@ -141,6 +143,7 @@ def render_candidate_batch(
     cue_ranker_vocal_backend="disabled",
     cue_ranker_vocal_model=None,
     cue_ranker=None,
+    candidate_request_config=None,
 ) -> BatchRenderResult:
     """Rank candidates and render all or the requested top K with each baseline.
 
@@ -415,6 +418,7 @@ def render_candidate_batch(
                 },
             )
         ),
+        candidate_request_config=candidate_request_config,
     )
     _write_json_atomic(manifest_path, _manifest_payload(batch_result, renderers))
     return batch_result
@@ -487,6 +491,7 @@ def generate_and_render_batch(
         cue_ranker_analysis_root=cue_ranker_analysis_root,
         cue_ranker_vocal_backend=cue_ranker_vocal_backend,
         cue_ranker_vocal_model=cue_ranker_vocal_model,
+        candidate_request_config=_candidate_request_config(candidate_config),
     )
 
 
@@ -590,9 +595,41 @@ def _manifest_payload(batch_result, renderers):
         "rendered_variants": [variant.to_dict() for variant in batch_result.rendered_variants],
         "failures": [failure.to_dict() for failure in batch_result.failures],
     }
+    if batch_result.candidate_request_config is not None:
+        payload["candidate_request_config"] = dict(batch_result.candidate_request_config)
+        payload["candidate_request_config_sha256"] = _canonical_json_sha256(
+            batch_result.candidate_request_config
+        )
+    if batch_result.candidate_generation.candidates:
+        first_candidate = batch_result.candidate_generation.candidates[0]
+        payload["source_audio_sha256"] = str(first_candidate.source_track.sha256).lower()
+        payload["target_audio_sha256"] = str(first_candidate.target_track.sha256).lower()
     if batch_result.cue_ranking is not None:
         payload["cue_ranking"] = batch_result.cue_ranking.to_dict()
     return payload
+
+
+def _candidate_request_config(candidate_config):
+    generator = (
+        "bar_grid_v2_length_specific"
+        if int(getattr(candidate_config, "format_version", 1)) == 2
+        else "bar_grid_v1"
+    )
+    return {
+        "format_version": int(getattr(candidate_config, "format_version", 1)),
+        "candidate_generator": generator,
+        "transition_lengths_bars": [int(value) for value in candidate_config.transition_lengths_bars],
+        "source_boundary_count": getattr(candidate_config, "source_boundary_count", None),
+        "target_boundary_count": getattr(candidate_config, "target_boundary_count", None),
+        "max_tempo_relative_difference": float(candidate_config.max_tempo_relative_difference),
+        "approximate_grid_policy": str(candidate_config.approximate_grid_policy),
+    }
+
+
+def _canonical_json_sha256(value):
+    return hashlib.sha256(
+        json.dumps(value, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
 
 
 def build_argument_parser():

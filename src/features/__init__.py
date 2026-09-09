@@ -86,6 +86,7 @@ from .variable_split import (
 from .cue_ranker_universe import (
     CUE_RANKER_DATASET_FORMAT_VERSION,
     CueRankerUniverseResult,
+    build_cue_ranker_pair_index,
     build_cue_ranker_universe,
     canonical_json_sha256,
     load_cue_ranker_universe_rows,
@@ -161,6 +162,7 @@ __all__ = [
     "load_variable_split_authority",
     "CUE_RANKER_DATASET_FORMAT_VERSION",
     "CueRankerUniverseResult",
+    "build_cue_ranker_pair_index",
     "build_cue_ranker_universe",
     "canonical_json_sha256",
     "load_cue_ranker_universe_rows",

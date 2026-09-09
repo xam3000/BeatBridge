@@ -19,6 +19,7 @@ from src.ranking.feature_baseline import CandidateScore, RankingFailure
 from src.ranking.learned_cue_ranker import (
     LearnedCueRankingResult,
     load_learned_cue_ranker,
+    _load_normalizer,
     _validate_hard_filter_contract,
 )
 from src.ml.cue_ranker_model import CueRankerTemporalConfig, CUE_RANKER_MODEL_NAME
@@ -135,6 +136,9 @@ def test_invalid_learned_checkpoint_is_rejected_after_hash_preflight(tmp_path):
                 "spectral_flux_log1p_p99": 1.0,
                 "onset_strength_log1p_p99": 1.0,
                 "stats_id": "synthetic",
+                "input_universe_manifest_sha256": "d" * 64,
+                "source_sha256": "e" * 64,
+                "training_audio_sha256": ["a" * 64],
             }
         ),
         encoding="utf-8",
@@ -149,11 +153,16 @@ def test_invalid_learned_checkpoint_is_rejected_after_hash_preflight(tmp_path):
             {
                 "format_version": 3,
                 "test": {"state": "sealed_not_materialized"},
+                "universe_manifest_sha256": "d" * 64,
                 "teacher_manifest_sha256": "t" * 64,
                 "teacher_release_sha256": "r" * 64,
                 "teacher_contract_sha256": "c" * 64,
                 "teacher_alignment_contract": "local_grid_target_to_source_v1",
-                "normalization": {"fit_scope": "training_tracks_only", "sha256": sha(normalizer)},
+                "normalization": {
+                    "fit_scope": "training_tracks_only",
+                    "sha256": sha(normalizer),
+                    "source_sha256": "e" * 64,
+                },
                 "files": {
                     "train_only_normalizer": {
                         "path": "normalization/train_only_stats.json",
@@ -197,6 +206,38 @@ def test_invalid_learned_checkpoint_is_rejected_after_hash_preflight(tmp_path):
 
     with pytest.raises(ValueError, match="cannot be loaded"):
         load_learned_cue_ranker(run_root, dataset_manifest_path=dataset_manifest)
+
+
+def test_inference_normalizer_rejects_payload_scope_mismatch(tmp_path):
+    normalizer = tmp_path / "normalizer.json"
+    normalizer.write_text(
+        json.dumps(
+            {
+                "fit_scope": "all_splits",
+                "stats_id": "synthetic",
+                "spectral_flux_log1p_p99": 1.0,
+                "onset_strength_log1p_p99": 1.0,
+                "input_universe_manifest_sha256": "d" * 64,
+                "source_sha256": "e" * 64,
+                "training_audio_sha256": ["a" * 64],
+            }
+        ),
+        encoding="utf-8",
+    )
+    digest = hashlib.sha256(normalizer.read_bytes()).hexdigest()
+    with pytest.raises(ValueError, match="invalid fit scope"):
+        _load_normalizer(
+            tmp_path / "manifest.json",
+            {
+                "universe_manifest_sha256": "d" * 64,
+                "normalization": {
+                    "fit_scope": "training_tracks_only",
+                    "sha256": digest,
+                    "source_sha256": "e" * 64,
+                },
+                "files": {"train_only_normalizer": {"path": "normalizer.json", "sha256": digest}},
+            },
+        )
 
 
 def test_learned_ranker_cannot_accept_legacy_or_unverified_candidates(batch_inputs):

@@ -160,3 +160,51 @@ def test_guard_rejection_is_always_a_negative_anchor_even_with_finite_utility():
         CueRankerTrainingConfig(guard_margin=0.05),
     )
     assert rows[1]["utility"] < rows[0]["utility"]
+
+
+def test_cue_ranker_wandb_lifecycle_logs_epoch_and_root_artifacts(tmp_path, monkeypatch):
+    class FakeLogger:
+        def __init__(self):
+            self.epochs = []
+            self.finish_args = None
+
+        def log_epoch(self, *args, **kwargs):
+            self.epochs.append((args, kwargs))
+
+        def finish(self, **kwargs):
+            self.finish_args = kwargs
+
+    fake = FakeLogger()
+    monkeypatch.setattr("src.ml.cue_ranker_runner.WandbLogger.start", lambda *args, **kwargs: fake)
+    output = tmp_path / "run"
+    result = train_cue_ranker(
+        *_loaders(), output, dataset_manifest_sha256=hashlib.sha256(b"synthetic").hexdigest(),
+        config=CueRankerTrainingConfig(max_epochs=1, device="cpu"),
+        wandb_config=object(),
+    )
+    assert result.last_epoch == 1
+    assert len(fake.epochs) == 1
+    assert fake.finish_args["status"] == "completed"
+    assert fake.finish_args["artifact_paths"] == ("best.pt", "latest.pt", "history.json", "manifest.json")
+
+
+def test_cue_ranker_wandb_finishes_on_controlled_error(tmp_path, monkeypatch):
+    class FakeLogger:
+        def __init__(self):
+            self.finish_args = None
+
+        def finish(self, **kwargs):
+            self.finish_args = kwargs
+
+    fake = FakeLogger()
+    monkeypatch.setattr("src.ml.cue_ranker_runner.WandbLogger.start", lambda *args, **kwargs: fake)
+    output = tmp_path / "existing"
+    output.mkdir()
+    monkeypatch.setattr("src.ml.cue_ranker_runner._load_resume", lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("synthetic resume failure")))
+    with pytest.raises(RuntimeError, match="synthetic resume failure"):
+        train_cue_ranker(
+            *_loaders(), output, dataset_manifest_sha256=hashlib.sha256(b"synthetic").hexdigest(),
+            config=CueRankerTrainingConfig(max_epochs=2, device="cpu"), resume=True, wandb_config=object(),
+        )
+    assert fake.finish_args["status"] == "failed"
+    assert isinstance(fake.finish_args["error"], RuntimeError)

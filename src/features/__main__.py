@@ -90,6 +90,23 @@ def build_argument_parser():
     cue_universe_parser.add_argument("output_directory")
     cue_universe_parser.add_argument("--split-map", required=True)
     cue_universe_parser.add_argument("--sampling-seed", type=int, default=20260825)
+    cue_pair_index_parser = subparsers.add_parser(
+        "build-cue-ranker-pair-index",
+        help="Build a sealed train/validation pair index from a producer manifest.",
+    )
+    cue_pair_index_parser.add_argument(
+        "source_manifest",
+        help="Batch manifest containing complete producer-recorded pair provenance.",
+    )
+    cue_pair_index_parser.add_argument(
+        "output_path",
+        help="New pair_index.json path; existing files are never overwritten.",
+    )
+    cue_pair_index_parser.add_argument("--split-map", required=True)
+    cue_pair_index_parser.add_argument(
+        "--dataset-manifest",
+        help="Optional Dataset-v2 manifest whose source-manifest SHA is also bound.",
+    )
     cue_dataset_parser = subparsers.add_parser(
         "export-cue-ranker-dataset",
         help="Publish a sealed Cue-Ranker Dataset-3 from universe and frozen labels.",
@@ -101,8 +118,8 @@ def build_argument_parser():
     return parser
 
 
-def main():
-    args = build_argument_parser().parse_args()
+def main(argv=None):
+    args = build_argument_parser().parse_args(argv)
     if args.command in {None, "schema"}:
         print(json.dumps(feature_schema(), ensure_ascii=False, indent=2))
         return 0
@@ -190,6 +207,18 @@ def main():
             sampling_seed=args.sampling_seed,
         )
         print(json.dumps({"output_directory": str(result.output_directory), "group_counts": result.group_counts, "candidate_counts": result.candidate_counts}, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.command == "build-cue-ranker-pair-index":
+        from .cue_ranker_universe import build_cue_ranker_pair_index
+
+        output_path = build_cue_ranker_pair_index(
+            args.source_manifest,
+            args.output_path,
+            split_map=args.split_map,
+            dataset_manifest=args.dataset_manifest,
+        )
+        print(json.dumps({"pair_index_path": str(output_path)}, ensure_ascii=False, indent=2))
         return 0
 
     if args.command == "export-cue-ranker-dataset":

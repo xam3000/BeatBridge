@@ -101,6 +101,7 @@ def generate_multi_song_batch(
         approximate_grid_policy=approximate_grid_policy,
         ranking_method=ranking_method,
     )
+    candidate_request_config = _candidate_request_config(candidate_config)
     output_directory.mkdir(parents=True, exist_ok=True)
     manifest_path = output_directory / "manifest.json"
     manifest = {
@@ -127,13 +128,20 @@ def generate_multi_song_batch(
         "target_sample_rate": int(target_sample_rate),
         "approximate_grid_policy": approximate_grid_policy,
         "transition_lengths_bars": list(transition_lengths_bars),
+        "candidate_request_config": candidate_request_config,
+        "candidate_request_config_sha256": _canonical_json_sha256(candidate_request_config),
         "sources": [],
         "failures": [],
     }
     compatibility_feature_cache = {}
 
     for source_index, source_song in enumerate(song_paths, start=1):
-        source_entry = {"source_path": source_song, "status": "running", "pairs": []}
+        source_entry = {
+            "source_path": source_song,
+            "source_audio_sha256": _file_sha256(source_song),
+            "status": "running",
+            "pairs": [],
+        }
         manifest["sources"].append(source_entry)
         try:
             target_songs = tuple(song for song in song_paths if song != source_song)
@@ -159,8 +167,13 @@ def generate_multi_song_batch(
                 )
                 pair_entry = {
                     "target_path": score.target_path,
+                    "source_audio_sha256": source_entry["source_audio_sha256"],
+                    "target_audio_sha256": _file_sha256(score.target_path),
                     "target_rank": score.rank,
                     "target_score": score.total_score,
+                    "candidate_generator": _candidate_generator_name(candidate_config),
+                    "candidate_request_config": candidate_request_config,
+                    "candidate_request_config_sha256": _canonical_json_sha256(candidate_request_config),
                     "output_directory": str(pair_directory.relative_to(output_directory)),
                     "status": "running",
                 }
@@ -190,6 +203,10 @@ def generate_multi_song_batch(
                             "manifest_path": str(
                                 result.manifest_path.relative_to(output_directory)
                             ),
+                            "pair_manifest_path": str(
+                                result.manifest_path.relative_to(output_directory)
+                            ),
+                            "pair_manifest_sha256": _file_sha256(result.manifest_path),
                             "candidate_count": len(result.candidate_generation.candidates),
                             "ranked_candidate_count": len(result.candidate_ranking.scores),
                             "rendered_variant_count": len(result.rendered_variants),
@@ -257,6 +274,32 @@ def _candidate_generation_config(
         transition_lengths_bars=tuple(transition_lengths_bars),
         approximate_grid_policy=approximate_grid_policy,
     )
+
+
+def _candidate_generator_name(candidate_config):
+    return (
+        "bar_grid_v2_length_specific"
+        if int(getattr(candidate_config, "format_version", 1)) == 2
+        else "bar_grid_v1"
+    )
+
+
+def _candidate_request_config(candidate_config):
+    return {
+        "format_version": int(getattr(candidate_config, "format_version", 1)),
+        "candidate_generator": _candidate_generator_name(candidate_config),
+        "transition_lengths_bars": [int(value) for value in candidate_config.transition_lengths_bars],
+        "source_boundary_count": getattr(candidate_config, "source_boundary_count", None),
+        "target_boundary_count": getattr(candidate_config, "target_boundary_count", None),
+        "max_tempo_relative_difference": float(candidate_config.max_tempo_relative_difference),
+        "approximate_grid_policy": str(candidate_config.approximate_grid_policy),
+    }
+
+
+def _canonical_json_sha256(value):
+    return hashlib.sha256(
+        json.dumps(value, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
 
 
 def _validate_ranking_method(ranking_method):

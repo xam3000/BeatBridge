@@ -394,6 +394,27 @@ def _load_normalizer(dataset_path, manifest):
         raise ValueError("Cue-Ranker normalization manifest SHA-256 differs from its file record")
     payload = _read_json(path, "Cue-Ranker normalizer")
     statistics = payload.get("statistics", payload)
+    if not isinstance(statistics, dict) or statistics.get("fit_scope") != "training_tracks_only":
+        raise ValueError("Cue-Ranker train-only normalizer payload has an invalid fit scope")
+    expected_universe = manifest.get("universe_manifest_sha256")
+    if (
+        not _is_sha256(expected_universe)
+        or statistics.get("input_universe_manifest_sha256") != expected_universe
+    ):
+        raise ValueError("Cue-Ranker train-only normalizer universe SHA-256 differs from the dataset")
+    expected_source = manifest.get("normalization", {}).get("source_sha256")
+    if (
+        not _is_sha256(expected_source)
+        or statistics.get("source_sha256") != expected_source
+    ):
+        raise ValueError("Cue-Ranker train-only normalizer source SHA-256 differs from the dataset")
+    training_audio_sha256 = statistics.get("training_audio_sha256")
+    if (
+        not isinstance(training_audio_sha256, list)
+        or not training_audio_sha256
+        or any(not _is_sha256(value) for value in training_audio_sha256)
+    ):
+        raise ValueError("Cue-Ranker train-only normalizer training scope is invalid")
     try:
         return FeatureNormalizationStats(
             spectral_flux_log1p_p99=statistics["spectral_flux_log1p_p99"],
@@ -432,6 +453,11 @@ def _file_sha256(path):
         for block in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def _is_sha256(value):
+    value = str(value or "").lower()
+    return len(value) == 64 and all(character in "0123456789abcdef" for character in value)
 
 
 __all__ = [
