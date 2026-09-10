@@ -12,6 +12,7 @@ Chronik aus Beobachtungen, Entscheidungen und gelernten Lektionen.
 |---|---|---|
 | [`STATUS.md`](./STATUS.md) | Einstieg, verifizierter Stand und priorisierte nächste Schritte | Bei Meilensteinen und relevanten Standänderungen aktualisieren |
 | [`Projekt-Gesamtuebersicht.md`](./Projekt-Gesamtuebersicht.md) | Maßgeblicher Forschungsrahmen, Scope und Zeitplanung | Nur bei bewussten Projektentscheidungen ändern |
+| [`GUI_SPECIFICATION.md`](./GUI_SPECIFICATION.md) | Implementierbares Zielbild für Paar-Editor, Datenvisualisierung, Vergleich und gestufte GUI-Umsetzung | Bei bewussten UX-/GUI-Entscheidungen aktualisieren; keine Pipelineverträge duplizieren |
 | [`CLI.md`](./CLI.md) | Installation, Kommandozeilen-Aufrufe, Renderer und Fehlerbehebung | Bei Änderungen an CLI-Argumenten oder Laufzeitvoraussetzungen aktualisieren |
 | [`RENDERING_PROTOCOL.md`](./RENDERING_PROTOCOL.md) | Versionierter Vertrag der programmatischen Rendering-Pipeline | Nur additiv ändern; inkompatible Änderungen benötigen eine neue Version |
 | [`CANDIDATE_PROTOCOL.md`](./CANDIDATE_PROTOCOL.md) | Versionierter Vertrag für automatische Übergangskandidaten | Nur additiv ändern; inkompatible Änderungen benötigen eine neue Version |

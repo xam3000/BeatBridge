@@ -1,0 +1,326 @@
+% Methodenteil für BeatBridge; Arbeitsfassung, Stand 09.09.2026.
+% Einbindung: \input{methodik.tex}; Pakete: amsmath, amssymb, booktabs.
+% Literatur: ../REFERENCES.bib. Quellenzuordnung und offene Angaben: README.md.
+% BB-OFFEN markiert Stellen, die vor der Abgabe ergänzt werden müssen.
+\providecommand{\methodikoffen}[1]{\par\smallskip\noindent\textit{Noch zu ergänzen: #1}\par\smallskip}
+
+\section{Methodik}
+\label{sec:methodik}
+
+\subsection{Forschungsdesign und methodisches Ziel}
+\label{sec:methodik-design}
+
+Die Arbeit untersucht, wie sich kurze musikalische Übergänge zwischen zwei Musikstücken durch gelernte zeitabhängige Steuerkurven erzeugen lassen. Die leitende Forschungsfrage lautet: Inwieweit können aus taktsynchronen Audiomerkmalen gelernte Mixing-Kurven ohne vorgegebene Zielkurven technisch gültige und musikalisch überzeugende Übergänge erzeugen, und welchen Beitrag kann eine zusätzlich gelernte Auswahl der Übergangspunkte leisten? Zur Untersuchung wird mit BeatBridge ein ausführbarer Softwareprototyp entwickelt. Die Arbeit folgt einem experimentellen, artefaktorientierten Forschungsdesign: Modellierung, Implementierung und kontrollierter Vergleich bilden gemeinsam die methodische Grundlage.
+
+Der wissenschaftliche Schwerpunkt liegt auf dem Lernen von Steuerkurven über einen differenzierbaren Renderer und eine festgelegte Zielfunktion. Die Auswahl der Übergangspunkte wird als eigenständige vorgeschaltete Aufgabe behandelt. Entsprechend unterscheidet die Pipeline vier Funktionen: Die Kandidatenauswahl bestimmt die verwendeten Songabschnitte; das Übergangsmodell prognostiziert zeitabhängige Kontrollen; der Renderer überführt diese Kontrollen in Audio; die Evaluation prüft technische Eigenschaften und wahrgenommene Qualität. Diese Trennung ermöglicht es, Auswahlverfahren bei konstantem Renderer und Steuerungsmodelle bei konstanten Übergangspunkten zu vergleichen.
+
+Ein Übergang verbindet einen ausgehenden Abschnitt aus Track~A mit einem eingehenden Abschnitt aus Track~B. Untersucht werden zunächst vier Takte sowie in einer separaten Erweiterung zwei, vier, sechs und acht Takte im 4/4-Metrum. Die Beschränkung auf lokale Übergänge vermeidet zusätzliche Einflussgrößen wie die globale Reihenfolge einer Playlist, langfristige Spannungsverläufe oder die kumulierten Fehler eines vollständigen DJ-Sets. Diese Aufgaben gehören nicht zum experimentell untersuchten Umfang.
+
+Der dokumentierte Arbeitsstand umfasst trainierte Modelle zur Übergangssteuerung und vorbereitete Hörvergleiche. Der ergänzende Cuepoint-Ranker ist implementiert und anhand synthetischer Daten technisch überprüft; ein Training mit realen Teacher-Labels und eine unabhängige perzeptuelle Validierung dieses Rankers stehen noch aus. Die nachfolgenden Abschnitte unterscheiden deshalb realisierte Verfahren von vorgesehenen Evaluationsschritten.
+
+\subsection{Datengrundlage und Aufteilung}
+\label{sec:methodik-daten}
+
+Die realen Entwicklungsdaten stammen aus einer lokal vorliegenden Musiksammlung. Die dokumentierte erweiterte Inventur umfasst 119 FLAC-Dateipfade. Nach Ausschluss eines explizit gesperrten Tracks, eines exakten Audio-Duplikats und sechs Tracks unterhalb von 145~BPM verbleiben 111 eindeutige zulässige Quellen; kein Track überschreitet die obere Auswahlgrenze von 165~BPM. Diese Tempobegrenzung definiert einen fokussierten Untersuchungskorpus. Sie erlaubt keine Aussage über eine gleichmäßige Abdeckung beliebiger Genres oder Tempi.
+
+% BB-OFFEN: Korpusmetadaten und Rechte sind im Repository nicht abschließend belegt.
+\methodikoffen{Herkunft und Nutzungsberechtigung der Musikstücke, Genreverteilung, Gesamtdauer und deskriptive Tempoverteilung anhand eines freigegebenen Korpusverzeichnisses angeben. Die lokale Verfügbarkeit wird nicht als Nachweis einer Forschungslizenz behandelt.}
+
+Für das variable Datenprotokoll werden zusätzlich nur Tracks mit akzeptierter Beat-/Downbeat-Provenienz verwendet. Die dokumentierte Auswahl enthält 87 Tracks; 24 weitere Tracks werden wegen approximativer Raster ausgeschlossen. Die Split-Autorität ordnet diese 87 Tracks einmalig 61 Trainings-, 13 Validierungs- und 13 Testpositionen zu. Tatsächlich gehen 53 Tracks in die exportierten Beispiele ein. Die Zahl der ausgewählten Tracks ist somit von der Zahl der in Übergangspaaren verwendeten Tracks zu unterscheiden.
+
+Ein Trainingsbeispiel bezeichnet keine vollständige Audiodatei, sondern eine gerichtete Kombination zweier Trackfenster einschließlich Cuepoints, Übergangslänge, Features und Provenienz. Mehrere Beispiele können daher aus denselben Tracks entstehen. Tabelle~\ref{tab:methodik-datasets} stellt die dokumentierten Datenstände dar. Die Testanzahlen werden aus den vorhandenen Protokollen übernommen; sie implizieren keine Testauswertung.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Dokumentierte Datensätze; angegeben sind Übergangsbeispiele.}
+  \label{tab:methodik-datasets}
+  \begin{tabular}{lrrrr}
+    \toprule
+    Datenstand & Takte & Training & Validierung & Test \\
+    \midrule
+    Erstinstanz, Format 1 & 4 & 45 & 9 & 9 \\
+    Erweiterung, Format 1 & 4 & 370 & 50 & 60 \\
+    Format 2, je Länge & 2/4/6/8 & 105 & 12 & 21 \\
+    Format 2, insgesamt & alle vier & 420 & 48 & 84 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Die Aufteilung erfolgt anhand der SHA-256-Identität der Audioquellen. Beide Tracks eines Paares müssen demselben Split angehören; splitübergreifende Paare werden verworfen. Für alle Übergangslängen gilt dieselbe eingefrorene Zuordnung. Dadurch gelangt ein identischer Track auch bei einer anderen Rolle, einem anderen Cuepoint oder einer anderen Länge nicht in einen zweiten Split. Diese Identitätsprüfung erkennt byteidentische Quellen; musikalisch identische Aufnahmen in unterschiedlichen Kodierungen oder alternative Versionen eines Titels erfordern zusätzliche Korpuspflege.
+
+Der Testsplit bleibt von Training, Normalisierungsfit und Checkpointwahl ausgeschlossen. Für den historischen kleinen Datensatz ist allerdings dokumentiert, dass Testbeispiele bereits in Entwicklungs-Hörtests verwendet wurden. Dieser Satz kann deshalb nicht erneut als vollständig unberührter Abschlusstest gelten. Für eine finale Generalisierungsaussage ist ein tatsächlich zurückgehaltener Satz erforderlich. Der Cue-Ranker-Pfad besitzt zusätzlich einen abgeschirmten Paarindex ausschließlich für Training und Validierung und öffnet keine Testartefakte.
+
+Reale Audiodaten, synthetische Funktionsdaten und automatisch erzeugte Pseudo-Labels erfüllen unterschiedliche Rollen. Reale Daten bilden die Grundlage des Control-Trainings. Synthetische Daten prüfen unter anderem Shapes, Gradienten, Fehlerbehandlung und Fortsetzbarkeit. Pseudo-Labels bilden die Zielfunktion eines eingefrorenen Teachers ab und ersetzen keine menschlichen Qualitätsurteile. Die unveränderten Originaldateien werden ausschließlich gelesen; erzeugte Features, Stems und Übergänge werden getrennt gespeichert.
+
+\subsection{Audio-Vorverarbeitung und zeitliche Ausrichtung}
+\label{sec:methodik-vorverarbeitung}
+
+Die allgemeine Rendering-Pipeline vereinheitlicht das Audio auf Stereo und ein Raster von 44\,100~Hz. Mono-Signale werden auf zwei Kanäle dupliziert; abweichende Sampleraten werden technisch konvertiert. Samplepositionen der Cuepoints beziehen sich auf dieses vereinheitlichte Raster. An den externen Time-Stretch-Schnittstellen werden 32-Bit-Gleitkomma-WAV-Dateien verwendet. Das Training arbeitet mit gecachten Stereo-Waveforms bei 11\,025~Hz. Diese Reduktion der Samplerate ist von einer musikalischen Tempoänderung zu unterscheiden.
+
+Die rhythmische Analyse kombiniert die Beatpositionen von Librosa mit Taktinformationen von aufTAKT. Neben Tempo und Beatkoordinaten werden Herkunft, Software- beziehungsweise Binary-Version, Rasterhash und Fallbackstatus gespeichert. Eine technisch vollständige Beatliste wird damit nicht automatisch als Nachweis korrekt erkannter Downbeats interpretiert.
+
+Der für den variablen Pfad eingesetzte partielle Merge ordnet beide Beatfolgen monoton und eindeutig zu. Eine dynamische Programmierung maximiert zunächst die Zahl der Paarungen innerhalb einer Distanz von 0,2~s und minimiert anschließend die Gesamtabweichung. Ein Raster wird nur dann als detektiert akzeptiert, wenn beide Matchabdeckungen im gemeinsamen Zeitbereich mindestens 98\,\% betragen und mindestens acht zusammenhängende vollständige Takte vorliegen. Nicht zugeordnete Beats erhalten keine erfundenen Taktinformationen. Zusätzlich trennt ein Abstand von mehr als dem 1,5-Fachen des medianen Beatabstands zusammenhängende Taktblöcke. Die daraus abgeleitete Confidence ist eine technische Zuordnungsheuristik und keine kalibrierte Wahrscheinlichkeit musikalischer Korrektheit.
+
+Für Vocal-Merkmale und stem-basierte Übergänge wird eine vortrainierte Source Separation verwendet. Historische Experimente nutzen HT-Demucs; spätere dokumentierte Läufe verwenden einen BS-RoFormer-Backend. Die zugrunde liegenden Modellfamilien sind in \cite{rouard2023hybrid,lu2024bsroformer} beschrieben. Modellname, konkrete Gewichte und Hashes gehören zur Artefaktprovenienz. Die Separation wird nicht als eigener Lernbeitrag der Arbeit behandelt.
+
+Die beiden Bridge-Fenster besitzen eine feste musikalische Bedeutung: Das Source-Fenster beginnt am Cuepoint~A und umfasst den nachfolgenden Auslauf; das Target-Fenster endet am Cuepoint~B und umfasst dessen Vorlauf. Der energiereiche Abschnitt von~A vor seinem Cuepoint und der folgende Abschnitt von~B nach dessen Cuepoint liegen außerhalb des überblendeten Fensters.
+
+Im variablen Waveform-Protokoll bestimmt die lokale Source-Griddauer $D_A$ die Ausgabelänge. Das Target-Fenster mit lokaler Dauer $D_B$ wird mit Rubber Band tonhöhenerhaltend angepasst. Die beiden relevanten Verhältnisse lauten
+\begin{equation}
+  r_{\mathrm{Dauer}}=\frac{D_A}{D_B},
+  \qquad f_{\mathrm{Tempo}}=\frac{D_B}{D_A}.
+\end{equation}
+Target-Mix und Target-Vocal erhalten dieselbe Transformation. Maßgeblich sind die tatsächlichen gespeicherten Gridgrenzen; eine globale BPM-Näherung ersetzt diese lokale Dauerbestimmung nicht. Nach dem Stretch werden alle vier Waveforms auf die Trainingssamplerate konvertiert. Eine verbleibende Rundungsabweichung darf höchstens zwei Samples auf dem 44,1-kHz-Raster betragen. Korrekturen erfolgen am Ende der Source beziehungsweise am Anfang des Targets und identisch für Mix und Vocal. Größere Abweichungen werden abgewiesen.
+
+Die allgemeine Pipeline verwendet bevorzugt den Rubber-Band-Filter von FFmpeg und ersatzweise die eigenständige R3-Engine. Der tatsächlich verwendete Backend wird protokolliert. Für einen eingefrorenen Teacher ist diese Auswahl Bestandteil des festen Release-Vertrags. Historische Renderer mit abweichender Längenbehandlung werden nicht nachträglich als Implementierung des strengeren variablen Alignments ausgegeben.
+
+\subsection{Repräsentation der Songabschnitte}
+\label{sec:methodik-features}
+
+Die Modelle erhalten keine rohen Audiosamples, sondern halbbeatsynchrone Featuresequenzen. Für eine Übergangslänge von $L$ Takten ergibt sich im 4/4-Metrum
+\begin{equation}
+ T = L\cdot4\cdot2=8L.
+\end{equation}
+Ein Kandidat wird durch $X_A,X_B\in\mathbb{R}^{T\times54}$, einen globalen Vektor $g\in\mathbb{R}^{16}$ und im variablen Protokoll durch die separate Längenbedingung $\ell=L/8$ repräsentiert. Der feste Vier-Takt-Pfad besitzt $T=32$; die variable Erweiterung verwendet $T\in\{16,32,48,64\}$.
+
+Die 54 Kanäle bestehen aus neun Timing-, neun Energie-, acht Spektral-/Rhythmus-, 19 Harmonik-, sechs Vocal- und drei Gültigkeitsmerkmalen. Timing umfasst unter anderem die normierte Übergangsposition und zyklisch kodierte Beat- und Taktphasen. Energie wird durch absolutes und trackrelatives RMS, Lautheitsänderung, Bandenergieanteile, Energieperzentil, Crest-Faktor und einen Stilleindikator beschrieben. Spektrale und rhythmische Merkmale umfassen Schwerpunkt, Bandbreite, Rolloff, Flatness, Flux, Onset-Stärke, Kick-Präsenz und Beat-Puls-Confidence. Die Harmonikgruppe enthält zwölf Chroma-Werte, sechs Tonnetz-Koordinaten und einen harmonischen Anteil.
+
+Die Feature-Bandgrenzen liegen bei 180~Hz und 4~kHz. Sie sind nicht mit allen Renderer-Bandgrenzen identisch. Die Vocal-Kanäle werden aus der Energie des separierten Vocal-Stems relativ zum Mix abgeleitet und beschreiben Aktivität, Prominenz, Onset, Offset, Fortschritt innerhalb einer zusammenhängenden Aktivitätsregion und Confidence. Diese Größen sind heuristische Indikatoren; insbesondere handelt es sich weder um kalibrierte Gesangswahrscheinlichkeiten noch um sprachlich annotierte Phrasen.
+
+Globale Merkmale beschreiben die beiden Tempi, Richtung und Betrag der Tempoanpassung, lokale Tonika- und Modusinformationen, deren Confidence, harmonische Ähnlichkeit und Kontextabdeckung. Ein zusätzlicher Analysekontext von vier Takten vor und vier Takten nach dem Cuepoint liefert Grenz- und Kontextinformationen. Er ist vom eigentlichen Modellfenster zu unterscheiden.
+
+Nicht verfügbare Analysen werden mit Nullwerten und expliziten Gültigkeitsmasken kodiert. Da keine validierte musikalische Phrasensegmentierung vorliegt, bleiben die entsprechenden Phrasenkanäle ungültig. Eine Modulo-Zählung der Takte wird nicht als erkannte Phrase ausgegeben. Dies gilt unabhängig davon, dass der Tensorvertrag bereits Platz für solche Merkmale vorsieht.
+
+Physikalisch begrenzte Größen verwenden feste Transformationen. Spektralfluss und Onset-Stärke werden mithilfe ihres jeweils ausschließlich aus Trainingsartefakten bestimmten 99. Perzentils normalisiert. Die eingefrorenen Statistiken werden unverändert auf Validierungsdaten und später auf Testdaten angewendet. Trackrelative Merkmale dürfen den jeweiligen vollständigen Track nutzen, jedoch keine Informationen anderer Splits.
+
+Das variable Datenformat speichert jede Länge in einem eigenen Shard. Batches sind längenhomogen; unvollständige Zeitfenster werden abgewiesen. Der reguläre Control-Pfad benötigt daher kein zeitliches Padding. Die drei Featuremasken kennzeichnen semantisch fehlende Information und sind keine Paddingmasken. Der Ranker verarbeitet unterschiedliche Längen in Teilbatches und setzt die Kandidatengruppe anschließend wieder zusammen; zusätzlich unterstützt seine Modell- und Loss-Schnittstelle explizite Maskierung.
+
+\subsection{Kandidatengenerierung}
+\label{sec:methodik-kandidaten}
+
+Ein Cuepoint ist eine auf dem Analyseraster lokalisierte Taktgrenze mit Sample-, Beat- und Taktindex. Die Kandidatengenerierung basiert auf detektierten Taktgrenzen; eine zusätzliche Beschränkung auf semantisch erkannte Phrasengrenzen ist im aktuellen Verfahren nicht realisiert. Für jedes gerichtete Songpaar werden je Länge die vollständigen Source- und Target-Grenzen bestimmt. Der Kandidatenraum ist
+\begin{equation}
+ \mathcal{C}_{A,B,L}=\mathcal{B}_{A,L}\times\mathcal{B}_{B,L}.
+\end{equation}
+Die längenspezifische Prüfung stellt sicher, dass fehlender Kontext für acht Takte einen ansonsten gültigen Zwei-Takt-Kandidaten nicht entfernt.
+
+Harte Kriterien betreffen detektierte Rasterprovenienz, vollständige zusammenhängende Takte, das unterstützte 4/4-Metrum, übereinstimmende Beatanzahlen sowie ausreichenden Kontext vor und nach beiden Cuepoints. Die symmetrische relative Tempoabweichung darf standardmäßig 15\,\% nicht überschreiten. Weitere ungültige Stretch- oder Samplegeometrien werden im Alignment beziehungsweise im Render-Guard abgefangen. Energie- und Harmonieeigenschaften wirken dagegen als weiche Kriterien.
+
+Jeder akzeptierte Kandidat erhält eine deterministische Identität aus Quellen, Cuepoints und Länge. Abweisungen werden mit Fehlercode und gegebenenfalls betroffener Länge gespeichert. Bei identischen Eingaben und unveränderter Konfiguration ergibt sich dieselbe geordnete Kandidatenmenge. Ein optionaler Songpaar-Vorfilter reduziert zuvor den Suchraum anhand globaler Kompatibilität. Seine Auswahl ist Bestandteil des Versuchsaufbaus und muss für verglichene Ranker konstant bleiben.
+
+\subsection{Baselines zur Cuepoint-Auswahl}
+\label{sec:methodik-auswahlbaselines}
+
+Die Auswahl-Baselines bewerten dieselben gültigen Kandidaten eines Songpaares. Verwendet werden eine deterministisch reproduzierbare Zufallsauswahl, eine reine BPM-Bewertung, eine Harmonie-Bewertung und die kombinierte handgefertigte Methode \texttt{feature\_baseline\_v3}. Eine isolierte Energie-/Lautheitsbaseline ist als zusätzlicher Vergleich sinnvoll, gehört jedoch nicht zu den derzeit implementierten Ranker-Evaluationsmethoden; Energie ist bereits Bestandteil der kombinierten Baseline.
+
+Der kombinierte Score lautet
+\begin{align}
+ s_{\mathrm{Feature}}={}&
+ 0{,}30s_{\mathrm{Power}}+0{,}30s_{\mathrm{NonOverlap}}
+ +0{,}18s_{\mathrm{Harmonie}}\nonumber\\
+ &+0{,}10s_{\mathrm{Energie}}+0{,}05s_{\mathrm{Timbre}}
+ +0{,}07s_{\mathrm{Tempo}}.
+\end{align}
+Die Power-Komponente bewertet die Energie der angrenzenden Abschnitte relativ zum jeweiligen Track. NonOverlap belohnt einen Energieabfall nach dem Source-Cue, niedrige Energie innerhalb der Bridge und einen Anstieg zum Target-Cue. Für einen vollständigen Grenzscore werden standardmäßig 6~dB Abfall beziehungsweise Anstieg verlangt. Die übrigen Komponenten beschreiben Chroma-Ähnlichkeit, RMS-Kontinuität, spektrale Ähnlichkeit und Tempokompatibilität.
+
+Die einfache BPM-Baseline besitzt innerhalb eines Songpaares nur geringe Trennschärfe, wenn alle Cuepoints dieselben globalen Tempi teilen. Gleichstände werden über die Kandidaten-ID aufgelöst. Ihre Rolle besteht damit auch darin, zu prüfen, ob ein komplexeres Verfahren über eine triviale Paar-Tempoheuristik hinausgeht. Der kombinierte Score ist keine kalibrierte Qualitätswahrscheinlichkeit.
+
+\subsection{Gelernter Cuepoint-Ranker}
+\label{sec:methodik-ranker}
+
+Der ergänzende Ranker schätzt für jeden Kandidaten einen skalaren Score, aus dem die relative Reihenfolge innerhalb eines gerichteten Songpaares entsteht. Beide Featuresequenzen durchlaufen denselben TCN-Encoder mit Kanalzahlen $54\rightarrow64\rightarrow128$ und einer weiteren dilatierten Faltung mit 128 Kanälen. Die Standardkonfiguration verwendet Kernelgröße~3, Dilatation~2 in der letzten Faltung und GELU-Aktivierungen.
+
+Die kodierten Sequenzen $H_A$ und $H_B$ werden durch Konkatenation von $H_A$, $H_B$, $H_A-H_B$ und $H_A\odot H_B$ fusioniert und auf 192 Dimensionen projiziert. Projizierte globale Merkmale und die Längenbedingung werden zu jedem Zeitschritt addiert. Für die zeitliche Aggregation kombiniert die Implementierung ein aufmerksamkeitsgewichtetes Mittel mit Max-Pooling. Es handelt sich somit nicht um ausschließlich ungewichtetes Mean-Pooling.
+
+Ein separater Zweig verarbeitet 20 numerische Kontextmerkmale und zwei acht-dimensionale Einbettungen für die Gridherkunft. Ein MLP kombiniert diesen Kontext mit der zeitlich aggregierten Repräsentation und gibt einen unbeschränkten endlichen Score aus. Kandidaten-IDs, Audiohashes, lokale Dateipfade und rohe Samplepositionen sind keine Modelleingaben.
+
+Die Lerneinheit ist eine Kandidatengruppe. Der Gruppenvertrag basiert auf dem vollständigen akzeptierten Candidate-v2-Universum und nicht auf der Top-$k$-Auswahl des Control-Datensatzes. Für das aufwendige Teacher-Labeling wird deterministisch nach Baseline-Quantilen geschichtet ausgewählt. Der vorgesehene Slotumfang beträgt bei Universumsgröße $n$
+\begin{equation}
+ m(n)=\min\!\left(512,\max\!\left(128,\left\lceil16\sqrt{n}\right\rceil\right)\right),
+\end{equation}
+wobei nur vorhandene Kandidaten ausgewählt werden können. Pro ausgewähltem Mitglied wird die Einschlusswahrscheinlichkeit $\pi_i=q_h/n_h$ des zugehörigen Stratums gespeichert.
+
+Das Training verwendet eine gruppierte listweise Kreuzentropie. Für die loss-zulässigen Mitglieder $S_g$ einer Gruppe werden Teacher-Utility $\tilde u_i$, Modellscore $s_i$ und Einschlusswahrscheinlichkeit folgendermaßen kombiniert:
+\begin{align}
+ p_i &= \frac{\exp(\tilde u_i/\tau_T)/\pi_i}
+                 {\sum_{j\in S_g}\exp(\tilde u_j/\tau_T)/\pi_j},\\
+ q_i &= \frac{\exp(s_i/\tau_M)/\pi_i}
+                 {\sum_{j\in S_g}\exp(s_j/\tau_M)/\pi_j},\\
+ \mathcal{L}_{\mathrm{Rank}}
+     &= -\frac{1}{|\mathcal{G}_{\mathrm{nutzbar}}|}
+        \sum_{g\in\mathcal{G}_{\mathrm{nutzbar}}}\sum_{i\in S_g}p_i\log q_i.
+\end{align}
+Die inverse Einschlussgewichtung wirkt in beiden Softmax-Verteilungen. Sie berücksichtigt die ungleichen Auswahlwahrscheinlichkeiten, garantiert aber keine exakte Rekonstruktion des vollständigen Universums-Losses. Die Temperaturdefaults sind $\tau_T=\tau_M=1$. Gruppen mit weniger als zwei zulässigen Mitgliedern werden als unzureichend gezählt und aus der Gruppenmittelung ausgeschlossen; bei keiner nutzbaren Gruppe entsteht ein Nullbeitrag.
+
+Die vorhandene synthetische Validierung belegt den Daten- und Optimierungspfad, jedoch kein erfolgreiches Ranking realer musikalischer Kandidaten. Eine finale Trainingskonfiguration für einen realen Ranker-Lauf ist deshalb noch nicht als durchgeführtes Experiment anzugeben.
+
+\subsection{Erzeugung der Teacher-Labels}
+\label{sec:methodik-teacher}
+
+Da kein umfangreicher Bestand menschlich annotierter Cuepoint-Rangfolgen vorliegt, ist ein Offline-Teacher zur Erzeugung von Pseudo-Labels vorgesehen. Dafür wird der deklarierte beste Checkpoint eines abgeschlossenen variablen TCN/BiLSTM-Laufs eingefroren. Das Release bindet Modell, Normalisierung, Renderer, Objective-Version, Alignment, Audio-/Stem-Provenienz und Softwareumgebung über Hashes. Während des Labelings befindet sich das Modell im Evaluationsmodus; es werden keine Optimierungsschritte durchgeführt.
+
+Für jeden ausgewählten Kandidaten prognostiziert der Teacher Kontrollen, rendert die Bridge und berechnet die Utility
+\begin{equation}
+ u_i=-\mathcal{L}_{\mathrm{v5}}(y_i).
+\end{equation}
+Ein zusätzlicher festgelegter Render-Guard verlangt einen Score von mindestens $0{,}50$ nach \texttt{rendered\_transition\_baseline\_v1}. Der Status \texttt{scored} bezeichnet eine erfolgreiche Bewertung. \texttt{guard\_rejected} kennzeichnet eine Ablehnung durch den Guard; \texttt{failed} bezeichnet technische Fehler, etwa nichtendliche Werte, Hashkonflikte oder nicht ausführbares Alignment.
+
+Technische Fehler werden weder als positive noch als negative Qualitätslabels verwendet. Guard-Ablehnungen bleiben dagegen negative Anker. Für den Loss wird ihre Utility auf das Minimum der erfolgreich bewerteten Gruppenmitglieder abzüglich einer Marge von standardmäßig $0{,}05$ gesetzt. Enthält eine Gruppe ausschließlich Guard-Ablehnungen und keinen erfolgreichen Referenzkandidaten, wird sie nicht zum Training verwendet.
+
+Labelerzeugung und Ranker-Training sind getrennte, versionierte Verarbeitungsschritte. Der Ranker liest nur die gebundenen Labels und Features und verändert den Teacher nicht. Damit wird die Übereinstimmung mit einer reproduzierbaren Zielregel lernbar. Eine hohe Teacher-Übereinstimmung ist jedoch kein unabhängiger Beleg für musikalische Qualität, weil Teacher und Labels dieselbe Proxy-Zielfunktion teilen.
+
+\subsection{Modelle zur Übergangssteuerung}
+\label{sec:methodik-controller}
+
+Das Control-Modell $f_\theta$ bildet die Featuresequenzen und globalen Merkmale auf zeitabhängige Kontrollen ab. Die Waveforms werden anschließend ausschließlich vom Renderer und von der Zielfunktion verwendet. Die Modellfamilien unterscheiden sich in zeitlichem Rezeptionsfeld, Stellgrößen und Trainingsprotokoll.
+
+\paragraph{Zeitgeteiltes MLP.}
+Die kompakte Baseline \texttt{time\_shared\_mlp\_v1} verwendet versteckte Dimensionen von 64 und 32 und besitzt 10\,394 Parameter. Sie prognostiziert eine Gesamtübergabe und eine separate Low-End-Übergabe. Dieselben MLP-Gewichte werden über die Zeitpositionen angewendet. Die Positionskurven besitzen konstruktiv monotone Verläufe mit festen Endpunkten~0 und~1. Dadurch werden keine unabhängigen, unkontrollierten Gains für beide Tracks gelernt. Das Modell wird mit einem Zwei-Band-Renderer und Objective~v4 trainiert.
+
+\paragraph{Vocal-aware MLP.}
+Die Erweiterung \texttt{vocal\_time\_shared\_mlp\_v2} besitzt 20\,821 Parameter und ergänzt eine eigene Vocal-Übergabeposition sowie getrenntes Source- und Target-Ducking. Gesamtmix, Low-End und Vocals können damit zu unterschiedlichen Zeitpunkten übergeben werden. Für Vocal-Position $v\in[0,1]$ entstehen die Basisgains
+\begin{equation}
+ a(v)=\cos\left(\frac{\pi v}{2}\right),\qquad
+ b(v)=\sin\left(\frac{\pi v}{2}\right).
+\end{equation}
+Die Ducking-Werte $d_A,d_B$ sind auf maximal 0,75 begrenzt und durch $4v(1-v)$ an den Endpunkten auf null gefenstert. Die angewendeten Gains lauten $g_A=a(v)(1-d_A)$ und $g_B=b(v)(1-d_B)$. Für die Basisgains gilt $a^2+b^2=1$; nach zusätzlichem Ducking ist konstante Leistung nicht mehr konstruktiv gegeben. Dieser Vocal-Pfad ist der dokumentierte operative Default.
+
+\paragraph{Full-Band-TCN/BiLSTM.}
+Das größere feste Vier-Takt-Modell besitzt 1\,013\,226 Parameter. Ein geteilter TCN-Encoder mit 64 und 128 Kanälen verarbeitet beide Tracks. Die Fusion aus kodierten Sequenzen, Differenz und Produkt wird auf 256 Dimensionen projiziert und um globale Merkmale ergänzt. Ein zweilagiger bidirektionaler LSTM mit Hidden-Dimension~128 verarbeitet den zeitlichen Kontext. Da das gesamte Übergangsfenster vorliegt, ist die Nutzung zukünftiger Schritte innerhalb dieses Fensters methodisch zulässig; ein kausales Streamingverfahren wird nicht beansprucht.
+
+Das Modell liefert zehn begrenzte Kontrollkanäle: zwei Track-Gains, jeweils zwei Low-, Mid- und High-Band-Stellgrößen, Low-End-Ownership und Vocal-Ducking. Die Ownership-basierten Übergaben sind monoton. Der zugehörige Full-Band-Renderer verwendet im dokumentierten generischen Trainingspfad eine Mid-Band-Absenkung als Vocal-Proxy. Diese ist von echter stem-spezifischer Vocal-Steuerung zu unterscheiden.
+
+\paragraph{Variable TCN/BiLSTM-Erweiterung.}
+Das variable Modell übernimmt den zeitlichen Encoder-/LSTM-Ansatz und ergänzt die explizite Bedingung $L/8$. Es verarbeitet $T=16,32,48,64$ und wird über einen stem-fähigen Vocal-Renderer mit einer zeitnormalisierten Variante von Objective~v5 trainiert. Seine zehn Diagnosekanäle dürfen nicht als identische Drei-Band-EQ-Steuerung des festen Full-Band-Modells interpretiert werden. Im tatsächlichen Trainingspfad werden Mix-, Low-End- und Vocal-Position sowie getrenntes Vocal-Ducking verwendet. Eine zusätzliche variable MLP-Baseline ist implementiert, für sie ist jedoch kein eigener ausgewerteter Trainingslauf dokumentiert.
+
+Das TCN/BiLSTM bildet die größere experimentelle Modellfamilie; daraus folgt keine bereits nachgewiesene Überlegenheit gegenüber dem operativen Vocal-MLP. Unterschiede in Datenformat, Separation, Alignment, Renderer und Objective verhindern insbesondere eine direkte Interpretation verschiedener Validation-Losses als Architektur-Rangliste.
+
+\subsection{Differenzierbares Rendering und Lernziel}
+\label{sec:methodik-renderer}
+
+Der Renderer $R$ verbindet vorhergesagte Kontrollen $c=f_\theta(X_A,X_B,g,\ell)$ mit den ausgerichteten Eingangssignalen zu $y=R(x_A,x_B,c)$. Im einfachsten Fall gilt sampleweise
+\begin{equation}
+ y[n]=g_A[n]x_A[n]+g_B[n]x_B[n].
+\end{equation}
+Die auf Halbbeatpositionen beschriebenen Kontrollen werden auf die Audiosamplerate interpoliert. Differenzierbare Filter und Gain-Operationen erlauben die Rückpropagation des Audio-Losses bis zu den Modellparametern. Monotone Positionen und begrenzte Stellgrößen werden bereits durch die Parametrisierung abgesichert; Glätte- und Krümmungsterme ergänzen diese Konstruktion.
+
+Der Zwei-Band-Pfad trennt Frequenzen unterhalb von 180~Hz vom Rest. Der feste Full-Band-Pfad ergänzt eine Trennung bei 3\,500~Hz, im Unterschied zur 4-kHz-Grenze der Featureextraktion. Im Vocal-Pfad wird für jeden Track zunächst $x_{\mathrm{Begleitung}}=x_{\mathrm{Mix}}-x_{\mathrm{Vocal}}$ gebildet. Die Begleitung durchläuft den Zwei-Band-Renderer, anschließend werden die beiden Vocal-Stems mit ihren eigenen Gains addiert. Da Stems Schätzungen sind, kann diese Subtraktion Separationsfehler hörbar machen.
+
+Das Training benötigt keine menschlich vorgegebenen Faderkurven und keine Ground-Truth-Mischung. Stattdessen wird eine gewichtete Proxy-Zielfunktion minimiert:
+\begin{equation}
+ \mathcal{L}_{\mathrm{Control}}=
+ \sum_{j\in\mathcal{J}}\lambda_j\mathcal{L}_j
+       (R(x_A,x_B,f_\theta(X_A,X_B,g,\ell))).
+\end{equation}
+Die Objective-v4-Terme betreffen Energieform, Randkontinuität, Glätte, Krümmung, Monotonie, Clipping, Transientenartefakte und featurebasierte Vocal-Konflikte. Die Energieform sieht eine kontrollierte Absenkung während der Bridge zwischen zwei energiereichen Abschnitten vor. Die dokumentierten festen Läufe verwenden 6~dB Zieltiefe, eine Energietoleranz von 12~dB und eine Randtoleranz von 6~dB.
+
+Objective~v5 übernimmt die allgemeinen Signal- und Kontrollterme und ersetzt die früheren Vocal-Overlap-/Boundary-Anteile durch stem-spezifischen Overlap, Vocal-Hörbarkeit und Gain-Änderungen innerhalb aktiver Phrasen. Der Hörbarkeitsterm wirkt der trivialen Lösung entgegen, beide Vocals stark abzusenken. Tabelle~\ref{tab:methodik-loss} zeigt die dokumentierten Gewichte der festen Vergleichsläufe. Im variablen Modell werden zeitabhängige Terme längenbezogen normalisiert; sein versionierter Objective-Vertrag bleibt separat.
+
+\begin{table}[htbp]
+ \centering
+ \caption{Gewichte der dokumentierten festen Objective-v4-/v5-Läufe.}
+ \label{tab:methodik-loss}
+ \begin{tabular}{lrr}
+  \toprule
+  Komponente & v4 & v5 \\
+  \midrule
+  Energieform & 1,00 & 1,00 \\
+  Randkontinuität & 0,50 & 0,50 \\
+  Glätte / Krümmung & 0,02 / 0,05 & 0,02 / 0,05 \\
+  Monotonie & 0,10 & 0,10 \\
+  Clipping & 2,00 & 2,00 \\
+  Transientenartefakte & 0,08 & 0,08 \\
+  Feature-Vocal-Overlap / -Boundary & 1,00 / 0,30 & 0 / 0 \\
+  Stem-Vocal-Overlap & -- & 1,00 \\
+  Vocal-Hörbarkeit & -- & 0,50 \\
+  Vocal-Gain-Änderung in Phrasen & -- & 0,20 \\
+  \bottomrule
+ \end{tabular}
+\end{table}
+
+Begrenzte Kontrollen garantieren bei addierten Audiosignalen allein noch keine Clippingfreiheit. Deshalb werden endliche Samples und die exportierte Amplitude separat geprüft. Für Hörvergleiche erhalten alle Varianten eines Beispiels denselben Peak-Gain, sodass der größte Betrag höchstens 0,98 erreicht. Diese gemeinsame Skalierung verhindert eine methodenspezifische nachträgliche Pegelanhebung; sie ist keine Gleichsetzung wahrgenommener Lautheit und keine LUFS-Normalisierung.
+
+\subsection{Rendering-Baselines und Vergleichsbedingungen}
+\label{sec:methodik-renderbaselines}
+
+Als einfache Audioreferenzen stehen harter Schnitt, linearer Crossfade und Equal-Power-Crossfade zur Verfügung. Für eine normierte Position $t\in[0,1]$ verwendet der lineare Crossfade $g_A=1-t$ und $g_B=t$, die Equal-Power-Referenz $g_A=\cos(\pi t/2)$ und $g_B=\sin(\pi t/2)$. Der harte Schnitt ist ein abrupter Wechsel und besitzt definitionsgemäß kein ausgedehntes Überlappungsfenster.
+
+Die aktuelle allgemeine Pipeline passt Track~B bereits für alle drei Verfahren an das Tempo von~A an. Der Name \texttt{tempo\_fade} ist ein Kompatibilitätsalias des linearen Fades und kein eigenständiges viertes Verfahren. Ein zusätzlicher Vergleich mit einem unangepassten Crossfade müsste separat festgelegt werden.
+
+Für Control-Vergleiche werden Cuepoints, Länge, Eingangsaudio, Stem-Backend, Tempoanpassung und gemeinsamer Ausgangsgain konstant gehalten. Die Equal-Power-Referenz wird innerhalb des jeweils passenden Renderer-Protokolls erzeugt. Wo komplette Modellpfade unterschiedliche Renderer einsetzen, untersucht der Vergleich das Gesamtsystem und isoliert keinen reinen Architektureffekt. Beim Rankervergleich werden dagegen Controller und Renderer konstant gehalten; nur die Kandidatenauswahl variiert.
+
+\subsection{Trainings- und Validierungsverfahren}
+\label{sec:methodik-training}
+
+Die Entwicklungsreihenfolge beginnt mit der technischen Prüfung von Analyse, Features und Renderer. Direkte Kurvenoptimierungen dienen der Untersuchung der Proxy-Zielfunktion. Anschließend werden Feature-to-Control-Modelle trainiert. Erst ein abgeschlossener und eingefrorener variabler Control-Lauf kann als Teacher eines nachgelagerten Ranker-Experiments dienen. Smoke-Tests überprüfen einzelne Verarbeitungsschritte und werden nicht mit den längeren realen Läufen gleichgesetzt.
+
+Die dokumentierten festen Referenzläufe verwenden AdamW mit Lernrate $10^{-3}$, Weight Decay $10^{-4}$, Batchgröße~5 und einer Begrenzung der Gradientennorm auf~1. Early Stopping wartet sechs Epochen ohne ausreichende Validierungsverbesserung; die minimale Verbesserung beträgt $10^{-4}$. Der maximale Umfang dieser Läufe beträgt 30 Epochen. Ausschließlich der Validierungs-Loss bestimmt den besten Checkpoint. Eine Initialisierung nahe einer festen Überblendung dient als reproduzierbarer Ausgangspunkt für die kleinen MLP-Modelle.
+
+Der historische MLP-Lauf endet nach 14 Epochen und wählt Epoche~8. Der dokumentierte RoFormer-Vocal-MLP-Lauf endet nach 27 Epochen und wählt Epoche~21; sein im Manifest gespeicherter Seed ist 20260805. Der Full-Band-TCN/BiLSTM-Lauf endet nach 20 Epochen und wählt Epoche~14 bei Seed~20260812. Für das historische MLP gilt Seed~20260804. Der tatsächliche Seed wird aus dem Trainingsvertrag übernommen, nicht aus dem Namen des Ausgabeordners abgeleitet.
+
+Für das variable TCN/BiLSTM sind reale Läufe mit 20 beziehungsweise 29 Epochen dokumentiert. Der spätere Lauf verwendet Lernrate $10^{-3}$, Weight Decay $10^{-4}$, Gradientengrenze~1, Seed~20260820, Patience~6 und minimale Verbesserung~0. Die vier Längen werden gleich gewichtet; der kleinste protokollierte Validierungs-Loss liegt in Epoche~23. Die genaue Batchzusammenstellung muss aus der zugehörigen Aufrufprovenienz ergänzt werden, da sie im inspizierten variablen Runmanifest nicht als Batchgrößenfeld enthalten ist. Ein 100-Epochen-Lauf wird nicht behauptet.
+
+Der erste MLP-Referenzlauf wurde auf der CPU ausgeführt. Die größeren dokumentierten Läufe nutzen \texttt{cuda:0}; für den variablen CUDA-Pfad ist eine NVIDIA RTX~5070~Ti dokumentiert. Seeds und deterministische Einstellungen werden gespeichert. Bekannte CUDA-Backward-Operationen laufen teilweise mit Determinismuswarnungen, weshalb keine uneingeschränkte bitgenaue GPU-Reproduzierbarkeit angenommen wird.
+
+Jeder Lauf speichert Konfiguration, epochale Historie sowie besten und letzten Checkpoint. Fortsetzungen prüfen die gebundenen Hashes und den unveränderten Trainingsvertrag. Abgebrochene oder nur teilweise ausgeführte Läufe werden mit ihrem tatsächlichen Status geführt. Der Testsplit wird weder für Early Stopping noch für die Auswahl von Hyperparametern geladen.
+
+% BB-OFFEN: Keine historischen Versionen aus der heutigen Umgebung ableiten.
+\methodikoffen{Für die endgültig ausgewählten Experimente die vollständigen Softwareversionen und die variable Batchkonfiguration aus den jeweiligen Laufartefakten beziehungsweise Aufrufprotokollen in den Anhang übernehmen.}
+
+\subsection{Objektive Evaluation}
+\label{sec:methodik-evaluation}
+
+Die technische Evaluation prüft Rasterprovenienz, vollständige Taktfenster, korrekte Sampleanzahlen, gleiche Shapes der ausgerichteten Signale, endliche Samples und Einhaltung der Exportamplitude. Für die variablen Übergänge werden Taktlänge, Beatanzahl und Sequenzlänge gemeinsam validiert. Diese Prüfungen belegen die Einhaltung des Verfahrensvertrags, nicht automatisch musikalische Qualität.
+
+Für den Cue-Ranker sind Top-1-Teacher-Agreement, Top-$k$-Overlap, NDCG, Teacher-Utility des gewählten Kandidaten und die Pearson-Korrelation zwischen Modellscore und Teacher-Utility implementiert. Top-1 misst die identische Auswahl bei deterministisch aufgelösten Gleichständen. Für $k_g=\min(k,|S_g|)$ ist der Top-$k$-Overlap
+\begin{equation}
+ A_{k,g}=\frac{|\operatorname{Top}_{k_g}(s)\cap
+                       \operatorname{Top}_{k_g}(\tilde u)|}{k_g}.
+\end{equation}
+Der Standardwert ist $k=3$. Die implementierte NDCG verwendet ordinale Relevanzen aus der Teacher-Reihenfolge: Bei $n$ Kandidaten erhält Rang~$r$ die Relevanz $n-r+1$. Die Relevanz eines Kandidaten wird bei der Berechnung des DCG durch $\log_2(p+1)$ für seine Position~$p$ in der ausgewerteten Reihenfolge diskontiert; die Summe wird durch den idealen DCG derselben Gruppe normiert. Damit wird nicht direkt eine exponentielle Transformation negativer Utility-Werte verwendet.
+
+Die Auswertung vergleicht Ranker, Zufall, BPM, Harmonie, kombinierte Feature-Baseline und Teacher-Oracle auf demselben loss-zulässigen Label-Snapshot. Das Oracle bildet eine Obergrenze der Teacher-Übereinstimmung innerhalb dieses Snapshots; es ist kein deploybares Auswahlmodell und kein menschliches Qualitätsoracle. Unzureichende Gruppen werden als nicht auswertbar ausgewiesen. Fehlt ein Baseline-Score, wird keine Ersatzbewertung erfunden; die tatsächlich ausgewertete Gruppenzahl ist mit anzugeben.
+
+Agreement, NDCG und gewählte Utility werden zunächst pro Gruppe berechnet und anschließend arithmetisch über Gruppen gemittelt. Die implementierte Pearson-Korrelation wird über die zulässigen Kandidaten der berücksichtigten Gruppen zusammen berechnet. Alle Metriken werden insgesamt und getrennt nach zwei, vier, sechs und acht Takten ausgegeben. Diese Größen beschreiben die Übereinstimmung mit dem eingefrorenen Teacher auf dem gelabelten Ausschnitt, nicht zwingend auf dem vollständigen Kandidatenuniversum.
+
+Eine inferenzstatistische Auswertung und Ablationen sind noch nicht abgeschlossen. Als vorgesehene Ablationen werden Vocal-Features, Harmonik, Längenbedingung und globale Features jeweils einzeln entfernt. Solche Varianten müssen unter identischen Splits, Budgets und Vergleichsbedingungen neu trainiert werden; eine bloße Änderung der Inferenzinputs ersetzt diese Untersuchung nicht. Für spätere Konfidenzintervalle und Tests ist die Abhängigkeit mehrerer Cuepoints desselben Songpaares sowie wiederverwendeter Tracks zu berücksichtigen. Die Anzahl gerenderter Varianten darf nicht als Anzahl unabhängiger Beobachtungen interpretiert werden.
+
+\subsection{Perzeptuelle Evaluation}
+\label{sec:methodik-hoerstudie}
+
+Die perzeptuelle Evaluation soll prüfen, ob Unterschiede in der Proxy-Zielfunktion tatsächlich hörbare Vorteile erzeugen. Die primäre Hypothese betrifft eine höhere Gesamtpräferenz für gelernte Übergänge gegenüber einer festen Equal-Power-Referenz. Sekundär wird untersucht, ob eine eigenständige Vocal-Steuerung die wahrgenommene Vocal-Klarheit verbessert, ohne den Energieverlauf oder die Artefaktfreiheit zu verschlechtern. Für einen später real trainierten Cue-Ranker ist zusätzlich eine separate Hypothese zum Nutzen der Kandidatenauswahl zu prüfen.
+
+Die vorhandenen Hörartefakte verwenden geblendete Bezeichnungen. Die Methodenabbildung liegt in einem getrennten Antwortschlüssel und wird erst nach abgeschlossener Bewertung ausgewertet. Die Zuordnung der Methoden zu A/B beziehungsweise A/B/C/D wird deterministisch randomisiert. Eine unabhängige Randomisierung der Reihenfolge aller Beispiele und ein Ausbalancieren von Reihenfolgeeffekten sind für eine finale Studie gesondert festzulegen.
+
+Der vorbereitete Mehrmodellvergleich auf Datenformat~1 enthält fünf Validierungspaare mit jeweils Equal Power, zeitgeteiltem MLP, Vocal-MLP und Full-Band-TCN/BiLSTM, insgesamt 20 WAV-Dateien bei 44,1~kHz. Der separate variable Hörsatz enthält je ein Beispiel für zwei, vier, sechs und acht Takte, jeweils gelerntes Modell gegen protokollgleiche Equal-Power-Referenz. Seine acht WAV-Dateien liegen bei 11\,025~Hz vor und enthalten ausschließlich das ausgerichtete Übergangsfenster. Die beiden Sätze werden wegen ihrer unterschiedlichen Daten-, Audio- und Renderingprotokolle nicht zu einer gemeinsamen Qualitätsrangliste zusammengeführt.
+
+Das dokumentierte A/B-Bewertungsprotokoll verwendet ganzzahlige Skalen von 1 bis~5 für Sauberkeit, Energieverlauf, Bassübergabe, Vocal-Klarheit und Artefaktfreiheit. Hinzu kommen eine Gesamtpräferenz mit möglichem Gleichstand, Fehler-Tags und freie Notizen. Rhythmische Stabilität wurde aus den aktuellen Control-Ratings entfernt, weil die verglichenen Kurven weder Beat-Grid noch Time-Stretch-Verfahren verändern. Sie bleibt eine technische und bei einem gesonderten Auswahlvergleich auch perzeptuell relevante Eigenschaft. Weitere Dimensionen wie Harmonie oder Natürlichkeit wären eine Erweiterung des Studienprotokolls.
+
+Die vorbereiteten Vergleiche auf Validierungsdaten sind Entwicklungsstudien, da diese Daten bereits die Modellwahl beeinflusst haben. Historische Hör-Gates mit einem Rater und wenigen, teils wiederverwendeten Trackpaaren liefern explorative Hinweise. Sie ersetzen weder eine unabhängige Abschlussevaluation noch eine populationsbezogene Wirksamkeitsaussage. Die Auswertung der zuletzt vorbereiteten Mehrmodell- und variablen Hörsätze steht im dokumentierten Stand noch aus.
+
+% BB-OFFEN: Diese Angaben können nicht aus Softwarecode rekonstruiert werden.
+\methodikoffen{Vor Durchführung der finalen Hörstudie Stichprobengröße und Rekrutierung, musikalische Erfahrung, Einwilligung und Datenschutz, Hörgeräte und Umgebung, Skalenanker, Reihenfolgeplan, Ausschlusskriterien, primären Endpunkt sowie statistisches Auswertungsverfahren festlegen. Anschließend die tatsächlich durchgeführte Erhebung berichten.}
+
+Für die vorgesehene finale Auswertung sollen Präferenzanteile und gepaarte Bewertungsunterschiede einschließlich Unsicherheitsintervallen berichtet werden. Bei wiederholten Bewertungen müssen sowohl Teilnehmende als auch Stimulusabhängigkeiten berücksichtigt werden, beispielsweise durch ein geeignetes hierarchisches Modell. Primäre Vergleiche, Effektmaß, Signifikanzniveau und der Umgang mit Mehrfachvergleichen sind vor der Entblindung festzulegen. Diese statistische Auswertung wird hier als Planung beschrieben und nicht als bereits ausgeführter Test.
+
+\subsection{Reproduzierbarkeit und Artefaktprovenienz}
+\label{sec:methodik-reproduzierbarkeit}
+
+Die Softwarepipeline trennt Analyse, Kandidatengenerierung, Featureextraktion, Datensatzexport, Modelltraining, Rendering und Evaluation in versionierte Verarbeitungsschritte. Zu den verwendeten Werkzeugen gehören Python, NumPy, Librosa, PyTorch, aufTAKT, Rubber Band beziehungsweise FFmpeg und die jeweiligen Separation-Backends. Für eine Reproduktion sind neben Bibliotheksversionen auch Modellgewichte, Backend-Binaries, Konfigurationen und Seeds maßgeblich.
+
+Audioquellen, Raster, Featurepayloads, Normalisierungsstatistiken, Datensatzmanifeste und Checkpoints werden über SHA-256-Werte verknüpft. Caches vermeiden die wiederholte Analyse vollständiger Tracks, die erneute Source Separation und wiederholtes Time-Stretching in jeder Epoche. Ein Cache ist nur dann wiederverwendbar, wenn Quellen und Verarbeitungskonfiguration zum gespeicherten Vertrag passen. Unterschiedliche Modell-, Grid- oder Alignmentversionen erzeugen getrennte Artefakte.
+
+Runmanifeste, Historien und Checkpoints werden atomar publiziert. Der Teacher- und Ranker-Pfad prüft seine Provenienzkette vor dem Laden; fehlende oder widersprüchliche Artefakte führen zu einer nachvollziehbaren Ablehnung. Die Repository-Dokumentation hält Entscheidungen, bekannte Grenzen und ausgeführte Prüfungen fest. Originalaudio und bestehende historische Artefakte werden durch neue Experimente nicht überschrieben.
+
+Automatisierte Prüfungen decken unter anderem Featuregeometrie, Split-Isolation, maskierte Verluste, endliche Gradienten, Checkpoint-Fortsetzung, Cacheintegrität und Audioexport ab. Synthetische End-to-End-Prüfungen bestätigen dabei die technische Verkettung. Ihre Ergebnisse werden ausdrücklich von realem Training und menschlicher Qualitätsbeurteilung getrennt.
+
+\subsection{Methodische Grenzen}
+\label{sec:methodik-grenzen}
+
+Die Qualität des Gesamtverfahrens hängt von der Beat- und Downbeat-Erkennung ab. Auch streng geprüfte Raster können musikalisch falsch liegen; hohe technische Matchabdeckung ersetzt keine annotierte Timingreferenz. Die strikte Ablehnung unsicherer Grids reduziert zudem die Korpusvielfalt und begünstigt gut analysierbare Musikstücke.
+
+Source-Separation-Fehler können sowohl die Vocal-Features als auch das gerenderte Signal beeinflussen. Rubber-Band-Time-Stretching kann trotz erhaltener Tonhöhe hörbare Artefakte erzeugen. Die Trainingssamplerate von 11\,025~Hz begrenzt die im Lernsignal repräsentierten hohen Frequenzen. Unterschiede der Ausgabe-Samplerate sind deshalb bei der Interpretation der Hörsätze zu beachten.
+
+Der begrenzte Korpus, sein enger Tempobereich und wiederholte Segmentpaare schränken die Generalisierbarkeit ein. Eine Top-$k$-Vorauswahl für das Control-Training verändert außerdem die Verteilung der Trainingsbeispiele gegenüber dem vollständigen Kandidatenraum. Der separate Ranker-Vertrag vermeidet die Übernahme dieser Top-$k$-Beschränkung als vollständiges Lernuniversum, bleibt aber an die Verteilung seiner ausgewählten Teacher-Kandidaten gebunden.
+
+Die handgefertigte Proxy-Zielfunktion operationalisiert bestimmte Eigenschaften eines gewünschten Übergangs. Sie bildet weder musikalische Präferenz vollständig ab noch ersetzt sie eine unabhängige Hörstudie. Ein Ranker kann die Grenzen seines Teachers übernehmen und einen hohen Agreement-Wert erreichen, ohne bessere Übergänge aus Sicht menschlicher Hörer auszuwählen. Schließlich beschränkt sich die Untersuchung auf kurze, vorgegebene Songkombinationen und Übergangslängen. Aussagen über vollständige DJ-Sets, beliebige Metren oder einen universellen Begriff musikalischer Kompatibilität sind daraus nicht ableitbar.

@@ -1,5 +1,35 @@
 # BeatBridge – Stand & Next Steps
 
+**GUI-Zielbild definiert und fuer Mehrtrack-Projekte praezisiert am
+2026-09-10:**
+[`GUI_SPECIFICATION.md`](./GUI_SPECIFICATION.md) beschreibt den spaeter
+implementierbaren Mehrtrack-Workflow: Ein Projekt darf beliebig viele Tracks
+und Abschnittsinstanzen in einer linearen Mashup-Sequenz enthalten; jeder
+einzelne Uebergang bleibt strikt ein gerichtetes Songpaar. Der Paar-Editor
+zeigt deshalb immer nur die beiden Spuren der aktuell gewaehlten Sequenzkante.
+Die Spezifikation umfasst ausserdem die DAW-artige Timeline,
+Cuepoint-/Constraint-Bearbeitung, synchrone
+Datenvisualisierung, Baseline-/Modellvergleich, Zustands- und Fehlerkonzept
+sowie Datenbindung an die vorhandenen versionierten Manifeste. Die Umsetzung
+ist bewusst in manifestbasierten Review-MVP, interaktiven Paar-Editor,
+Mashup-Assembly und Evaluationsmodus gestuft. Das Bild unter
+[`gui-mockups/beatbridge-daw-data-concept-v1.png`](./gui-mockups/beatbridge-daw-data-concept-v1.png)
+ist visuelle Referenz, aber kein fachlicher oder pixelgenauer Vertrag. Es wurde
+noch kein GUI-Code implementiert und kein GUI-Test ausgefuehrt.
+
+**Thesis-Strukturabgleich am 2026-09-09:** Die verbindliche Aufgabenstellung
+`angepasste_aufgabenstellung_masterarbeit.pdf` wurde gegen den Repository- und
+Overleaf-Stand geprüft. Die englischen Kapitelgerüste gewichten nun gelernte
+beziehungsweise verwendete Audio-Repräsentationen, Übergangsmetrik und
+-Ranking, Control-basierte Übergangsgenerierung sowie GUI-/Nutzerworkflow und
+Evaluation des manuellen Korrekturaufwands getrennt. Offene Evidenz ist direkt
+in den TeX-Gerüsten als `TODO` markiert. Besonders offen bleiben reale
+Embedding-/Cue-Ranker-Experimente, eine minimale GUI, End-to-End-Mashup-Export,
+die in der Aufgabenstellung genannten 1-/3-Takt-Fälle und eine Evaluation der
+Nutzbarkeit für Tanzperformances. Die vorhandenen 6-/8-Takt-Versuche sind als
+zusätzliche Generalisierung eingeordnet, nicht als Ersatz für den primären
+Umfang von ein bis vier Takten.
+
 **Artefaktabgleich am 2026-09-07 (Repository-/Modellübersicht):** Die lokalen
 Variable-TCN-Runmanifeste dokumentieren mittlerweile abgeschlossene Läufe mit
 20 Epochen (`variable_tcn_bilstm_waveform_v2_full_20260821`) beziehungsweise
