@@ -1,5 +1,18 @@
 # BeatBridge – Stand & Next Steps
 
+**Repository-/Overleaf-Audit am 2026-09-13:** Der Hauptbranch ist nach einem
+frischen Fetch exakt mit `origin/main` synchron. Der Pfad `overleaf` wurde im
+Commit `95f7e1d` jedoch nur als Gitlink auf den fremden Commit
+`6469dfac57062f654c0d9b4d5b87b6e2f6f9e45d` aufgenommen. Da keine
+`.gitmodules`-Datei mit Repository-URL versioniert ist und das Commitobjekt im
+Hauptrepository nicht existiert, kann ein frischer Checkout die dort erwarteten
+Dateien wie `CGThesis.tex`, `meta.tex` und die Kapiteldateien nicht beziehen;
+der lokale Ordner ist auf diesem Rechner leer. Der Push des Hauptbranches ist
+damit angekommen, die Overleaf-Arbeit aber nicht reproduzierbar im
+BeatBridge-Repository enthalten. Vor weiteren Thesis-Arbeiten muss der Inhalt
+entweder als normale Dateien eingecheckt oder als korrekt konfiguriertes und
+separat erreichbares Submodule veröffentlicht werden.
+
 **GUI-Zielbild definiert und fuer Mehrtrack-Projekte praezisiert am
 2026-09-10:**
 [`GUI_SPECIFICATION.md`](./GUI_SPECIFICATION.md) beschreibt den spaeter

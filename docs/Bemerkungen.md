@@ -3738,3 +3738,33 @@ Caches werden nicht migriert oder überschrieben.
   editierbares Gerüst angelegt. Als Nächstes können Forschungsfragen,
   Methodik und die tatsächlichen Ergebnisse kapitelweise ausgearbeitet und
   anschließend in Overleaf kompiliert werden.
+
+## 2026-09-13 – Repository-/Overleaf-Push-Audit
+
+- **Fragestellung und Reasoning:** Prüfen, ob die auf einem anderen Rechner
+  hinzugefügte Overleaf-Arbeit vollständig auf GitHub angekommen ist und sich
+  aus einem anderen Checkout reproduzieren lässt.
+- **Eingaben/Setup:** Lokaler Branch `main`, Remote `origin` und der nach
+  ausdrücklich erlaubtem `git fetch --prune origin` aktualisierte Remote-Ref.
+  Bestehende Nutzeränderungen am Notebook und unversionierte IDE-Dateien
+  blieben unangetastet.
+- **Testumfang bzw. Befehle:** `git status --short --branch`, `git branch -vv`,
+  `git rev-list --left-right --count main...origin/main`, `git ls-tree`,
+  `git submodule status`, `git cat-file -e`, Prüfung von `.gitmodules`,
+  Inventur des lokalen Pfads `overleaf` und Sichtung des einführenden Commits
+  `95f7e1d`.
+- **Ergebnis inklusive Fehlern oder Blockaden:** `main` und `origin/main` sind
+  bei Commit `95f7e1d` synchron (0 voraus, 0 zurück). `overleaf` ist dort nur
+  ein Gitlink (Modus `160000`) auf Commit
+  `6469dfac57062f654c0d9b4d5b87b6e2f6f9e45d`. Eine `.gitmodules`-Datei und
+  damit die Quell-URL fehlen; `git submodule status` bricht entsprechend ab.
+  Das referenzierte Commitobjekt ist nicht im Hauptrepo vorhanden, und der
+  lokale `overleaf`-Ordner ist leer. Die zuvor protokollierten Dateien
+  `CGThesis.tex`, `meta.tex` und Kapiteldateien sind deshalb in diesem
+  Checkout nicht verfügbar.
+- **Schlussfolgerung und nächster Schritt:** Der Hauptrepo-Push war technisch
+  erfolgreich, enthält aber nicht reproduzierbar den Overleaf-Inhalt. Auf dem
+  anderen Rechner den verschachtelten Repository-Inhalt entweder als normale
+  BeatBridge-Dateien einchecken oder ein echtes Submodule mitsamt
+  `.gitmodules` und erreichbarem, separat gepushtem Zielrepository einrichten;
+  danach aus einem frischen Checkout gegenprüfen.
