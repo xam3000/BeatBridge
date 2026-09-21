@@ -1,5 +1,128 @@
 # BeatBridge – Stand & Next Steps
 
+**Implementation-Kapitel am 2026-09-21:** Der Templateinhalt von
+`overleaf/chapters/04_implementation.tex` wurde durch ein englisches,
+evidenzbasiertes Kapitel ersetzt. Es beschreibt den manifestorientierten
+Datenfluss von Analyse und Candidate-Erzeugung über Feature-/Waveformcaches,
+Datasetexport und Training bis zu geblendeten Studienartefakten. Feature-
+Protokoll 1 und 2, fester Full-Band-TCN-Renderer und variabler Vocal-Renderer,
+Default-Feature-Ranker und nur synthetisch verifizierter Learned-Ranker sowie
+real ausgeführte, audit-only und geplante Komponenten bleiben explizit
+getrennt. Der aktuelle Nutzerworkflow ist korrekt als CLI-, Notebook- und
+lokaler HTML-Workflow beschrieben; GUI, manuelle Korrekturstudie,
+Multi-Track-Assembly und finaler Projekt-Export bleiben TODO.
+
+Lokale Dataset-/Runmanifeste stützen die Format-1-Aussagen. Format-2- und
+spätere Controllerzahlen werden wegen fehlender Primärartefakte in diesem
+Checkout nur als dokumentierte Audit-Evidenz bezeichnet. Die bestehende
+BS-RoFormer-Zitation `lu2024bsroformer` wurde wiederverwendet; die
+Bibliographie blieb unverändert. Ein isolierter Doppelbuild erzeugte ein
+zehnseitiges Kapitel-PDF ohne LaTeX-Fehler, undefinierte Referenzen oder
+Overfull-Boxen; vier repräsentative Seiten wurden visuell geprüft. Der
+Gesamtbuild scheitert weiterhin vor Kapitelinklusion an fehlendem
+`ngerman.ldf`. Fehlversuche und genaue Befehle stehen in `Bemerkungen.md`.
+
+**Methodology-/System-Design-Kapitel am 2026-09-16:**
+Der verifizierte deutsche Entwurf `docs/masterarbeit/methodik.tex` wurde als
+zusammenhängendes englisches Kapitel in
+`overleaf/chapters/03_mainPart.tex` übertragen. Das Kapitel trennt
+Forschungsdesign und Evidenzstufen, SHA-basierte Splits, Grid-/Alignment-
+Verträge, beat-synchrone Repräsentation, Candidate-Baselines und den nur
+synthetisch verifizierten Cue-Ranker, die inkompatiblen Controller-/Renderer-
+Familien, Proxy-Objectives, Training, objektive und perzeptuelle Evaluation
+sowie bekannte Grenzen. Mathematische Definitionen und bestehende
+Overleaf-Labels bleiben erhalten; fehlende Rechte-/Korpusdaten,
+Format-2-Primärartefakte, Repräsentationsversuch, realer Ranker, 1-/3-Takt-
+Fälle, gelernte Controller-Hörstudie und Nutzer-/Tanzevaluation bleiben als
+LaTeX-TODO sichtbar.
+
+Die Format-1-Datasetzahlen wurden gegen die zwei lokalen Manifeste und
+Trainingseinstellungen/Parameterzahlen gegen die drei lokalen Runmanifeste
+abgeglichen. Format-2-Zahlen und spätere TCN-/RoFormer-/Variable-Runs werden
+ausdrücklich nur als dokumentierte Audit-Evidenz geführt, weil ihre
+Primärartefakte in diesem Checkout fehlen. Der einzige neue Zitationsschlüssel
+im Kapitel ist der bereits vorhandene und zuvor geprüfte
+`lu2024bsroformer`; die Bibliographie wurde nicht verändert. Whitespace-,
+Klammer-, Label- und Zitationschecks bestanden. Der Gesamtbuild scheitert
+weiterhin vor Kapitelinklusion an fehlendem `ngerman.ldf`. Ein isolierter
+Kapitelbuild mit `amsmath`, `amssymb` und `booktabs` erzeugte dagegen ein
+warnungsfreies 16-seitiges Prüf-PDF ohne Overfull-Boxen; die beiden Tabellen
+wurden über Ghostscript gerendert und visuell geprüft. Details einschließlich
+aller Fehlversuche stehen in `Bemerkungen.md`.
+
+**Claim-Level-Literaturaudit am 2026-09-16:**
+`overleaf/chapters/02_relatedWork.tex` ist jetzt als technischer Vergleich
+statt als Literaturkatalog aufgebaut. Für automatische Sequenzierung,
+Cuepoint-Auswahl und Übergangssysteme, gelernte Controls und differenzierbare
+Audioverarbeitung, MIR-Frontends, selbstüberwachte Musikrepräsentationen,
+Kompatibilitätslernen und Evaluation werden jeweils Problem, Supervision,
+Output, Auswertung und Abgrenzung zu BeatBridge benannt. Die Gap-Aussage ist
+auf das Lernen zeitabhängiger interpretierbarer Controls für ein festes
+Cue-Paar über einen getrennten differenzierbaren Renderer und ein fixes
+Proxy-Objective ohne Ground-Truth-Controlkurven oder menschliche Qualitätslabels
+begrenzt. DJ AI (2025) und die Princeton-Senior-Thesis von Hein (2025) wurden
+als neuere direkte Arbeiten ergänzt; deshalb wird weder die erstmalige Nutzung
+von Musik-SSL in einer Übergangspipeline noch eine allgemeine Neuheit der
+Control-Vorhersage behauptet. Die Bibliographie enthält nun nur die 23 im
+Kapitel verwendeten Primärquellen und korrigierte Publikationsdaten. Offene
+Repräsentations- und Perzeptionsevidenz bleibt als LaTeX-TODO erhalten. Der
+lokale Gesamtbuild bleibt wegen fehlendem `ngerman.ldf`, `biblatex.sty` und
+Biber blockiert; isolierte Syntax-, BibTeX-, Schlüssel- und Diff-Prüfungen sind
+in `Bemerkungen.md` dokumentiert.
+
+**Thesis-Blueprint am 2026-09-16:**
+[`masterarbeit/THESIS_BLUEPRINT.md`](./masterarbeit/THESIS_BLUEPRINT.md)
+leitet aus der verbindlichen Aufgabenstellung und dem verifizierbaren
+Repository-Stand eine englische Argumentations- und Evidenzstruktur ab, ohne
+Thesis-Prosa zu ersetzen. Das Dokument enthält eine primäre Forschungsfrage
+mit drei Teilfragen, Problem und Scope, getrennte wissenschaftliche und
+Software-Engineering-Beiträge, eine Claim-to-Evidence-Matrix, die vollständige
+Kapitel-/Abschnittsplanung und eine Negativliste derzeit unbelegter Aussagen.
+Der wissenschaftliche Kern ist das Lernen zeitabhängiger interpretierbarer
+Mixing-Controls ohne Ground-Truth-Kurven über einen differenzierbaren Renderer
+und ein pro Lauf eingefrorenes Proxy-Objective; Cuepoint-Auswahl bleibt ein
+getrenntes vorgelagertes Problem.
+
+Der Blueprint trennt den festen Vier-Takt-Pfad vom variablen
+2/4/6/8-Takt-Pfad und hält 1/3 Takte, Repräsentationsversuch, reale
+Cue-Ranker-Evidenz, GUI/Endexport sowie Korrekturaufwand und Tanz-Nutzbarkeit
+als offene Aufgabenstellungsanforderungen fest. Drei lokal vorhandene reale
+Control-Runs wurden über Manifest, History, Datasetbindung und neun
+Run-Dateihashes geprüft; vier abgeschlossene historische Hörsätze wurden auf
+konsistente Bewertungs-/Ergebniszahlen geprüft. Die später dokumentierten
+TCN-/Variable-Runs und September-Hörsätze fehlen in diesem Checkout und sind
+deshalb als frühere Audit-Evidenz statt als frisch geprüfte Primärartefakte
+klassifiziert. Das ist kein Hörqualitätsnachweis für gelernte Controller.
+Overleaf-/Thesis-Prosa und Bibliographie wurden in dieser Aufgabe nicht
+verändert; LaTeX wurde nicht neu kompiliert. Ein unabhängiger lesender Review
+führte zu drei Korrekturen im Plan (Hörartefaktstatus, explizite
+Analyse-/GUI-Anforderung und Titelstatus) und fand danach keine weitere
+umsetzungsrelevante Inkonsistenz. Details stehen in
+`Bemerkungen.md`.
+
+**LaTeX-Strukturaudit am 2026-09-14 (aktueller lokaler Dateistand):**
+Die Overleaf-Dateien und eine versionierte `.gitmodules` mit Overleaf-URL
+sind jetzt lokal vorhanden; der ältere Leerordner-Befund direkt darunter
+beschreibt nicht diesen Dateistand. Eine neue Prüfung der Remote-Erreichbarkeit
+oder eines frischen Checkouts wurde nicht durchgeführt. Zu Beginn des
+Reaudits am 2026-09-14 verwendete der Live-Checkout `LR`; er ist jetzt auf
+`MA, twosided` korrigiert. Der erhaltene Vorher-Snapshot vom 2026-09-13
+enthält dagegen bereits `MA`; wann und wodurch der Live-Checkout
+zwischenzeitlich auf `LR` wechselte, wurde nicht nachgewiesen. Beide
+Abstracts, sieben getrennte
+Hauptkapitel und der Anhang sind aktiviert; Template-Beispiele wurden durch
+englische Gliederungen und konkrete Evidenz-TODOs ersetzt. Der englische
+Titel bleibt unverändert, weil die Aufgabenstellungs-PDF nur einen abweichenden
+deutschen Titel und keinen registrierten englischen Wortlaut belegt.
+Der Audit unter [`masterarbeit/THESIS_SETUP_AUDIT.md`](./masterarbeit/THESIS_SETUP_AUDIT.md)
+hält Struktur, Quellen und offene Anforderungen fest. Dies ist keine neue
+Ergebnis- oder Literaturfreigabe. Die statische Strukturprüfung und der
+unabhängige Strukturreview bestanden. Der lokale `pdflatex`-Versuch scheiterte
+an fehlendem `ngerman.ldf`; auch `biblatex.sty` und Biber fehlen. Es entstand
+kein PDF; ein vollständiger Build und die visuelle Prüfung bleiben offen.
+Prüfungen und der erneute Abgleich des zuvor widersprüchlichen Live-Zustands
+stehen in `Bemerkungen.md`.
+
 **Repository-/Overleaf-Audit am 2026-09-13:** Der Hauptbranch ist nach einem
 frischen Fetch exakt mit `origin/main` synchron. Der Pfad `overleaf` wurde im
 Commit `95f7e1d` jedoch nur als Gitlink auf den fremden Commit

@@ -3768,3 +3768,518 @@ Caches werden nicht migriert oder überschrieben.
   BeatBridge-Dateien einchecken oder ein echtes Submodule mitsamt
   `.gitmodules` und erreichbarem, separat gepushtem Zielrepository einrichten;
   danach aus einem frischen Checkout gegenprüfen.
+
+## 2026-09-13 – Thesis-Setup-Audit: Bestandsaufnahme, Aufgabenstellung und Toolchain
+
+- **Fragestellung und Reasoning:** Vor inhaltlichem Schreiben den tatsächlichen
+  Overleaf-Dateistand, die verbindliche Aufgabenstellung und die lokal verfügbare
+  Build-Umgebung prüfen; ältere Statusaussagen nicht als aktuellen Dateinachweis
+  behandeln. Bestehende Nutzerdiffs und Originaldateien erhalten.
+- **Eingaben/Setup:** Pflichtdokumente, alle zehn Kapitel-/Abstract-/Anhangdateien,
+  `CGThesis.tex`, `meta.tex`, `cg.cls`, `bibliography.bib`, relevante Protokolle
+  und die unveränderte dreiseitige Aufgabenstellungs-PDF. Lesender
+  Vorher-Snapshot unter `/tmp/beatbridge-thesis-setup-audit-20260913/before/`.
+- **Testumfang bzw. Befehle:** `git status --short`,
+  `git -C overleaf status --short`, `git -C overleaf diff -- CGThesis.tex`,
+  `git ls-files --stage .gitmodules overleaf`; Toolinventur per `command -v`
+  für `pdftotext pdftoppm pdfinfo latexmk pdflatex xelatex lualatex tectonic biber bibtex node`,
+  `pdflatex --version`, `kpsewhich babel.sty`, `kpsewhich ngerman.ldf`,
+  `kpsewhich biblatex.sty`, `kpsewhich biber`. PDF-Prüfung:
+  `pdfinfo angepasste_aufgabenstellung_masterarbeit.pdf`, danach
+  `/usr/bin/pdfinfo angepasste_aufgabenstellung_masterarbeit.pdf`,
+  `/usr/bin/pdftotext -layout angepasste_aufgabenstellung_masterarbeit.pdf -`
+  und `/usr/bin/pdftoppm -scale-to 1400 -png angepasste_aufgabenstellung_masterarbeit.pdf /tmp/beatbridge-thesis-setup-audit-20260913/assignment`;
+  alle drei erzeugten Seiten visuell angesehen.
+- **Ergebnis einschließlich Fehlern/Blockaden:** Die Nutzeränderung von `LR`
+  auf `MA` war bereits vorhanden und wurde erhalten. Vor dieser Bearbeitung war
+  nur Related Work eingebunden; Abstracts und weitere Kapitel enthielten noch
+  Template-Material oder nur Überschriften. Die lokale `.gitmodules` ist
+  versioniert und der Submodule-Inhalt vorhanden; ältere Leerordner-Aussagen
+  treffen auf diesen Stand nicht zu. Keine neue Remote-/Checkout-Prüfung.
+  Das zuerst über PATH aufgelöste gebündelte `pdfinfo` scheiterte wegen fehlendem
+  `GLIBC_2.38`; dadurch wurde die anschließende `&&`-Kette nicht ausgeführt.
+  Die expliziten System-Poppler-Befehle waren erfolgreich. Die Aufgabenstellung
+  enthält einen deutschen, aber keinen registrierten englischen Titel; der
+  bestehende englische Titel bleibt mit Klärungs-TODO erhalten. PDF-Seite 2
+  bestätigt insbesondere 1–4 Takte, GUI/Export, Repräsentations-/Metrikbewertung,
+  manuellen Korrekturaufwand und Tanz-Nutzbarkeit als Anforderungen.
+  `pdflatex` ist vorhanden (TeX Live 2022/dev/Debian), aber `ngerman.ldf`,
+  `biblatex.sty` und Biber wurden nicht gefunden; auch `latexmk` fehlt.
+  Der vorgeschriebene Windows-Pythonpfad `.venv/Scripts/python.exe` ist in
+  dieser Linux-Umgebung nicht vorhanden. Es wurde kein Python ausgeführt.
+- **Schlussfolgerung/nächster Schritt:** Struktur an den tatsächlichen Dateien
+  reparieren, empirische Inhalte als TODO belassen und den Buildfehler separat
+  protokollieren. Primärliteratur, Registrierung und Prüfungsordnung sind noch
+  nicht durch diesen Strukturcheck verifiziert.
+
+## 2026-09-13 – Thesis-Setup-Audit: lokaler LaTeX-Buildversuch
+
+- **Fragestellung und Reasoning:** Die aktivierte vollständige Gliederung mit der
+  unveränderten Hochschulklasse kompilieren; ein Quelltextcheck allein belegt
+  keine erfolgreiche LaTeX-/Bibliographie-Verarbeitung oder korrekte Seitengestaltung.
+- **Eingaben/Setup:** Bearbeitete Overleaf-Quelldateien; Arbeitsverzeichnis
+  `/home/max/Documents/BeatBridge/overleaf`; neuer Buildordner einschließlich
+  `chapters/` ausschließlich unter `/tmp/beatbridge-thesis-setup-audit-20260913/build/`.
+  Der vom PDF-Skill verlangte Artefaktmarker wurde einmal erfolgreich ausgeführt.
+- **Testumfang bzw. Befehl:**
+  `pdflatex -interaction=nonstopmode -halt-on-error -file-line-error -output-directory=/tmp/beatbridge-thesis-setup-audit-20260913/build CGThesis.tex`.
+- **Ergebnis einschließlich Fehlern/Blockaden:** Exit-Code 1 beim Laden von
+  Babel: `Unknown option 'ngerman'`; `ngerman.ldf` fehlt. Kein PDF erzeugt.
+  Log: `/tmp/beatbridge-thesis-setup-audit-20260913/build/CGThesis.log`.
+  Der Abbruch erfolgt vor Verarbeitung der Kapitel und Bibliographie;
+  weitere LaTeX-Fehler sind damit weder nachgewiesen noch ausgeschlossen.
+  Biber wurde nicht ausgeführt; zusätzlich fehlt laut Vorprüfung `biblatex.sty`.
+- **Schlussfolgerung/nächster Schritt:** Vollständige TeX-Abhängigkeiten
+  bereitstellen oder in Overleaf mit `CGThesis.tex` als Hauptdatei bauen.
+  `cg.cls` bleibt unverändert; keine Sprach-/Bibliographiepakete wurden entfernt,
+  um einen scheinbar erfolgreichen Ersatzbuild zu erzeugen. Nach erfolgreichem
+  Build Warnungen und Seiten einschließlich beider Abstracts visuell prüfen.
+
+## 2026-09-13 – Thesis-Setup-Audit: statische Endprüfung und unabhängiger Review
+
+- **Fragestellung und Reasoning:** Aktivierung, Reihenfolge, Referenzintegrität,
+  Template-Bereinigung und Erhaltung der bestehenden Literatur-/Nutzerinhalte
+  unabhängig von der unvollständigen LaTeX-Installation prüfen.
+- **Eingaben/Setup:** Finale LaTeX-Struktur und Vorher-Snapshot. Temporäre
+  lesende Node-Prüfung; keine Testsplit-, Checkpoint- oder Audioverarbeitung.
+- **Testumfang bzw. Befehle:**
+  `/home/max/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node /tmp/beatbridge-thesis-setup-audit-20260913/check_structure.mjs`,
+  `git -C overleaf diff --check` und
+  `git diff --check -- docs/STATUS.md docs/Bemerkungen.md`.
+  SHA-256 des temporären Prüfscripts:
+  `e5b4c02c73838c18300f45a7fbdb9ec905d51c3d93675ad40d773c89fc9e6269`.
+  Der Strukturcheck entfernt Kommentare, prüft aktive Include-/Inputdateien,
+  Kapitelreihenfolge, `MA`/Englisch, lokalen deutschen Sprachwechsel, Anhangmodus,
+  einfache Klammer-/Umgebungsbalance, Label-Eindeutigkeit, aktive Referenzen,
+  Zitationsfolge/-schlüssel und Template-Reste. Vorher/Nachher-Vergleiche prüfen
+  den exakten Titel, Related-Work-Prosa und sämtliche nicht-editoriellen
+  Bibliographiefelder. SHA-256-Vergleiche schützen Notebook, Aufgabenstellungs-PDF,
+  Schreibpromptdatei und `.gitmodules` gegen Änderungen durch diese Bearbeitung.
+  Zusätzlich unabhängiger lesender Strukturreview durch ein anderes Modell mit
+  frischem Kontext gemäß Projekt-Skill; keine Tests/Dateiänderungen durch den Reviewer.
+- **Ergebnis einschließlich Fehlern/Blockaden:** Node Exit-Code 0, keine
+  fehlgeschlagene Prüfung: 10 aktive Includes (2 Abstracts, 7 Hauptkapitel,
+  1 Anhang), gewünschte Kapitelreihenfolge, 14 eindeutige aktive Labels,
+  0 aktive Querverweise, 43 Zitationsvorkommen mit 38 unterschiedlichen
+  Schlüsseln und 38 eindeutigen Bibliographieeinträgen. Alle Zitationen
+  auflösbar und gegenüber dem Snapshot unverändert. Alle zehn eingebundenen
+  Dateien enthalten konkrete TODOs. Related-Work-Prosa, Titel und nicht-editorielle
+  Bibliographiefelder erhalten; vier editorielle Notizen stehen jetzt in Kommentaren.
+  Alle vier Schutz-Hashes stimmen. Beide Diff-Whitespace-Prüfungen erfolgreich.
+  Nach Ergänzung des Prüfprotokolls und eines reinen Abgabedatum-TODO-Kommentars
+  wurden beide genannten `git diff --check`-Prüfungen erneut erfolgreich ausgeführt.
+  Der unabhängige Review fand keine umsetzungsrelevanten Strukturfehler.
+- **Schlussfolgerung/nächster Schritt:** Die Quelldateien bilden ein konsistentes
+  Arbeitsgerüst. Das ersetzt weder TeX/Biber-Kompilation noch Primärquellenprüfung,
+  fertige Abstracts oder eine Ergebnisfreigabe. Offene Punkte und Quellen stehen in
+  `docs/masterarbeit/THESIS_SETUP_AUDIT.md`. Kein Training, keine Python-/pytest-Suite,
+  keine Hörbewertung und kein Commit durch diesen Agenten.
+
+## 2026-09-14 – Thesis-Setup-Reaudit: Aufgabenstellung und Live-Zustand
+
+- **Fragestellung und Reasoning:** Den tatsächlich ausgecheckten Overleaf-Stand
+  erneut gegen die Aufgabenstellung prüfen, weil die vorhandene Audit-Dokumentation
+  bereits eine reparierte Struktur meldete, der Live-Stand aber weiterhin
+  `LR`, deaktivierte Abstracts/Kapitel und Template-Beispiele enthielt.
+- **Eingaben/Setup:** `CGThesis.tex`, `meta.tex`, alle Dateien unter
+  `overleaf/chapters/`, `bibliography.bib`, `cg.cls`, die Pflichtdokumente,
+  relevante Protokolle/Methodikdateien, eine lesende Inventur vorhandener
+  Manifest-/History-/Ratingartefakte und die unveränderte dreiseitige
+  Aufgabenstellungs-PDF. Keine Audio-, Dataset- oder Checkpointdatei verändert.
+- **Testumfang bzw. Befehle:** Zunächst `pdfinfo`, `pdftotext -layout` und
+  `pdftoppm` über PATH; anschließend explizit `/usr/bin/pdfinfo`,
+  `/usr/bin/pdftotext -layout` und `/usr/bin/pdftoppm -png -r 130`.
+  Alle drei gerenderten Seiten wurden visuell geprüft. Zusätzlich
+  `git status --short`, `git submodule status` und
+  `git -C overleaf status --short`.
+- **Ergebnis einschließlich Fehlern/Blockaden:** Der erste Poppler-Aufruf brach
+  ab, weil die gebündelte Binary `GLIBC_2.38` verlangt. Die System-Poppler-
+  Aufrufe waren erfolgreich: drei A4-Seiten, keine Verschlüsselung oder Formulare,
+  vollständige lesbare Darstellung. Die PDF bestätigt den deutschen Titel,
+  Masterarbeitsstatus, GUI/Export, Repräsentations- und Metrikevaluation,
+  Übergänge von ein bis vier Takten, manuellen Korrekturaufwand und
+  Tanz-Nutzbarkeit; sie enthält keinen exakten registrierten englischen Titel.
+  Der Overleaf-Submodule-Checkout war sauber und stand auf `6469dfa`, enthielt
+  aber den noch nicht reparierten Template-Zustand. Bestehende Diffs in
+  `docs/STATUS.md`, `docs/Bemerkungen.md` und das unversionierte Auditdokument
+  wurden erhalten und nur auf den nachgewiesenen aktuellen Stand fortgeschrieben.
+- **Schlussfolgerung/nächster Schritt:** Den Live-Stand selbst reparieren,
+  den englischen Titel bis zur Prüfung des Registrierungsdatensatzes bewahren
+  und fehlende Empirie ausschließlich als präzise TODO-Kommentare führen.
+
+## 2026-09-14 – Thesis-Setup-Reaudit: statische Strukturprüfung
+
+- **Fragestellung und Reasoning:** Nach dem Umbau maschinell prüfen, ob beide
+  Abstracts, sieben Hauptkapitel und der Anhang aktiv und geordnet sind, ob
+  Referenzen/Zitationen auflösbar bleiben und ob Template-Demos entfernt wurden.
+- **Eingaben/Setup:** Bearbeitete Overleaf-Quellen und der unveränderte
+  Vorher-Snapshot unter
+  `/tmp/beatbridge-thesis-setup-audit-20260913/before/`. Der bestehende
+  lesende Node-Prüfer wurde wiederverwendet; keine Experimentartefakte wurden
+  ausgeführt oder verändert.
+- **Testumfang bzw. Befehle:**
+  `/home/max/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node /tmp/beatbridge-thesis-setup-audit-20260913/check_structure.mjs`,
+  `git -C overleaf diff --check`, Diff-Whitespace-Prüfung der geänderten
+  Projektdokumentation sowie `rg` nach den bekannten Template-Texten und
+  einem aktiven `LR`-Klassenaufruf.
+- **Ergebnis einschließlich Fehlern/Blockaden:** Der erste Strukturcheck
+  meldete ausschließlich `bibliography non-editorial fields preserved`,
+  weil zunächst auch die vorhandene informative Graph-Cut-`note` entfernt
+  worden war. Dieses nicht als Templateplatzhalter belegte Feld wurde
+  wiederhergestellt. Die Wiederholung und die abschließende Prüfung bestanden:
+  10 aktive Includes, die sieben verlangten Kapitel in richtiger Reihenfolge,
+  43 eindeutige Labels, keine aktiven Querverweise, 43 Zitationsvorkommen mit
+  38 unterschiedlichen und auflösbaren Schlüsseln, 38 eindeutige
+  Bibliographieeinträge sowie mindestens ein Evidenz-TODO in jeder eingebundenen
+  Datei. Die Template-Suche und alle Diff-Whitespace-Prüfungen blieben leer.
+- **Schlussfolgerung/nächster Schritt:** Die Quellstruktur ist statisch
+  konsistent. Das ist kein Ersatz für LaTeX/Biber-Kompilation, visuelle
+  PDF-Prüfung, Primärquellenprüfung oder empirische Ergebnisfreigabe.
+
+## 2026-09-14 – Thesis-Setup-Reaudit: lokaler LaTeX-Buildversuch
+
+- **Fragestellung und Reasoning:** Prüfen, ob die vollständige Struktur mit der
+  unveränderten Instituts-Klasse lokal kompiliert und damit auch Sprachwechsel,
+  Kapitelverarbeitung und Bibliographie technisch validiert werden können.
+- **Eingaben/Setup:** Arbeitsverzeichnis `overleaf/`, Ausgabe ausschließlich
+  unter `tmp/thesis_setup_audit_20260914/build/`. Der PDF-Artefaktmarker wurde
+  unmittelbar vor dem Build genau einmal erfolgreich ausgeführt.
+- **Testumfang bzw. Befehl:**
+  `pdflatex -interaction=nonstopmode -halt-on-error -file-line-error -output-directory=/home/max/Documents/BeatBridge/tmp/thesis_setup_audit_20260914/build CGThesis.tex`.
+  Vorprüfung per `command -v` und `kpsewhich` für LaTeX-/Bibliographiewerkzeuge
+  und `babel.sty`, `ngerman.ldf`, `biblatex.sty`.
+- **Ergebnis einschließlich Fehlern/Blockaden:** `pdflatex` ist als TeX Live
+  2022/dev/Debian vorhanden, brach aber beim Laden von Babel mit
+  `Unknown option 'ngerman'` ab, weil `ngerman.ldf` fehlt. Kein PDF wurde
+  erzeugt; Kapitel und Bibliographie wurden nicht erreicht. `latexmk`,
+  `biber` und `biblatex.sty` fehlen ebenfalls; nur `bibtex` ist vorhanden,
+  obwohl die Klasse Biber verlangt. Der Log liegt unter
+  `tmp/thesis_setup_audit_20260914/build/CGThesis.log`.
+- **Schlussfolgerung/nächster Schritt:** Vollständige TeX-Abhängigkeiten
+  bereitstellen oder in Overleaf mit `CGThesis.tex` als Hauptdokument bauen.
+  Danach Biber-Lauf, Referenz-/Warnungsprüfung und visuelle Kontrolle aller
+  Seiten einschließlich Titel und beider Abstracts durchführen. Keine
+  Klassenabhängigkeit wurde entfernt, um den Build scheinbar erfolgreich zu machen.
+
+## 2026-09-14 – Thesis-Setup-Reaudit: unabhängiger Strukturreview
+
+- **Fragestellung und Reasoning:** Den Mehrdatei-Umbau gemäß Projekt-Skill mit
+  frischem Kontext gegen Aufgabenstellung, LaTeX-Struktur und wissenschaftliche
+  Evidenzgrenzen kreuzprüfen.
+- **Eingaben/Setup:** Read-only-Review durch ein anderes Modell; Pflichtdokumente,
+  Aufgabenstellung, aktueller Overleaf-Diff, sämtliche Kapitel und Bibliographie.
+  Keine Dateiänderung und kein empirischer Test durch den Reviewer.
+- **Testumfang bzw. Befehl:** Manueller Strukturreview von Dokumentklasse,
+  Sprachzustand, Abstracts, Kapitelreihenfolge, Titel, Template-Resten, TODOs,
+  Labels, Zitationen und Dokumentationskonsistenz.
+- **Ergebnis einschließlich Fehlern/Blockaden:** Kein Defekt in der TeX-Struktur.
+  Ein Dokumentationswiderspruch wurde gefunden: Der zu Beginn dieses Reaudits
+  direkt gelesene Live-Stand enthielt `LR`, während der erhaltene
+  Vorher-Snapshot vom 2026-09-13 bereits `MA` enthält und der ältere Logeintrag
+  `MA` als erhaltene Nutzeränderung beschreibt. Die Ursache der zwischenzeitlichen
+  Abweichung ist nicht belegt. `STATUS.md` und der Auditbericht beschreiben nun
+  ausschließlich diese beobachteten Zustände, ohne eine unbelegte Herkunft zu
+  behaupten. Zusätzlich wurde der gemeldete Grammatikfehler in `STATUS.md`
+  korrigiert. Danach bestand der Node-Strukturcheck erneut mit 10 aktiven
+  Includes, 43 eindeutigen Labels, 43 Zitationsvorkommen, 38 auflösbaren
+  Bibliographieschlüsseln und ohne Fehler. `git -C overleaf diff --check`
+  sowie `git diff --check -- docs/STATUS.md docs/Bemerkungen.md` blieben
+  ohne Ausgabe. Die explizite Dateiprüfung bestätigte, dass der fehlgeschlagene
+  Build kein `CGThesis.pdf` erzeugt hatte.
+- **Schlussfolgerung/nächster Schritt:** Der Reaudit ist nach der
+  Dokumentationskorrektur strukturell freigegeben. Vollständige Kompilation,
+  visuelle Thesis-Prüfung und Primärquellenaudit bleiben offen.
+
+## 2026-09-16 – Thesis-Blueprint: Aufgabenstellung und Evidenzinventur
+
+- **Fragestellung und Reasoning:** Eine belastbare englische Thesis-Argumentation
+  planen, ohne Kapitelprosa zu schreiben und ohne implementierte Pfade,
+  Verzeichnisnamen oder ältere Statusaussagen als Ausführungsnachweis zu
+  behandeln. Besonders zu trennen waren direkte Control-Optimierung, gelernte
+  Controller, Cuepoint-Ranking, fester Vier-Takt-Pfad, variabler
+  2/4/6/8-Takt-Pfad, synthetische Tests, Validierungsstudien und historische
+  Testnutzung.
+- **Eingaben/Setup:** `AGENTS.md`, `.agents/AGENT.md`, vollständig extrahiertes
+  `multi-session-project-discipline/SKILL.md`, `docs/STATUS.md`,
+  `docs/Projekt-Gesamtuebersicht.md`, relevante Feature-/Dataset-/Control-/
+  Ranker-/Rendering-/Hörprotokolle, Modellstands- und GUI-Dokumente,
+  relevante Implementierung und Tests, alle LaTeX-Dateien und die unveränderte
+  dreiseitige Aufgabenstellungs-PDF. Die PDF wurde mit
+  `/usr/bin/pdftotext -layout` extrahiert, mit `/usr/bin/pdftoppm -scale-to 1100
+  -png` gerendert und auf allen drei Seiten visuell geprüft. Unfertige
+  Antwortschlüssel, Audio, Test-Shards und Tensorpayloads wurden nicht geöffnet.
+- **Testumfang bzw. Befehle:** Lesende Inventur per `rg`, `sed`, `jq`, `cat`,
+  `git status --short` und `git -C overleaf status --short`. Der temporäre
+  `/tmp/beatbridge-blueprint-20260916/check_evidence.sh` prüfte mit `jq` und
+  `sha256sum` alle drei lokal vorhandenen Runmanifeste gegen History,
+  Best-/Latest-Checkpoint und gebundenes Datasetmanifest sowie die Zähler der
+  vollständigen Hörstudien. Checkpoints wurden nur gehasht, nicht geladen.
+- **Ergebnis einschließlich Fehlern/Blockaden:** Neun manifestierte Run-Dateien,
+  drei Datasetbindungen und drei History-Minimum/Best-/Endepochen-Ketten
+  stimmten. Verifiziert wurden der feste MLP-v1-Lauf und zwei historische
+  Vocal-MLP-v2-Läufe; die Validation-Proxy-Werte sind ausschließlich
+  innerhalb des jeweiligen Laufvertrags interpretierbar. Vier vollständige
+  `study_results.json` stimmten mit vollständigen Ratings und Präferenzsummen
+  überein. Drei weitere lokale Ratingsätze stehen auf `unrated`. Die später in
+  den Dokumenten genannten RoFormer-/Full-Band-/Variable-Runs, Dataset v2 und
+  September-Hörsätze fehlen in diesem Checkout; ihre bisherigen Auditbefunde
+  wurden als dokumentierte, nicht als frisch verifizierte Primärevidenz
+  klassifiziert. Der reale Cue-Ranker bleibt unbelegt; der vorhandene
+  End-to-End-Test ist ausdrücklich synthetisch.
+- **Schlussfolgerung/nächster Schritt:** Der Blueprint muss aktuelle lokale
+  Primärevidenz, frühere Audit-Evidenz und noch erforderliche Versuche sichtbar
+  trennen. Vor finalen Ergebnistabellen sind die fehlenden unveränderlichen
+  Artefakte wiederherzustellen und erneut zu prüfen. Niedrigere Proxy-Losses
+  dürfen nicht als Hörqualität oder Architektur-Rangliste ausgegeben werden.
+
+## 2026-09-16 – Thesis-Blueprint: statische Konsistenz- und Schutzprüfung
+
+- **Fragestellung und Reasoning:** Prüfen, ob der neue Plan alle verlangten
+  Bestandteile und die vorhandene LaTeX-Gliederung abdeckt, seine relativen
+  Quellenlinks auflösen und die bestehende Thesis-Prosa unverändert bleibt.
+- **Eingaben/Setup:**
+  `docs/masterarbeit/THESIS_BLUEPRINT.md`, alle Dateien unter
+  `overleaf/chapters/` und ein vor der Blueprint-Bearbeitung erzeugtes
+  SHA-256-Inventar des gesamten Overleaf-Checkouts. Das temporäre Prüfsystem
+  liegt unter `/tmp/beatbridge-blueprint-20260916/`.
+- **Testumfang bzw. Befehle:** Zuerst `node
+  /tmp/beatbridge-blueprint-20260916/check_blueprint.mjs`; danach wegen
+  fehlendem `node` auf PATH explizit
+  `/home/max/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node
+  /tmp/beatbridge-blueprint-20260916/check_blueprint.mjs`. Zusätzlich
+  `git diff --check -- docs/masterarbeit/THESIS_BLUEPRINT.md docs/STATUS.md
+  docs/Bemerkungen.md`, SHA-256 von Aufgabenstellungs-PDF, `.gitmodules` und
+  `docs/masterarbeit/SCHREIBPROMPTS.md` sowie `diff -u` zwischen dem
+  Overleaf-Vorher-Inventar und einem neu berechneten Inventar.
+- **Ergebnis einschließlich Fehlern/Blockaden:** Der erste Node-Aufruf
+  scheiterte mit Exit-Code 127, weil `node` nicht auf PATH liegt. Der erste
+  Lauf über den gebündelten Node fand sechs nur in Gross-/Kleinschreibung und
+  Benennung abweichende Related-Work-Zeilen im Blueprint. Die Zeilen wurden an
+  die tatsächlichen LaTeX-Abschnittstitel angeglichen. Danach bestand der
+  Check: genau eine primäre Frage, drei Teilfragen, 31 aufgelöste relative
+  Links, Abdeckung aller 47 vorhandenen LaTeX-Abschnitte sowie vorhandene
+  Beitrags-, Evidenzmatrix-, Outline-, Negativclaim- und Zitationsgrenzen.
+  `git diff --check` blieb leer. Das Overleaf-SHA-Inventar ist bytegenau
+  unverändert; auch die drei genannten Schutzdateien wurden nicht bearbeitet.
+  Es wurde kein LaTeX-Build gestartet, da ausschließlich ein Markdown-Plan
+  angelegt und keine Thesis-Quelle verändert wurde. Kein Python-/pytest-Lauf,
+  Training oder Hörtest wurde ausgeführt.
+- **Schlussfolgerung/nächster Schritt:** Die Blueprint-Struktur ist statisch
+  konsistent und die Thesis-Prosa blieb unverändert. Die in der früheren
+  Setup-Prüfung dokumentierte fehlende lokale TeX-Toolchain wird durch diesen
+  Markdown-Check weder behoben noch erneut getestet.
+
+## 2026-09-16 – Thesis-Blueprint: unabhängiger Evidenzreview
+
+- **Fragestellung und Reasoning:** Den umfangreichen Plan gemäß
+  Multi-Session-Projektdisziplin in frischem Kontext gegen Aufgabenstellung,
+  Evidenzklassen, Modellpfade, Hörstatus und Zitationsgrenzen prüfen, bevor er
+  als Grundlage für spätere Kapitelprosa dient.
+- **Eingaben/Setup:** Read-only-Review durch ein anderes Modell mit
+  `THESIS_BLUEPRINT.md`, Pflichtdokumenten, Aufgabenstellung, relevanten
+  Protokollen, Quellpfaden und lokal verfügbaren Manifest-/History-/
+  Ratingartefakten. Der Reviewer öffnete weder Audio/Test-Shards noch
+  unfertige Antwortschlüssel und änderte keine Datei.
+- **Testumfang bzw. Befehl:** Semantischer Review von Forschungsfragen,
+  Aufgabenstellungsabdeckung, wissenschaftlichen und technischen Beiträgen,
+  Claim-to-Evidence-Matrix, allen Kapitelabschnitten, Negativclaims,
+  Fixed-vs.-Variable-Trennung, Cue-Ranker-Grenzen, Validation-/Held-out-Sprache,
+  lokal fehlenden späteren Artefakten und Quellenverweisen. Der erste
+  Reviewversuch wurde vor inhaltlicher Arbeit durch ein Nutzungslimit des
+  Review-Agenten beendet. Ein neuer begrenzter Fresh-Context-Review wurde
+  anschließend erfolgreich abgeschlossen.
+- **Ergebnis einschließlich Fehlern/Blockaden:** Drei konkrete Punkte wurden
+  gefunden und korrigiert: (1) P6 bezeichnete irrtümlich H1–H6 insgesamt als
+  abgeschlossene Ergebnisdateien, obwohl nur H1–H4 abgeschlossen sind; (2) die
+  Aufgabenstellungstabelle führte automatische Tempo-/Beat-/Taktanalyse und
+  GUI-Anzeige von Beats, Takten und Segmentgrenzen nicht als eigene Anforderung;
+  (3) der Statussatz zum unveränderten registrierten Titel widersprach dem
+  offenen Nachweis des exakten englischen Registrierungstitels. Zusätzlich
+  wurde die Zuordnung der Repräsentationsbewertung zu SQ1 und der
+  Metrikbewertung zu SQ2 explizit gemacht. Der Reviewer fand keine weiteren
+  Fehler bei Fragenzahl, Fixed-/Variable-Trennung, Validation-/Held-out-
+  Einordnung, synthetischen Ranker-Grenzen, Beitragsmatrix, Dataset-/Run-/
+  Ratingzahlen, Zitationsaussagen oder lokalen Quellenpfaden. Nach den
+  Korrekturen wurden der Node-Blueprint-Check und der Evidenzcheck erneut
+  ausgeführt: weiterhin 1+3 Forschungsfragen, 31 gültige relative Links,
+  47 abgedeckte LaTeX-Abschnitte, neun gültige Run-Dateihashes, drei
+  Datasetbindungen, drei konsistente Histories und vier konsistente
+  abgeschlossene Hörzusammenfassungen. `git diff --check` sowie der erneute
+  Overleaf-SHA-Vergleich blieben ohne Ausgabe.
+- **Schlussfolgerung/nächster Schritt:** Der korrigierte Blueprint ist als
+  evidenzgebundene Planungsgrundlage reviewbar. Die fehlenden Versuche und
+  Artefakte bleiben offene Arbeit; der Review wandelt keine dokumentierte oder
+  geplante Evidenz in ein Ergebnis um. Vor Thesis-Prosa folgt die fachliche
+  Prüfung des Blueprint-Inhalts durch den Nutzer beziehungsweise die Betreuung.
+
+## 2026-09-16 – Related Work: Claim-, Quellen- und Metadatenaudit
+
+- **Fragestellung und Reasoning:** Jeden Absatz des Related-Work-Kapitels auf
+  eine durch die zitierte Primärquelle belegte Aussage zurückführen und die
+  Positionierung als Vergleich von Problem, Supervision, Output und Evaluation
+  formulieren. Dabei mussten Cuepoint-Auswahl, Kompatibilitätsranking,
+  Rendering und Control-Lernen getrennt sowie Proxy-Optimierung und
+  Perzeptionsnachweis ausdrücklich auseinandergehalten werden.
+- **Eingaben/Setup:** Pflichtdokumente und Projekt-Skill, Thesis-Blueprint,
+  Feature-, Control-, Ranker- und Render-Metrik-Protokolle, aktueller
+  LaTeX-Stand sowie Primärpublikationen beziehungsweise offizielle
+  Proceedings-, DOI-, Autoren- und Hochschul-Repositoriumsseiten. Geprüft
+  wurden insbesondere die direkten Systeme von Bittner et al., Kim et al.,
+  Mosaikbox, DJTransGAN, Robinson und Brown, DJ AI und Hein sowie die
+  verwendeten Frontend-, SSL-, Kompatibilitäts- und Evaluationsarbeiten.
+- **Testumfang bzw. Befehle:** Zitations-/Bibliographieschlüssel wurden mit
+  `rg`, `perl` und `sort -u` inventarisiert. Der Gesamtbuild wurde mit
+  `pdflatex -interaction=nonstopmode -halt-on-error
+  -output-directory=/tmp/beatbridge_literature_audit CGThesis.tex` versucht.
+  Ein isoliertes englisches Testdokument unter
+  `/tmp/beatbridge_literature_audit/` wurde mit `pdflatex`, `bibtex` und zwei
+  weiteren `pdflatex`-Läufen gebaut. Ein repräsentativer BibLaTeX-Test mit
+  `backend=bibtex` wurde zusätzlich gestartet. Abschließend wurden
+  Schlüsselgleichheit, Klammer-/Syntaxzustand und Whitespace mit Shell-/Perl-
+  Checks sowie `git -C overleaf diff --check` und `git diff --check` geprüft.
+- **Ergebnis einschließlich Fehlern/Blockaden:** Das Kapitel wurde auf sieben
+  Vergleichsgruppen plus Terminologie und Positionierungssynthese umgebaut.
+  23 zitierte Schlüssel besitzen genau 23 Bibliographieeinträge. Das isolierte
+  Kapitel ließ sich einschließlich klassischem BibTeX-Lauf zu einem
+  neunseitigen Test-PDF bauen; nach der bibliographisch korrekten Einstufung
+  der Princeton-Arbeit als BibLaTeX-`@thesis` blieb der abschließende
+  BibLaTeX-Lauf lokal blockiert, weil `biblatex.sty` fehlt. Der Gesamtbuild
+  scheiterte bereits zuvor an fehlendem `ngerman.ldf`; `latexmk` und Biber sind
+  ebenfalls nicht installiert. Es entstand kein Thesis-PDF. Die Fehler sind
+  Toolchain-Blockaden und keine durch das Kapitel gemeldeten LaTeX-Syntaxfehler.
+  Eine abschließende Link-Stichprobe erkannte außerdem, dass die zunächst
+  eingetragene ISMIR-Late-Breaking-Nummer `000036` auf den Spleeter-Abstract
+  statt auf die Graph-Cut-Arbeit verwies; der Primärquellenlink wurde auf den
+  verifizierten Abstract `000035` korrigiert.
+  Kein Python-/pytest-Lauf, Training, Audio-Rendern oder Hörtest wurde
+  ausgeführt.
+- **Schlussfolgerung/nächster Schritt:** In Overleaf oder einer vollständigen
+  TeX-Installation `pdflatex`/Biber/`pdflatex` zweimal ausführen, danach
+  undefinierte Zitate, BibLaTeX-Warnungen, Zeilenumbrüche und das sichtbare
+  Literaturverzeichnis prüfen. Die zwei erhaltenen TODOs dürfen erst nach dem
+  kontrollierten Repräsentationsversuch beziehungsweise einer fixierten
+  Perzeptionsauswertung ersetzt werden.
+
+## 2026-09-16 – Englisches Methodology-/System-Design-Kapitel
+
+- **Fragestellung und Reasoning:** Den verifizierten deutschen Methodikentwurf
+  sinngemäß in das Overleaf-Kapitel überführen, dabei mathematische und
+  methodische Verträge erhalten und jede Aussage nach Evidenzstufe begrenzen.
+  Besonders zu prüfen waren Zahlen aus Dataset-/Runmanifesten, die Trennung
+  von Fixed- und Variable-Protokoll, synthetischer Cue-Ranker-Verifikation,
+  realem Training, Validation-Entwicklung und held-out Evaluation sowie die
+  bereits bekannten Toolchain-Blockaden.
+- **Eingaben/Setup:** Pflichtdokumente und eingebetteter
+  Multi-Session-Projektdisziplin-Skill, deutscher Entwurf, Thesis-Blueprint,
+  Setup-Audit, Analysis-/Candidate-/Feature-/Dataset-/Control-/Ranker-/Study-
+  Protokolle, aktueller Overleaf-Aufbau und Bibliographie. Lokal vorhanden
+  waren zwei Format-1-Datasetmanifeste, drei Format-1-Runmanifeste/-Histories
+  und historische Hörartefakte. Die Primärartefakte für Dataset v2, spätere
+  RoFormer-/Full-Band-/Variable-Runs und die September-Hörsätze fehlen in
+  diesem Checkout; dafür wurden nur die datierten Repository-Audits verwendet.
+  Originalaudio, Checkpoints, Manifeste und Hörartefakte wurden nicht geändert.
+- **Testumfang bzw. Befehle und Ergebnisse:** Read-only-`jq`-Abgleiche
+  bestätigten für die lokalen Datasetmanifeste `45/9/9` und `370/50/60`,
+  train-only-Normalisierung und die IDs `f9044dc259b7296c8b28` und
+  `52bc9d1cebfd1b82d2ea`. Die lokalen Runmanifeste bestätigten unter anderem
+  Parameterzahlen `10.394`/`20.821`, Trainings-Samplerate 11.025 Hz,
+  Batchgröße 5, Lernrate `1e-3`, Weight Decay `1e-4`, Gradientengrenze 1,
+  Patience 6 und die SHA-gebundene Best-/Latest-/History-Struktur.
+  `git -C overleaf diff --check`, ein AWK-Klammercheck, die Prüfung auf
+  doppelte Kapitel-Labels und der Abgleich von `lu2024bsroformer` gegen
+  `bibliography.bib` bestanden mit Exit-Code 0. Der Gesamtbuild
+  `pdflatex -interaction=nonstopmode -halt-on-error
+  -output-directory=/tmp/beatbridge-methodology-latex-20260916 CGThesis.tex`
+  scheiterte mit Exit-Code 1 vor jeder Kapitelinklusion an fehlendem
+  `ngerman.ldf`; es entstand kein Thesis-PDF. Der erste isolierte Kapitelbuild
+  erzeugte ein 15-seitiges PDF, meldete aber mehrere Overfull-Boxen und wegen
+  des reduzierten Wrappers zunächst undefinierte Referenzen/Zitationen. Nach
+  iterativer Umformulierung und einem temporären Bibliographieplatzhalter
+  bestanden weitere `pdflatex`-Läufe; der abschließende Lauf erzeugte ein
+  16-seitiges PDF mit Exit-Code 0 ohne Warnungen oder Overfull-Boxen. Der
+  erste Renderingversuch mit dem gebündelten `pdftoppm` scheiterte an dessen
+  nicht verfügbarer GLIBC-2.38-Abhängigkeit. Der Fallback mit Ghostscript
+  renderte die Seiten 3 und 11 erfolgreich; Dataset- und Objective-Tabelle
+  wurden visuell auf lesbare Spalten, vollständige Werte und Überlauf geprüft.
+  Nach der Status- und Logpflege bestanden `git diff --check`,
+  `git -C overleaf diff --check` und der erneute Klammercheck mit Exit-Code 0.
+  Nach dem abschließenden HT-Demucs-Zitations-TODO bestanden beide Diffchecks,
+  der Klammercheck und der erneute Schlüsselabgleich ebenfalls mit Exit-Code 0.
+  Die vorgeschriebene Windows-Python-Datei `.venv\\Scripts\\python.exe` ist
+  in diesem Linux-Checkout nicht vorhanden; deshalb wurde kein Python-/pytest-
+  Lauf gestartet.
+- **Ergebnis einschließlich Fehlern/Blockaden:**
+  `overleaf/chapters/03_mainPart.tex` enthält nun das englische Kapitel mit
+  erhaltenem Kapitel- und allen bisherigen Abschnittslabels. Der Text trennt
+  implementierte, technisch verifizierte, real trainierte, evaluierte und
+  geplante Arbeit. Format-2-/spätere Runzahlen sind als Audit-only markiert;
+  der synthetische Ranker wird nicht als Realergebnis dargestellt; Proxy-Loss
+  wird nicht als Perzeptionsnachweis verwendet. Die vorhandene Bibliographie
+  wurde nicht verändert. Der Gesamtbuild bleibt ausschließlich an der
+  dokumentierten lokalen TeX-Abhängigkeit blockiert; der Kapitelquelltext
+  selbst kompiliert isoliert fehlerfrei.
+- **Schlussfolgerung/nächster Schritt:** In Overleaf beziehungsweise einer
+  vollständigen TeX-Installation den Gesamtbuild mit Biber ausführen und das
+  Kapitel im echten Thesis-Layout vollständig visuell prüfen. Vor dem Entfernen
+  der LaTeX-TODOs müssen insbesondere Korpusrechte, Format-2-/spätere
+  Primärartefakte, Repräsentationsversuch, realer Cue-Ranker, 1-/3-Takt-Fälle,
+  gelernte Controller-Hörstudie sowie GUI-, Korrekturaufwands- und
+  Tanzevaluation tatsächlich vorliegen. Kein Commit wurde erstellt.
+
+## 2026-09-21 – Evidence-based Implementation-Kapitel
+
+- **Fragestellung und Reasoning:** Den Templateinhalt von
+  `overleaf/chapters/04_implementation.tex` durch eine reproduzierbare,
+  wissenschaftlich begrenzte Beschreibung der tatsächlich implementierten
+  BeatBridge-Pipeline ersetzen. Entscheidend waren die Trennung von
+  Feature-Protokoll 1 und 2, festem Full-Band-Renderer und variablem
+  Vocal-Renderer sowie implementiertem Code, synthetischer Verifikation,
+  realem Training und lediglich geplanter GUI-/End-to-End-Funktionalität.
+- **Eingaben/Setup:** Pflichtdokumente und eingebetteter
+  Multi-Session-Projektdisziplin-Skill, `STATUS.md`, Exposé, aktuelles
+  Methodology-Kapitel, Analysis-/Candidate-/Feature-/Dataset-/Rendering-/ML-/
+  Cue-Ranker-/Batch-/GUI-Protokolle, CLI-Dokumentation und die relevanten
+  Quellmodule. Primäre lokale Evidenz waren zwei Format-1-Datasetmanifeste,
+  drei Format-1-Runmanifeste/-Histories und historische Studienartefakte.
+  Format-2-Dataset, spätere Fixed-TCN-/Variable-TCN-Runs und reale
+  Cue-Ranker-Artefakte fehlen in diesem Checkout und wurden nicht als frisch
+  verifizierte Primärartefakte behandelt.
+- **Testumfang bzw. Befehle:** Der erste isolierte Aufruf
+  `pdflatex -interaction=nonstopmode -halt-on-error -output-directory=/tmp
+  /tmp/beatbridge_impl_check.tex` scheiterte, weil der temporäre Wrapper
+  `\cite` zunächst mit `\newcommand` statt `\renewcommand` definierte. Nach
+  der Wrapperkorrektur kompilierte das Kapitel. Tabellenbreiten,
+  Pseudocodegröße, lange Bezeichner und die Provenienzkette wurden danach
+  iterativ korrigiert. Der finale isolierte Doppelaufruf desselben Befehls
+  erzeugte ein zehnseitiges PDF ohne LaTeX-Fehler, undefinierte Referenzen
+  oder Overfull-Boxen; verblieben sind nur Underfull-Hinweise in schmalen
+  Tabellenzellen. `rg` bestätigte neun eindeutige bestehende Kapitel-/
+  Abschnittslabels, genau eine Zitation `lu2024bsroformer`, den vorhandenen
+  Bibliographieeintrag und vier explizite TODO-Kommentare. Der Gesamtbuild
+  `pdflatex -interaction=nonstopmode -halt-on-error CGThesis.tex` scheiterte
+  wie dokumentiert vor Kapitelinklusion an fehlendem `ngerman.ldf`; es entstand
+  kein Thesis-PDF. Der erste Bildrender-Aufruf über das gebündelte
+  `pdftoppm` scheiterte an dessen GLIBC-2.38-Anforderung. `/usr/bin/pdftoppm`
+  renderte anschließend Seiten 1, 2, 5 und 6 des isolierten PDFs erfolgreich.
+  Architekturabbildung, Statusübersicht, Pseudocode und Controller-/Renderer-
+  Tabelle wurden visuell auf Lesbarkeit und Überlauf geprüft. Abschließend
+  bestanden `git -C overleaf diff --check` und `git diff --check` mit
+  Exit-Code 0. Die beim blockierten Gesamtbuild erzeugte unversionierte
+  `overleaf/CGThesis.log` wurde danach wieder entfernt.
+- **Ergebnis einschließlich Fehlern/Blockaden:** Das Kapitel beschreibt nun
+  Architektur und Datenfluss, Analyse- und Featurecaches, Candidate- und
+  Datasetaufbau, optionalen Cue-Ranker, vier Controller-/Rendererpfade,
+  Training und Resume, Evaluation, Provenienzkette sowie den aktuellen
+  CLI-/Notebook-/HTML-Workflow. Der Variable-TCN-Pfad wird korrekt als
+  vocal-aware Objective-v5-Pfad und nicht als Variante des festen
+  Drei-Band-EQ-Renderers beschrieben. Der reale Ranker, eine GUI,
+  Multi-Track-Assembly und finaler Projekt-Export bleiben ausdrücklich offen.
+  Proxy-Loss wird nicht als Perzeptionsnachweis verwendet. Originalaudio,
+  Datasets, Checkpoints, Manifeste und Studienartefakte wurden nicht geändert.
+- **Schlussfolgerung/nächster Schritt:** Den vollständigen Thesis-Build in
+  Overleaf oder einer TeX-Installation mit `ngerman`, BibLaTeX und Biber
+  ausführen und das Kapitel im endgültigen Thesis-Layout prüfen. TODOs erst
+  nach realem Ranker-Lauf, GUI-/End-to-End-Implementierung, Klärung von
+  Korpus- und onTAKT-Rechten sowie Wiederherstellung der fehlenden Format-2-
+  und späteren Runartefakte entfernen. Kein Python-/pytest-Lauf, Training,
+  Audio-Rendering oder Commit wurde ausgeführt.
