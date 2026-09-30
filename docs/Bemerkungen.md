@@ -1,5 +1,415 @@
 # Beobachtungen, Entscheidungen und Gelerntes
 
+## 2026-09-30 — Erweiterung des Vier-Modell-Hörtests auf 20 Beispiele (abgeschlossen)
+
+- **Fragestellung/Reasoning:** Korrektur der gewünschten Hörtestgröße von
+  zwei auf zwanzig Paarbeispiele. Die frühere Zwei-Paar-Ausgabe bleibt
+  unverändert. Alle fünf Varianten pro Zeile (vier Modelle plus Equal Power)
+  müssen exakt denselben Übergang verwenden.
+- **Eingaben/Setup:** Dataset-v1-Validation mit 50 Datensätzen; Kandidaten
+  mussten beidseitige Vocal-Feature-Stärke ≥ 0,15 und Tempoänderung ≤ 0,5 %
+  erfüllen. Damit waren 29 Cue-Beispiele geeignet, aber nur fünf gerichtete
+  Trackpaare (10/7/6/3/3 Cues); alle fünf RoFormer-Stems der gewählten
+  Trackliste waren bereits im lokalen Cache. Die strikte Vorregel „höchstens
+  ein Beispiel pro Track“ erlaubte nur fünf Beispiele insgesamt. Für die
+  Korrektur wurde eine deterministische Round-Robin-Auswahl über die fünf
+  Trackpaare verwendet. Sie wählt 20 unterschiedliche Candidate-/Cue-IDs,
+  balanciert 3/3/4/5/5 Beispiele auf die Paare und verwendet Tracks/Cues nicht
+  doppelt. Alle Hörbeispiele bleiben aus Validation; kein Testsplit wurde
+  gelesen. Die v1-/v2-Modellvertragsgrenzen aus dem Zwei-Paar-Hörtest gelten
+  weiterhin.
+- **Prüfumfang/Befehle:** Vorab-Kapazitäts-/Cacheprüfung: 20 selektierbare
+  Cues, fünf Trackpaare, fünf Stemcache-Treffer; geschätzte WAV-Größe ~670 MB,
+  freier Speicher ~3,3 TB. Smoke:
+  `.venv\Scripts\python.exe -X utf8 -B -m src.evaluation.four_model_listening_study --smoke-only --allow-track-reuse --output-directory output/four_models_shared_20pairs_validation_20260930 --feature-cache-root output/four_model_shared_feature_cache_20260927 --vocal-cache-root output/feature_cache`
+  bestand mit einem ausgewählten 4-Takt-Cue und fünf validen Stereo-Renderings
+  (260.096 Übergangssamples). Vollständiger Export:
+  `.venv\Scripts\python.exe -X utf8 -B -m src.evaluation.four_model_listening_study --pair-count 20 --allow-track-reuse --output-directory output/four_models_shared_20pairs_validation_20260930 --feature-cache-root output/four_model_shared_feature_cache_20260927 --vocal-cache-root output/feature_cache`
+  bestand bei 20/20 Paaren und 100 WAVs. Der erste SHA-/Format-Auditaufruf
+  enthielt versehentlich Zeilenumbrüche in `python -c` und endete mit
+  `SyntaxError`; die erneut ausgeführte Einzeilenprüfung bestand:
+  `FINAL_20_PAIR_VERIFY_OK`, 100/100 WAV-SHAs, 4/4 Run-/Checkpoint-SHA-Bindungen,
+  gleiche 44,1-kHz-Samplerate, Kanal- und Samplezahl je Beispiel. Gesamtausgabe
+  674.487.520 Bytes. Player:
+  `output/four_models_shared_20pairs_validation_20260930/index.html`.
+- **Schlussfolgerung und nächster Schritt:** Gewünschte Größe ist umgesetzt.
+  Für alle 20 Cue-Beispiele gibt es fünf blind/randomisiert beschriftete
+  Varianten desselben Übergangs mit identischem Kontext und gemeinsamem
+  Peak-Gain; die frühere Zwei-Paar-Ausgabe bleibt reproduzierbar erhalten.
+  Da nur fünf Trackpaare vertreten sind, sind Hörerurteile innerhalb eines
+  Trackpaars korreliert und nicht als 20 unabhängige Tracktests auszuwerten.
+  Der variable Checkpoint bleibt auf v1-Stimuli out-of-domain; der Satz ist
+  explorativ, kein protokollgleicher Benchmark. `answer_key.json` erst nach
+  vollständiger Bewertung öffnen. Es wurden keine Gewichte/Audios committed.
+
+## 2026-09-27 — Geblendeter gemeinsamer Hörtest für vier Modelle (abgeschlossen)
+
+- **Fragestellung/Reasoning:** Vier bereits trainierte Modelle sollen anhand
+  derselben 2 Paarbeispiele hörbar verglichen werden. `2p` wurde als zwei
+  unterschiedliche Trackpaar-Beispiele interpretiert; wegen der drei festen
+  Format-1-Modelle sind beide Übergänge vier Takte lang. Equal Power ist als
+  Referenz zusätzlich enthalten.
+- **Eingaben/Setup:** Ausschließlich Dataset-v1-Validation (50 Beispiele,
+  Dataset-ID `52bc9d1cebfd1b82d2ea`, Manifest-SHA
+  `4708a8fa983354903759a934f48d36b6450510809773dda2a12f9408821886b7`)
+  sowie der abgeschlossene Variable-Run und Dataset-v2
+  (`2a124caf5625b4c8f683`, SHA
+  `bf82442d82713bdb21b7f7429f7aee1845eda3c44abcd6d5f4fdca688a78a422`).
+  Beide ausgewählten Paare haben getrennte Tracks (max. eine Verwendung pro
+  Track), 0,5 % maximale Tempoanpassung und Vocal-Feature-Mindeststärke 0,15.
+  Kein Testsplit wurde geöffnet. Für das variable Modell wurden seine
+  Feature-Protocol-2-Features auf denselben v1-Cues mit den im v2-Manifest
+  gespeicherten, ausschließlich auf Train-Tracks gefitteten Normalisierungs-
+  Statistiken berechnet. Seine Waveforms benutzen denselben ausgerichteten
+  44,1-kHz-Mix-/RoFormer-Stimulus; gerendert wird mit seinem 11,025-kHz-
+  Renderer und anschließend auf 44,1 kHz resampelt. Alle Varianten je Paar
+  teilen exakt denselben Vor-/Nachlauf und gemeinsamen Peak-Gain.
+- **Prüfumfang/Befehle:** Neuer reproduzierbarer Exporter
+  `src/evaluation/four_model_listening_study.py`. Smoke:
+  `.venv\Scripts\python.exe -X utf8 -B -m src.evaluation.four_model_listening_study --smoke-only --feature-cache-root output/four_model_shared_feature_cache_20260927 --vocal-cache-root output/feature_cache`
+  bestand auf einem Paar für Equal Power und alle vier Modelle; finite
+  Stereoausgaben, 273.920 Übergangssamples, keine Hördatei geschrieben.
+  Anschließend vollständiger Export mit denselben Cache-Argumenten und
+  `--pair-count 2` (Default) bestand. SHA-Nachprüfung bestätigte beide
+  Datasetmanifeste, alle vier Run-Manifeste und Checkpoints sowie alle zehn
+  WAV-Dateien. Jede WAV hat 44.100 Hz; die fünf Dateien je Paar haben jeweils
+  dieselbe Samplezahl (847.220 beziehungsweise 829.812). Ergebnis:
+  `output/four_models_shared_2pairs_validation_20260927/` mit `index.html`,
+  blindem `manifest.json`, lokalem `answer_key.json` und unrated
+  `ratings.json`.
+- **Fehler und Sackgassen:** Direkter `py_compile`-Aufruf konnte die
+  Bytecode-Datei im vorhandenen `__pycache__` nicht anlegen; der Import-/CLI-
+  Help-Check mit `-B` validierte danach das Modul ohne Bytecode-Schreiben.
+  Erster Smoke scheiterte beim Schreiben in den bestehenden
+  `output/feature_cache/feature_protocol_v1`-Pfad (Access denied). Ein
+  isolierter neuer Cachepfad löste zunächst einen RoFormer-Asset-Download aus,
+  der an der Windows-CP1252-Ausgabe scheiterte; danach wurde der vorhandene
+  RoFormer-Artefaktcache explizit wiederverwendet und nur der neue Featurecache
+  getrennt angelegt. Zwei Exporter-Smoke-Fehler (doppeltes `cache_root`-
+  Argument; im Smoke-Modus angelegtes Paarverzeichnis ohne Studienroot) wurden
+  behoben; der folgende Smoke bestand. Der erste vollständige Export konnte
+  den vorhandenen `output/control_studies`-Pfad nicht beschreiben; der finale
+  Export nutzt daher einen neuen Ordner direkt unter `output/`. Keine dieser
+  Sackgassen änderte bestehende Quellen, Datensätze, Checkpoints oder Caches.
+- **Schlussfolgerung und nächster Schritt:** Der Hörtest ist bereit unter
+  `output/four_models_shared_2pairs_validation_20260927/index.html`.
+  Methode/Labels bleiben bis zum Abschluss geblendet; `answer_key.json` erst
+  danach öffnen. Die v1- und v2-Validation-Bestände haben null identische
+  Trackpaare. Deshalb ist dies ein gemeinsamer Stimulus-Hörvergleich, kein
+  protokollgleicher Qualitätsbenchmark: das variable Modell ist auf den v1-
+  Tracks out-of-domain und seine Eingabe-/Rendererverträge bleiben v2. Nicht
+  über Modellverträge hinweg statistisch poolen. Testsplit bleibt geschlossen.
+
+## 2026-09-27 — Resume der beiden 30-Epochen-Läufe (abgeschlossen)
+
+- **Fragestellung/Reasoning:** `variable_tcn_bilstm_transition_control_v1`
+  und `vocal_time_shared_mlp_v2` sollen über das ursprüngliche Limit von 30
+  Epochen hinaus trainieren. Die Läufe hatten Early Stopping (Patience 6),
+  erreichten dieses beim ersten Lauf aber nicht vor `max_epochs=30`. Daher
+  wurde jeweils der letzte Checkpoint einschließlich Optimizerzustand geladen,
+  `max_epochs` auf 100 erweitert und die bestehende Geduld-/Min-Delta-Policy
+  beibehalten. Das Limit 100 ist nur eine Obergrenze, kein Sollziel.
+- **Eingaben/Setup:** Unveränderte Runverträge und lokale Checkpoints vom
+  2026-09-26. Vocal-MLP: Dataset-v1-ID `52bc9d1cebfd1b82d2ea`, Manifest-SHA
+  `4708a8fa983354903759a934f48d36b6450510809773dda2a12f9408821886b7`,
+  370 Train-/50 Validationbeispiele; alle 420 Vocalcacheeinträge waren
+  Treffer. Variable TCN/BiLSTM: Dataset-v2-ID `2a124caf5625b4c8f683`,
+  Manifest-SHA `bf82442d82713bdb21b7f7429f7aee1845eda3c44abcd6d5f4fdca688a78a422`,
+  Waveformcacheindex-SHA
+  `902e53a8491354000adcc9acad9f94d39eceae2a96a662891190438881c4c30`,
+  2.649 Train-/622 Validationbeispiele, `test_reads=0`. Seed 20260926,
+  CUDA `cuda:0`, Patience 6, W&B-Projekt/Gruppe unverändert. W&B loggt nur
+  Konfiguration und Metriken (`--no-wandb-log-checkpoints`); lokale
+  Checkpoints bleiben lokal.
+- **Fehlstart/Sackgasse:** Der erste Vocal-Resume-Aufruf mit Standard-
+  Sandbox-Netzwerkzugriff scheiterte nach 90 Sekunden in `wandb.init`
+  (`CommError: Run initialization has timed out`); es begann keine neue
+  Epoche und die Checkpoints blieben unverändert. Gelernt: Online-Resume
+  benötigt bei diesem Setup explizit erlaubten Netzwerkzugriff. Der erneute
+  Aufruf mit freigegebenem Netzwerk startete denselben W&B-Run erfolgreich.
+- **Vocal-MLP-Lauf/Befehl:**
+
+  ```powershell
+  .venv\Scripts\python.exe -u -B -m src.ml train-vocal output\datasets\feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output\training_runs\prive_scantraxx_all_models_dataset_v1_vocal_time_shared_mlp_v2_20260926_run01 --cache-root output\ml_cache\bridge_waveform_v2_vocal --feature-cache-root output\feature_cache --seed 20260926 --max-epochs 100 --batch-size 5 --device cuda:0 --resume --wandb-mode online --wandb-project beatbridge --wandb-group prive-scantraxx-extension-all-models-20260926 --wandb-name vocal_time_shared_mlp_v2-dataset-v1-continue-to100 --wandb-tags prive_scantraxx_extension dataset_format_v1 dataset_52bc9d1cebfd1b82d2ea vocal_time_shared_mlp_v2 resume_30_to_100 --no-wandb-log-checkpoints
+  ```
+
+  Epoche 31–40 wurden ergänzt; Early Stopping beendete den Lauf in Epoche
+  40. Best-Checkpoint nach der konfigurierten Min-Delta-Policy: Epoche 34,
+  Validation-Loss `0.324909533560276`; spätere minimale Loss-Schwankungen
+  unterschritten die Min-Delta-Schwelle nicht. W&B-Run
+  [`1d4dc62c31b2985fb4e2`](https://wandb.ai/xamdoesmc-technische-universit-t-braunschweig/beatbridge/runs/1d4dc62c31b2985fb4e2).
+  Finales Manifest-SHA `9a15c5536910b27beb13377ba1cb887feae0af94f44e3d88264ca198ccd0d621`;
+  Best-/Latest-Checkpoint-SHAs `4c3561d46e42976d259eef9d0b07094ed726c455d22c829b25e431173f48e474` /
+  `628d4c87b1385b0ca762af0fdacf64a2eced0f51189c91c1286a597bba880f7e`.
+- **Variable-TCN/BiLSTM-Lauf/Befehl:**
+
+  ```powershell
+  .venv\Scripts\python.exe -u -B -m src.ml train-variable-tcn-bilstm output\datasets\prive_scantraxx_extension_variable_v2_fp2_roformer_2-4-6-8bar_top1x3_split20260923_run02_local_four_four output\training_runs\prive_scantraxx_all_models_dataset_v2_variable_tcn_bilstm_20260926_run01 --cache-root output\ml_cache\variable_bridge_waveform_v2\prive_scantraxx_extension_run02_wandb_full_20260926 --transition-bars 2 4 6 8 --seed 20260926 --max-epochs 100 --batch-size 4 --device cuda:0 --resume --wandb-mode online --wandb-project beatbridge --wandb-group prive-scantraxx-extension-all-models-20260926 --wandb-name variable_tcn_bilstm_transition_control_v1-dataset-v2-continue-to100 --wandb-tags prive_scantraxx_extension dataset_format_v2 dataset_2a124caf5625b4c8f683 variable_tcn_bilstm_transition_control_v1 resume_30_to_100 --no-wandb-log-checkpoints
+  ```
+
+  Epoche 31–40 wurden ergänzt; sechs aufeinanderfolgende Epochen ohne
+  Min-Delta-Verbesserung beendeten den Lauf nach Epoche 40. Best-Checkpoint:
+  Epoche 34, Validation-Loss `0.2271690967781491`. W&B-Run
+  [`875000043610a50d8e24`](https://wandb.ai/xamdoesmc-technische-universit-t-braunschweig/beatbridge/runs/875000043610a50d8e24).
+  Finales Manifest-SHA `e7ae40fe07ca6199e4de09fb2bac710f9993d8bf8c6ab6c5b3b5e8a4b3626658`;
+  Best-/Latest-Checkpoint-SHAs `1822d86a7672912844b538284113a46d89a3e3914afa562f39e27e6d11c63b68` /
+  `d22fb4910c5fd993c42464beec9460d65dc658d6ac951312786a7a707d10ae21`.
+- **Ergebnis/Schlussfolgerung:** Beide Läufe gingen über Epoche 30 hinaus
+  und endeten vor dem Sicherheitslimit 100 aufgrund der bestehenden
+  Early-Stopping-Regel. Beide W&B-IDs wurden fortgesetzt; W&B bestätigte je
+  0 Media- und 0 Artifactdateien. Die lokalen Manifeste binden History sowie
+  Best-/Latest-Checkpoint-SHAs; beim Variable-Run bestätigt `io_audit.json`
+  ausschließlich Train/Validation und `test_reads=0`. Auf CUDA erschienen
+  erwartete PyTorch-Warnungen zu nichtdeterministischen CUDA-Backward-Op-
+  Implementierungen unter `warn_only=True`; beide Läufe endeten regulär.
+  Es wurden weder Audio noch Modellgewichte committet. Kein Commit erstellt.
+
+## 2026-09-26 — PRIVE-Trainingsläufe über Modellfamilien (abgeschlossen)
+
+- **Fragestellung/Reasoning:** Die vier registrierten Modellpfade sollen auf
+  dem neuen PRIVE-Dataset geprüft werden. Format 2 wird ausschließlich vom
+  `variable_tcn_bilstm_transition_control_v1`-Runner unterstützt; die drei
+  Format-1-Modelle werden deshalb separat auf dem kompatiblen, eingefrorenen
+  Format-1-Dataset trainiert. Das ist kein direkter Vergleich auf demselben
+  Dataset. Test bleibt geschlossen.
+- **Eingaben/Setup:** Dataset-v2-ID `2a124caf5625b4c8f683`, Manifest-SHA-256
+  `bf82442d82713bdb21b7f7429f7aee1845eda3c44abcd6d5f4fdca688a78a422`,
+  2.649 Train-/636 Validationbeispiele (2/4/6/8 Takte, kein Test). Für
+  Format 1: Dataset-ID `52bc9d1cebfd1b82d2ea`, SHA-256
+  `4708a8fa983354903759a934f48d36b6450510809773dda2a12f9408821886b7`,
+  370 Train-/50 Validationbeispiele. Alle Läufe verwenden Seed 20260926,
+  höchstens 30 Epochen, CUDA `cuda:0`, W&B-Projekt `beatbridge`, Gruppe
+  `prive-scantraxx-extension-all-models-20260926`; W&B protokolliert nur
+  Konfiguration/Metriken. `--no-wandb-log-checkpoints` hält Gewichte lokal.
+  Die vorherige Freigabeanfrage für Checkpointuploads wurde vom Auto-Review
+  blockiert; Uploads wurden nicht erzwungen oder umgangen.
+- **Format-1-Läufe:**
+  `time_shared_mlp_v1`: Output
+  `output/training_runs/prive_scantraxx_all_models_dataset_v1_time_shared_mlp_v1_20260926_run01`,
+  W&B `3295dc7d3ac5ee773b9c`, Early Stop Epoche 7, beste Epoche 1,
+  Val-Loss 0,4152084. `vocal_time_shared_mlp_v2`: Output
+  `output/training_runs/prive_scantraxx_all_models_dataset_v1_vocal_time_shared_mlp_v2_20260926_run01`,
+  W&B `1d4dc62c31b2985fb4e2`, Abschluss Epoche 30, beste Epoche 27,
+  Val-Loss 0,3258285. `tcn_bilstm_transition_control_v1`: Output
+  `output/training_runs/prive_scantraxx_all_models_dataset_v1_tcn_bilstm_transition_control_v1_20260926_run01`,
+  W&B `4c2d8caa663d38f24385`, Early Stop Epoche 24, beste Epoche 18,
+  Val-Loss 0,3207784. Alle drei lokalen Runmanifeste binden obige v1-Dataset-
+  ID/SHA und hashen Best-/Latest-Checkpoint sowie History. Für Vocal-MLP und
+  TCN wurden je 370/370 Train- und 50/50 Validationcachetreffer geprüft;
+  Test wurde nicht geladen. W&B meldete je 0 Medien-/Artifactdateien.
+- **Format-1-Befehle:**
+
+  ```powershell
+  .venv\Scripts\python.exe -u -B -m src.ml train output\datasets\feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output\training_runs\prive_scantraxx_all_models_dataset_v1_time_shared_mlp_v1_20260926_run01 --cache-root output\ml_cache\bridge_waveform_v1 --seed 20260926 --max-epochs 30 --batch-size 5 --device cuda:0 --wandb-mode online --wandb-project beatbridge --wandb-group prive-scantraxx-extension-all-models-20260926 --wandb-name time_shared_mlp_v1-dataset-v1-run01 --wandb-tags prive_scantraxx_extension dataset_format_v1 dataset_52bc9d1cebfd1b82d2ea time_shared_mlp_v1 --no-wandb-log-checkpoints
+  .venv\Scripts\python.exe -u -B -m src.ml train-vocal output\datasets\feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output\training_runs\prive_scantraxx_all_models_dataset_v1_vocal_time_shared_mlp_v2_20260926_run01 --cache-root output\ml_cache\bridge_waveform_v2_vocal --feature-cache-root output\feature_cache --seed 20260926 --max-epochs 30 --batch-size 5 --device cuda:0 --wandb-mode online --wandb-project beatbridge --wandb-group prive-scantraxx-extension-all-models-20260926 --wandb-name vocal_time_shared_mlp_v2-dataset-v1-run01 --wandb-tags prive_scantraxx_extension dataset_format_v1 dataset_52bc9d1cebfd1b82d2ea vocal_time_shared_mlp_v2 --no-wandb-log-checkpoints
+  .venv\Scripts\python.exe -u -B -m src.ml train-tcn-bilstm output\datasets\feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output\training_runs\prive_scantraxx_all_models_dataset_v1_tcn_bilstm_transition_control_v1_20260926_run01 --cache-root output\ml_cache\bridge_waveform_v1 --seed 20260926 --max-epochs 30 --batch-size 5 --device cuda:0 --wandb-mode online --wandb-project beatbridge --wandb-group prive-scantraxx-extension-all-models-20260926 --wandb-name tcn_bilstm_transition_control_v1-dataset-v1-run01 --wandb-tags prive_scantraxx_extension dataset_format_v1 dataset_52bc9d1cebfd1b82d2ea tcn_bilstm_transition_control_v1 --no-wandb-log-checkpoints
+  ```
+
+- **Variable-Waveformcache:** Smoke-Befehl mit `--limit 1`, Splits Train und
+  Validation sowie 2/4/6/8 Takten: **8/8 erzeugt, 0 rejected**. Der Vollbefehl
+  verwendet Dataset-v2 oben, Cache
+  `output/ml_cache/variable_bridge_waveform_v2/prive_scantraxx_extension_run02_wandb_20260926`,
+  Featurecache
+  `output/feature_cache_prive_scantraxx_extension_fp2_roformer_20260923_run02_local_four_four`,
+  Trainingrate 11025 Hz, Renderrate 44100 Hz und Toleranz 2 Samples. Zwei
+  Vollmaterialisierungs-/Recheck-Befehle wurden ausgeführt; der finale
+  Cache-Recheck war:
+
+  ```powershell
+  .venv\Scripts\python.exe -u -B -m src.ml cache-variable-waveforms output\datasets\prive_scantraxx_extension_variable_v2_fp2_roformer_2-4-6-8bar_top1x3_split20260923_run02_local_four_four --cache-root output\ml_cache\variable_bridge_waveform_v2\prive_scantraxx_extension_run02_wandb_full_20260926 --feature-cache-root output\feature_cache_prive_scantraxx_extension_fp2_roformer_20260923_run02_local_four_four --transition-bars 2 4 6 8 --training-sample-rate 11025 --render-sample-rate 44100 --rounding-tolerance-samples 2
+  ```
+
+  Der isolierte Smoke verwendete denselben Befehl mit dem ursprünglichen
+  `...run02_wandb_20260926`-Root und `--limit 1`.
+  Zwei
+  frühere Vollversuche scheiterten bei `os.replace` mit WinError 5; ein
+  gleich-parentiger atomarer Rename-Smoke bestand. Daraufhin wurde nur ein
+  begrenzter Retry auf `PermissionError` ergänzt (50/100/250/500 ms,
+  fehlersicher nach vier Retries) samt Regression. Der fokussierte Test
+  `.venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests\test_variable_waveform_cache.py`
+  bestand mit **12 passed in 5,41 s**. Der erste Vollcachelauf legte 3.271
+  vollständige Cacheeinträge an, scheiterte aber absichtlich fail-closed beim
+  Überschreiben des zuvor erzeugten 8-Einträge-Smoke-Index. Dieser bleibt im
+  ursprünglichen Root unverändert. Entries und Rootvertrag (7,83 GiB) wurden
+  in einen neuen Root
+  `...prive_scantraxx_extension_run02_wandb_full_20260926` kopiert; der
+  erste Kopierversuch war ACL-blockiert und wurde nach gezielter
+  Schreibfreigabe erfolgreich wiederholt. Der
+  vollständige Materialisierungsbefehl lief dort ausschließlich auf
+  Cachetreffern durch: 3.271 Indexeinträge, null Train-Rejections, 14
+  Validation-Rejections, 0 Cachemisses im Recheck. Rejections: 12
+  `feature_grid_provenance_mismatch` und zwei
+  `backend_rounding_residual_exceeds_tolerance`. Für 2/4/6/8 Takte liegen in
+  Validation 156/156/156/154 und in Train 663/663/663/660 Cacheeinträge vor.
+  Indexdatei-SHA `902e53a8491354000adcc9acad9f94d39eceae2a96a662891190438881c4c30`,
+  Payload-SHA `9f497d898ef1615314e3a58233dfed3cc19c9598a082d6d0d07caeb328ee58a7`;
+  Report-SHA `888c27eff632eba9aa8b65d8149ee15c1aa64f3fbc4575b95b02e0c1985b0eac`.
+- **Runnerkorrektur für Cache-Rejections:** Vor dem Training wird jetzt
+  geprüft, dass der Materialisierungsreport denselben Dataset-SHA und den
+  versiegelten Index-SHA bindet, alle Datasetbeispiele nach Split/Länge
+  abdeckt und dass fehlende IDs genau den dokumentierten Validation-
+  Rejections entsprechen. Kein Train-Beispiel darf fehlen; nur exakt diese
+  Validation-IDs werden vor dem Batching ausgeschlossen. ID-Liste und
+  Materialisierungsreport-SHA landen im `io_audit.json`, das im Runmanifest
+  gehasht ist. Erster fokussierter Regressionstest: **1 failed, 15 passed**
+  (`SimpleNamespace`-Fixture hatte kein `len()`); die Zählung wurde auf die
+  Beispielmetadaten abgestellt. Wiederholung
+  `.venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests\test_variable_dataset.py tests\test_variable_tcn_bilstm.py`
+  bestand mit **16 passed in 6,35 s**. Zwei nachgelagerte read-only
+  Auditaufrufe schlugen nur bei der angenommenen Manifestposition für
+  `best_epoch` fehl; die finale Wiederholung las den Bestepoch aus der
+  gespeicherten History und bestand mit allen Dataset-/Index-/Report-/Run-
+  Bindungen. Die abschließende Wiederholung desselben fokussierten Tests nach
+  den Run-/Statusdokumentationsänderungen bestand mit **16 passed in 6,34 s**.
+  `git diff --check` bestand; Git meldete nur die im Projekt üblichen
+  LF/CRLF-Hinweise.
+- **Variable-Format-2-Lauf:** Befehl
+  `.venv\Scripts\python.exe -u -B -m src.ml train-variable-tcn-bilstm output\datasets\prive_scantraxx_extension_variable_v2_fp2_roformer_2-4-6-8bar_top1x3_split20260923_run02_local_four_four output\training_runs\prive_scantraxx_all_models_dataset_v2_variable_tcn_bilstm_20260926_run01 --cache-root output\ml_cache\variable_bridge_waveform_v2\prive_scantraxx_extension_run02_wandb_full_20260926 --transition-bars 2 4 6 8 --seed 20260926 --max-epochs 30 --batch-size 4 --device cuda:0 --wandb-mode online --wandb-project beatbridge --wandb-group prive-scantraxx-extension-all-models-20260926 --wandb-name variable_tcn_bilstm_transition_control_v1-dataset-v2-run01 --wandb-tags prive_scantraxx_extension dataset_format_v2 dataset_2a124caf5625b4c8f683 variable_tcn_bilstm_transition_control_v1 --no-wandb-log-checkpoints`.
+  W&B `875000043610a50d8e24`, Status `completed`, Epoche 30, beste Epoche
+  28, Val-Loss `0.2279368011548227`; lokal gebundener Run-ID
+  `627905c3371fdd8c8ea4`. Das `io_audit.json` meldet ausschließlich Train und
+  Validation, 2.649 Train-/622 Validationbeispiele und `test_reads=0`.
+  Vor dem Voll-Lauf bestanden der 8-Einträge-/4-Längen-Cache-Smoke und der
+  synthetische Ein-Epochen-Runner-Smoke
+  `test_temporal_runner_records_length_metrics_and_rejects_resume_length_mismatch`
+  (im oben protokollierten fokussierten Regressionstest).
+  Runmanifest bindet Dataset-SHA und Cacheindex-SHA; finaler read-only Auditor
+  validierte alle 3.271 Cachepayload-/Manifest-SHAs, Zählungen je Länge/Split,
+  Report-SHA, Runvertrag, History und I/O-Audit. Ein zusätzlicher
+  SHA-256-Abgleich der referenzierten Best-/Latest-Checkpoints und History in
+  allen vier lokalen Runmanifesten bestand ohne Abweichung. W&B meldet 0
+  Medien- und 0 Artifactdateien. Der separate W&B-/Checkpointuploadversuch
+  bleibt vom Auto-Review abgelehnt; Gewichte liegen lokal.
+- **Vollständige Modellabdeckung/Schlussfolgerung:** Die drei inkompatiblen
+  Format-1-Modelle wurden separat auf dem gebundenen v1-Dataset trainiert;
+  das Format-2-Modell auf Dataset-v2. Es sind damit vier getrennte, korrekt
+  protokollierte Trainingsläufe abgeschlossen, aber kein Same-Dataset-
+  Leistungsvergleich. Die in der ursprünglichen Erweiterungsplanung
+  vorgesehene unabhängige Hörstudie gegen Equal Power bleibt ein eigener,
+  noch offener Evaluationsschritt. Es wurde kein Audio und kein Gewicht
+  committet; es wurde kein Commit erstellt.
+
+## 2026-09-26 — PRIVE Dataset-v2 Erweiterung, Producer Run 06 (abgeschlossen)
+
+- **Fragestellung/Reasoning:** Nach der Änderung an Candidate Protocol 2 soll
+  der PRIVE-Datensatz reproduzierbar erneut erweitert werden. Kandidaten dürfen
+  lokale Nicht-4/4-Inseln im Track tolerieren, müssen aber für jede Transition
+  ausschließlich vollständige, zusammenhängende 4/4-Fenster verwenden.
+  Train-/Validation-Paare bleiben splitintern; Testtracks werden vor
+  Hashing/Analyse geschlossen ausgeschlossen. Der frühere Dataset-v2-Root
+  `...run01` bleibt unverändert.
+- **Eingaben/Setup:** BPM-eligible Corpusmanifest mit 407 Tracks, davon 292
+  Train, 58 Validation und 57 Test; Split-Mapping-SHA
+  `f01243f227db7fb41c8859de62985b39ba75a71fe9a8f5fe95b40d619c1b4a7a`.
+  Partial-Merge-v2-Analyse unter
+  `output/pre_analysis/prive_scantraxx_extension_merge_v2_20260923_run01`;
+  `feature_baseline_v3`; 44.100 Hz; 2/4/6/8 Takte; Top-1-Target und Top-3
+  Kandidaten je Länge; vier Analyse- und acht Featureworker. Testsplit ist
+  geschlossen.
+- **Lauf/Befehl:**
+  `.venv\Scripts\python.exe -B -m src.variable_producer --corpus-manifest output\corpora\prive_scantraxx_extension_v2_20260923_run01\eligible_corpus_manifest.json --output-dir output\producers\prive_scantraxx_extension_variable_v2_top1x3_20260923_run06_local_four_four --split-map output\corpora\prive_scantraxx_extension_v2_20260923_run01\split_authority.json --analysis-location output\pre_analysis\prive_scantraxx_extension_merge_v2_20260923_run01 --top-targets 1 --top-candidates-per-length 3 --transition-bars 2 4 6 8 --target-sample-rate 44100 --min-bpm 145 --max-bpm 165 --analysis-workers 8 --source-workers 4`.
+- **Producer-Ergebnis/Audit:** `completed`, 350/350 Train-/Validationquellen,
+  null Producerfehler; 292 Train- und 58 Validationquellen, 57 Testtracks
+  geschlossen ausgeschlossen. Es entstanden 3.285 gespeicherte Top-3-
+  Kandidaten (2.649 Train, 636 Validation) über 2/4/6/8 Takte und 282
+  verschiedene Endpunkttracks. 71 Train- und fünf Validationpaare blieben ohne
+  Kandidaten. Pairmanifest-SHAs stimmen mit dem Root überein; kein Track
+  überquert Train/Validation, und es gibt keine Testpaare. Finaler Producer-
+  Root-SHA `26c5a98ee98bba43dc9e733da4e7b6180fb2e63fc19bb80882dd19da28a224e3`,
+  Split-Mapping-SHA `f01243f227db7fb41c8859de62985b39ba75a71fe9a8f5fe95b40d619c1b4a7a`.
+  Eine erste manuelle Prüfroutine scheiterte an zwischenzeitlich falsch
+  angenommenen Feldnamen bzw. daran, dass Pairmanifeste nur Top-3-Kandidaten
+  statt der gesamten Rohmenge speichern; nach Anpassung an das tatsächliche
+  Schema bestand der read-only Audit. Producerartefakte wurden dabei nicht
+  verändert.
+- **Dataset-Export-Eingaben/Befehle:** Zuerst wurde exakt der geplante
+  `export-dataset-v2`-Befehl mit neuem Run02-Ziel gestartet. Der erste Versuch
+  brach beim Abruf des öffentlichen BS-RoFormer-Checkpoints mit
+  `WinError 10013` (Netzwerksocket im Sandboxlauf verweigert) ab; Datasetroot
+  wurde nicht angelegt und es waren noch keine Stem-/Featureartefakte
+  geschrieben. Nach genehmigter Netzfreigabe wurde derselbe Befehl wiederholt:
+  `.venv\Scripts\python.exe -B -m src.features export-dataset-v2 output\producers\prive_scantraxx_extension_variable_v2_top1x3_20260923_run06_local_four_four\manifest.json output\datasets\prive_scantraxx_extension_variable_v2_fp2_roformer_2-4-6-8bar_top1x3_split20260923_run02_local_four_four --cache-root output\feature_cache_prive_scantraxx_extension_fp2_roformer_20260923_run02_local_four_four --analysis-root output\pre_analysis\prive_scantraxx_extension_merge_v2_20260923_run01 --transition-bars 2 4 6 8 --top-k-per-pair 3 --split-map output\corpora\prive_scantraxx_extension_v2_20260923_run01\split_authority_for_producer_run06_local_four_four.json --vocal-backend roformer --min-bpm 145 --max-bpm 165`.
+- **Zwischenstand:** Der frühere Voll-Export lief nach Fertigstellung der
+  Featurecaches zunächst mehrere Minuten auf CPU, scheiterte aber beim letzten
+  Staging-Schritt: `PermissionError: [WinError 5] Zugriff verweigert` beim
+  Anlegen des temporären Unterordners in `output/datasets`. Der unveränderliche
+  Datasetroot war noch nicht veröffentlicht. Das Checkpointartefakt liegt nur
+  im ignorierten Cache (`BS-Rofo-SW-Fixed.ckpt`, 699.412.152 Bytes); Audio und
+  Modellgewichte wurden nicht committet. Der frühere Run01-Datasetroot blieb
+  unverändert.
+- **Contract-Korrektur/Sackgasse:** Der erste Export wurde nach zwei
+  Track-Featurecaches kontrolliert mit `Ctrl+C` beendet (Exit-Code 1); es war
+  noch kein Datasetroot veröffentlicht. Inspektion zeigte, dass der
+  Dataset-v2-Exporter `extract_or_load_track_features` ohne Analyseobjekt
+  aufrief und damit trotz des Merge-v2-Analysisroots `PreAnalysis`/Merge-v1
+  instanziierte. Damit wurden vorhandene Merge-v2-Raster nicht wiederverwendet
+  und Feature-Bin/Cue-Autorität war nicht explizit gebunden. Der v2-Exporter
+  erzeugt nun standardmäßig ein gemeinsames `PartialPreAnalysis`-Objekt und
+  bindet `beat_grid_analysis_contract=partial_merge_v2` im Datasetmanifest.
+  Die Regression `.venv\Scripts\python.exe -B -m pytest -q
+  tests/test_variable_dataset.py -p no:cacheprovider` bestand danach mit Exit-
+  Code 0 (`7 passed in 5.24s`). Bereits geschriebene Stem-/Featurecaches
+  bleiben als ignorierte, SHA-gebundene Artefakte erhalten; sie werden nicht
+  entfernt. Der Run01-Datasetroot ist unberührt.
+- **Wiederanlauf/Sackgassen:** Der erste Start nach der Contract-Korrektur
+  scheiterte vor dem Schreiben weiterer Daten mit `UnicodeEncodeError` in der
+  RoFormer-Bibliothek (Emoji-Statusausgabe gegen Windows-CP1252); der
+  Datasetroot blieb abwesend. Derselbe Export wurde mit
+  `$env:PYTHONIOENCODING='utf-8'` gestartet. Die Partial-Merge-v2-Caches
+  wurden wiederverwendet (keine erneute aufTAKT-Analyse pro Track). Dieser
+  Wiederanlauf berechnete die Beispiele, konnte aber den temporären Ordner
+  wegen verweigerter Datasetordner-Schreibrechte nicht anlegen. Der
+  Schreibtestbefehl `.venv\Scripts\python.exe -B -c "from pathlib import Path;
+  p=Path('output/datasets/.codex_write_probe.tmp'); p.mkdir(); print(p.resolve());
+  p.rmdir()"` bestätigte dieselbe `WinError 5`-Blockade in `output/datasets`.
+  Der genehmigte Wiederanlauf mit Schreibzugriff auf genau diesen Exportpfad
+  wurde am 26.09.2026 um 09:38 gestartet und nach etwa 4 Minuten 20 Sekunden
+  erfolgreich veröffentlicht (Exit-Code 0). Verwendet wurden derselbe
+  Producer, Splitmap, Feature-/Stemcache und Exportbefehl; keine Quelldaten
+  oder bestehenden Datasetroots wurden überschrieben.
+- **Cache-Wiederverwendung:** Vorhandene RoFormer-Caches aus den früheren
+  PRIVE-Run01-, PRIVE-Smoke- und Variable-v2-Caches wurden read-only auf
+  Überschneidung geprüft. 72 der 282 benötigten Track-SHAs hatten 83 passende
+  Stemcache-Verzeichnisse. Für den laufenden Run02 wurden danach 61 noch
+  fehlende Verzeichnisse kopiert; ihre `vocal_stem.npz`-SHA stimmt jeweils mit
+  `artifact_sha256` des Manifests überein, Track-SHA, BS-RoFormer-Modellname und
+  Cache-ID passen. 22 bereits vorhandene Verzeichnisse wurden übersprungen,
+  null ungültige Einträge. Originalcaches blieben unverändert; der laufende
+  Export verwendet die übernommenen Einträge bei ihrem normalen SHA-Cache-Lookup.
+- **Export- und Contract-Audit:** Dataset-v2-Run02 wurde vollständig erstellt:
+  Dataset-ID `2a124caf5625b4c8f683`, Manifest-SHA-256
+  `bf82442d82713bdb21b7f7429f7aee1845eda3c44abcd6d5f4fdca688a78a422`,
+  Datasetdateien insgesamt 30.623.521 Bytes. 3.285/3.285 ausgewählte
+  Beispiele wurden exportiert. Verteilung je Länge: 2 Takte 663 Train/159
+  Validation; 4 Takte 663/159; 6 Takte 663/159; 8 Takte 660/159; jeweils
+  0 Testbeispiele. Alle 350 gebundenen Pairmanifeste und alle 24 Datasetdateien
+  (NPZ plus JSONL einschließlich ausdrücklich leerer Testshards) stimmen mit
+  den SHA-256-Werten im Manifest überein. Producer-Manifest-SHA ist
+  `26c5a98ee98bba43dc9e733da4e7b6180fb2e63fc19bb80882dd19da28a224e3`,
+  Split-Mapping-SHA bleibt
+  `f01243f227db7fb41c8859de62985b39ba75a71fe9a8f5fe95b40d619c1b4a7a`.
+  Der Loader hat alle 12 Längen-/Split-Shards gelesen und Featureformen,
+  Längenkonditionierung sowie Metadaten geprüft. Beispielendpunkte sind ihren
+  autorisierten Splits zugeordnet; kein Train-/Validation-Track-Leakage,
+  keine Testbeispiele. Audit erster Versuch endete mit `AttributeError`, weil
+  die Prüfroutine `track_assignments` fälschlich als Dictionary statt der
+  manifestierten Liste annahm; nach Anpassung an das Schema bestand dasselbe
+  PowerShell-Here-String-Prüfskript über
+  `.venv\Scripts\python.exe -B -` vollständig (Exit-Code 0).
+- **Testläufe/Ergebnis:** Regressionstest
+  `.venv\Scripts\python.exe -B -m pytest -q tests\test_variable_dataset.py -p no:cacheprovider`
+  bestand am 26.09.2026 mit Exit-Code 0 (`7 passed in 4.04s`). Der vollständige
+  Loader-/SHA-/Leakageaudit bestand ebenfalls mit Exit-Code 0. `git diff
+  --check` meldete keine Whitespacefehler; nur die vorhandenen Hinweise zu
+  LF→CRLF bei geänderten Textdateien. `git status --short` bestätigt: keine
+  Dataset-, Audio- oder Modellgewichtsdateien sind Git-Änderungen; bestehende
+  Nutzungsänderungen wurden nicht bereinigt oder committet.
+- **Schlussfolgerung/nächster Schritt:** Dataset-v2-Erweiterung ist vollständig
+  und reproduzierbar materialisiert. Der separate Run01-Datasetroot blieb
+  unverändert. Keine Waveformcache-, Trainings-/Fine-Tuning- oder unabhängigen
+  Hörvergleichsläufe wurden angefordert oder ausgeführt; sie bleiben getrennte
+  nächste Schritte.
+
 ## Test- und Renderläufe am 2026-09-04 (nichttrivial vergleichbare Modelle)
 
 - **Fragestellung und Reasoning:** Für die zuvor bewusst ausgeschlossenen
@@ -4283,3 +4693,1274 @@ Caches werden nicht migriert oder überschrieben.
   Korpus- und onTAKT-Rechten sowie Wiederherstellung der fehlenden Format-2-
   und späteren Runartefakte entfernen. Kein Python-/pytest-Lauf, Training,
   Audio-Rendering oder Commit wurde ausgeführt.
+
+## 2026-09-21 – Read-only-Audit des neuen Scantraxx-Ordners
+
+- **Fragestellung und Reasoning:** Ausschließlich den rekursiv neu
+  hinzugefügten Ordner `musik\PRIVE Hardstyle Top 1000 of all times - by
+  Scantraxx` inventarisieren. Erforderlich waren Audioanzahl/-format,
+  exakte SHA-256-Duplikate im Ordner, SHA-Überschneidungen mit dem übrigen
+  `musik`-Bestand, Treffer in Analyse-/Feature-/Vocal-Stem-Caches,
+  Batchgrößenabschätzung und auffällige Dateien/Metadaten. Da die
+  Projektanweisung Rendering, Featureextraktion und Training ausdrücklich
+  untersagt, wurden nur Dateisystem-, Hash-, Container-/Tag- und
+  CLI-Help-Prüfungen ausgeführt. Originalaudio wurde nicht geöffnet zum
+  Dekodieren und nicht geschrieben.
+- **Eingaben/Setup:** Repository-Arbeitsbaum am 2026-09-21, `.venv\Scripts\python.exe`
+  (Python 3.14.2), FFprobe 8.1 aus dem lokalen PATH. Vorbestehende
+  Änderungen `overleaf` (modified) und `prototypes/` (untracked) wurden
+  nicht verändert. Zielordner enthielt 399 Dateien: 398 FLAC-Dateien und
+  eine 14.430-Byte-Textdatei `Download Report - 21.9.2026, 11:00:12.txt`.
+- **Testumfang bzw. Befehle:**
+  - `Get-ChildItem musik -Recurse -File` plus Erweiterungs-/Größen- und
+    Pfadlängeninventar. Ergebnis: unter `musik` 519 Dateien, davon 517
+    Audio-Dateien; außerhalb des Zielordners 119 Audio-Dateien. Der neue
+    Ordner umfasst 13.519.656.836 Bytes Audio.
+  - SHA-256-Prüfung der 398 Ziel-FLACs mit acht parallelen, gestreamten
+    Hash-Läufen über `.venv\Scripts\python.exe` sowie Größen-Vorfilter für
+    den Gesamtbestand. Ergebnis: **398 eindeutige SHA-256-Hashes, 0 interne
+    Duplikate**. Die einzige gleich große Kandidatenpaarung im Zielordner
+    war nicht byteidentisch: `Hit You With That Bang Shit - Adaro.flac`
+    (`4ea3bf25c2cf30066e2a719fc1518427ba28f6822c59af448f2dd81b0b971d22`)
+    und `Hit you with that bang shit - Radio Edit - Adaro.flac`
+    (`06ea7a198b0a21bd5d0b816bbbfe5eb192769f4ca43a16ad927853b68ac4a972`).
+  - SHA-Überlappungsprüfung gegen alle übrigen Audio-Dateien unter `musik`.
+    Für eine vollständige Duplikatentscheidung wurden alle zwei mehrfach
+    vorkommenden Dateigrößen (nur vier Dateien) gehasht; unterschiedliche
+    Dateigrößen können keinen gleichen SHA-256 besitzen. Ergebnis:
+    **0 Zieldateien mit SHA-Überschneidung**. Die bekannte externe
+    Duplikatgruppe `musik\07 - BREATH_LESS.flac` und
+    `musik\Deezl - BREATH_LESS.flac` hat SHA-256
+    `acc1e30d0698b39b23add02b3806648c74eecc937d7c27a933e33266153c5c99`,
+    liegt aber vollständig außerhalb des neuen Ordners.
+  - FFprobe-Metadatenprüfung aller 398 FLACs ohne Dekodierung:
+    `ffprobe -v error -show_entries ... -of json`. Ergebnis: 398/398
+    erfolgreich, jeweils FLAC/16-bit/44.100 Hz/2 Kanäle, Dauer 117,016 bis
+    530,924 Sekunden, Gesamtdauer 102.612,283 Sekunden bzw. 28,5034
+    Stunden. Jede Datei besitzt einen FLAC-Audiostream und einen
+    eingebetteten MJPEG-Coverstream; das ist erwartete Cover-Art und kein
+    zweiter hörbarer Audiostream.
+  - Tag-/Namensprüfung mit FFprobe, Unicode-/Casefold-Gruppierung und
+    Größen-/Pfadlängenprüfung. `title`, `artist` und `album` sind in allen
+    398 Dateien vorhanden; Datums- und numerische Track-/Disc-Tags waren
+    formal gültig. Optional fehlen `composer` in 223, `publisher` in 2,
+    `copyright` in 3 und die vier Disc-/Track-Totalfelder in jeweils 1
+    Datei. In allen Dateien existieren sowohl `COMMENT` als auch `comment`
+    (zwei unterschiedlich geschriebene Kommentar-Tags); das sollte vor
+    einer späteren Metadaten-Normalisierung bewusst entschieden werden.
+    Auffällige, aber technisch zulässige Namen sind führendes `#` sowie
+    Unicode-Zeichen wie `Alpha²` und das Fullwidth-Zeichen `？` in `Huh？`.
+    Es gab keine case-insensitiven oder NFC-normalisierten Dateinamen-
+    Duplikate, keine kleinen/0-Byte-Audiodateien und keinen Pfad über 142
+    Zeichen. Die Textdatei ist ein Downloader-Fehlerbericht mit 51
+    nummerierten Fehlversuchen/fehlenden Downloads, keine Audiodatei.
+  - Cacheprüfung ohne Öffnen von NPZ-/Audio-Payloads: JSON-Manifeste und
+    64-stellige Cachepfad-SHAs unter `output\pre_analysis*` und
+    `output\feature_cache*` wurden gegen alle 398 Ziel-SHAs verglichen;
+    zusätzlich wurden Legacy-Analyse-TXT-Dateien auf Zielnamen geprüft.
+    Geprüfter Bestand: 118 `analysis.json`, 73 Format-1-Featuremanifeste,
+    122 Variable-v2-Featuremanifeste, 64 Demucs-Vocal-Stemmanifeste und 55
+    RoFormer-Vocal-Stemmanifeste (zusätzlich 68 Stem-Payloads im separaten
+    Variable-v2-Root). Ergebnis: **0 Analyse-, 0 Feature- und 0
+    Vocal-Stem-Cachetreffer**; auch 16-stellige Cacheprefixe trafen nicht.
+    Legacy-Analyse-TXT-Treffer nach Dateinamen: 0.
+  - CLI-Vertragsprüfung: `.venv\Scripts\python.exe -m src.multi_batch_render
+    --help`, `.venv\Scripts\python.exe -m src.features --help`,
+    `.venv\Scripts\python.exe -m src.ml --help` sowie die Help-Aufrufe der
+    relevanten Cache-/Train-Unterbefehle. Ergebnis: Ordner werden von
+    `multi_batch_render` rekursiv expandiert; der Befehl dedupliziert per
+    SHA-256 und rendert danach. Es gibt keinen offiziellen Analyse-only-
+    CLI. Es wurde kein Multi-Batch, keine Analyse für diesen Ordner, keine
+    Featureextraktion, kein Vocal-Stem-Lauf, kein Waveformcache, kein
+    Rendering und kein Training ausgeführt.
+- **Ergebnis einschließlich Fehlern/Blockaden:** Der neue Bestand ist ein
+  technisch konsistenter Satz von 398 eindeutigen, stereo 44,1-kHz-
+  16-bit-FLACs mit eingebettetem Cover-Art. Es bestehen keine exakten
+  Überschneidungen mit dem übrigen `musik`-Audio und keine verwertbaren
+  bestehenden Analyse-/Feature-/Vocal-Caches. Die Metadatenrisiken sind
+  optional fehlende Felder, doppelte Kommentar-Schreibweisen und einige
+  Unicode-/führende-`#`-Namen; die Container-/Audioheader selbst zeigten
+  keinen FFprobe-Fehler.
+- **Batchumfangsschätzung:** Nach Filterung sei `N` die Zahl der Tracks,
+  die BPM-/Grid-Policy und Ausschlüsse passieren. Dann erzeugt
+  `multi_batch_render` höchstens `N * min(top-targets, N-1)` Songpaare.
+  Bei allen 398 Tracks wären das bei `--top-targets 1` 398 Paare, bei
+  Default `--top-targets 3` 1.194 Paare. Mit einem Renderer und
+  `--top-transitions 1` beziehungsweise `3` sind das 398 bzw. 1.194 WAVs
+  (Default-Targets plus 3 Transitions: 3.582 WAVs). Als grobe Candidate-
+  Referenz liefert der bereits dokumentierte 111-Paar-Lauf 1.730.938
+  Candidates, also etwa 15.594 pro Paar; daraus folgen grob 6,2 Mio.
+  Candidates bei 398 Top-1-Paaren beziehungsweise 18,6 Mio. bei 1.194
+  Paaren. Das ist nur eine Ressourcenabschätzung: BPM-/Grid-Ausschlüsse,
+  Tracklängen und Fehler können `N` und die tatsächlichen Counts deutlich
+  senken. BPM wurde in diesem Audit bewusst nicht analysiert.
+- **Konkreter späterer Ausführungsplan; in dieser Session nicht ausgeführt:**
+  1. Zuerst ein begrenzter Pilot auf 20 deterministisch sortierten FLACs;
+     neuer Analyse- und Outputroot, vier Takte, ein Ziel, eine Transition,
+     ein Renderer, strikte Grid-Policy. Das prüft Ressourcen und Failure-
+     Klassen, ohne bestehende Artefakte zu überschreiben:
+
+     ```powershell
+     $pilotTracks = @(Get-ChildItem -LiteralPath 'musik\PRIVE Hardstyle Top 1000 of all times - by Scantraxx' -File -Filter '*.flac' | Sort-Object FullName | Select-Object -First 20 -ExpandProperty FullName)
+     & .venv\Scripts\python.exe -m src.multi_batch_render @pilotTracks `
+       --output-dir output\batches\scantraxx_pilot_20260921 `
+       --analysis-location output\pre_analysis_scantraxx_pilot_20260921 `
+       --analysis-workers 8 --top-targets 1 --top-transitions 1 `
+       --renderers equal_power --transition-bars 4 `
+       --approximate-grid-policy reject --min-bpm 145 --max-bpm 165 `
+       --track-exclusions config\track_exclusions.json
+     ```
+
+  2. Nach Prüfung des Pilot-Manifests den vollständigen, noch begrenzten
+     Top-1/Top-3-Batch ausführen. `multi_batch_render` akzeptiert den
+     Zielordner rekursiv; `--analysis-location` und `--output-dir` sind neu:
+
+     ```powershell
+     & .venv\Scripts\python.exe -m src.multi_batch_render `
+       'musik\PRIVE Hardstyle Top 1000 of all times - by Scantraxx' `
+       --output-dir output\batches\scantraxx_top1_top3_20260921 `
+       --analysis-location output\pre_analysis_scantraxx_20260921 `
+       --analysis-workers 8 --top-targets 1 --top-transitions 3 `
+       --renderers equal_power --transition-bars 4 `
+       --approximate-grid-policy reject --min-bpm 145 --max-bpm 165 `
+       --track-exclusions config\track_exclusions.json
+     ```
+
+  3. Erst wenn das Batch-Manifest fehlerfrei und die BPM-/Grid-Ausschlüsse
+     fachlich akzeptiert sind, die darin akzeptierten Songs in einen neuen
+     Feature-/Vocal-Cache extrahieren. Das ist der erste ausdrücklich teure
+     Feature-/Stem-Schritt und bleibt bis zur Freigabe ungestartet:
+
+     ```powershell
+     $batch = Get-Content -Raw output\batches\scantraxx_top1_top3_20260921\manifest.json | ConvertFrom-Json
+     foreach ($song in $batch.songs) {
+       & .venv\Scripts\python.exe -m src.features cache-track $song `
+         --cache-root output\feature_cache_scantraxx_20260921 `
+         --analysis-root output\pre_analysis_scantraxx_20260921 `
+         --sample-rate 44100 --vocal-backend roformer `
+         --vocal-model roformer-model-bs-roformer-sw-by-jarredou
+       if ($LASTEXITCODE -ne 0) { throw "cache-track failed: $song" }
+     }
+     ```
+
+  4. Einen neuen, trackgetrennten Format-1-Datensatz exportieren; der
+     Zielordner muss neu sein. Dieser Befehl extrahiert bei Cache-Miss noch
+     fehlende Ziel-BPM-/Cue-Varianten und ist daher erst nach Cacheprüfung
+     und Ressourcenfreigabe auszuführen:
+
+     ```powershell
+     & .venv\Scripts\python.exe -m src.features export-dataset `
+       output\batches\scantraxx_top1_top3_20260921\manifest.json `
+       output\datasets\scantraxx_feature_protocol_v1_top1_top3_20260921 `
+       --cache-root output\feature_cache_scantraxx_20260921 `
+       --analysis-root output\pre_analysis_scantraxx_20260921 `
+       --top-k-per-pair 3 --transition-bars 4 --split-seed 20260921 `
+       --min-bpm 145 --max-bpm 165 --vocal-backend roformer `
+       --vocal-model roformer-model-bs-roformer-sw-by-jarredou `
+       --track-exclusions config\track_exclusions.json
+     ```
+
+  5. Vor jedem ML-Lauf nur die ausdrücklich vorgesehenen Train-/Validation-
+     Waveformcaches aufbauen; den Testsplit nicht materialisieren, wenn kein
+     unabhängiger Testlauf autorisiert ist:
+
+     ```powershell
+     & .venv\Scripts\python.exe -m src.ml cache-vocal-waveforms `
+       output\datasets\scantraxx_feature_protocol_v1_top1_top3_20260921 `
+       --split train --cache-root output\ml_cache\scantraxx_vocal_bridge_20260921 `
+       --training-sample-rate 11025
+     & .venv\Scripts\python.exe -m src.ml cache-vocal-waveforms `
+       output\datasets\scantraxx_feature_protocol_v1_top1_top3_20260921 `
+       --split validation --cache-root output\ml_cache\scantraxx_vocal_bridge_20260921 `
+       --training-sample-rate 11025
+     ```
+
+  6. Training bleibt ein separater, explizit freizugebender Schritt. Für den
+     Format-1-Vocal-Runner wäre der konkrete Einstieg:
+
+     ```powershell
+     & .venv\Scripts\python.exe -m src.ml train-vocal `
+       output\datasets\scantraxx_feature_protocol_v1_top1_top3_20260921 `
+       output\training_runs\scantraxx_vocal_mlp_v2_seed20260921 `
+       --cache-root output\ml_cache\scantraxx_vocal_bridge_20260921 `
+       --feature-cache-root output\feature_cache_scantraxx_20260921 `
+       --device auto --wandb-mode disabled --seed 20260921
+     ```
+
+     Der Befehl wurde nicht ausgeführt; vor einem realen Lauf müssen
+     Datasetgröße, Speicher-/VRAM-Budget, Track-Split, Cachevollständigkeit
+     und ein unabhängiger Auswertungsplan geprüft werden. Variable-v2- oder
+     Cue-Ranker-Pfade bleiben bis zur expliziten Veröffentlichung einer
+     passenden Split-Autorität und Provenienzkette zurückgestellt.
+- **Schlussfolgerung/nächster Schritt:** Der Audit ist abgeschlossen und
+  liefert eine belastbare Nullbasis für neue Cachematerialisierung. Als
+  nächster Schritt genügt bei Freigabe der 20-Track-Pilot; bis dahin werden
+  keine Audiodateien, bestehenden Caches, Manifeste oder Trainingsartefakte
+  verändert. Der abschließende `git diff --check -- docs/Bemerkungen.md`
+  bestand. Kein Commit wurde erstellt.
+
+## 2026-09-21 — Preflight und Multi-Song-Batch PRIVE Top 1000
+
+- **Fragestellung und Reasoning:** Der neu hinzugefügte Ordner `musik\\PRIVE
+  Hardstyle Top 1000 of all times - by Scantraxx` sollte ausschließlich mit
+  der bestehenden Multi-Batch-Pipeline verarbeitet werden. Vor dem Lauf waren
+  die verpflichtenden Projektdateien `AGENTS.md`, `docs/STATUS.md`,
+  `docs/Projekt-Gesamtuebersicht.md`, `.agents/AGENT.md` und
+  `.agents/multi-session-project-discipline.skill` gelesen. Der Zielpfad
+  `output\\batches\\prive\\_top1000\\_baseline\\_20260921` war neu bzw.
+  leer; Original-Audiodateien und bestehende Outputs wurden nicht zum
+  Überschreiben freigegeben.
+- **Setup und Preflight:** Python wurde ausschließlich über
+  `.venv\\Scripts\\python.exe` verwendet. Ausgeführt wurden u. a.:
+
+  ```powershell
+  ffmpeg -hide_banner -version
+  ffmpeg -hide_banner -filters
+  ffmpeg -hide_banner -h filter=rubberband
+  rubberband --version
+  .\\aufTAKTCl.exe --help
+  ```
+
+  FFmpeg 8.1 (`www.gyan.dev`) war vorhanden und mit
+  `--enable-librubberband` gebaut; der `rubberband`-Filter war verfügbar.
+  Eine eigenständige `rubberband`-CLI war nicht im PATH, wurde für diesen
+  Lauf aber nicht benötigt, weil die Pipeline den FFmpeg-Librubberband-Pfad
+  nutzt. `aufTAKTCl.exe` war vorhanden (Version `4.2.0+e2277a`, gebaut am
+  03.03.2023); `--help` lief bis zur erwarteten Meldung zum fehlenden
+  `-inputFile`. Die Binary-Prüfsumme war
+  `35F9149CFEF66DF9B7AC7716953F859F2D34AF1BEB2D2DB231062A4A1B523`.
+- **Verarbeitung/Befehl:** Der exakt verwendete Pipeline-Befehl war:
+
+  ```powershell
+  & .venv\\Scripts\\python.exe -u -m src.multi_batch_render `
+    'musik\\PRIVE Hardstyle Top 1000 of all times - by Scantraxx' `
+    --output-dir output\\batches\\prive\\_top1000\\_baseline\\_20260921 `
+    --ranking-method feature_baseline_v3 `
+    --top-targets 1 --top-transitions 1 `
+    --renderers equal_power --transition-bars 2 4 `
+    --min-bpm 145 --max-bpm 165 `
+    --analysis-workers 4 `
+    --analysis-location output\\pre_analysis\\prive_top1000_baseline_20260921 `
+    --approximate-grid-policy reject `
+    --track-exclusions config\\track_exclusions.json
+  ```
+
+  Der erste Versuch analysierte alle 398 Titel, scheiterte anschließend aber
+  beim Anlegen von `output\\batches\\prive` mit `PermissionError`/WinError 5;
+  es wurden keine Batchdateien geschrieben. Der zweite Versuch las danach
+  398 vorhandene Analyse-JSONs aus dem separaten Analyse-Root, scheiterte aber
+  erneut beim atomaren Root-Manifest-Tempfile mit WinError 5; auch der
+  Zielordner blieb leer. Nach einer einmaligen, exakt auf den neuen Zielpfad
+  begrenzten Dateischreibfreigabe wurde derselbe Befehl erneut ausgeführt.
+  Dieser freigegebene Lauf erreichte das Root-Manifest und lief bei
+  Einzelfehlern weiter; Prozess-Exitcode war `1`, weil Fehler aufgezeichnet
+  wurden.
+- **Ergebnis und Manifestprüfung:** Verifiziert mit
+  `.venv\\Scripts\\python.exe` und `manifest.json` unter
+  `output\\batches\\prive\\_top1000\\_baseline\\_20260921`:
+
+  - rekursiver Eingang: 398 Audiofiles; Analyse erfolgreich/cachevalidiert:
+    398; BPM-Bereich akzeptiert: 321;
+  - BPM-ausgeschlossen: 77 (74 unter 145 BPM, 3 über 165 BPM);
+    Analysefehler: 0; konfigurierte Ausschlüsse: 0; SHA-Duplikate im
+    Zielordner: 0;
+  - 321 Sources wurden als `completed` gerankt und erhielten jeweils ein
+    ausgewähltes Ziel; 321/321 Pair-Aufrufe scheiterten jedoch vor der
+    Candidate-Erzeugung mit demselben Fehler:
+    `generate_and_render_batch() got an unexpected keyword argument
+    'cue_ranker'`;
+  - erfolgreiche Songpaare: 0; erfolgreiche Renderings: 0; Pair-Manifeste
+    und WAV-Ausgaben: 0. Im Batch-Root liegt nur `manifest.json` (ca. 98,5
+    MB), keine Audiodatei;
+  - Candidate-Rejections: nicht bestimmbar/nicht erreicht, weil alle Paare
+    vor `generate_transition_candidates` abbrachen; häufigste persistierte
+    Pair-Rejection ist daher keine Candidate-Rejection, sondern der genannte
+    `TypeError` (321 Fälle);
+  - Analyse-Backends: `librosa.beat.beat_track` für Beat-Tempo und
+    `zplane_AUFTAKT_aufTAKTCl` für Bar-Metadaten; ein Rendering-Tempo-/Stretch-
+    Backend wurde nicht verwendet, weil kein Render- oder
+    Transition-Metric-Schritt erreicht wurde;
+  - Root-Konfiguration verifiziert: `feature_baseline_v3`, ausschließlich
+    `equal_power`, Übergänge `[2, 4]` Takte, `top_targets_per_source=1`,
+    `top_transitions_per_pair=1`, BPM `[145, 165]`,
+    `analysis_workers=4`, `approximate_grid_policy=reject` und
+    `config\\track_exclusions.json`.
+- **Zusatzprüfungen:** Die Root-Datei wurde rekursiv auf Pair-Manifeste und
+  WAVs geprüft (jeweils 0). Der Fehler wurde gegen den Quellcode abgeglichen:
+  `src\\multi_batch_render.py` übergibt in Zeile 193 `cue_ranker=...`,
+  während `src\\batch_render.py::generate_and_render_batch` keinen Parameter
+  dieses Namens akzeptiert und stattdessen `cue_ranker_run`/verwandte
+  Provenienzparameter führt. Es wurden keine Codeänderungen vorgenommen.
+  `git status --short` zeigte keine Änderungen unter `musik` oder den
+  bestehenden Outputs; es wurden keine Audiodateien verändert. Training,
+  zusätzliche Featureextraktion und Vocal-Stem-Extraktion wurden nicht
+  ausgeführt.
+- **Schlussfolgerung/nächster Schritt:** `docs/STATUS.md` wird nicht
+  aktualisiert, weil kein verifizierter Render-Meilenstein vorliegt. Vor
+  einem neuen Lauf muss die bestehende API-Inkompatibilität zwischen
+  `multi_batch_render.py` und `batch_render.py` projektseitig korrigiert und
+  mit einem kleinen neuen Zielpfad getestet werden. Danach kann derselbe
+  oben dokumentierte Befehl in einem neuen, nicht überschriebenen Batchpfad
+  erneut laufen; die 398 Analyse-JSONs im separaten Analyse-Root können dabei
+  wiederverwendet werden. Kein Commit wurde erstellt.
+
+## 2026-09-21 — API-Fix und erfolgreicher PRIVE-Top-1000-Batch
+
+- **Fragestellung und Reasoning:** Der zuvor dokumentierte Batch scheiterte
+  in allen 321 Pair-Aufrufen an einer API-Inkompatibilität: `src\\multi_batch_render.py`
+  übergab `cue_ranker=...`, obwohl `src\\batch_render.py::generate_and_render_batch`
+  diesen Parameter nicht akzeptiert. Für `feature_baseline_v3` wird dieser
+  optionale Learned-Ranker nicht benötigt; daher wurde ausschließlich diese
+  veraltete Keyword-Übergabe entfernt. Die `cue_ranker_run`- und übrigen
+  Provenienzparameter blieben unverändert.
+- **Setup und Patchprüfung:** Geändert wurde nur
+  `src\\multi_batch_render.py`; `git diff --check -- src/multi_batch_render.py`
+  bestand. Zusätzlich wurde
+  `.venv\\Scripts\\python.exe -m src.multi_batch_render --help` ausgeführt.
+  Der vorherige Fehl-Output blieb erhalten; der neue Lauf verwendete den
+  nicht überschreibenden Pfad
+  `output\\batches\\prive\\_top1000\\_baseline\\_20260921_fixed`.
+- **Verarbeitung/Befehl:** Ausgeführt wurde mit `.venv\\Scripts\\python.exe`:
+
+  ```powershell
+  & .venv\\Scripts\\python.exe -u -m src.multi_batch_render `
+    'musik\\PRIVE Hardstyle Top 1000 of all times - by Scantraxx' `
+    --output-dir output\\batches\\prive\\_top1000\\_baseline\\_20260921_fixed `
+    --ranking-method feature_baseline_v3 `
+    --top-targets 1 --top-transitions 1 `
+    --renderers equal_power --transition-bars 2 4 `
+    --min-bpm 145 --max-bpm 165 `
+    --analysis-workers 4 `
+    --analysis-location output\\pre_analysis\\prive_top1000_baseline_20260921 `
+    --approximate-grid-policy reject `
+    --track-exclusions config\\track_exclusions.json
+  ```
+
+  Der Lauf beendete sich mit Exit-Code `0`. Original-FLACs, der vorherige
+  Fehl-Output und bestehende Nutzeränderungen wurden nicht überschrieben.
+  Training, zusätzliche Vocal-Stem-Extraktion und ein separater
+  Feature-Extraktionslauf wurden nicht ausgeführt.
+- **Root-Manifest und Verarbeitungsergebnis:** Geprüft wurde
+  `output\\batches\\prive\\_top1000\\_baseline\\_20260921_fixed\\manifest.json`;
+  der Root enthielt 321 Pair-Manifeste, 122 WAVs und war 93,86 MiB groß.
+
+  - rekursiver Eingang: 398 Audiodateien; 321 nach BPM-Filter akzeptiert;
+    77 ausgeschlossen (74 unter 145 BPM, 3 über 165 BPM);
+  - konfigurierte Track-Ausschlüsse: 0; SHA-Duplikate im Zielordner: 0;
+    Analysefehler: 0; Cross-Ordner-SHA-Überschneidungen: 0;
+  - Sources: 321/321 `completed`; Songpaare: 321/321 `completed`;
+    Pair-Fehler: 0; Renderfehler: 0; Übergangsmetrikfehler: 0;
+  - erfolgreiche Renderings: 122 Varianten als 122 WAVs, ausschließlich
+    `equal_power`; 199 Paare hatten wegen fehlender Kandidaten keine
+    Rendering-Variante;
+  - Candidate-Rejections: `incompatible_transition_meter` 70.374,
+    `target_grid_provenance_rejected` 138, `source_grid_provenance_rejected`
+    136 und `invalid_source_grid` 1;
+  - tatsächlich verwendete Tempo-/Analyse-Backends: BPM/Beat
+    `librosa.beat.beat_track`, Bar-Metadaten `zplane_AUFTAKT_aufTAKTCl`;
+    für alle 122 Renderings war der Stretch-/Tempo-Backendstatus
+    `not_needed`, da keine Tempoänderung erforderlich war. FFmpeg mit
+    librubberband war vorab geprüft, wurde für diese gleich-tempo
+    Renderings aber nicht als Stretch-Backend benötigt;
+  - Analyse-Cache: 398 Analyse-JSONs im separaten Root vorhanden; vor dem
+    Lauf waren keine passenden Feature- oder Vocal-Stem-Cache-Treffer
+    vorhanden. Die Baseline-Features wurden im regulären Pair-Verlauf
+    verarbeitet.
+- **Schlussfolgerung/nächster Schritt:** Der API-Fix ist durch einen
+  vollständigen, fehlerfreien Multi-Song-Lauf verifiziert. Für den nächsten
+  Lauf empfiehlt sich ein gezielter Kandidaten-/Grid-Audit der 199 Paare ohne
+  Kandidat, insbesondere der häufigen `incompatible_transition_meter`-Fälle,
+  bevor ein größerer Renderer- oder Learned-Ranker-Lauf gestartet wird. Kein
+  Commit wurde erstellt.
+
+## 2026-09-23 — Fehlversuch beim Syntaxcheck der Dataset-v2-Erweiterung
+
+- **Fragestellung und Reasoning:** Früher Syntaxcheck der neuen additiven
+  Producer-, Splitgruppen-, Waveformcacheindex- und Trainingsvertragsmodule,
+  bevor funktionale Tests ausgeführt werden.
+- **Eingaben/Setup:** Repository-Worktree; `.venv\Scripts\python.exe`; vier
+  geänderte Pythonmodule, keine Audioeingaben.
+- **Testumfang bzw. Befehl:**
+
+  ```powershell
+  .venv\Scripts\python.exe -m py_compile src\variable_producer.py src\features\variable_split.py src\ml\variable_waveform_cache.py src\ml\variable_runner.py
+  ```
+
+- **Ergebnis einschließlich Fehlern oder Blockaden:** Der Lauf endete mit
+  Exit-Code 1, bevor der Syntaxcheck abgeschlossen war. Python konnte die
+  temporäre Bytecodedatei unter `src\__pycache__` wegen `PermissionError:
+  [Errno 13]` nicht anlegen. Es liegt damit kein festgestellter Syntaxfehler,
+  sondern eine lokale Schreibblockade des Bytecodecaches vor.
+- **Schlussfolgerung und nächster Schritt:** Den identischen Check mit `-B`
+  beziehungsweise `PYTHONDONTWRITEBYTECODE=1` wiederholen und anschließend
+  die fokussierten synthetischen Regressionstests ausführen.
+
+## 2026-09-23 — Schreibfreier Syntaxcheck der Dataset-v2-Erweiterung
+
+- **Fragestellung und Reasoning:** Nach der Bytecache-Blockade sollte die
+  Syntax derselben vier Module ohne Seiteneffekt geprüft werden.
+- **Eingaben/Setup:** `.venv\Scripts\python.exe -B`; Quelltexte wurden mit
+  `ast.parse` nur gelesen, kein Bytecode geschrieben.
+- **Testumfang bzw. Befehl:**
+
+  ```powershell
+  .venv\Scripts\python.exe -B -c "import ast,pathlib; files=['src/variable_producer.py','src/features/variable_split.py','src/ml/variable_waveform_cache.py','src/ml/variable_runner.py']; [ast.parse(pathlib.Path(f).read_text(encoding='utf-8'), filename=f) for f in files]; print('AST syntax OK:', len(files))"
+  ```
+
+- **Ergebnis einschließlich Fehlern oder Blockaden:** Exit-Code 0;
+  `AST syntax OK: 4`.
+- **Schlussfolgerung und nächster Schritt:** Die Module sind syntaktisch
+  gültig; als Nächstes folgen fokussierte synthetische Funktions- und
+  Regressionstests.
+
+## 2026-09-23 — Erster fokussierter Regressionstest der Implementierung
+
+- **Fragestellung und Reasoning:** Prüfung des neuen candidate-only Producers,
+  der Recording-Group-Splitfortschreibung, des Cacheindexes und des
+  TCN/BiLSTM-Vertrags gegen die vorhandenen synthetischen Tests.
+- **Eingaben/Setup:** Ausschließlich Pytest-Fixtures in temporären
+  Verzeichnissen; keine private Musik, keine Stems und keine Modellgewichte.
+- **Testumfang bzw. Befehl:**
+
+  ```powershell
+  .venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests/test_variable_producer.py tests/test_variable_contract_hardening.py tests/test_variable_waveform_cache.py tests/test_variable_tcn_bilstm.py
+  ```
+
+- **Ergebnis einschließlich Fehlern oder Blockaden:** 24 Tests bestanden,
+  ein neuer Producer-Test schlug fehl. Die Testhilfsfunktion `_sha` erwartete
+  ein `Path`-Objekt, erhielt vom realistischen Producer-Stub aber einen
+  Stringpfad; dadurch blieb die Paarliste leer. Der Fehler lag im Testaufbau,
+  nicht im Produktivpfad.
+- **Schlussfolgerung und nächster Schritt:** `_sha` im Test normalisiert den
+  Eingang nun mit `Path(path)`; derselbe fokussierte Lauf wird wiederholt.
+
+## 2026-09-23 — Erfolgreicher fokussierter Regressionstest der Implementierung
+
+- **Fragestellung und Reasoning:** Wiederholung nach Korrektur des
+  Testpfadtyps; Ziel war die gemeinsame Prüfung von Producer, Splitgruppen,
+  Cacheindex und bestehendem Variable-TCN/BiLSTM-Verhalten.
+- **Eingaben/Setup:** Synthetische temporäre Dateien und Tensoren; kein Zugriff
+  auf die private Musiksammlung, keine Audio- oder Gewichtsartefakte.
+- **Testumfang bzw. Befehl:**
+
+  ```powershell
+  .venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests/test_variable_producer.py tests/test_variable_contract_hardening.py tests/test_variable_waveform_cache.py tests/test_variable_tcn_bilstm.py
+  ```
+
+- **Ergebnis einschließlich Fehlern oder Blockaden:** **25 Tests bestanden in
+  7,24 Sekunden**.
+- **Schlussfolgerung und nächster Schritt:** Die neuen Kernverträge arbeiten
+  synthetisch zusammen. Zusätzlich wird die explizite Aufnahme beider
+  Waveformcache-SHAs in den Trainingsvertrag getestet und danach die breitere
+  variable Regression ausgeführt.
+
+## 2026-09-23 — Erster breiter Variable-v2-Regressionslauf
+
+- **Fragestellung und Reasoning:** Gemeinsame Regression der neuen Verträge
+  mit Feature Protocol 2, Dataset-v2, Variable-ML, Multi-Batch und bestehenden
+  Hörstudienexportern.
+- **Eingaben/Setup:** Zehn synthetische Testmodule; `.venv`; Bytecode- und
+  Pytest-Cache deaktiviert; keine privaten Audiodateien.
+- **Testumfang bzw. Befehl:**
+
+  ```powershell
+  .venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests/test_variable_producer.py tests/test_variable_features.py tests/test_variable_dataset.py tests/test_variable_contract_hardening.py tests/test_variable_waveform_cache.py tests/test_variable_tcn_bilstm.py tests/test_variable_ml.py tests/test_multi_batch_render.py tests/test_all_models_control_study.py tests/test_nontrivial_model_examples.py
+  ```
+
+- **Ergebnis einschließlich Fehlern oder Blockaden:** 60 Tests bestanden,
+  ein Assertion-Matcher scheiterte ausschließlich an der Großschreibung von
+  `Both` in der erwarteten Fehlermeldung. Die geprüfte Produktivvalidierung
+  löste korrekt aus.
+- **Schlussfolgerung und nächster Schritt:** Testregex auf `[Bb]oth`
+  korrigiert; derselbe breite Lauf wird wiederholt.
+
+## 2026-09-23 — Erfolgreicher breiter Variable-v2-Regressionslauf
+
+- **Fragestellung und Reasoning:** Wiederholung der gemeinsamen Regression
+  nach der reinen Testmatcher-Korrektur.
+- **Eingaben/Setup:** Zehn synthetische Testmodule; keine privaten Audios,
+  Stems, Datasetshards oder Gewichte.
+- **Testumfang bzw. Befehl:**
+
+  ```powershell
+  .venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests/test_variable_producer.py tests/test_variable_features.py tests/test_variable_dataset.py tests/test_variable_contract_hardening.py tests/test_variable_waveform_cache.py tests/test_variable_tcn_bilstm.py tests/test_variable_ml.py tests/test_multi_batch_render.py tests/test_all_models_control_study.py tests/test_nontrivial_model_examples.py
+  ```
+
+- **Ergebnis einschließlich Fehlern oder Blockaden:** **61 Tests bestanden in
+  8,93 Sekunden**.
+- **Schlussfolgerung und nächster Schritt:** Die additive Implementierung ist
+  mit den bestehenden variablen Daten-, Modell- und Studienpfaden kompatibel.
+  Es folgt ein expliziter synthetischer Vier-Längen-Smoke mit Resume.
+
+## 2026-09-23 — Synthetischer Vier-Längen-Training-Smoke mit Resume
+
+- **Fragestellung und Reasoning:** Prüfung, dass 2/4/6/8-Takt-Batches gemeinsam
+  eine Epoche trainieren, per streng identischem Vertrag auf Epoche 2
+  fortgesetzt werden und Cacheindex-/Rootmanifest-SHAs erhalten bleiben.
+- **Eingaben/Setup:** Synthetische Feature-/Waveformtensoren für alle vier
+  Längen, CPU, 8 kHz und kleiner Test-Lowpass; keine Korpusdaten.
+- **Testumfang bzw. Befehl:**
+
+  ```powershell
+  .venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests/test_variable_tcn_bilstm.py
+  ```
+
+- **Ergebnis einschließlich Fehlern oder Blockaden:** **8 Tests bestanden in
+  5,22 Sekunden**, darunter Epoche 1 plus SHA-vertraglich geprüftes Resume auf
+  Epoche 2 sowie Model-only-Fine-Tune mit neuem Optimizer.
+- **Schlussfolgerung und nächster Schritt:** Der Code-Smoke ist grün. Der
+  reale 16/4-Track-Smoke folgt nach der Recording-Group-Prüfung und wird nicht
+  durch den synthetischen Test ersetzt.
+
+## 2026-09-23 — Abschlussregression nach Recording-Group- und Status-Hardening
+
+- **Fragestellung und Reasoning:** Nach Aufnahme der Gruppenmitglieder in die
+  Splitautorität und fail-closed Producer-Rootstatus sollte die betroffene
+  Vertragsmenge erneut geprüft werden.
+- **Eingaben/Setup:** Fünf synthetische Testmodule, temporäre Dateien/Tensoren,
+  kein Zugriff auf das PRIVE-Audio.
+- **Testumfang bzw. Befehl:**
+
+  ```powershell
+  .venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests/test_variable_producer.py tests/test_variable_contract_hardening.py tests/test_variable_dataset.py tests/test_variable_waveform_cache.py tests/test_variable_tcn_bilstm.py
+  ```
+
+- **Ergebnis einschließlich Fehlern oder Blockaden:** **33 Tests bestanden in
+  9,06 Sekunden**.
+- **Schlussfolgerung und nächster Schritt:** Gruppenbindung, kompakter
+  Producer, Pair-SHA-Verifikation, Cacheindex und Vier-Längen-Training bleiben
+  grün. Danach wurden die drei neuen/erweiterten CLI-Oberflächen geprüft.
+
+## 2026-09-23 — CLI-Preflight für Producer, Splitfortschreibung und Training
+
+- **Fragestellung und Reasoning:** Sicherstellen, dass die implementierten
+  Einstiegspunkte ausführbar und die Fine-Tune-Optionen tatsächlich exponiert
+  sind, ohne einen Reallauf zu starten.
+- **Eingaben/Setup:** Nur Argumentparser; keine Korpus-, Cache- oder
+  Trainingsartefakte.
+- **Testumfang bzw. Befehl:**
+
+  ```powershell
+  .venv\Scripts\python.exe -B -m src.variable_producer --help
+  .venv\Scripts\python.exe -B -m src.variable_split_extension --help
+  .venv\Scripts\python.exe -B -m src.ml train-variable-tcn-bilstm --help
+  ```
+
+- **Ergebnis einschließlich Fehlern oder Blockaden:** Alle drei Befehle
+  endeten mit Exit-Code 0. Producer und Splitfortschreibung zeigen ihre
+  Pflichtpfade; der Trainingsparser zeigt Resume getrennt von
+  `--initialize-from-manifest` und `--initialize-from-checkpoint`.
+- **Schlussfolgerung und nächster Schritt:** Die Ausführungspfade sind
+  erreichbar. Der nächste reale Schritt benötigt die bestätigte
+  Recording-Group-Datei.
+
+## 2026-09-23 — Producer-Request-SHA-Abschlusscheck
+
+- **Fragestellung und Reasoning:** Der kompakte Producer bindet nun seine
+  vollständige Anfragekonfiguration kanonisch im Root und in jedem
+  Pairmanifest; die unmittelbar betroffenen Tests wurden erneut ausgeführt.
+- **Eingaben/Setup:** Synthetische Zweitrack-Fixture und Split-Hardening,
+  keine realen Audiodaten.
+- **Testumfang bzw. Befehl:**
+
+  ```powershell
+  .venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests/test_variable_producer.py tests/test_variable_contract_hardening.py
+  ```
+
+- **Ergebnis einschließlich Fehlern oder Blockaden:** **8 Tests bestanden in
+  2,49 Sekunden**.
+- **Schlussfolgerung und nächster Schritt:** Request-SHA, Gruppenbindung und
+  fail-closed Status sind verifiziert. Es folgt nur noch der statische
+  Diff-/Whitespace-Check; danach folgt der Realkorpuslauf.
+
+## 2026-09-23 — Abschließender Diff-/Whitespace-Check
+
+- **Fragestellung und Reasoning:** Prüfung aller in diesem Auftrag neu
+  implementierten oder dokumentierten Pfade auf Patch-Artefakte und
+  Whitespacefehler.
+- **Eingaben/Setup:** Explizite Liste der Producer-, Split-, Dataset-, Cache-,
+  Trainings-, Test- und Dokumentationsdateien; vorbestehende fremde Änderungen
+  an `overleaf`, `prototypes/` und `src/multi_batch_render.py` waren nicht Teil
+  der Prüfliste.
+- **Testumfang bzw. Befehl:** `git diff --check --` mit allen im Auftrag
+  bearbeiteten Dateien.
+- **Ergebnis einschließlich Fehlern oder Blockaden:** Exit-Code 0; keine
+  Whitespacefehler. Git meldete nur erwartete LF/CRLF-Konvertierungshinweise
+  für bereits unter Windows geführte Dateien.
+- **Schlussfolgerung und nächster Schritt:** Der Implementierungsstand ist
+  sauber übergabefähig. Vor der realen Materialisierung bleibt nur die
+  Recording-Group-Zuordnung technisch zu bestätigen.
+
+## 2026-09-23 — Unabhängiger Read-only-Audit des variablen PRIVE-Top-3-Batches
+
+- **Fragestellung und Reasoning:** Der vorhandene Multi-Song-Batch
+  `output\batches\prive_top1000_variable_top3_20260922` sollte unabhängig
+  auf Datenvollständigkeit, Fehlersemantik, BPM-Ausschlüsse, approximative
+  Grids, SHA-Duplikate, Candidate-Rejections, Score-Verteilungen,
+  Rendererfehler und Tempo-Backend-Provenienz geprüft werden. Zulässig waren
+  ausschließlich vorhandene Manifeste und bereits erzeugte Artefakte. Es
+  wurde kein Audio neu gerendert, kein Modell trainiert und kein
+  Originalaudio geöffnet oder neu gehasht. Damit beziehen sich Aussagen zu
+  Source-Audio-SHAs auf die im Root-/Pair-Manifest deklarierte Provenienz.
+- **Eingaben/Setup:** Gelesen wurden das 99.689.588-Byte-Root-Manifest, alle
+  963 Pair-Manifeste mit zusammen 1.051.087.719 Bytes sowie die einzige
+  vorhandene WAV. Python lief ausschließlich über
+  `.venv\Scripts\python.exe`; JSON wurde mit der Standardbibliothek,
+  Verteilungen mit NumPy und die bestehende WAV mit SoundFile gelesen.
+  Vorbestehende Änderungen an `docs/Bemerkungen.md`, `docs/STATUS.md`,
+  `src/multi_batch_render.py`, `overleaf` und `prototypes/` wurden erhalten.
+- **Testumfang bzw. Befehle:** Zunächst inventarisierten read-only
+  `Get-ChildItem -LiteralPath
+  output\batches\prive_top1000_variable_top3_20260922 -Recurse -File` und
+  fokussierte `.venv\Scripts\python.exe -c "..."`-Sonden Root-/Pair-Schema,
+  Failure-Payloads, Candidate-/Score-Struktur und das einzige WAV-Manifest.
+  Der anschließende vollständige Python-Audit las alle 963 Pair-Manifeste,
+  berechnete deren SHA-256, verglich Referenzen und Zähler, validierte den
+  kanonischen Candidate-Request-Hash, Kandidaten-/Score-ID-Mengen,
+  Rangsortierung, endliche Werte, Scorebereich, Grid-Provenienz,
+  Outputreferenzen und Verteilungen. Eine getrennte SoundFile-/NumPy-Sonde
+  prüfte Header, Samplezahl, endliche Werte, Peak und die manifestierten
+  Übergangsgrenzen der bestehenden WAV. `pytest`, Pipeline-CLIs, Renderer,
+  Feature-/Stem-Extraktion und Trainingsrunner wurden nicht gestartet.
+- **Datenvollständigkeit und SHA-Verträge:** Das Root-Manifest hat SHA-256
+  `e9c4a1466f6dba7000de2f04a6c2476bd019ae30e28a56679cc38c35f77be989`
+  und deklariert 321 Songs/Sources. Es gibt 963 erwartete und 963 vorhandene
+  Pair-Verzeichnisse/-Manifeste (`321 * top_targets_per_source=3`), keine
+  fehlenden oder verwaisten Pair-Manifeste und keine Zählerabweichung.
+  Sämtliche 963 manifestierten Pair-Manifest-SHAs stimmen mit den Dateien;
+  Candidate-Request-Payload und -SHA sind Root, Pair-Referenz und Pair-
+  Manifest überall identisch. Die 321 Source-Pfade und 321 deklarierten
+  Source-Audio-SHAs sind jeweils eindeutig; `duplicate_tracks` ist leer,
+  kein ausgewähltes Paar ist ein SHA-Self-Pair und alle Candidate-
+  Source-/Target-SHAs stimmen mit der Root-Referenz. Das belegt
+  Manifestkonsistenz, nicht eine erneute Hashprüfung der Original-FLACs.
+- **BPM-Filter:** Das Manifest bilanziert 398 analysierte Tracks als 321
+  akzeptiert plus 77 BPM-Ausschlüsse; Analysefehler, Policy-Ausschlüsse und
+  SHA-Duplikate sind jeweils null. Alle 321 akzeptierten manifestierten BPMs
+  liegen inklusiv in `[145,165]`: 29 bei 147,656250, 251 bei 151,999081,
+  32 bei 156,605114 und 9 bei 161,499023 BPM. Von den 77 Ausschlüssen liegen
+  74 unter 145 und 3 über 165 BPM. Auffällig sind 31 Ausschlüsse exakt bei
+  74,898098 BPM; im Hardstyle-Korpus ist ein Half-Time-Schätzfehler damit
+  plausibel, aus Manifesten allein aber nicht bewiesen. Die BPM-Policy ist
+  technisch konsistent, ihre musikalische Recall-Qualität nicht validiert.
+- **Approximative Grids und Candidate-Rejections:** Über 1.926 Pair-Seiten
+  sind 1.104 Grids `auftakt_matched_to_librosa` mit `fallback_used=false`
+  und 822 `fallback_from_detected_beats` mit `fallback_used=true`; für die
+  321 Track-SHAs wurde kein widersprüchlicher Grid-Datensatz gefunden. Die
+  konfigurierte Policy `approximate_grid_policy=reject` greift sichtbar:
+  231 Pair-Manifeste verwerfen die Source- und 235 die Target-Provenienz.
+  Weitere 694 Paare enden mit `unsupported_meter` (Variable Candidate
+  Protocol 2 verlangt 4/4), drei mit `invalid_source_grid`. Insgesamt haben
+  958/963 Paare keine Kandidaten; die Rejection-Einträge sind je Pair
+  aggregierte Abbruchgründe und keine Zählung einzelner hypothetischer
+  Kandidaten. Nur fünf Paare erzeugen Kandidaten.
+- **Candidate- und Score-Prüfung:** Die fünf zulässigen Paare enthalten
+  zusammen 303.824 Kandidaten und ebenso viele `feature_baseline_v3`-Scores:
+  88.278 für 2, 79.584 für 4, 71.583 für 6 und 64.379 für 8 Takte. Alle
+  Candidate-IDs sind global eindeutig, Candidate-/Score-ID-Mengen stimmen,
+  Ränge sind lückenlos absteigend sortiert, alle Scores sind endlich und
+  liegen in `[0,1]`. Gesamtverteilung: Minimum 0,215710, 5-%-Quantil
+  0,359225, Median 0,491583, Mittel 0,499160, 95-%-Quantil 0,637146,
+  Maximum 0,893347. Komponentenmittel: Energy 0,824369, Harmonic 0,953022,
+  High Power 0,423352, Non-Overlap 0,043309, Tempo 1,0 und Timbre 0,703609.
+  Der sehr niedrige mittlere Non-Overlap-Wert zeigt, dass der große
+  Candidate-Raum überwiegend schwache Bridge-Geometrien enthält; das
+  Top-Ranking funktioniert formal, ist aber keine Hörqualitätsevidenz.
+  Die 102.720 Songkompatibilitäts-Scores liegen bei Median 0,909858 und
+  Mittel 0,901648; die 963 ausgewählten Top-3-Ziele bei Median 0,969089 und
+  Mittel 0,966251. Es gab keine Song- oder Candidate-Rankingfehler.
+- **Renderer- und Metrikfehler:** Vier der fünf ausgewählten Top-1-
+  Candidates scheitern mit `ValueError`, weil Source- und Target-
+  Übergangsfenster unterschiedlich lang sind: `Feel My Fire - Ran-D →
+  Imagine - Bass Modulators` 566.272/564.224 Samples (Differenz 2.048),
+  `Living For The Moment - Ran-D → Broken - Regain` 279.552/282.624
+  (3.072), `Mellow - Showtek → The Words - Psyko Punkz`
+  280.576/282.112 (1.536) und `WKND - Edit - Max Enforcer → Imagine -
+  Bass Modulators` 141.312/140.800 (512). Das entspricht bei 44,1 kHz etwa
+  46,4, 69,7, 34,8 und 11,6 ms. Nur `Keep Me Awake - Radio Edit -
+  Atmozfears → Imagine - Bass Modulators` wurde als 8-Takt-Equal-Power-WAV
+  erzeugt. Deren Render-Metrik scheitert separat: Das manifestierte
+  `transition_end_sample=784724` liegt 35.024 Samples beziehungsweise
+  0,7942 s hinter der 749.700 Frames langen Datei. Daher existiert für den
+  gesamten Batch kein `rendered_transition_baseline_v1`-Score.
+- **Vorhandene WAV:** Die deklarierte Datei existiert, ist nicht verwaist
+  und hat SHA-256
+  `3a94ab0e6700eb006c2c42fdedddf761484a3ddc6d2da8e438a02fffe5253b5f`.
+  Header und Manifest stimmen bei 44.100 Hz, Stereo, 749.700 Frames und
+  17,0 s; alle Samples sind endlich. Abweichend von früheren Float32-
+  Studienartefakten ist sie PCM-16. Der Peak erreicht exakt -1,0; 1.536
+  Samples liegen betragsmäßig bei mindestens 0,999 und 573 Samples exakt
+  bei negativem Full Scale. Das ist ein objektiver Pegel-/Clipping-
+  Prüfhinweis, beweist ohne Vergleich zum Eingang aber nicht, dass der
+  Renderer das Clipping neu erzeugt hat.
+- **Fehlersemantik:** Root-`failures` ist leer und alle 321 Sources sowie
+  963 Pair-Referenzen tragen `status=completed`, obwohl vier Pair-Manifeste
+  Renderfehler und eines einen Transition-Metric-Fehler enthalten. Die
+  zugehörigen Root-Pair-Summen `render_failure_count=1` beziehungsweise
+  `transition_metric_failure_count=1` sind korrekt; `completed` bedeutet
+  hier also abgeschlossene/persistierte Bearbeitung, nicht erfolgreichen
+  Render und nicht Fehlerfreiheit. Ein Verbraucher darf weder Root-
+  `failures=[]` noch `status=completed` allein als Erfolgsindikator nutzen,
+  sondern muss die verschachtelten Fehlerzähler auswerten. Der Prozess-
+  Exitcode des historischen Laufs ist nicht als Artefakt vorhanden und kann
+  aus diesem Audit nicht behauptet werden.
+- **Tempo-Backend-Provenienz:** Alle fünf renderrelevanten Top-Candidates
+  deklarieren identische Source-/Target-BPM 151,999081 und
+  `tempo_relative_difference=0`. Die einzige erfolgreiche Variante nennt
+  deshalb korrekt `tempo_backend=not_needed`; ein Time-Stretch-Backend wurde
+  in keinem vorhandenen Audioartefakt ausgeführt. Für die vier vor dem
+  Renderabschluss gescheiterten Versuche existiert folgerichtig keine
+  ausgeführte Backend-Provenienz. Die Grids nennen einheitlich
+  `librosa=0.11.0;aufTAKTCl=sha256:35f9149c...1b523`; dies ist
+  Analyse-/Grid-, nicht Time-Stretch-Provenienz.
+- **Technische Funktionsfähigkeit versus musikalische Qualität:** Formal
+  funktionieren Inventar, SHA-Verkettung, BPM-Filter, Grid-Policy,
+  Candidate-v2-Erzeugung für fünf Paare und Feature-Ranking. Als Hörbatch
+  ist das Ergebnis nicht freigegeben: Nur 1/963 Paare besitzt Audio, dieses
+  Audio hat keinen gültigen Render-Metrikscore und einen Full-Scale-
+  Pegelhinweis. Weder die hohen Songkompatibilitätswerte noch der beste
+  Candidate-Score 0,893347 belegen musikalische Stimmigkeit, Artefaktfreiheit
+  oder Tanz-Nutzbarkeit; es fand in diesem Audit keine Hörbewertung statt.
+- **Kleines, konditionales Hörset:** Nach Behebung der Renderer-/Metrikfehler
+  wäre ein dreiteiliges Set ohne Track- oder Künstlerwiederholung sinnvoll:
+  (1) `Keep Me Awake - Atmozfears → Imagine - Bass Modulators`, 8 Takte,
+  Score 0,801610; (2) `Living For The Moment - Ran-D → Broken - Regain`,
+  4 Takte, Score 0,893347; (3) `Mellow - Showtek → The Words - Psyko
+  Punkz`, 4 Takte, Score 0,854332. Das ist nur eine metadatenbasierte,
+  innerhalb des Hardstyle-Batches möglichst wenig redundante Auswahl. Aktuell
+  ist allein Nummer 1 als WAV vorhanden und wegen Metrikfehler/Pegelfund nur
+  diagnostisch hörbar; Nummer 2 und 3 wurden nicht erzeugt. Es wird keine
+  musikalische Qualität behauptet.
+- **Schlussfolgerung und nächster Schritt:** Vor einer Hörfreigabe zuerst
+  den Variable-Renderervertrag für lokale Gridlängen sowie die Berechnung
+  der Render-Metrikgrenzen korrigieren und in einem neuen, nicht
+  überschreibenden kleinen Lauf verifizieren. Separat sollte die Häufung
+  von Half-Time-BPMs und `unsupported_meter` untersucht werden; die strikte
+  Approximate-Grid-Policy sollte nicht still gelockert werden. Dieser Auftrag
+  hat bewusst keinen Fix, keinen neuen Render-/Trainingslauf und keinen
+  Commit ausgeführt. Der abschließende Befehl
+  `git diff --check -- docs/STATUS.md docs/Bemerkungen.md` bestand; Git gab
+  nur die bestehende LF/CRLF-Konvertierungswarnung für beide Dateien aus.
+
+## 2026-09-23 — Plan und Vertragsaudit für die PRIVE-Dataset-v2-Erweiterung
+
+- **Fragestellung und Reasoning:** Die 398 lokalen PRIVE-FLACs sollen das
+  bestehende variable Trainingskorpus reproduzierbar erweitern, ohne jetzt
+  Audio, Stems, Features, Datasetshards, Waveformcaches oder Gewichte zu
+  materialisieren und ohne Training. Vor dem Plan wurden Feature Protocol 2,
+  Dataset Format 2, Splitautorität, BS-RoFormer-Provenienz,
+  Variable-Waveformcache, Variable-TCN/BiLSTM-Runner und die beiden vorhandenen
+  PRIVE-Batches gegen Code, Protokolle und lokale Manifeste geprüft.
+- **Eingaben/Setup:** Repository am 2026-09-23; `.venv\Scripts\python.exe`;
+  read-only Inventur des PRIVE-Ordners und der vorhandenen Dataset-/Cache-/
+  Runmanifeste. Vorbestehende Änderungen an `docs/Bemerkungen.md`,
+  `docs/STATUS.md`, `src/multi_batch_render.py`, `overleaf` und `prototypes/`
+  wurden erhalten.
+- **Testumfang bzw. Befehl:**
+
+  ```powershell
+  .venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests/test_variable_features.py tests/test_variable_dataset.py tests/test_variable_contract_hardening.py tests/test_variable_waveform_cache.py tests/test_variable_tcn_bilstm.py tests/test_multi_batch_render.py
+  ```
+
+- **Ergebnis einschließlich Fehlern oder Blockaden:** **45 Tests bestanden in
+  58,12 Sekunden**. Es wurden nur synthetische Pytest-Fixtures und temporäre
+  Verzeichnisse verwendet. Feature-v2, homogene Dataset-v2-Shards, gemeinsame
+  SHA-Splitautorität, Geometrie-Hardening, lokales Grid-Alignment,
+  Cacheintegrität, T=16/32/48/64, explizite Längenkonditionierung,
+  Checkpoint/Resume und Multi-Batch-Regression sind grün. Kein Testsplit-
+  Audio und kein reales Korpusartefakt wurde geöffnet oder geschrieben.
+- **Verifizierte Entscheidungen:** Der bestehende 2/4-Takt-Baseline-Root und
+  der fehlerhafte variable Top-3-Root sind keine Datasetquelle. Vor dem
+  Vollauf ist ein neuer kompakter, splitbewusster Multi-Song-Produzent mit
+  `PartialPreAnalysis`/Merge-v2, Candidate Protocol 2 und ohne Renderer
+  erforderlich. Die alten 87 Splitzuweisungen bleiben unverändert; neue
+  Audio-SHAs werden gruppenweise ergänzt. Der neue primäre Modelllauf startet
+  von Grund auf. Ein optionales Fine-Tuning ist ein separater Initialisierungs-
+  lauf und kein Resume. Test-Waveformcache, Testtraining und Testmodellwahl
+  bleiben gesperrt.
+- **Sackgassen:** Die frühere 87-Paar-Materialisierung erzeugte 6,15 GB JSON
+  für 1,92 Millionen Kandidaten; ein erneut unbeschränktes Vollmanifest wird
+  deshalb nicht akzeptiert. Der aktuelle Variable-Runvertrag bindet nur das
+  Datasetmanifest und noch keinen kanonischen Gesamtindex des Waveformcaches;
+  dieser Hash wird vor dem neuen Training Pflicht. Exakte Audio-SHA-Trennung
+  allein erkennt außerdem keine Radio-/Album-/Alternate-Version derselben
+  Aufnahme, weshalb eine vorgelagerte Recording-Group-Zuordnung geplant ist.
+- **Schlussfolgerung und nächster Schritt:** Der vollständige Phasen-,
+  Hash-, Speicher-, Laufzeit-, Smoke-, Trainings- und Hörstudienplan steht in
+  `docs/PRIVE_DATASET_V2_EXTENSION_PLAN.md`. Vor jeder Materialisierung sind
+  zuerst Producervertrag, Split-/Recording-Gruppen und
+  der Waveformcacheindex-Vertrag zu schließen. Der abschließende Lauf
+  `git diff --check -- docs/PRIVE_DATASET_V2_EXTENSION_PLAN.md docs/STATUS.md
+  docs/Bemerkungen.md` bestand mit Exit-Code 0; ausgegeben wurden nur die
+  bestehenden LF/CRLF-Hinweise für `STATUS.md` und `Bemerkungen.md`. Kein
+  Commit wurde erstellt.
+
+## 2026-09-24 — Reale PRIVE-Korpusinventur und Dataset-v2-Smoke-Lauf
+
+- **Fragestellung und Reasoning:** Nach der ausdrücklichen Freigabe zur
+  Materialisierung soll die PRIVE-Sammlung technisch in einen neuen,
+  unveränderlichen Dataset-v2-Pfad überführt werden. Unverändert bleiben die
+  technischen Schutzregeln: Recording-Gruppen dürfen keine Splits
+  überqueren, alte Zuweisungen werden eingefroren und der Testsplit bleibt
+  für Producer-Smoke, Training und Modellwahl geschlossen.
+- **Statischer Normalisierungscheck:** Ein `.venv\Scripts\python.exe -B -c`
+  Check lud `src/variable_corpus_inventory.py`, pars­te die geänderten
+  Python-Dateien mit `ast.parse` und prüfte beispielhaft die
+  Recording-Group-Normalisierung. `Special Edit` wurde mit der Grundaufnahme
+  gruppiert; `A Feeling (Citizen Remix)` normalisierte zu
+  `the raiders|a feeling`. Ergebnis: erfolgreich in 29,4 s.
+- **Erster realer Inventurlauf (fehlgeschlagen, unverändert bewahrt):**
+
+  ```powershell
+  .venv\Scripts\python.exe -B -m src.variable_corpus_inventory `
+    --base-producer-manifest output\batch_variable_v2_strict_20260820_selected_top3_run01\manifest.json `
+    --base-dataset-manifest output\datasets\variable_v2_strict_20260820_selected_roformer_run01\manifest.json `
+    --added-directory "musik\PRIVE Hardstyle Top 1000 of all times - by Scantraxx" `
+    --output-dir output\corpora\prive_scantraxx_extension_v2_20260923_run01 `
+    --split-seed 20260923
+  ```
+
+  Der Lauf stoppte absichtlich mit `ValueError`, weil die Recording-Gruppe
+  `recording-a930310ba6b8991716df` bereits in zwei eingefrorenen Splits lag:
+  `musik\05 - HELP_LESS.flac` in Train und `HELP_LESS - DEEZL.flac` aus dem
+  Q-dance-Korpus in Test. Die Dateien haben verschiedene Audio-SHAs, bilden
+  nach Artist/Titel aber dieselbe Aufnahme. Der Teilstand wurde nicht
+  überschrieben, sondern nach
+  `output/corpora/prive_scantraxx_extension_v2_20260923_run01_failed_recording_conflict01`
+  verschoben.
+- **Entscheidung aus der Sackgasse:** Bei Konflikten ausschließlich zwischen
+  bereits eingefrorenen Altzuweisungen bleibt genau der stärker geschützte
+  Split aktiv (`test > validation > train`); die anderen Kopien werden mit
+  Pfad, SHA, Gruppe, altem und behaltenem Split explizit im Korpusmanifest
+  als `preexisting_recording_group_cross_split_conflict` ausgeschlossen.
+  Neue Tracks werden weiterhin gruppenweise zugewiesen, nicht einzeln.
+- **Gezielter Regressionstest nach dem Konflikt-Fix:**
+
+  ```powershell
+  .venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider `
+    tests/test_variable_corpus_inventory.py `
+    tests/test_variable_producer.py `
+    tests/test_variable_contract_hardening.py
+  ```
+
+  Ergebnis: **10 Tests bestanden in 3,72 s**. Nach der zusätzlichen
+  Parallelisierung des BPM-/Merge-v2-Preflights wurde derselbe Umfang erneut
+  ausgeführt: **10 Tests bestanden in 2,46 s**.
+- **Erfolgreicher realer Inventurlauf:** Der obige Inventurbefehl wurde mit
+  demselben neuen Zielpfad wiederholt und erfolgreich abgeschlossen. Aktiv
+  sind **484 Tracks in 473 Recording-Gruppen**; ein Train-Duplikat der
+  eingefrorenen Testaufnahme `HELP_LESS` ist ausgeschlossen. Die versiegelten
+  Bindungen lauten: Korpusmanifest
+  `46a7f677f008ce9d8296b6b1a80db0fbf6d419cddfbe0886c88b3d7ae297b3a4`,
+  Recording-Gruppen
+  `9b9d657c5785013d20b06abd252c8d4af1e06889e977a06f3b666effcb2dc0b4`,
+  Splitautoritätsdatei
+  `1eaf5672428f030ca9807c5ddf3d1e06bf03c06b2792b8a9a21bf564a318d3ee`
+  und kanonische Splitabbildung
+  `f01243f227db7fb41c8859de62985b39ba75a71fe9a8f5fe95b40d619c1b4a7a`.
+  Die Autorität enthält 343 Train-, 70 Validation- und 72 Test-SHAs; sie
+  enthält bewusst auch die ausgeschlossene historische Train-SHA, während
+  das aktive Korpus 484 statt 485 Tracks umfasst.
+- **Erster Producer-Smoke (abgebrochen):** Ein 20-Track-Smoke mit separatem,
+  leerem Merge-v2-Cache wurde nach der ersten abgeschlossenen Analyse
+  abgebrochen, weil aufTAKT pro Track ungefähr Echtzeit/2 benötigt und der
+  vorhandene Cache dadurch nicht wiederverwendet wurde. Der eine
+  Cacheeintrag blieb als diagnostischer Teilstand unter
+  `output/pre_analysis/prive_scantraxx_extension_merge_v2_smoke_20260924_run01_aborted_empty_cache01`
+  erhalten. Es wurden weder Audio gerendert noch Datasetshards geschrieben.
+- **Parallelisierungsentscheidung:** `src.variable_producer` besitzt nun
+  `--analysis-workers`; jeder Worker verwendet eine eigene
+  `PartialPreAnalysis`-Instanz, während der inhaltsadressierte Cache atomar
+  beschrieben wird. Der Producervertrag bindet die Workerzahl in seine
+  Request-Konfiguration. Dadurch kann der teure reale Preflight parallel
+  laufen, ohne Split-, Candidate- oder Outputsemantik zu ändern.
+- **Zweiter Smoke-Subset:** Der versiegelte Subset
+  `smoke_corpus_manifest_run02.json` enthält vier Train- und vier
+  Validation-Tracks aus dem neuen PRIVE-Ordner, acht verschiedene
+  Recording-Gruppen und keinen Testtrack. SHA-256:
+  `dc826a8ace66ab6ae0c1183bb7252c4a737a95256efbc0d6c6b4d2309d28fb85`.
+  Ein erster Selektionsversuch schrieb nichts, weil der Filter den
+  tatsächlichen Quellenwert `prive_scantraxx` zunächst fälschlich als
+  `added` erwartete; nach read-only Diagnose wurde ein neuer Run-02-Pfad
+  verwendet.
+- **Laufender realer Producer-Smoke:**
+
+  ```powershell
+  .venv\Scripts\python.exe -B -m src.variable_producer `
+    --corpus-manifest output\corpora\prive_scantraxx_extension_v2_20260923_run01\smoke_corpus_manifest_run02.json `
+    --output-dir output\producers\prive_scantraxx_extension_variable_v2_smoke_20260924_run02 `
+    --split-map output\corpora\prive_scantraxx_extension_v2_20260923_run01\split_authority.json `
+    --analysis-location output\pre_analysis `
+    --transition-bars 2 4 6 8 --top-targets 1 `
+    --top-candidates-per-length 1 --min-bpm 145 --max-bpm 165 `
+    --analysis-workers 4
+  ```
+
+  Alle acht Analysen wurden ohne Analysefehler beendet; zwei Tracks lagen
+  außerhalb des BPM-Fensters. Der Candidate-v2-Lauf für die sechs
+  verbleibenden Tracks war beim Schreiben dieses Zwischenstands noch aktiv.
+
+## 2026-09-25 — Dataset-v2-Smoke und Vollauf
+
+- **Fragestellung und Reasoning:** Den freigegebenen Plan mit einem realen,
+  reproduzierbaren Dataset-v2-Smoke ausführen und bei bestandenen Split-,
+  Grid- und Hash-Gates den Voll-Producer starten. In dieser Fortsetzung wurden
+  keine Testbeispiele in den Smoke aufgenommen; die Splitautorität enthält
+  weiterhin den unangetasteten geschlossenen Testsplit.
+- **Smoke-Producer Run 02:** Run 02 wurde mit vier Audioanalysen ausgeführt.
+  BPM-Prüfung schloss `It's Our Moment - Wasted Penguinz` (74,898 BPM) und
+  `Mask On My Face - KELTEK` (129,199 BPM) aus. Train produzierte Kandidaten,
+  aber beide verbleibenden Validation-Tracks hatten unter dem aktuellen
+  4/4-Vertrag keine Kandidaten. Diagnose der Rejections: `unsupported_meter`.
+  Der Prozess endete ohne Analysefehler, der Smoke wurde wegen fehlender
+  Validation-Beispiele verworfen und der Root unverändert als Diagnoseartefakt
+  belassen.
+- **Smoke-Producer Run 04:** Ein mit den früheren Candidate-Dateien
+  übereinstimmendes Validation-Paar (`Azure - D-Charged` / `Safe & Sound`)
+  war unter den aktuellen Analysis-v2-Caches ebenfalls kein gültiges 4/4-Paar.
+  Der Run endete technisch, aber mit null Validation-Kandidaten; er wurde
+  nicht als Datasetquelle verwendet.
+- **Grid-gültiger Validation-Smoke:** Read-only Suche über die abgeschlossenen
+  Merge-v2-Caches fand vier aktuelle 4/4-Validation-Grids. Ein direkter
+  `generate_transition_candidates`-Check auf `MEDICINE - TOZA` und
+  `My History - Galactixx` ergab 9.282 Kandidaten für 2 Takte und keine
+  Rejection. Die vier Tracks für Run 05 sind zwei PRIVE-Train-Tracks
+  (`Feel My Fire`, `Imagine`) und zwei eingefrorene Basis-Validation-Tracks
+  (`MEDICINE`, `My History`), alle mit unterschiedlichen Aufnahmegruppen und
+  bereits SHA-verifizierten Analysecaches. Der Smoke-Subset-SHA lautet
+  `e91f2964aad10f39f6a249f3e4ef3cb0288e24dedb67e7bc1f14cc0dca69dfb2`.
+- **Producer-Smoke Run 05:** Befehl:
+
+  ```powershell
+  .venv\Scripts\python.exe -B -m src.variable_producer `
+    --corpus-manifest output\corpora\prive_scantraxx_extension_v2_20260923_run01\smoke_corpus_manifest_run05.json `
+    --output-dir output\producers\prive_scantraxx_extension_variable_v2_smoke_20260924_run05 `
+    --split-map output\corpora\prive_scantraxx_extension_v2_20260923_run01\split_authority.json `
+    --analysis-location output\pre_analysis\prive_scantraxx_extension_merge_v2_smoke_20260924_run05 `
+    --transition-bars 2 4 6 8 --top-targets 1 `
+    --top-candidates-per-length 1 --min-bpm 145 --max-bpm 165 `
+    --analysis-workers 4
+  ```
+
+  Ergebnis `completed`, keine Fehler, vier splitinterne Paare, je ein Top-
+  Candidate für jede Länge und Split. Insgesamt 16 Candidates, acht Train,
+  acht Validation; Candidate- und Pair-SHAs wurden geprüft. Producer-Root-SHA:
+  `0346b1b1b3fcf5b1fa2db7b77402c511cc21e714cee30e5e29019984c94fd287`.
+- **Splitbindung für den Datasetexport:** Der Export verweigerte zunächst
+  korrekt die ungebundene Korpusautorität, da sie an das Korpusmanifest statt
+  an dieses Producer-Root gebunden war (`Frozen split authority source
+  manifest hash differs`). `bind_variable_split_authority` und das CLI
+  `src.variable_split_binding` wurden ergänzt. Die Bindung ließ Mapping-SHA
+  und sämtliche Zuweisungen unverändert und speicherte Parent-Map- und
+  Producer-Root-SHA.
+- **Regressionstests zur Splitbindung:** Erster Lauf des erweiterten
+  Testumfangs endete mit **1 Fehler / 10 bestanden**: der synthetische Test
+  der regulären Splitbildung übergab null Pairgewichte, wodurch der
+  Splitter wie spezifiziert keine nichtleeren Example-Splits erzeugen konnte.
+  Nach Korrektur der Testfixture und nach Ergänzung des parallelen Source-
+  Pfads liefen die Tests jeweils erfolgreich:
+
+  ```powershell
+  .venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider `
+    tests\test_variable_contract_hardening.py `
+    tests\test_variable_producer.py `
+    tests\test_variable_corpus_inventory.py
+  ```
+
+  Ergebnisse: **11 Tests bestanden in 3,50 s**; nach Hinzunahme des
+  `source_workers=2`-Producer-Smokes **11 Tests bestanden in 2,54 s**.
+- **RoFormer- und Dataset-Smoke:** Der erste Export scheiterte vor Feature-
+  Extraktion an CP1252 bei einem Emoji in der Downloadbibliothek. Mit
+  `PYTHONIOENCODING=utf-8` erreichte er den Modellabruf, den das eingeschränkte
+  Netzwerk zunächst blockierte (drei Verbindungsversuche). Nach erfolgreicher
+  Freigabe des nötigen Netzwerkzugriffs lud der Export den
+  BS-RoFormer-Checkpoint mit 699.412.152 Bytes in den ignorierten lokalen
+  Featurecache. Es wurde kein Gewicht dem Repository hinzugefügt.
+  Anschließend endete der Export erfolgreich:
+
+  ```powershell
+  .venv\Scripts\python.exe -B -m src.features export-dataset-v2 `
+    output\producers\prive_scantraxx_extension_variable_v2_smoke_20260924_run05\manifest.json `
+    output\datasets\prive_scantraxx_extension_variable_v2_fp2_roformer_smoke_20260924_run01 `
+    --cache-root output\feature_cache_prive_scantraxx_extension_fp2_roformer_smoke_20260924_run01 `
+    --analysis-root output\pre_analysis\prive_scantraxx_extension_merge_v2_smoke_20260924_run05 `
+    --transition-bars 2 4 6 8 --top-k-per-pair 1 `
+    --split-map output\corpora\prive_scantraxx_extension_v2_20260923_run01\split_authority_for_producer_smoke_run05.json `
+    --vocal-backend roformer --min-bpm 145 --max-bpm 165
+  ```
+
+  Der Versuch `src.features validate-variable-dataset` war kein gültiger
+  Befehl (die CLI bietet ihn nicht an). Stattdessen wurden alle 16 Beispiele
+  mit `VariableFeatureDatasetCollection` einzeln geladen. Ein erster
+  Prüf-Ausdruck erwartete fälschlich, dass auch die Splitzuweisung für Test
+  aus dem Manifest fehlt; anschließend wurde die richtige Bedingung geprüft:
+  in jedem Shard sind null Testbeispiele und Testshards explizit leer.
+  Ergebnis: 2 Train und 2 Validation für jede Länge, 16 erfolgreich
+  eingelesene Beispiele, Feature Protocol 2, Datasetmanifest-SHA
+  `f687d786c11bd64433a7092d05fe507b9584aaf857916a55f04d1d85b1a3ca32`.
+- **BPM-Eligible-Subset für den Vollauf:** Der bereits abgeschlossene
+  Baseline-Preflight (87 bestehende Tracks) und der alte PRIVE-Preflight
+  (321 akzeptierte von 398 Dateien) wurden anhand ihrer Tracklisten mit dem
+  Audio-SHA-Inventar verknüpft. Das neue `eligible_corpus_manifest.json`
+  enthält 407 einmalige Audios und bindet beide Elternmanifeste sowie ihre
+  BPM-Policy; Splitzahlen: 292/58/57. Manifest-SHA:
+  `7bcf4a79db6943d78bf53d60f5adbf273245f31c7378a3aaacf360df6dc95be3`.
+  Die abgeleitete Trackauswahl wurde über Pfade aus den alten Manifesten
+  erstellt und anschließend mit der aktuellen Korpus-SHA-Liste auf 407
+  eindeutige Zeilen abgeglichen. Ungeprüfte Half-Time-Dateien wurden nicht
+  ergänzt.
+- **Voll-Producer-Sackgasse Run 01:** Der erste Voll-Producer wurde nach
+  129 fertigen Merge-v2-Analysemanifests während des Preflights abgebrochen.
+  Die Trackliste umfasste zu diesem Zeitpunkt noch alle 484 Audios, sodass
+  bekannte BPM-Ausschlüsse unnötig erneut analysiert worden wären. Das
+  Producer-Verzeichnis wurde vor dem Ende des BPM-Preflights nicht angelegt;
+  die 129 inhaltsadressierten Cacheeinträge bleiben bestehen.
+- **Voll-Producer Run 02:** Der laufende Befehl verwendet die gebundene
+  407-Track-Eligible-Liste und vier Source-Worker:
+
+  ```powershell
+  .venv\Scripts\python.exe -B -m src.variable_producer `
+    --corpus-manifest output\corpora\prive_scantraxx_extension_v2_20260923_run01\eligible_corpus_manifest.json `
+    --output-dir output\producers\prive_scantraxx_extension_variable_v2_top1x3_20260923_run02 `
+    --split-map output\corpora\prive_scantraxx_extension_v2_20260923_run01\split_authority.json `
+    --analysis-location output\pre_analysis\prive_scantraxx_extension_merge_v2_20260923_run01 `
+    --transition-bars 2 4 6 8 --top-targets 1 `
+    --top-candidates-per-length 3 --min-bpm 145 --max-bpm 165 `
+    --analysis-workers 8 --source-workers 4
+  ```
+
+  Der Run schloss später 407/407 Eligible-Audio-SHA-Analysen ab und begann
+  die Paarbildung. Beim Abbruch war ein Pair abgeschlossen und es gab null
+  Pairfehler; die Gesamtentscheidung und Korrektur des Testsplit-Gates stehen
+  direkt im folgenden Eintrag.
+
+- **Voll-Producer Run 02 -- geschlossener Testsplit-Gatefehler:** Run 02 wurde
+  nach abgeschlossener BPM-Voranalyse (407/407 Eligible-Audio-SHAs) und nach
+  Beginn der Paarbildung abgebrochen. Der Producer hatte zu diesem Zeitpunkt
+  Quellen mit Split test in die Voranalyse einbezogen; ein Pair war
+  abgeschlossen, null fehlgeschlagen. Es gab noch keinen Datasetexport und
+  kein Training. Das verletzt den geforderten geschlossenen Testsplit. Run 02
+  bleibt als unvollständiges Diagnoseartefakt erhalten; seine Analysecaches
+  und das partielle Producerroot werden nicht als Dataset verwendet.
+- **Korrektur und Regressionstest, 2026-09-25:** src.variable_producer
+  schließt nun Testtracks anhand der bereits manifestierten Audio-SHAs aus,
+  bevor Audiodateien gehasht, BPM-analysiert oder zur Paarbildung verwendet
+  werden. Die ausgeschlossenen Test-SHAs werden nur als Auditmetadaten
+  aufgeführt. Falls ein Splitauthority-Testzuweisungen enthält, aber kein
+  Korpusmanifest zum Vorfiltern vorliegt, verweigert der Producer den Lauf,
+  bevor er Audio inspiziert.
+  Ein erster Testbefehl verwies auf die nicht existente Datei
+  tests/test_variable_split.py und führte keine Tests aus. Der tatsächliche
+  fokussierte Befehl
+  .venv\Scripts\python.exe -B -m pytest tests\test_variable_producer.py -q
+  bestand mit 3 Tests in 7,62 s. Die neuen Regressionstests belegen, dass
+  Testaudio weder gehasht noch analysiert wird und dass der Lauf ohne
+  manifestbasierte Vorfilterung vor Audiozugriff abbricht.
+  Nächster Schritt: Run 03 mit derselben Eligible-Liste, dem unveränderten
+  Splitmapping und neuer Producer-Run-ID ausschließlich aus Train/Validation
+  erstellen; danach Testleere und SHAbindungen des Dataset-v2-Exports prüfen.
+
+## 2026-09-25 — Recovery des PRIVE-Produzenten und Dataset-v2-Vollausführung
+
+- **Fragestellung/Reasoning:** Den PRIVE-Trainingsbestand auf dem korrigierten,
+  strikt trackgetrennten Run fortsetzen, ohne unvollständige Rootmanifeste zu
+  verändern; danach den neuen unveränderlichen 2/4/6/8-Takt-Dataset-v2-Root
+  mit Feature Protocol 2 und BS-RoFormer erzeugen und maschinell prüfen.
+- **Eingaben/Setup:** Korpusinventar-Manifest-SHA
+  `46a7f677f008ce9d8296b6b1a80db0fbf6d419cddfbe0886c88b3d7ae297b3a4`;
+  BPM-Eligible-Manifest mit 407 Tracks und Verteilung 292/58/57,
+  SHA `7bcf4a79db6943d78bf53d60f5adbf273245f31c7378a3aaacf360df6dc95be3`;
+  kanonische Mapping-SHA
+  `f01243f227db7fb41c8859de62985b39ba75a71fe9a8f5fe95b40d619c1b4a7a`.
+  Der reproduzierbare Split nutzt Audio-SHA und vorab bestätigte
+  Recording-Gruppen. Für den Dataset-Export werden nur gleichsplitige
+  Train-/Validation-Paare akzeptiert; `test` wird bereits vor Audiozugriff
+  ausgeschlossen.
+- **Producer-Sackgasse und Recovery:** Korrigierter Run 03 verarbeitete 350
+  Train-/Validation-Sources und schrieb alle 350 Pairmanifeste, endete aber
+  mit Exit-Code 1, bevor das Rootmanifest seine gesamten Statuszeilen
+  aktualisierte (61 von 350 Statuszeilen waren aktualisiert). Das partielle
+  Run-03-Root wurde nicht verändert oder als abgeschlossen ausgegeben.
+  Recovery Run 04 aggregierte zwar die 350 vorhandenen Pairmanifeste, besaß
+  aber null geeignete Validation-Beispiele und wurde nicht verwendet. Recovery
+  Run 05 erzeugte einen neuen Root aus Run 03 plus zwei SHA-geprüften,
+  splitinternen Validation-Pairmanifesten des bereits geprüften Smoke Run 05.
+  Root:
+  `output/producers/prive_scantraxx_extension_variable_v2_top1x3_20260923_run05_recovered_from_run03_plus_validation_smoke/manifest.json`;
+  SHA-256 `172c3ba41c9a7b807452e443865e63d43d67bcbd2d792be6ca841ed69b2d8a36`.
+  Er bindet 350 Source-Zeilen, 352 Pairmanifeste (292 Train / 60 Validation),
+  null Pairfehler und 57 ausgeschlossene Testzuweisungen. Von 289
+  Source-Ranking-Audits sind die Originalranglisten nicht wiederherstellbar;
+  diese Records sind ausdrücklich als nicht wiederhergestellt markiert.
+  Pro Taktlänge stehen 36 Train- und 2 Validation-Candidates zur Verfügung.
+- **Splitbindung:** Die unveränderte Mapping-SHA wurde an Recovery-Root-SHA
+  gebunden; Authoritydatei
+  `output/corpora/prive_scantraxx_extension_v2_20260923_run01/split_authority_for_producer_run05_recovered.json`,
+  Datei-SHA `bfcb6929bd5c1f7bbfee41c82e5cef868a066dfa13337e712d5d3227265030b9`.
+  Ein erster Aufruf verwendete versehentlich einen nicht existierenden
+  Producerpfad (fehlendes `_variable`) und schlug vor jeder Änderung fehl;
+  der Aufruf mit dem richtigen Recoverypfad bestand. Nach Ergänzung der
+  Recovery-Validierung für mehrere Supplement-Roots bestanden
+  `.venv\Scripts\python.exe -B -m pytest tests\test_variable_producer.py tests\test_variable_producer_recovery.py -q`
+  mit **4 Tests in 2,59 s**.
+- **Datasetexport:** Ziel war vor dem Lauf nicht vorhanden:
+  `output/datasets/prive_scantraxx_extension_variable_v2_fp2_roformer_2-4-6-8bar_top1x3_split20260923_run01`.
+  Verwendeter Befehl:
+
+  ```powershell
+  $env:PYTHONIOENCODING='utf-8'
+  .venv\Scripts\python.exe -B -m src.features export-dataset-v2 `
+    output\producers\prive_scantraxx_extension_variable_v2_top1x3_20260923_run05_recovered_from_run03_plus_validation_smoke\manifest.json `
+    output\datasets\prive_scantraxx_extension_variable_v2_fp2_roformer_2-4-6-8bar_top1x3_split20260923_run01 `
+    --cache-root output\feature_cache_prive_scantraxx_extension_fp2_roformer_20260923_run01 `
+    --analysis-root output\pre_analysis\prive_scantraxx_extension_merge_v2_20260923_run01 `
+    --transition-bars 2 4 6 8 --top-k-per-pair 3 `
+    --split-map output\corpora\prive_scantraxx_extension_v2_20260923_run01\split_authority_for_producer_run05_recovered.json `
+    --vocal-backend roformer --min-bpm 145 --max-bpm 165
+  ```
+
+  Der erste rund 50-minütige Extraktionslauf befüllte 22 Vocal-Stem- und 23
+  Track-Featurecaches, endete aber beim Anlegen des temporären Datasetroots
+  mit `PermissionError: [WinError 5]` unter `output\datasets`. Der Root-ACL
+  erlaubte Änderungen; die Workspace-Sandbox hatte den konkreten temporären
+  Schreibzugriff blockiert. Der Exporter entfernte den unvollständigen Temp-
+  Root, der unveränderliche Zielpfad blieb frei. Nach gezielter Freigabe lief
+  derselbe Befehl mit Exit-Code 0 durch und schrieb 152 Beispiele. Verteilung
+  je Länge (2/4/6/8): **36 Train / 2 Validation / 0 Test**.
+- **SHA-/Split-/Loaderaudit:** Read-only Inlineprüfung via
+  `@' ... '@ | .venv\Scripts\python.exe -B -` validierte Feature Protocol 2,
+  RoFormer, die gebundene Recovery-Root-SHA und Mapping-SHA, die SHA des
+  Producerroots, alle 352 Pairmanifeste und alle 24 Sharddateien. Der
+  ML-`VariableFeatureDataset` lud alle 12 Längen-/Splitshards und 152 Beispiele;
+  Shapes für T=16/32/48/64, Metadata-/Example-ID-Gleichheit, Cachemanifest-
+  SHAs und Audio-SHA-Zuordnung jedes Tracks wurden geprüft. Pro Beispiel lagen
+  Source und Target im deklarierenden Split; der Testshard war je Länge leer.
+  Ergebnis: null Split-Leckage, null Testbeispiele. Dataset-ID
+  `6be39995e91c0063a933`, Manifest-SHA-256
+  `9d11bae795c098376d46a9a02204a7cb6647f77ffb5ff39f5c80c2da94823562`.
+  Der Root enthält 25 Dateien und 1.640.132 Bytes.
+- **Cache-/Repositoryprüfung:** Der getrennte RoFormer-/Featurecache enthält
+  92 Dateien und 1.433.741.822 Bytes (22 `vocal_stem.npz`, 23
+  `track_features.npz`, einschließlich lokaler Modellassets). `git check-ignore`
+  bestätigte Datasetmanifest und RoFormer-Checkpoint als von `.gitignore`
+  erfasste `output/`-Artefakte. Kein Audio und keine Gewichte wurden dem
+  Git-Index hinzugefügt; es wurde kein Commit erstellt.
+- **Regressionstest:**
+
+  ```powershell
+  .venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider `
+    tests\test_variable_producer.py `
+    tests\test_variable_producer_recovery.py `
+    tests\test_variable_corpus_inventory.py `
+    tests\test_variable_dataset.py `
+    tests\test_variable_contract_hardening.py `
+    tests\test_variable_features.py `
+    tests\test_feature_dataset_export.py
+  ```
+
+  Ergebnis: **30 passed in 7,83 s**, zwei bestehende `audioread`-
+  Deprecation-Warnungen (`aifc`, `sunau` entfernt in Python 3.13).
+- **Schlussfolgerung und nächster Schritt:** Der angeforderte unveränderliche
+  Dataset-v2-Export ist erstellt und inhaltlich/SHA-seitig geprüft.
+  Variable-Waveformcache, Training/Fine-Tuning des
+  `variable_tcn_bilstm_transition_control_v1` und unabhängiger Hörvergleich
+  gegen Equal Power wurden nicht gestartet und sind außerhalb des hier
+  abgeschlossenen Dataset-Schritts offen. Fehler, Cacheartefakte und Dataset
+  bleiben durch Recovery-Roots beziehungsweise unveränderliche Pfade
+  nachvollziehbar.
+- **Dokumentationscheck:** `git diff --check` bestand mit Exit-Code 0; Git
+  gab nur die bestehenden LF/CRLF-Hinweise aus. Nach Bereinigung des
+  Eingabeinventars fand der gezielte PRIVE-Plan-Suchcheck keine Bewertung der
+  Sammlungseignung oder -dokumentation und keine Aussage, Run 03 sei noch in
+  Vorbereitung.
+
+## 2026-09-25 — Diagnose der `unsupported_meter`-Rejections in PRIVE
+
+- **Fragestellung/Reasoning:** Klären, ob die leeren PRIVE-Train-Paare wegen
+  tatsächlich unbrauchbarer Beatpositionen oder wegen der globalen
+  Metrumprüfung von Candidate Protocol 2 abgelehnt wurden.
+- **Eingaben/Setup:** Read-only Join der Pairmanifeste für „Meltdown“ → „Life
+  That We Dream Of“, „Birds“ → „02 ASCENSION“ und „Inferno“ → „VENGEANCE“ mit
+  den Merge-v2-Analysen, adressiert durch Source-/Target-Audio-SHA, unter
+  `output/pre_analysis/prive_scantraxx_extension_merge_v2_20260923_run01`.
+  Analysevertrag `librosa_auftakt_monotonic_partial_v2`, Samples bei 44.100 Hz.
+  Codepfad `src/candidates/variable.py` und Candidate Protocol 2 wurden
+  lesend geprüft; keine Audiodatei, kein Cache und kein Dataset wurde erzeugt
+  oder verändert.
+- **Prüfumfang/Ergebnis:** Der Variable-Candidate-Generator weist das ganze
+  Paar sofort ab, falls irgendein Beat-Tupel in Source oder Target
+  `beats_in_bar != 4` trägt; die Prüfung läuft vor Provenienz-, Fenster- und
+  Kandidatenprüfung. „Meltdown“ hat zwei lokal als 3/4 markierte Inseln bei
+  107,62–110,82 s und 143,22–145,22 s; eine read-only Auswertung der
+  zusammenhängenden, vollständigen 4/4-Fenster findet 78 vollständige
+  4/4-Takte, maximal 34 am Stück. „Birds“ hat in Source eine einzelne
+  3-Beat-Insel bei 21,77–22,52 s; Source/Target sind Merge-v2-akzeptiert und
+  enthalten 129/128 vollständige 4/4-Takte, maximal 26/60 am Stück.
+  „Inferno“ hat mehrere lokal als 3/4 markierte Inseln in Source und Target;
+  beide Merge-v2-Analysen sind akzeptiert und enthalten 120/91 vollständige
+  4/4-Takte, maximal 47/58 am Stück. In den drei untersuchten Pairmanifesten wurde damit
+  `unsupported_meter` als globale Policy-Rejection bestätigt, nicht als
+  Nachweis, dass keinerlei beat-synchrone 4/4-Fenster existieren.
+  Zusatzbefund: Das Target von „Meltdown“ hat nur Fallback-Provenienz, weil
+  seine Merge-Abdeckung 0,858 unter der 0,98-Schwelle liegt; die frühe
+  Metrum-Rejection verdeckt diesen separaten Provenienzgrund.
+- **Schlussfolgerung und nächster Schritt:** Die sechs Tracks der drei Paare
+  besitzen jeweils mindestens einen zusammenhängenden 4/4-Block von 16 oder
+  mehr Takten; damit sind strukturelle Pre-/Postfenster bis acht Takte
+  vorhanden. Es ist plausibel, daraus Kandidaten zu gewinnen, ohne 3/4-Inseln
+  umzudeuten. Ein späterer read-only In-Memory-Smoke fand in „Birds“ →
+  „02 ASCENSION“ 10.602/5.841/3.306/1.575 ungerankte Kandidaten für
+  2/4/6/8 Takte und in „Inferno“ → „VENGEANCE“ 6.298/3.570/2.184/1.296.
+  Das sind keine exportierten Trainingsbeispiele und kein Nachweis
+  musikalischer Downbeat-Korrektheit. „Meltdown“ → „Life That We Dream Of“
+  bleibt wegen Target-Fallback-Provenienz abgelehnt. Daraufhin wurde der
+  Candidate-v2-Metrumfilter geändert: Metrum- und Kontiguitätsbedingungen
+  gelten pro Fenster, bestehende Candidate-/Datasetmanifeste bleiben
+  unverändert. Für neue Daten ist ein neuer Producer-/Datasetroot nötig;
+  SHAs/Splits sind dort erneut zu prüfen.
+
+## 2026-09-25 — Variable Candidate-v2: lokale 4/4-Fenster
+
+- **Fragestellung/Reasoning:** Nicht ganze Tracks wegen lokaler Nicht-4/4-
+  Markierungen verwerfen, aber weiterhin ausschließlich Kandidaten mit
+  vollständigen, zusammenhängenden 4/4-Fenstern für 2/4/6/8 Takte zulassen.
+  `unsupported_meter` soll nur auftreten, wenn kein Kandidat einer
+  angeforderten Länge möglich ist und der Metrumausschluss dafür ursächlich
+  ist.
+- **Eingaben/Setup:** Synthetische Beat-Grid-Fixtures einschließlich
+  3/4-only und 4/4-/3/4-/4/4-Mischung; erkannte Grid-Metadaten; `.venv`;
+  Änderungen in `src/candidates/variable.py`,
+  `tests/test_variable_contract_hardening.py` und
+  `docs/CANDIDATE_PROTOCOL.md`.
+- **Testumfang/Befehle:**
+  `.venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests\test_variable_contract_hardening.py tests\test_candidates.py tests\test_partial_merge.py`
+  sowie
+  `.venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests\test_variable_producer.py tests\test_multi_batch_render.py`.
+- **Ergebnis:** Erste Gruppe **32 passed in 6,36 s**; zweite Gruppe
+  **15 passed in 6,16 s**; keine Fehler oder Warnungen. Mixed-Meter-Fixture
+  liefert Kandidaten für 2/4/6/8 Takte an lokalen 4/4-Grenzen. Reine
+  3/4-Fixtures liefern `unsupported_meter`; Nicht-4/4-Beatgrenzen werden
+  nicht als Candidate-Cutpoints ausgegeben. Source-/Target-Boundary-Limits
+  werden nach dem lokalen 4/4-Fensterfilter angewandt, damit Metruminseln
+  brauchbare 4/4-Grenzen nicht aus dem Top-N verdrängen. Zusätzlich lief der
+  geänderte Generator read-only auf den SHA-gebundenen Analysen dreier echter
+  Train-Paare: „Birds“ → „02 ASCENSION“ ergab 10.602/5.841/3.306/1.575,
+  „Inferno“ → „VENGEANCE“ 6.298/3.570/2.184/1.296 ungerankte Kandidaten für
+  2/4/6/8 Takte; „Meltdown“ → „Life That We Dream Of“ blieb korrekt an
+  `target_grid_provenance_rejected` gesperrt. Das waren In-Memory-Ergebnisse,
+  keine geschriebenen Pairmanifeste.
+- **Abschließender Regressionstest:** Nach Ergänzung einer Regression, die
+  einen möglichen kürzeren Übergang trotz nicht möglicher langer Länge
+  absichert, wurde die kombinierte Gruppe ausgeführt:
+  `.venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests\test_variable_contract_hardening.py tests\test_candidates.py tests\test_partial_merge.py tests\test_variable_producer.py tests\test_multi_batch_render.py`.
+  Der erste kombinierte Lauf bestand mit **48 passed in 5,42 s**; die
+  abschließende Wiederholung nach Formatierung bestand mit **48 passed in
+  5,57 s**. Beide ohne Fehler oder Warnungen.
+- **Schlussfolgerung und nächster Schritt:** Regressionen bestätigen den
+  neuen Fensterscope und unveränderte Integration in Producer/Batch. Der
+  Realpaar-Smoke bestätigt, dass die lokale Filteränderung Kandidaten
+  freigibt, ohne Provenienzfilter zu lockern. Es wurde kein Producerlauf,
+  Datasetexport oder Training gestartet; der bisherige
+  unveränderliche Datasetroot bleibt unverändert. Für eine aktualisierte
+  Stichprobe ist ein neuer Producer- und Datasetroot mit geschlossener
+  Testsplitauthorität sowie anschließendem SHA-/Leakage-Audit erforderlich.

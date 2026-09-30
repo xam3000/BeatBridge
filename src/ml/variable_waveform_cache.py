@@ -16,6 +16,7 @@ import os
 from pathlib import Path
 import shutil
 import tempfile
+import time
 import uuid
 
 import librosa
@@ -42,6 +43,8 @@ VARIABLE_WAVEFORM_RENDER_SAMPLE_RATE = 44_100
 VARIABLE_WAVEFORM_ROUNDING_TOLERANCE_SAMPLES = 2
 VARIABLE_WAVEFORM_ROUNDING_CORRECTION_VERSION = 1
 VARIABLE_WAVEFORM_TEMPO_BACKEND_VERSION = "rubberband_backend_protocol_v1"
+VARIABLE_WAVEFORM_CACHE_INDEX_FORMAT_VERSION = 1
+VARIABLE_WAVEFORM_CACHE_INDEX_NAME = "index.json"
 
 
 class VariableWaveformAlignmentReject(ValueError):
@@ -448,6 +451,7 @@ def materialize_variable_waveform_cache(
         "ratio_statistics": {},
     }
     ratios = {length: [] for length in lengths}
+    indexed_artifacts = []
     for split in requested_splits:
         for length in lengths:
             dataset = VariableFeatureDataset(dataset_directory, length, split)
@@ -470,6 +474,7 @@ def materialize_variable_waveform_cache(
                     )
                     bucket["cache_hits" if artifact.cache_hit else "cache_misses"] += 1
                     ratios[length].append(float(artifact.manifest["alignment"]["ratios"]["local_stretch_ratio_output_over_input"]))
+                    indexed_artifacts.append((split, length, example, artifact))
                 except VariableWaveformAlignmentReject as error:
                     bucket["rejected"] += 1
                     report["rejections"].append({"split": split, "length": length, "example_id": example["example_id"], "reason": error.reason, "diagnostics": error.diagnostics})
@@ -480,7 +485,119 @@ def materialize_variable_waveform_cache(
             }
     report_path = Path(cache_root) / "materialization_report.json"
     _write_json_atomic(report_path, report, allow_overwrite=True)
+    index = write_variable_waveform_cache_index(
+        cache_root,
+        dataset_manifest_path=dataset_manifest_path,
+        artifacts=indexed_artifacts,
+        splits=requested_splits,
+        transition_lengths=lengths,
+    )
+    report["cache_index"] = {
+        "path": str(Path(cache_root) / VARIABLE_WAVEFORM_CACHE_INDEX_NAME),
+        "file_sha256": _file_sha256(Path(cache_root) / VARIABLE_WAVEFORM_CACHE_INDEX_NAME),
+        "payload_sha256": index["payload_sha256"],
+        "entry_count": len(index["entries"]),
+    }
+    _write_json_atomic(report_path, report, allow_overwrite=True)
     return report
+
+
+def write_variable_waveform_cache_index(
+    cache_root,
+    *,
+    dataset_manifest_path,
+    artifacts,
+    splits,
+    transition_lengths,
+):
+    """Seal exactly the materialized cache entries in a deterministic index."""
+
+    cache_root = Path(cache_root)
+    root_manifest_path = cache_root / "manifest.json"
+    if not root_manifest_path.is_file():
+        raise FileNotFoundError(f"Variable-v2 cache root manifest is missing: {root_manifest_path}")
+    dataset_manifest_path = Path(dataset_manifest_path)
+    dataset_manifest_sha256 = _file_sha256(dataset_manifest_path)
+    root_manifest = _read_json(root_manifest_path)
+    if str(root_manifest.get("dataset_manifest_sha256", "")).lower() != dataset_manifest_sha256:
+        raise ValueError("Variable waveform cache root and dataset manifest hashes differ")
+    rows = []
+    seen = set()
+    for split, length, example, artifact in artifacts:
+        key = str(example["example_id"])
+        if key in seen:
+            raise ValueError(f"Duplicate example in waveform cache index: {key}")
+        seen.add(key)
+        entry_manifest_path = artifact.cache_directory / "manifest.json"
+        waveform_path = artifact.cache_directory / "waveforms.npz"
+        rows.append({
+            "example_id": key,
+            "split": str(split),
+            "transition_length_bars": int(length),
+            "cache_id": str(artifact.manifest["cache_id"]),
+            "directory": str(artifact.cache_directory.resolve().relative_to(cache_root.resolve())),
+            "manifest_sha256": _file_sha256(entry_manifest_path),
+            "waveforms_sha256": _file_sha256(waveform_path),
+        })
+    payload = {
+        "format_version": VARIABLE_WAVEFORM_CACHE_INDEX_FORMAT_VERSION,
+        "dataset_manifest_sha256": dataset_manifest_sha256,
+        "cache_root_manifest_sha256": _file_sha256(root_manifest_path),
+        "splits": sorted({str(value) for value in splits}),
+        "transition_lengths_bars": sorted({int(value) for value in transition_lengths}),
+        "entries": sorted(rows, key=lambda item: item["example_id"]),
+    }
+    payload["payload_sha256"] = _canonical_json_sha256(payload)
+    _write_json_atomic(cache_root / VARIABLE_WAVEFORM_CACHE_INDEX_NAME, payload)
+    return payload
+
+
+def load_variable_waveform_cache_index(
+    cache_root,
+    *,
+    dataset_manifest_sha256,
+    required_splits=("train", "validation"),
+    required_lengths=SUPPORTED_VARIABLE_LENGTHS,
+):
+    """Validate the sealed cache index and every referenced immutable payload."""
+
+    cache_root = Path(cache_root)
+    index_path = cache_root / VARIABLE_WAVEFORM_CACHE_INDEX_NAME
+    payload = _read_json(index_path)
+    if int(payload.get("format_version", 0)) != VARIABLE_WAVEFORM_CACHE_INDEX_FORMAT_VERSION:
+        raise ValueError("Unsupported variable waveform cache index format")
+    declared_payload_sha = payload.get("payload_sha256")
+    unsigned = {key: value for key, value in payload.items() if key != "payload_sha256"}
+    if declared_payload_sha != _canonical_json_sha256(unsigned):
+        raise ValueError("Variable waveform cache index payload hash differs")
+    if str(payload.get("dataset_manifest_sha256", "")).lower() != str(dataset_manifest_sha256).lower():
+        raise ValueError("Variable waveform cache index dataset hash differs")
+    root_manifest_path = cache_root / "manifest.json"
+    if payload.get("cache_root_manifest_sha256") != _file_sha256(root_manifest_path):
+        raise ValueError("Variable waveform cache root manifest hash differs")
+    if str(_read_json(root_manifest_path).get("dataset_manifest_sha256", "")).lower() != str(dataset_manifest_sha256).lower():
+        raise ValueError("Variable waveform cache root dataset hash differs")
+    if set(required_splits) - set(payload.get("splits", ())):
+        raise ValueError("Variable waveform cache index lacks required splits")
+    if {int(value) for value in required_lengths} - {int(value) for value in payload.get("transition_lengths_bars", ())}:
+        raise ValueError("Variable waveform cache index lacks required transition lengths")
+    entries = {}
+    for row in payload.get("entries", ()):
+        example_id = str(row["example_id"])
+        if example_id in entries:
+            raise ValueError(f"Duplicate example in waveform cache index: {example_id}")
+        directory = cache_root / row["directory"]
+        if _file_sha256(directory / "manifest.json") != row.get("manifest_sha256"):
+            raise ValueError(f"Variable waveform entry manifest hash differs: {example_id}")
+        if _file_sha256(directory / "waveforms.npz") != row.get("waveforms_sha256"):
+            raise ValueError(f"Variable waveform payload hash differs: {example_id}")
+        entries[example_id] = row
+    return {
+        "path": index_path,
+        "file_sha256": _file_sha256(index_path),
+        "payload": payload,
+        "entries": entries,
+    }
 
 
 def build_variable_cache_loader(
@@ -489,6 +606,9 @@ def build_variable_cache_loader(
     cache_root=VARIABLE_WAVEFORM_CACHE_ROOT,
     training_sample_rate=VARIABLE_WAVEFORM_SAMPLE_RATE,
     render_sample_rate=VARIABLE_WAVEFORM_RENDER_SAMPLE_RATE,
+    require_index=False,
+    required_splits=("train", "validation"),
+    required_lengths=SUPPORTED_VARIABLE_LENGTHS,
 ):
     """Return a strict cache-hit-only loader for Dataset-2 train/validation."""
 
@@ -497,10 +617,22 @@ def build_variable_cache_loader(
     manifest = _read_json(manifest_path)
     dataset_id = manifest["dataset_id"]
     dataset_manifest_sha256 = _file_sha256(manifest_path)
+    index = None
+    if require_index:
+        index = load_variable_waveform_cache_index(
+            cache_root,
+            dataset_manifest_sha256=dataset_manifest_sha256,
+            required_splits=required_splits,
+            required_lengths=required_lengths,
+        )
 
     def loader(example, geometry):
         if example.get("split") not in {"train", "validation"}:
             raise ValueError("Variable-v2 cache loader refuses the test split")
+        if index is not None and str(example["example_id"]) not in index["entries"]:
+            raise FileNotFoundError(
+                f"Variable-v2 waveform cache index lacks example: {example['example_id']}"
+            )
         artifact = load_variable_waveform_cache(
             example,
             geometry,
@@ -789,10 +921,30 @@ def _publish_entry(cache_directory, manifest, arrays):
         cache_directory.parent.mkdir(parents=True, exist_ok=True)
         try:
             os.replace(temporary_directory, cache_directory)
-        except (FileExistsError, PermissionError):
-            if _load_cached_entry(cache_directory, {key: manifest[key] for key in _cache_identity_keys()}) is None:
+        except (FileExistsError, PermissionError) as error:
+            cache_config = {key: manifest[key] for key in _cache_identity_keys()}
+            if _load_cached_entry(cache_directory, cache_config) is not None:
+                shutil.rmtree(temporary_directory, ignore_errors=True)
+            elif isinstance(error, FileExistsError) or cache_directory.exists():
                 raise
-            shutil.rmtree(temporary_directory, ignore_errors=True)
+            else:
+                # Managed Windows folders may briefly deny the atomic rename
+                # while the just-written NPZ/manifest is being scanned. Retry
+                # only when the destination is still absent; persistent ACL or
+                # provenance errors remain fail-closed.
+                for delay in (0.05, 0.1, 0.25, 0.5):
+                    time.sleep(delay)
+                    try:
+                        os.replace(temporary_directory, cache_directory)
+                        break
+                    except PermissionError:
+                        if _load_cached_entry(cache_directory, cache_config) is not None:
+                            shutil.rmtree(temporary_directory, ignore_errors=True)
+                            break
+                        if cache_directory.exists() or not temporary_directory.exists():
+                            raise
+                else:
+                    raise error
     except Exception:
         shutil.rmtree(temporary_directory, ignore_errors=True)
         raise
@@ -919,6 +1071,11 @@ def _file_sha256(path):
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _canonical_json_sha256(value):
+    canonical = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 def _array_sha256(array):

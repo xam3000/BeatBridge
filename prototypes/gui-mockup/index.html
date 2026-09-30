@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>BeatBridge – GUI-Prototyp</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand-block" aria-label="BeatBridge">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+        <strong>BeatBridge</strong>
+        <span class="prototype-badge">INTERAKTIVER PROTOTYP</span>
+      </div>
+
+      <div class="project-title">
+        <span class="eyebrow">PROJEKT</span>
+        <span>Performance Set 01</span>
+      </div>
+
+      <div class="transport" aria-label="Transportsteuerung">
+        <button class="icon-button" id="jumpStart" type="button" aria-label="Zum Anfang">↤</button>
+        <button class="play-button" id="playPause" type="button" aria-label="Wiedergabe starten">▶</button>
+        <button class="icon-button is-active" id="loopToggle" type="button" aria-pressed="true" aria-label="Übergang wiederholen">↻</button>
+        <output id="timeDisplay" class="time-display">00:00.0 / 00:20.0</output>
+      </div>
+
+      <div class="top-actions">
+        <span class="audio-status"><span class="status-dot"></span>Audio bereit</span>
+        <button class="secondary-button" id="compareButton" type="button">Varianten vergleichen</button>
+        <button class="primary-button" id="exportButton" type="button">Mashup exportieren</button>
+      </div>
+    </header>
+
+    <aside class="library-panel" aria-label="Trackbibliothek">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">MEDIEN</span>
+          <h1>Bibliothek</h1>
+        </div>
+        <button class="icon-button" id="mockImport" type="button" aria-label="Mock-Track importieren">＋</button>
+      </div>
+      <label class="search-field">
+        <span class="sr-only">Tracks durchsuchen</span>
+        <span aria-hidden="true">⌕</span>
+        <input id="trackSearch" type="search" placeholder="Tracks durchsuchen">
+      </label>
+      <div id="trackList" class="track-list"></div>
+      <div class="library-note">
+        <span class="status-dot"></span>
+        Alle Inhalte sind lokale Mock-Daten.
+      </div>
+    </aside>
+
+    <main class="workspace">
+      <section class="sequence-panel" aria-labelledby="sequenceTitle">
+        <div class="sequence-header">
+          <div>
+            <span class="eyebrow">MASHUP-SEQUENZ</span>
+            <h2 id="sequenceTitle">4 Abschnitte · 3 Paarübergänge</h2>
+          </div>
+          <div class="sequence-legend" aria-label="Statuslegende">
+            <span><i class="legend-dot ready"></i>Bereit</span>
+            <span><i class="legend-dot editing"></i>In Bearbeitung</span>
+            <span><i class="legend-dot open"></i>Offen</span>
+          </div>
+        </div>
+        <div id="sequenceStrip" class="sequence-strip" aria-label="Geordnete Mashup-Abschnitte"></div>
+      </section>
+
+      <div class="editor-layout">
+        <section class="editor-main" aria-label="Paar-Editor">
+          <div class="timeline-panel">
+            <div class="timeline-toolbar">
+              <div class="pair-context">
+                <span class="eyebrow">AKTIVER PAARÜBERGANG</span>
+                <strong id="pairTitle">A → B</strong>
+                <span id="pairStatus" class="status-chip editing">In Bearbeitung</span>
+              </div>
+              <div class="toolbar-controls">
+                <button class="tool-button is-active" type="button" aria-pressed="true">Takt</button>
+                <button class="tool-button" type="button" aria-pressed="false">Beat</button>
+                <span>4 / 4</span>
+                <span id="toolbarTempo">161,5 BPM</span>
+                <label class="zoom-control">Zoom <input id="zoomRange" type="range" min="80" max="130" value="100"></label>
+              </div>
+            </div>
+
+            <div class="timeline-stage" id="timelineStage">
+              <div class="bar-ruler" aria-hidden="true">
+                <span>57</span><span>58</span><span>59</span><span>60</span><span>61</span><span>62</span><span>63</span><span>64</span><span>65</span><span>66</span><span>67</span><span>68</span>
+              </div>
+              <div class="section-ruler" aria-hidden="true">
+                <span>Build-up</span><span class="transition-section" id="transitionLabel">Übergang · 4 Takte</span><span>Drop</span>
+              </div>
+              <div class="timeline-content">
+                <div class="transition-highlight" aria-hidden="true"></div>
+                <div class="playhead" id="playhead" aria-hidden="true"><i></i></div>
+
+                <article class="audio-lane lane-a">
+                  <div class="lane-meta">
+                    <span class="lane-letter">A</span>
+                    <div><strong id="laneATitle">HELP LESS</strong><small id="laneAMeta">161 BPM · F♯m</small></div>
+                    <div class="lane-actions"><button type="button" aria-label="Track A stummschalten">M</button><button type="button" aria-label="Track A solo">S</button></div>
+                  </div>
+                  <div class="wave-area">
+                    <svg viewBox="0 0 1000 120" preserveAspectRatio="none" role="img" aria-label="Gemockte Wellenform von Track A">
+                      <path id="waveformA" class="waveform-fill"></path>
+                      <path class="control-line control-a" d="M420 18 C520 26 590 64 690 88 C750 102 790 102 830 104"></path>
+                    </svg>
+                    <span class="cue-marker cue-a" id="cueA">A OUT · Takt 61</span>
+                  </div>
+                </article>
+
+                <article class="audio-lane lane-b">
+                  <div class="lane-meta">
+                    <span class="lane-letter">B</span>
+                    <div><strong id="laneBTitle">BREATH LESS</strong><small id="laneBMeta">160 BPM · Em</small></div>
+                    <div class="lane-actions"><button type="button" aria-label="Track B stummschalten">M</button><button type="button" aria-label="Track B solo">S</button></div>
+                  </div>
+                  <div class="wave-area">
+                    <svg viewBox="0 0 1000 120" preserveAspectRatio="none" role="img" aria-label="Gemockte Wellenform von Track B">
+                      <path id="waveformB" class="waveform-fill"></path>
+                      <path class="control-line control-b" d="M420 103 C510 100 600 74 690 40 C750 18 790 18 830 16"></path>
+                    </svg>
+                    <span class="cue-marker cue-b" id="cueB">B IN · Takt 65</span>
+                  </div>
+                </article>
+              </div>
+            </div>
+          </div>
+
+          <section class="analysis-panel" aria-labelledby="analysisTitle">
+            <div class="analysis-header">
+              <div>
+                <span class="eyebrow">ERKLÄRUNG & VERGLEICH</span>
+                <h2 id="analysisTitle">Warum dieser Übergang?</h2>
+              </div>
+              <div class="tab-list" role="tablist" aria-label="Analyseansicht">
+                <button class="tab-button is-active" role="tab" aria-selected="true" data-tab="analysis" type="button">Analyse</button>
+                <button class="tab-button" role="tab" aria-selected="false" data-tab="alternatives" type="button">Alternativen <span id="alternativeCount">3</span></button>
+                <button class="tab-button" role="tab" aria-selected="false" data-tab="details" type="button">Details</button>
+              </div>
+              <div class="method-switch" aria-label="Vergleichsmethode">
+                <button type="button" data-method="baseline" aria-pressed="false">Baseline</button>
+                <button type="button" data-method="model" class="is-active" aria-pressed="true">Modell</button>
+              </div>
+            </div>
+
+            <div id="analysisTab" class="tab-panel">
+              <div class="chart-stack">
+                <div class="chart-title"><strong>Energie & Vocal-Aktivität</strong><span>gemeinsame Übergangszeit</span></div>
+                <svg class="analysis-chart" viewBox="0 0 900 190" preserveAspectRatio="none" role="img" aria-label="Gemockte Energie- und Vocal-Aktivitätsdaten">
+                  <g class="chart-grid"><path d="M0 38H900M0 76H900M0 114H900M0 152H900"></path><path d="M150 0V190M300 0V190M450 0V190M600 0V190M750 0V190"></path></g>
+                  <rect class="chart-transition" x="330" y="0" width="300" height="190"></rect>
+                  <path id="energyA" class="energy-line energy-a"></path>
+                  <path id="energyB" class="energy-line energy-b"></path>
+                  <g id="vocalBarsA" class="vocal-bars vocal-a"></g>
+                  <g id="vocalBarsB" class="vocal-bars vocal-b"></g>
+                  <line id="chartPlayhead" class="chart-playhead" x1="0" x2="0" y1="0" y2="190"></line>
+                </svg>
+                <div class="harmony-lane">
+                  <span>Harmonie</span>
+                  <div><i class="harmony-a"></i><strong id="harmonyA">F♯m</strong><em>kompatibler Übergang</em><strong id="harmonyB">Em</strong><i class="harmony-b"></i></div>
+                </div>
+                <div class="chart-legend"><span><i class="swatch a"></i><b id="legendA">A · HELP LESS</b></span><span><i class="swatch b"></i><b id="legendB">B · BREATH LESS</b></span><span class="data-label">Mock-Zeitreihen</span></div>
+              </div>
+              <div class="score-panel">
+                <div class="score-heading"><div><span class="eyebrow" id="scoreType">MODELLSCORE</span><strong id="totalScore">88</strong></div><span>höher ist besser</span></div>
+                <div id="scoreBars" class="score-bars"></div>
+                <p class="score-note">Scores dienen im Prototyp nur zur Darstellung der späteren Datenbindung.</p>
+              </div>
+            </div>
+
+            <div id="alternativesTab" class="tab-panel" hidden>
+              <div id="variantGrid" class="variant-grid"></div>
+            </div>
+
+            <div id="detailsTab" class="tab-panel" hidden>
+              <dl class="details-grid" id="detailsGrid"></dl>
+            </div>
+          </section>
+        </section>
+
+        <aside class="inspector-panel" aria-labelledby="inspectorTitle">
+          <div class="inspector-heading">
+            <div><span class="eyebrow">PAAR-EINSTELLUNGEN</span><h2 id="inspectorTitle">Übergang</h2></div>
+            <span class="pair-count">2 Tracks</span>
+          </div>
+
+          <section class="inspector-section">
+            <h3>Auswahl</h3>
+            <label>Source-Cuepoint<input id="sourceCue" type="text" value="Takt 61 · 01:32.8" readonly></label>
+            <label>Target-Cuepoint<input id="targetCue" type="text" value="Takt 65 · 01:38.7" readonly></label>
+            <div class="two-fields">
+              <label>Länge<select id="lengthSelect"><option>2</option><option selected>4</option><option>6</option><option>8</option></select><span>Takte</span></label>
+              <label>Zieltempo<input id="tempoInput" type="number" min="100" max="200" step="0.1" value="161.5"><span>BPM</span></label>
+            </div>
+          </section>
+
+          <section class="inspector-section">
+            <h3>Methode</h3>
+            <div class="segmented-control" id="rendererControl">
+              <button type="button" data-renderer="Equal Power" class="is-active" aria-pressed="true">Equal Power</button>
+              <button type="button" data-renderer="ML Control" aria-pressed="false">ML Control</button>
+            </div>
+          </section>
+
+          <section class="inspector-section">
+            <div class="section-title-row"><h3>Constraints</h3><span>pro Übergang</span></div>
+            <label class="check-row"><input id="vocalCheck" type="checkbox" checked><span><strong>Vocal-Overlap vermeiden</strong><small>Weiche Präferenz im Mockup</small></span></label>
+            <label class="range-row"><span><strong>Time-Stretch maximal</strong><output id="stretchValue">8 %</output></span><input id="stretchRange" type="range" min="2" max="15" value="8"></label>
+            <label class="range-row"><span><strong>Energie-Kontinuität</strong><output id="energyValue">75 %</output></span><input id="energyRange" type="range" min="0" max="100" value="75"></label>
+          </section>
+
+          <section class="inspector-section selection-summary">
+            <span class="eyebrow">LOKALE AUSWAHL</span>
+            <div id="selectionSummary"><strong>Variante 01</strong><span>Equal Power · Score 88</span></div>
+          </section>
+
+          <button class="primary-button accept-button" id="acceptTransition" type="button">Übergang übernehmen</button>
+          <p class="inspector-footnote">Änderungen betreffen nur die aktive Kante zwischen genau zwei Abschnitten.</p>
+        </aside>
+      </div>
+    </main>
+
+    <footer class="statusbar">
+      <span id="globalStatus"><i class="status-dot"></i> Mock-Projekt geladen · 4 Tracks analysiert</span>
+      <span><code>mock-project-v1</code> · keine Pipeline-Anbindung</span>
+    </footer>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <script src="mock-data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

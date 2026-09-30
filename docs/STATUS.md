@@ -1,5 +1,160 @@
 # BeatBridge – Stand & Next Steps
 
+**Geblendeter Hörtest mit vier trainierten Modellen auf 20 Beispielen am
+2026-09-30:** Unter
+`output/four_models_shared_20pairs_validation_20260930/` liegen zwanzig
+verschiedene 4-Takt-Cue-Beispiele, je mit Equal Power plus
+`time_shared_mlp_v1`, `vocal_time_shared_mlp_v2`,
+`tcn_bilstm_transition_control_v1` und
+`variable_tcn_bilstm_transition_control_v1`. Alle fünf Labels pro Beispiel
+nutzen dieselben Cues, 5-s/8-s-Kontexte und den gemeinsamen Peak-Gain. Die
+20 Cues verteilen sich balanciert 3/3/4/5/5 über nur fünf Trackpaare; die
+Trackpaare/Cues sind daher nicht als zwanzig unabhängige Tracktests zu zählen.
+Smoke-Test, Export sowie 100 WAV-SHAs und alle vier Run-/Checkpoint-SHAs
+bestanden; Testsplit blieb geschlossen. Player:
+`output/four_models_shared_20pairs_validation_20260930/index.html`.
+Die ältere, unveränderte Zwei-Paar-Ausgabe liegt weiter unter
+`output/four_models_shared_2pairs_validation_20260927/`. Einschränkung:
+Validation-Sets von Dataset-v1 und v2 teilen keine Trackpaare. Die drei festen
+Modelle bleiben auf v1; die Variable-TCN erhält Feature-Protocol-2-Eingaben
+mit v2-Trainingsnormalisierung für dieselben v1-Stimuli, ist dort aber
+out-of-domain. Explorativer gemeinsamer Stimulus-Hörvergleich, kein
+protokollgleicher Benchmark und nicht gemeinsam statistisch poolen.
+Entscheidungen und Sackgassen: `docs/Bemerkungen.md`.
+
+**Fortgesetzte PRIVE-Trainingsläufe am 2026-09-27:** Die beiden Läufe, die am
+Vortag am 30-Epochen-Limit endeten, wurden aus ihren SHA-validierten letzten
+Checkpoints fortgesetzt; beide besaßen Early Stopping (Patience 6). Vocal
+`vocal_time_shared_mlp_v2`: Epoche 40, Best-Checkpoint Epoche 34, Validation-
+Loss 0,32491, Status `early_stopped`; W&B-Run
+[`1d4dc62c31b2985fb4e2`](https://wandb.ai/xamdoesmc-technische-universit-t-braunschweig/beatbridge/runs/1d4dc62c31b2985fb4e2).
+Variable `variable_tcn_bilstm_transition_control_v1`: Epoche 40, Best-
+Checkpoint Epoche 34, Validation-Loss 0,227169, Patience erreicht; W&B-Run
+[`875000043610a50d8e24`](https://wandb.ai/xamdoesmc-technische-universit-t-braunschweig/beatbridge/runs/875000043610a50d8e24).
+Dataset-/Cacheverträge blieben unverändert, Variable-`io_audit.json` bestätigt
+`test_reads=0`. W&B enthält nur Metriken/Konfiguration; alle Gewichte blieben
+lokal. Ausführung, Checkpoint-/Manifest-SHAs und der fehlgeschlagene erste
+Online-Start stehen im aktuellen Block von `docs/Bemerkungen.md`.
+
+**PRIVE-Trainingsläufe über alle Modellpfade am 2026-09-26:** Alle vier
+registrierten Modelle haben abgeschlossene, getrennte W&B-Läufe. Das
+`variable_tcn_bilstm_transition_control_v1` nutzt Dataset-v2
+`2a124caf5625b4c8f683` (Manifest-SHA
+`bf82442d82713bdb21b7f7429f7aee1845eda3c44abcd6d5f4fdca688a78a422`): Run
+`875000043610a50d8e24`, 30 Epochen, beste Epoche 28, Validation-Loss 0,22794.
+Der vollständige Waveformcache enthält 3.271 SHA-geprüfte Einträge; alle 2.649
+Trainbeispiele sind enthalten, in Validation wurden 14 einzeln reportgebundene
+Cache-Rejections ausgeschlossen (622 verbleibende Beispiele). `io_audit.json`
+bestätigt `test_reads=0`. Die drei Format-1-Modelle wurden separat auf dem
+kompatiblen Dataset `52bc9d1cebfd1b82d2ea` (SHA
+`4708a8fa983354903759a934f48d36b6450510809773dda2a12f9408821886b7`)
+trainiert: `time_shared_mlp_v1` Run `3295dc7d3ac5ee773b9c`, Val-Loss 0,41521;
+`vocal_time_shared_mlp_v2` Run `1d4dc62c31b2985fb4e2`, Val-Loss 0,32583;
+`tcn_bilstm_transition_control_v1` Run `4c2d8caa663d38f24385`, Val-Loss
+0,32078. Das sind keine gleich-datasetigen Modellvergleiche. W&B enthält nur
+Konfigurationen/Metriken; Gewichte und Audiodateien blieben lokal. Der
+unabhängige Hörvergleich gegen Equal Power bleibt offen. SHA-Bindungen,
+Rejected-Gründe und Sackgassen sind in `docs/Bemerkungen.md` protokolliert.
+
+**PRIVE-Dataset-v2-Erweiterung am 2026-09-26:** Der neue unveränderliche
+Datasetroot
+`output/datasets/prive_scantraxx_extension_variable_v2_fp2_roformer_2-4-6-8bar_top1x3_split20260923_run02_local_four_four`
+ist mit Feature Protocol 2, Partial-Merge-v2-Raster und BS-RoFormer vollständig
+exportiert. Dataset-ID `2a124caf5625b4c8f683`, Manifest-SHA-256
+`bf82442d82713bdb21b7f7429f7aee1845eda3c44abcd6d5f4fdca688a78a422`.
+Er enthält 3.285 Beispiele: 2 Takte 663 Train/159 Validation, 4 Takte
+663/159, 6 Takte 663/159 und 8 Takte 660/159; Test jeweils 0. Alle 24
+Datei-SHAs und 350 Pairmanifest-SHAs stimmen. Producer-Root-SHA ist
+`26c5a98ee98bba43dc9e733da4e7b6180fb2e63fc19bb80882dd19da28a224e3`; die
+Split-Mapping-SHA lautet weiterhin
+`f01243f227db7fb41c8859de62985b39ba75a71fe9a8f5fe95b40d619c1b4a7a`.
+Der ML-Loader hat alle zwölf Shards geprüft; Train-/Validation-Track-Leckage
+und Testbeispiele: null. Der frühere unveränderliche Datasetroot
+`output/datasets/prive_scantraxx_extension_variable_v2_fp2_roformer_2-4-6-8bar_top1x3_split20260923_run01`
+bleibt unverändert: Dataset-ID `6be39995e91c0063a933`, 152 Beispiele (je
+Länge 36 Train, 2 Validation und 0 Test). Der RoFormer-/Featurecache liegt
+getrennt und ignoriert unter `output/`; Audiodateien oder Gewichte wurden
+nicht committet.
+
+Der korrigierte Voll-Producer Run 06 verwendete ausschließlich Train- und
+Validationquellen und wurde aus seinen vollständigen Pairmanifesten
+SHA-validiert. Zwei bereits geprüfte Validation-Smoke-Paare ergänzen die
+Validationstichprobe.
+Der frühere Run 02 mit offenem Testsplit-Gate wird nicht als Datasetquelle
+verwendet. Ein erster Exportabschluss wurde von der Workspace-Sandbox beim
+Anlegen seines temporären Datasetverzeichnisses blockiert; derselbe Export
+lief nach gezielter Freigabe erfolgreich durch. Run-SHAs, Sackgassen,
+Exportbefehl und Prüfdetails stehen in `docs/Bemerkungen.md`.
+
+Waveformcache und das Training/Fine-Tuning von
+`variable_tcn_bilstm_transition_control_v1` wurden am 2026-09-26 nachgeholt;
+der vollständige Cache- und Trainingsaudit steht im aktuellen Block oben.
+Der unabhängige Hörvergleich gegen Equal Power bleibt nachgelagert/offen.
+
+**Lokaler Metrumfilter für Variable Candidate-v2 (2026-09-25):** Die globale
+Ablehnung bei einzelnen Nicht-4/4-Beat-Tupeln ist aufgehoben. Nur die
+vollständigen Pre-/Postfenster eines Kandidaten müssen jetzt in beiden Tracks
+4/4 sein; andere Rasterabschnitte werden weder umgedeutet noch paarweit
+abgewiesen. `unsupported_meter` wird nur zurückgegeben, wenn keine Länge einen
+Kandidaten ergibt, auf beiden Seiten vollständige Fenster existieren und
+mindestens eine Seite für jede mögliche Paarung kein gültiges 4/4-Fenster hat.
+Der bestehende PRIVE-Datasetroot bleibt unverändert (weiterhin 152 Beispiele);
+Producer und Export wurden nicht erneut ausgeführt. Regressionen für
+Kandidatengenerator, Partial-Merge, Producer und Multi-Batch sind dokumentiert
+in `docs/Bemerkungen.md`. Ein read-only In-Memory-Smoke findet nun lokale
+Kandidaten in zwei realen Paaren (Birds → 02 ASCENSION: 10.602/5.841/3.306/1.575;
+Inferno → VENGEANCE: 6.298/3.570/2.184/1.296 für 2/4/6/8 Takte); das dritte
+Paar bleibt wegen Fallback-Provenienz gesperrt. Die Rohkombinationen sind keine
+exportierten Trainingsbeispiele.
+
+**Architekturstand der PRIVE-Dataset-v2-Erweiterung:** Der neue Ordner wird
+nicht aus den vorhandenen PRIVE-Batchroots und nicht durch In-place-Erweiterung
+des bestehenden Dataset-v2 übernommen. Der verbindliche Plan unter
+[`PRIVE_DATASET_V2_EXTENSION_PLAN.md`](./PRIVE_DATASET_V2_EXTENSION_PLAN.md)
+sieht einen neuen splitbewussten Partial-Merge-v2-Produzenten ohne Rendering,
+eine für Recording-Groups vorbereitete und für bestehende Tracks unveränderte
+Splitautorität, Feature Protocol 2, einen eigenen BS-RoFormer-
+Featurecache, einen neuen unveränderlichen 2/4/6/8-Takt-Datasetroot, einen nur
+für Train/Validation gebauten Variable-Waveformcache und Scratch-Training des
+`variable_tcn_bilstm_transition_control_v1` vor. Testdaten bleiben bis zum
+separat eingefrorenen Evaluation-Gate geschlossen. `src.variable_split_extension`,
+der candidate-only `src.variable_producer`, Pair-Manifest-SHA-Prüfung, ein
+versiegelter Waveformcacheindex und Model-only-Fine-Tune-Initialisierung sind
+implementiert. Der PRIVE-Dataset-v2-Root ist nun real exportiert und anhand
+seiner Manifest-, Datei- und Pair-SHAs sowie des ML-Loaders geprüft (Details
+im aktuellen Ausführungsblock oben und im Plan). Variable-Waveformcache und
+Training wurden am 2026-09-26 abgeschlossen; der unabhängige Hörvergleich ist
+noch nicht ausgeführt.
+
+**Unabhängiger Audit des variablen PRIVE-Top-3-Batches am 2026-09-23:**
+Der vorhandene Batch
+`output/batches/prive_top1000_variable_top3_20260922` ist auf Manifestebene
+vollständig referenziert (321 Sources, 963/963 Pair-Manifeste, alle
+Pair-Manifest-SHAs korrekt), aber kein technisch vollständiger Hörbatch.
+958/963 ausgewählte Paare besitzen wegen Grid-/Metrum-Rejections keine
+Kandidaten. Von den fünf kandidatentragenden Paaren scheitern vier am
+Variable-Renderer wegen unterschiedlicher Source-/Target-Fensterlängen; die
+einzige erzeugte WAV scheitert anschließend an der Render-Metrik, weil das
+manifestierte Übergangsende 35.024 Samples außerhalb der Datei liegt. Daher
+existiert kein gültiger Render-Score und nur eine eingeschränkt prüfbare
+Hördatei. Root- und Source-Status `completed` bedeuten hier nur abgeschlossene
+Verarbeitung, nicht Fehlerfreiheit; die fünf Fehler stehen ausschließlich in
+den Pair-Manifests/-Summen. Die vollständige read-only Prüfung, Score- und
+Rejection-Verteilungen sowie der konditionale Hörsetvorschlag stehen in
+`docs/Bemerkungen.md`. Es wurde nichts neu gerendert oder trainiert.
+
+**Verifizierter PRIVE-Top-1000-Baseline-Meilenstein am 2026-09-21:** Die
+API-Inkompatibilität zwischen `src/multi_batch_render.py` und
+`generate_and_render_batch` wurde behoben, indem die veraltete optionale
+`cue_ranker`-Keyword-Übergabe entfernt wurde. Der rekursive Lauf mit
+`feature_baseline_v3`, `equal_power`, 2-/4-Takt-Übergängen, BPM 145–165,
+`analysis_workers=4` und `approximate_grid_policy=reject` endete mit Exit-Code
+0. Das Root-Manifest unter
+`output/batches/prive/_top1000/_baseline/_20260921_fixed/manifest.json`
+verzeichnet 321 abgeschlossene Songpaare, 122 WAV-Renderings, keine Pair- oder
+Renderfehler und 77 BPM-Ausschlüsse. Die vollständige Prüfung und der exakte
+Befehl stehen in `docs/Bemerkungen.md`.
+
 **Implementation-Kapitel am 2026-09-21:** Der Templateinhalt von
 `overleaf/chapters/04_implementation.tex` wurde durch ein englisches,
 evidenzbasiertes Kapitel ersetzt. Es beschreibt den manifestorientierten

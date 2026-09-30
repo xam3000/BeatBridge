@@ -15,6 +15,7 @@ import zipfile
 
 import numpy as np
 
+from src.analysis.pre_analysis import PartialPreAnalysis
 from src.dataset import DEFAULT_TRACK_EXCLUSIONS_PATH, is_track_excluded, load_track_exclusions
 from src.features.contract import FEATURE_DIMENSION, GLOBAL_FEATURE_DIMENSION
 from src.features.extract_track import (
@@ -121,6 +122,10 @@ def export_variable_feature_dataset(
     _validate_bpm_bounds(minimum_bpm, maximum_bpm)
     split_config = split_config or SplitConfig()
     track_feature_loader = track_feature_loader or extract_or_load_track_features
+    # Candidate-v2 uses the Partial-Merge-v2 beat grid. Build Feature Protocol
+    # 2 artifacts on that same grid so cue boundaries and cached feature bins
+    # share one analysis authority (and can reuse the producer's analysis cache).
+    analysis = analysis or PartialPreAnalysis(str(Path(analysis_root)) + os.sep)
     pair_manifests = _discover_pair_manifests(source_manifest)
     if max_pairs is not None:
         if int(max_pairs) <= 0:
@@ -296,6 +301,7 @@ def export_variable_feature_dataset(
         "format_version": DATASET_FORMAT_VERSION,
         "exporter_version": VARIABLE_DATASET_EXPORTER_VERSION,
         "feature_protocol_version": 2,
+        "beat_grid_analysis_contract": "partial_merge_v2",
         "global_pair_extractor_version": VARIABLE_GLOBAL_PAIR_EXTRACTOR_VERSION,
         "v1_global_pair_extractor_version": GLOBAL_PAIR_EXTRACTOR_VERSION,
         "supported_lengths": list(lengths),
@@ -671,6 +677,9 @@ def _discover_pair_manifests(source_manifest):
             path = (source_manifest.parent / pair["manifest_path"]).resolve()
             if not path.is_file():
                 raise FileNotFoundError(f"Pair manifest does not exist: {path}")
+            declared_sha256 = pair.get("pair_manifest_sha256")
+            if declared_sha256 is not None and str(declared_sha256).lower() != _file_sha256(path):
+                raise ValueError(f"Pair manifest SHA-256 differs: {path}")
             paths.append(path)
     if not paths:
         raise ValueError("Manifest contains no completed pair manifests")

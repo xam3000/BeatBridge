@@ -9,6 +9,7 @@ from src.features import FEATURE_DIMENSION
 from src.features.__main__ import build_argument_parser
 from src.features.extract_track import TrackFeatureArtifact
 from src.features.variable_dataset_export import (
+    _discover_pair_manifests,
     _select_variable_candidate_records,
     export_variable_feature_dataset,
 )
@@ -67,6 +68,26 @@ def _write_source_manifest(path, pairs, *, variants=1):
         ),
         encoding="utf-8",
     )
+
+
+def test_root_manifest_pair_sha_is_verified(tmp_path):
+    pair = tmp_path / "pair.json"
+    pair.write_text("{}\n", encoding="utf-8")
+    root = tmp_path / "root.json"
+    root.write_text(
+        json.dumps({
+            "sources": [{
+                "pairs": [{
+                    "status": "completed",
+                    "manifest_path": pair.name,
+                    "pair_manifest_sha256": "0" * 64,
+                }]
+            }]
+        }),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="Pair manifest SHA-256 differs"):
+        _discover_pair_manifests(root)
 
 
 def _fake_loader_factory(expected_hashes):
@@ -173,6 +194,51 @@ def test_variable_dataset_export_writes_all_lengths_and_reuses_one_split_map(tmp
     assert manifest2["dataset_id"] == manifest["dataset_id"]
     assert manifest2["shards"] == manifest["shards"]
     assert manifest2["files"] == manifest["files"]
+
+
+def test_variable_v2_export_uses_partial_merge_v2_analysis_by_default(tmp_path, monkeypatch):
+    pair = (
+        tmp_path / "train_a.wav",
+        tmp_path / "train_b.wav",
+        _sha("partial-grid-a"),
+        _sha("partial-grid-b"),
+    )
+    source_manifest = tmp_path / "batch.json"
+    _write_source_manifest(source_manifest, [pair])
+    expected_hashes = {str(pair[0]): pair[2], str(pair[1]): pair[3]}
+    seen_analysis = []
+
+    class FakePartialPreAnalysis:
+        def __init__(self, analysis_root):
+            self.analysis_root = analysis_root
+
+    monkeypatch.setattr(
+        "src.features.variable_dataset_export.PartialPreAnalysis",
+        FakePartialPreAnalysis,
+    )
+    fake_loader = _fake_loader_factory(expected_hashes)
+
+    def loader(path, **kwargs):
+        seen_analysis.append(kwargs["analysis"])
+        return fake_loader(path, **kwargs)
+
+    result = export_variable_feature_dataset(
+        source_manifest,
+        tmp_path / "dataset-v2-grid-contract",
+        split_authority={pair[2]: "train", pair[3]: "train"},
+        split_config=__import__(
+            "src.features.dataset_export", fromlist=["SplitConfig"]
+        ).SplitConfig(train=1.0, validation=0.0, test=0.0),
+        track_feature_loader=loader,
+        analysis_root=tmp_path / "partial-analysis",
+        vocal_backend="disabled",
+    )
+
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    assert manifest["beat_grid_analysis_contract"] == "partial_merge_v2"
+    assert len(seen_analysis) == 2
+    assert all(isinstance(item, FakePartialPreAnalysis) for item in seen_analysis)
+    assert seen_analysis[0] is seen_analysis[1]
 
 
 def test_variable_dataset_documents_empty_length_shards(tmp_path):
@@ -285,3 +351,19 @@ def test_variable_collection_and_waveform_batches_remain_length_homogeneous(tmp_
     assert collated["features_a"].shape == (2, 16, FEATURE_DIMENSION)
     assert len(collated["source_audio"]) == 2
     assert collated["source_audio_lengths"][0] != collated["source_audio_lengths"][1]
+
+    included_ids = {shard.example_ids[0] for shard in dataset.datasets}
+    filtered = VariableFeatureControlDataset(
+        result.output_directory,
+        "train",
+        waveform_loader=waveform_loader,
+        include_example_ids=included_ids,
+    )
+    assert len(filtered) == 4
+    assert {
+        example_id
+        for shard in filtered.datasets
+        for example_id in shard.example_ids
+    } == included_ids
+    assert set(filtered.indices_by_length()) == {2, 4, 6, 8}
+    assert all(len(filtered[index]["source_audio"]) == 2 for index in range(len(filtered)))

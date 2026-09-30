@@ -63,3 +63,19 @@ Fehler; sie werden nicht still repariert. Der Trainingsloader verwendet
 standardmäßig nur vollständige Cache-Hits und öffnet ausschließlich Train und
 Validation. Der Testsplit wird weder materialisiert noch geladen.
 
+## Versiegelter Cacheindex und Trainingsbindung (additiv, 2026-09-23)
+
+Nach jeder expliziten Materialisierung schreibt der v2-Pfad zusätzlich ein
+unveränderliches `index.json`. Es enthält nur die tatsächlich erzeugten
+Train-/Validation-Einträge, sortiert nach `example_id`, und bindet für jeden
+Eintrag Cache-ID, Split, Länge, Entry-Manifest-SHA und `waveforms.npz`-SHA.
+Der Index bindet außerdem Datasetmanifest-SHA und Cache-Rootmanifest-SHA; sein
+kanonischer Payload-Hash steht im Index, sein Datei-SHA im
+Materialisierungsbericht.
+
+Der reale `train-variable-tcn-bilstm`-Wrapper verlangt diesen Index, prüft
+Root, alle referenzierten Entry-Manifeste und Payloads vor dem Training und
+nimmt Index- und Rootmanifest-SHA in Runmanifest und Checkpoints auf. Ein
+fehlendes Beispiel, ein abweichender Hash oder ein Testsplitzugriff bricht
+fail-closed ab. Der Wrapper schreibt anschließend `io_audit.json` mit den
+geöffneten Splits und `test_reads=0` und bindet die Datei im Runmanifest.

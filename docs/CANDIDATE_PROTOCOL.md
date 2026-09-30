@@ -100,3 +100,13 @@ gespeichert, wenn alle vier Fenster dieselbe positive Beatanzahl liefern. Es
 gibt keine akzeptierten Kandidaten mit `None` oder widersprüchlicher
 Beatanzahl. Die kanonische Nutzereingabe bleibt immer
 `transition_length_bars`; die Beatanzahl ist ein abgeleitetes Rendererfeld.
+
+Die 4/4-Anforderung gilt für die vier Fenster eines jeweiligen Kandidaten,
+nicht global für sämtliche Beat-Tupel beider Tracks. Lokal als anderes Metrum
+markierte Takte dürfen daher außerhalb der verwendeten Fenster liegen; reine
+3/4- oder metrumgemischte Fenster werden nicht als 4/4 umgedeutet. Der
+Generator gibt `unsupported_meter` erst aus, wenn kein Kandidat übrig bleibt
+und beide Tracks zwar vollständige Fenster für eine angeforderte Länge haben,
+aber mindestens eine Seite dafür keine vollständigen 4/4-Pre-/Postfenster
+besitzt. Gibt es für mindestens eine Länge einen zulässigen Kandidaten, werden
+andere lokale Metrumstellen nicht als paarweite Metrum-Rejection ausgegeben.

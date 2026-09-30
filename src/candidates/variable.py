@@ -109,19 +109,6 @@ def generate_variable_candidates_from_grids(
         rejections.append(CandidateRejection("invalid_target_grid", str(error)))
         return result()
 
-    if any(
-        boundary.beats_in_bar != 4
-        for grid in (source_grid, target_grid)
-        for boundary in grid.boundaries
-    ):
-        rejections.append(
-            CandidateRejection(
-                "unsupported_meter",
-                "Variable Candidate Protocol 2 currently requires a 4/4 beat grid.",
-            )
-        )
-        return result()
-
     if config.approximate_grid_policy == "reject":
         if not source_grid_metadata.is_verified_detection:
             rejections.append(
@@ -166,15 +153,30 @@ def generate_variable_candidates_from_grids(
         return result()
 
     candidates: list[TransitionCandidate] = []
+    meter_blocked_all_complete_windows = False
     for length_bars in config.transition_lengths_bars:
-        source_boundaries = _eligible_boundaries(source_grid, length_bars)
-        target_boundaries = _eligible_boundaries(target_grid, length_bars)
+        all_source_boundaries = _eligible_boundaries(source_grid, length_bars)
+        all_target_boundaries = _eligible_boundaries(target_grid, length_bars)
+        source_boundaries = _eligible_four_four_boundaries(
+            source_grid, all_source_boundaries, length_bars
+        )
+        target_boundaries = _eligible_four_four_boundaries(
+            target_grid, all_target_boundaries, length_bars
+        )
+
+        if (
+            all_source_boundaries
+            and all_target_boundaries
+            and (not source_boundaries or not target_boundaries)
+        ):
+            meter_blocked_all_complete_windows = True
+
         if config.source_boundary_count is not None:
             source_boundaries = source_boundaries[-config.source_boundary_count :]
         if config.target_boundary_count is not None:
             target_boundaries = target_boundaries[: config.target_boundary_count]
 
-        if not source_boundaries:
+        if not all_source_boundaries:
             rejections.append(
                 CandidateRejection(
                     "insufficient_source_bars",
@@ -182,7 +184,7 @@ def generate_variable_candidates_from_grids(
                     transition_length_bars=length_bars,
                 )
             )
-        if not target_boundaries:
+        if not all_target_boundaries:
             rejections.append(
                 CandidateRejection(
                     "insufficient_target_preroll",
@@ -252,6 +254,14 @@ def generate_variable_candidates_from_grids(
                     )
                 )
 
+    if not candidates and meter_blocked_all_complete_windows:
+        rejections.append(
+            CandidateRejection(
+                "unsupported_meter",
+                "No complete, contiguous 4/4 windows are available on both tracks for any requested transition length.",
+            )
+        )
+
     if not candidates and not rejections:
         rejections.append(
             CandidateRejection(
@@ -268,6 +278,17 @@ def _eligible_boundaries(grid: _Grid, length_bars: int):
         for boundary in grid.boundaries
         if _window_beats(grid, boundary.bar_index, length_bars) is not None
         and _following_window_beats(grid, boundary.bar_index, length_bars) is not None
+    ]
+
+
+def _eligible_four_four_boundaries(grid: _Grid, boundaries, length_bars: int):
+    expected_beats = 4 * length_bars
+    return [
+        boundary
+        for boundary in boundaries
+        if _window_beats(grid, boundary.bar_index, length_bars) == expected_beats
+        and _following_window_beats(grid, boundary.bar_index, length_bars)
+        == expected_beats
     ]
 
 

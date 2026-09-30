@@ -29,6 +29,7 @@ class VariableFeatureDataset(Dataset):
         split,
         *,
         waveform_loader: Callable | None = None,
+        include_example_ids: set[str] | frozenset[str] | None = None,
     ):
         self.dataset_directory = Path(dataset_directory)
         self.split = str(split)
@@ -114,6 +115,21 @@ class VariableFeatureDataset(Dataset):
             if int(item["sequence_length"]) != self.geometry.sequence_length:
                 raise ValueError("Variable shard metadata contains another sequence length")
 
+        if include_example_ids is not None:
+            included = frozenset(str(value) for value in include_example_ids)
+            keep = tuple(
+                index for index, example_id in enumerate(self.example_ids)
+                if example_id in included
+            )
+            self.example_ids = tuple(self.example_ids[index] for index in keep)
+            self.features_a = self.features_a[list(keep)]
+            self.features_b = self.features_b[list(keep)]
+            self.global_features = self.global_features[list(keep)]
+            self.length_condition = self.length_condition[list(keep)]
+            self.transition_length_bars = self.transition_length_bars[list(keep)]
+            self.sequence_lengths = self.sequence_lengths[list(keep)]
+            self.examples = tuple(self.examples[index] for index in keep)
+
     def __len__(self):
         return len(self.example_ids)
 
@@ -153,6 +169,7 @@ class VariableFeatureDatasetCollection(Dataset):
         *,
         transition_length_bars=None,
         waveform_loader: Callable | None = None,
+        include_example_ids: set[str] | frozenset[str] | None = None,
     ):
         requested = (
             tuple(
@@ -176,6 +193,7 @@ class VariableFeatureDatasetCollection(Dataset):
                 length,
                 split,
                 waveform_loader=waveform_loader,
+                include_example_ids=include_example_ids,
             )
             for length in self.lengths
         )

@@ -10,6 +10,7 @@ from src.ml import (
     VariableTCNBiLSTMTransitionControl,
     VariableTemporalTrainingConfig,
     build_variable_training_contract,
+    load_variable_checkpoint_for_initialization,
     collate_variable_feature_examples,
     load_variable_checkpoint_for_resume,
     train_variable_temporal_control_model,
@@ -17,6 +18,7 @@ from src.ml import (
     variable_vocal_self_supervised_batch_loss,
     write_variable_run_manifest,
 )
+from src.ml.variable_runner import _validated_cache_exclusions
 
 
 def _features(length):
@@ -46,6 +48,85 @@ def _batch(length, count=2):
             "target_vocal_audio": 0.01 * torch.randn((2, samples)),
         })
     return collate_variable_feature_examples(examples)
+
+
+def test_variable_cache_exclusions_must_match_report_and_only_validation(monkeypatch, tmp_path):
+    import hashlib
+    import json
+    from types import SimpleNamespace
+
+    import src.ml.variable_data as variable_data
+
+    lengths = (2, 4, 6, 8)
+    all_examples = {
+        (split, length): {
+            "example_id": f"{split}-{length}",
+            "split": split,
+            "transition_length_bars": length,
+        }
+        for split in ("train", "validation")
+        for length in lengths
+    }
+
+    def fake_dataset(_directory, length, split):
+        return SimpleNamespace(examples=(all_examples[(split, length)],))
+
+    monkeypatch.setattr(variable_data, "VariableFeatureDataset", fake_dataset)
+    indexed = {
+        example["example_id"]: {
+            "split": example["split"],
+            "transition_length_bars": example["transition_length_bars"],
+        }
+        for (split, length), example in all_examples.items()
+        if (split, length) != ("validation", 8)
+    }
+    index_sha = "a" * 64
+    report = {
+        "dataset_manifest_sha256": "b" * 64,
+        "splits": ["train", "validation"],
+        "lengths": list(lengths),
+        "cache_index": {"file_sha256": index_sha, "entry_count": len(indexed)},
+        "counts": {},
+        "rejections": [{
+            "split": "validation",
+            "length": 8,
+            "example_id": "validation-8",
+            "reason": "feature_grid_provenance_mismatch",
+        }],
+    }
+    for split in ("train", "validation"):
+        report["counts"][split] = {}
+        for length in lengths:
+            rejected = split == "validation" and length == 8
+            report["counts"][split][str(length)] = {
+                "requested": 1,
+                "cache_hits": 0 if rejected else 1,
+                "cache_misses": 0,
+                "rejected": 1 if rejected else 0,
+            }
+    report_path = tmp_path / "materialization_report.json"
+    report_path.write_text(json.dumps(report), encoding="utf-8")
+
+    result = _validated_cache_exclusions(
+        tmp_path,
+        tmp_path,
+        "b" * 64,
+        {"entries": indexed, "file_sha256": index_sha},
+        lengths,
+    )
+    assert [row["example_id"] for row in result["rejections"]] == ["validation-8"]
+    assert result["report_sha256"] == hashlib.sha256(report_path.read_bytes()).hexdigest()
+
+    report["rejections"][0]["split"] = "train"
+    report_path.write_text(json.dumps(report), encoding="utf-8")
+    with pytest.raises(ValueError, match="Validation cache rejections"):
+        _validated_cache_exclusions(
+            tmp_path,
+            tmp_path,
+            "b" * 64,
+            {"entries": indexed, "file_sha256": index_sha},
+            lengths,
+        )
 
 
 @pytest.mark.parametrize("length,steps", ((2, 16), (4, 32), (6, 48), (8, 64)))
@@ -125,6 +206,26 @@ def test_temporal_runner_records_length_metrics_and_rejects_resume_length_mismat
     assert set(result["history"][0]["train"]["by_length"]) == {"2", "4"}
     manifest = __import__("json").loads((output / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["files"]["latest_checkpoint"]["sha256"]
+    initialized, provenance = load_variable_checkpoint_for_initialization(
+        output / "manifest.json",
+        output / manifest["files"]["best_checkpoint"]["path"],
+    )
+    assert initialized["epoch"] == 1
+    assert provenance["optimizer_state_loaded"] is False
+    fine_tune_output = tmp_path / "temporal-fine-tune"
+    train_variable_temporal_control_model(
+        (_batch(2, 1), _batch(4, 1)),
+        (_batch(2, 1), _batch(4, 1)),
+        fine_tune_output,
+        config=VariableTemporalTrainingConfig(max_epochs=1, training_sample_rate=8_000, lowpass_kernel_size=31, device="cpu"),
+        dataset_manifest_sha256=digest,
+        supported_lengths=(2, 4),
+        initialize_from_manifest=output / "manifest.json",
+        initialize_from_checkpoint=output / manifest["files"]["best_checkpoint"]["path"],
+        progress=lambda message: None,
+    )
+    fine_tune_manifest = __import__("json").loads((fine_tune_output / "manifest.json").read_text(encoding="utf-8"))
+    assert fine_tune_manifest["contract"]["initialization"]["mode"] == "model_weights_only_optimizer_reset_v1"
     wrong_contract = build_variable_training_contract(
         dataset_manifest_sha256=digest,
         supported_lengths=(2, 4, 6),
@@ -145,3 +246,38 @@ def test_temporal_runner_records_length_metrics_and_rejects_resume_length_mismat
             expected_contract=wrong_contract,
             expected_runner_name="self_supervised_train_validation_variable_tcn_bilstm_v1",
         )
+
+
+def test_all_lengths_smoke_resumes_and_preserves_cache_bindings(tmp_path):
+    digest = hashlib.sha256(b"all-length-smoke-dataset").hexdigest()
+    index_sha = hashlib.sha256(b"all-length-smoke-index").hexdigest()
+    root_sha = hashlib.sha256(b"all-length-smoke-root").hexdigest()
+    batches = tuple(_batch(length, 1) for length in (2, 4, 6, 8))
+    output = tmp_path / "all-length-smoke"
+    common = {
+        "dataset_manifest_sha256": digest,
+        "supported_lengths": (2, 4, 6, 8),
+        "waveform_cache_index_sha256": index_sha,
+        "waveform_cache_root_manifest_sha256": root_sha,
+        "progress": lambda _message: None,
+    }
+    train_variable_temporal_control_model(
+        batches,
+        batches,
+        output,
+        config=VariableTemporalTrainingConfig(max_epochs=1, training_sample_rate=8_000, lowpass_kernel_size=31, device="cpu"),
+        **common,
+    )
+    resumed = train_variable_temporal_control_model(
+        batches,
+        batches,
+        output,
+        config=VariableTemporalTrainingConfig(max_epochs=2, training_sample_rate=8_000, lowpass_kernel_size=31, device="cpu"),
+        resume=True,
+        **common,
+    )
+    assert [row["epoch"] for row in resumed["history"]] == [1, 2]
+    manifest = __import__("json").loads((output / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["contract"]["supported_lengths"] == [2, 4, 6, 8]
+    assert manifest["contract"]["waveform_cache_index_sha256"] == index_sha
+    assert manifest["contract"]["waveform_cache_root_manifest_sha256"] == root_sha

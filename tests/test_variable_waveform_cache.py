@@ -1,10 +1,12 @@
 import hashlib
 import json
+from pathlib import Path
 
 import numpy as np
 import pytest
 
 from src.features.variable_contract import geometry_for_length
+import src.ml.variable_waveform_cache as variable_cache
 from src.ml.__main__ import build_argument_parser
 from src.ml.variable_waveform_cache import (
     VARIABLE_WAVEFORM_ALIGNMENT_CONTRACT,
@@ -12,6 +14,8 @@ from src.ml.variable_waveform_cache import (
     _match_pair_boundary,
     align_variable_waveform_windows,
     load_or_create_variable_waveform_cache,
+    load_variable_waveform_cache_index,
+    write_variable_waveform_cache_index,
 )
 
 
@@ -197,6 +201,79 @@ def test_cache_hit_corruption_provenance_and_atomic_publication(tmp_path):
         )
 
 
+def test_atomic_cache_publication_retries_transient_permission_error(tmp_path, monkeypatch):
+    example = _example()
+    arrays = {
+        "source": np.zeros((2, 1000), dtype=np.float32),
+        "target": np.ones((2, 1000), dtype=np.float32),
+    }
+    original_replace = variable_cache.os.replace
+    calls = 0
+
+    def fail_once_for_directory(source, destination):
+        nonlocal calls
+        if Path(source).is_dir():
+            calls += 1
+            if calls == 1:
+                raise PermissionError("transient Windows scanner lock")
+        return original_replace(source, destination)
+
+    monkeypatch.setattr(variable_cache.os, "replace", fail_once_for_directory)
+    artifact = load_or_create_variable_waveform_cache(
+        example,
+        dataset_id="dataset",
+        dataset_manifest_sha256=_sha("dataset-manifest"),
+        cache_root=tmp_path,
+        audio_loader=lambda _example, role, _geometry: arrays[role],
+        vocal_loader=lambda _example, role, _geometry: arrays[role] * 0.5,
+    )
+
+    assert calls == 2
+    assert (artifact.cache_directory / "manifest.json").is_file()
+    assert (artifact.cache_directory / "waveforms.npz").is_file()
+    assert not list(tmp_path.rglob("*.tmp"))
+
+
+def test_cache_index_binds_root_entry_and_payload_hashes(tmp_path):
+    example = _example()
+    arrays = {"source": np.zeros((2, 1000), dtype=np.float32), "target": np.ones((2, 1000), dtype=np.float32)}
+    dataset_manifest = tmp_path / "dataset-manifest.json"
+    dataset_manifest.write_text("{}\n", encoding="utf-8")
+    dataset_sha = hashlib.sha256(dataset_manifest.read_bytes()).hexdigest()
+    artifact = load_or_create_variable_waveform_cache(
+        example,
+        dataset_id="dataset",
+        dataset_manifest_sha256=dataset_sha,
+        cache_root=tmp_path / "cache",
+        audio_loader=lambda _example, role, _geometry: arrays[role],
+        vocal_loader=lambda _example, role, _geometry: arrays[role] * 0.5,
+    )
+    index = write_variable_waveform_cache_index(
+        tmp_path / "cache",
+        dataset_manifest_path=dataset_manifest,
+        artifacts=(("train", 2, example, artifact),),
+        splits=("train",),
+        transition_lengths=(2,),
+    )
+    loaded = load_variable_waveform_cache_index(
+        tmp_path / "cache",
+        dataset_manifest_sha256=dataset_sha,
+        required_splits=("train",),
+        required_lengths=(2,),
+    )
+    assert loaded["payload"]["payload_sha256"] == index["payload_sha256"]
+    assert loaded["entries"][example["example_id"]]["waveforms_sha256"]
+
+    (artifact.cache_directory / "waveforms.npz").write_bytes(b"tampered")
+    with pytest.raises(ValueError, match="payload hash differs"):
+        load_variable_waveform_cache_index(
+            tmp_path / "cache",
+            dataset_manifest_sha256=dataset_sha,
+            required_splits=("train",),
+            required_lengths=(2,),
+        )
+
+
 def test_cache_is_separate_from_legacy_roots_and_cli_parses():
     parser = build_argument_parser()
     cache_args = parser.parse_args(
@@ -209,4 +286,3 @@ def test_cache_is_separate_from_legacy_roots_and_cli_parses():
     assert cache_args.transition_bars == [2, 4, 6, 8]
     assert train_args.command == "train-variable-tcn-bilstm"
     assert train_args.device == "cuda:0"
-

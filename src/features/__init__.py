@@ -81,7 +81,9 @@ from .variable_split import (
     authority_from_mapping,
     build_variable_split_authority,
     canonical_mapping_sha256,
+    extend_variable_split_authority,
     load_variable_split_authority,
+    write_variable_split_authority,
 )
 from .cue_ranker_universe import (
     CUE_RANKER_DATASET_FORMAT_VERSION,
@@ -159,7 +161,9 @@ __all__ = [
     "authority_from_mapping",
     "build_variable_split_authority",
     "canonical_mapping_sha256",
+    "extend_variable_split_authority",
     "load_variable_split_authority",
+    "write_variable_split_authority",
     "CUE_RANKER_DATASET_FORMAT_VERSION",
     "CueRankerUniverseResult",
     "build_cue_ranker_pair_index",

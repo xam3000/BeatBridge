@@ -25,6 +25,7 @@ from .variable_model import (
 )
 from .variable_data import (
     VariableFeatureControlDataset,
+    VariableFeatureDataset,
     VariableLengthBatchSampler,
     collate_variable_feature_examples,
 )
@@ -34,6 +35,7 @@ from .variable_waveform_cache import (
     VARIABLE_WAVEFORM_RENDER_SAMPLE_RATE,
     VARIABLE_WAVEFORM_SAMPLE_RATE,
     build_variable_cache_loader,
+    load_variable_waveform_cache_index,
 )
 from .wandb_logging import WandbConfig, WandbLogger
 
@@ -100,6 +102,10 @@ def train_variable_temporal_control_model(
     dataset_manifest_sha256,
     supported_lengths=SUPPORTED_VARIABLE_LENGTHS,
     resume=False,
+    waveform_cache_index_sha256=None,
+    waveform_cache_root_manifest_sha256=None,
+    initialize_from_manifest=None,
+    initialize_from_checkpoint=None,
     progress=print,
     wandb_config: WandbConfig | None = None,
 ):
@@ -133,9 +139,22 @@ def train_variable_temporal_control_model(
         model_name=VARIABLE_TCN_BILSTM_MODEL_NAME,
         model_format_version=VARIABLE_TCN_BILSTM_MODEL_FORMAT_VERSION,
         objective_name="objective_v5_time_normalized_variable_tcn_bilstm_v1",
+        waveform_cache_index_sha256=waveform_cache_index_sha256,
+        waveform_cache_root_manifest_sha256=waveform_cache_root_manifest_sha256,
     )
     immutable_training = config.to_dict()
     immutable_training.pop("max_epochs")
+    initialization = None
+    initialization_checkpoint = None
+    if (initialize_from_manifest is None) != (initialize_from_checkpoint is None):
+        raise ValueError("Initialization requires both a source manifest and checkpoint")
+    if resume and initialize_from_manifest is not None:
+        raise ValueError("Fine-tune initialization and resume are mutually exclusive")
+    if initialize_from_manifest is not None:
+        initialization_checkpoint, initialization = load_variable_checkpoint_for_initialization(
+            initialize_from_manifest,
+            initialize_from_checkpoint,
+        )
     contract.update({
         "runner_name": VARIABLE_TEMPORAL_TRAINING_RUNNER_NAME,
         "model": {"config": model_config.to_dict()},
@@ -152,6 +171,8 @@ def train_variable_temporal_control_model(
             "weighting": config.length_weighting,
         },
     })
+    if initialization is not None:
+        contract["initialization"] = initialization
     run_id = hashlib.sha256(_canonical_json(contract)).hexdigest()[:20]
     output_directory = Path(output_directory).resolve()
     checkpoint_directory = output_directory / "checkpoints"
@@ -162,6 +183,8 @@ def train_variable_temporal_control_model(
     device = torch.device(config.device)
     torch.manual_seed(config.seed)
     model = VariableTCNBiLSTMTransitionControl(model_config).to(device=device, dtype=torch.float32)
+    if initialization_checkpoint is not None:
+        model.load_state_dict(initialization_checkpoint["model_state_dict"], strict=True)
     renderer = DifferentiableVocalAwareRenderer(
         sample_rate=config.training_sample_rate,
         lowpass_cutoff_hz=config.lowpass_cutoff_hz,
@@ -258,6 +281,8 @@ def run_variable_tcn_bilstm_training(
     resume=False,
     wandb_config: WandbConfig | None = None,
     progress=print,
+    initialize_from_manifest=None,
+    initialize_from_checkpoint=None,
 ):
     """Run the real Dataset-2 TCN/BiLSTM path using cache hits only.
 
@@ -278,23 +303,41 @@ def run_variable_tcn_bilstm_training(
     batch_size = int(batch_size)
     if batch_size < 1:
         raise ValueError("batch_size must be at least 1")
+    cache_binding = load_variable_waveform_cache_index(
+        waveform_cache_root,
+        dataset_manifest_sha256=dataset_manifest_sha256,
+        required_splits=("train", "validation"),
+        required_lengths=lengths,
+    )
+    cache_exclusions = _validated_cache_exclusions(
+        dataset_directory,
+        waveform_cache_root,
+        dataset_manifest_sha256,
+        cache_binding,
+        lengths,
+    )
     waveform_loader = build_variable_cache_loader(
         dataset_directory,
         cache_root=waveform_cache_root,
         training_sample_rate=config.training_sample_rate,
         render_sample_rate=VARIABLE_WAVEFORM_RENDER_SAMPLE_RATE,
+        require_index=True,
+        required_splits=("train", "validation"),
+        required_lengths=lengths,
     )
     train_dataset = VariableFeatureDatasetCollection(
         dataset_directory,
         "train",
         transition_length_bars=lengths,
         waveform_loader=waveform_loader,
+        include_example_ids=cache_binding["entries"].keys(),
     )
     validation_dataset = VariableFeatureDatasetCollection(
         dataset_directory,
         "validation",
         transition_length_bars=lengths,
         waveform_loader=waveform_loader,
+        include_example_ids=cache_binding["entries"].keys(),
     )
 
     def make_batches(dataset, *, shuffle, seed):
@@ -319,19 +362,132 @@ def run_variable_tcn_bilstm_training(
         dataset_manifest_sha256=dataset_manifest_sha256,
         supported_lengths=lengths,
         resume=resume,
+        waveform_cache_index_sha256=cache_binding["file_sha256"],
+        waveform_cache_root_manifest_sha256=cache_binding["payload"]["cache_root_manifest_sha256"],
+        initialize_from_manifest=initialize_from_manifest,
+        initialize_from_checkpoint=initialize_from_checkpoint,
         wandb_config=wandb_config,
         progress=progress,
     )
+    audit_path = Path(output_directory) / "io_audit.json"
+    audit_payload = {
+        "format_version": 1,
+        "policy": "train_validation_only_test_closed_v1",
+        "dataset_manifest_sha256": dataset_manifest_sha256,
+        "waveform_cache_index_sha256": cache_binding["file_sha256"],
+        "opened_splits": ["train", "validation"],
+        "test_reads": 0,
+        "train_examples_read": int(sum(len(batch["example_ids"]) for batch in train_batches)),
+        "validation_examples_read": int(sum(len(batch["example_ids"]) for batch in validation_batches)),
+        "materialization_report_sha256": cache_exclusions["report_sha256"],
+        "excluded_validation_cache_rejections": cache_exclusions["rejections"],
+    }
+    _atomic_json_write(audit_path, audit_payload)
+    run_manifest_path = Path(output_directory) / "manifest.json"
+    run_manifest = json.loads(run_manifest_path.read_text(encoding="utf-8"))
+    run_manifest.setdefault("files", {})["io_audit"] = _file_record(
+        audit_path, run_manifest_path.parent
+    )
+    _atomic_json_write(run_manifest_path, run_manifest)
     result.update({
         "status": "completed",
         "last_epoch": int(result["history"][-1]["epoch"]),
         "dataset_id": dataset_manifest["dataset_id"],
         "cache_root": str(Path(waveform_cache_root)),
+        "cache_index_sha256": cache_binding["file_sha256"],
         "train_batch_count": len(train_batches),
         "validation_batch_count": len(validation_batches),
         "cache_hits": int(sum(1 for batch in train_batches + validation_batches for _ in batch["example_ids"])),
+        "test_reads": 0,
+        "excluded_validation_examples": len(cache_exclusions["rejections"]),
     })
     return result
+
+
+def _validated_cache_exclusions(
+    dataset_directory,
+    cache_root,
+    dataset_manifest_sha256,
+    cache_binding,
+    lengths,
+):
+    """Allow only report-bound Validation cache rejections to be omitted.
+
+    Train examples may never be omitted.  The immutable index, dataset shards,
+    and materialization report must agree exactly before filtering Validation.
+    """
+
+    from .variable_data import VariableFeatureDataset
+
+    expected = {}
+    requested_counts = {split: {int(length): 0 for length in lengths} for split in ("train", "validation")}
+    for split in ("train", "validation"):
+        for length in lengths:
+            dataset = VariableFeatureDataset(dataset_directory, length, split)
+            requested_counts[split][length] = len(dataset.examples)
+            for example in dataset.examples:
+                example_id = str(example["example_id"])
+                if example_id in expected:
+                    raise ValueError(f"Duplicate Dataset-v2 example ID across shards: {example_id}")
+                expected[example_id] = {
+                    "split": split,
+                    "transition_length_bars": int(length),
+                }
+
+    indexed = cache_binding["entries"]
+    for example_id, row in indexed.items():
+        if example_id not in expected:
+            raise ValueError(f"Waveform cache index contains an unknown dataset example: {example_id}")
+        if row.get("split") != expected[example_id]["split"] or int(row.get("transition_length_bars", -1)) != expected[example_id]["transition_length_bars"]:
+            raise ValueError(f"Waveform cache index metadata differs from dataset: {example_id}")
+    missing = set(expected) - set(indexed)
+    missing_train = sorted(value for value in missing if expected[value]["split"] == "train")
+    if missing_train:
+        raise ValueError(f"Waveform cache index lacks Train examples: {missing_train[:5]}")
+
+    report_path = Path(cache_root) / "materialization_report.json"
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    report_index = report.get("cache_index", {})
+    if report.get("dataset_manifest_sha256") != dataset_manifest_sha256:
+        raise ValueError("Materialization report dataset SHA differs")
+    if report_index.get("file_sha256") != cache_binding["file_sha256"]:
+        raise ValueError("Materialization report does not bind the sealed cache index")
+    if report_index.get("entry_count") != len(indexed):
+        raise ValueError("Materialization report entry count differs from cache index")
+    if tuple(sorted(int(value) for value in report.get("lengths", ()))) != tuple(sorted(lengths)):
+        raise ValueError("Materialization report transition lengths differ")
+    if set(report.get("splits", ())) != {"train", "validation"}:
+        raise ValueError("Materialization report must cover exactly Train and Validation")
+
+    rejected_rows = report.get("rejections", ())
+    rejection_ids = [str(row.get("example_id", "")) for row in rejected_rows]
+    if len(set(rejection_ids)) != len(rejection_ids) or set(rejection_ids) != missing:
+        raise ValueError("Materialization report rejections do not match uncached dataset examples")
+    if any(
+        row.get("split") != "validation"
+        or str(row.get("reason", "")) == ""
+        or expected.get(str(row.get("example_id"))) != {
+            "split": "validation",
+            "transition_length_bars": int(row.get("length", -1)),
+        }
+        for row in rejected_rows
+    ):
+        raise ValueError("Only explicitly reported Validation cache rejections may be excluded")
+
+    for split in ("train", "validation"):
+        for length in lengths:
+            bucket = report.get("counts", {}).get(split, {}).get(str(length), {})
+            total = sum(int(bucket.get(key, -1)) for key in ("cache_hits", "cache_misses", "rejected"))
+            if int(bucket.get("requested", -1)) != requested_counts[split][length] or total != requested_counts[split][length]:
+                raise ValueError(f"Materialization report counts differ from Dataset-v2 {split}/{length}")
+
+    return {
+        "report_sha256": _sha256(report_path),
+        "rejections": sorted(
+            (dict(row) for row in rejected_rows),
+            key=lambda row: str(row["example_id"]),
+        ),
+    }
 
 
 def build_variable_training_contract(
@@ -341,6 +497,8 @@ def build_variable_training_contract(
     model_name=VARIABLE_TIME_SHARED_MLP_MODEL_NAME,
     model_format_version=VARIABLE_MLP_MODEL_FORMAT_VERSION,
     objective_name="objective_v5_time_normalized_variable_v1",
+    waveform_cache_index_sha256=None,
+    waveform_cache_root_manifest_sha256=None,
 ):
     """Build the immutable contract embedded in run manifests and checkpoints."""
 
@@ -358,7 +516,7 @@ def build_variable_training_contract(
     digest = str(dataset_manifest_sha256).lower()
     if len(digest) != 64 or any(character not in "0123456789abcdef" for character in digest):
         raise ValueError("dataset_manifest_sha256 must be a SHA-256 hex digest")
-    return {
+    contract = {
         "dataset_format_version": 2,
         "feature_protocol_version": 2,
         "dataset_manifest_sha256": digest,
@@ -379,6 +537,19 @@ def build_variable_training_contract(
         "model_format_version": int(model_format_version),
         "objective_name": str(objective_name),
     }
+    if (waveform_cache_index_sha256 is None) != (waveform_cache_root_manifest_sha256 is None):
+        raise ValueError("Both waveform cache SHA bindings must be supplied together")
+    if waveform_cache_index_sha256 is not None:
+        for name, value in (
+            ("waveform_cache_index_sha256", waveform_cache_index_sha256),
+            ("waveform_cache_root_manifest_sha256", waveform_cache_root_manifest_sha256),
+        ):
+            value = str(value).lower()
+            if len(value) != 64 or any(character not in "0123456789abcdef" for character in value):
+                raise ValueError(f"{name} must be a SHA-256 hex digest")
+            contract[name] = value
+        contract["waveform_cache_index_format_version"] = 1
+    return contract
 
 
 def variable_checkpoint_payload(
@@ -475,6 +646,38 @@ def load_variable_checkpoint_for_resume(manifest_path, checkpoint_path, *, expec
         run_id=manifest.get("run_id"),
         expected_runner_name=expected_runner_name,
     )
+
+
+def load_variable_checkpoint_for_initialization(manifest_path, checkpoint_path):
+    """Load model weights only and return SHA provenance for a fresh optimizer run."""
+
+    manifest_path = Path(manifest_path)
+    checkpoint_path = Path(checkpoint_path)
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if manifest.get("runner_name") != VARIABLE_TEMPORAL_TRAINING_RUNNER_NAME:
+        raise ValueError("Initialization source is not a variable temporal run")
+    checkpoint_sha256 = _sha256(checkpoint_path)
+    records = tuple(
+        value for value in manifest.get("files", {}).values()
+        if isinstance(value, dict) and value.get("sha256")
+    )
+    if not any(record.get("sha256") == checkpoint_sha256 for record in records):
+        raise ValueError("Initialization checkpoint hash is not bound by the source manifest")
+    checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
+    validate_variable_checkpoint(
+        checkpoint,
+        expected_runner_name=VARIABLE_TEMPORAL_TRAINING_RUNNER_NAME,
+    )
+    provenance = {
+        "mode": "model_weights_only_optimizer_reset_v1",
+        "source_run_id": str(manifest["run_id"]),
+        "source_manifest_sha256": _sha256(manifest_path),
+        "source_checkpoint_sha256": checkpoint_sha256,
+        "source_dataset_manifest_sha256": checkpoint["contract"].get("dataset_manifest_sha256"),
+        "optimizer_state_loaded": False,
+        "scheduler_state_loaded": False,
+    }
+    return checkpoint, provenance
 
 
 def _validate_temporal_batches(batches, supported_lengths, split):

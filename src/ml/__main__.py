@@ -219,6 +219,8 @@ def build_argument_parser():
     variable_train_parser.add_argument("--training-sample-rate", type=int, default=VARIABLE_WAVEFORM_SAMPLE_RATE)
     variable_train_parser.add_argument("--device", default=VariableTemporalTrainingConfig().device)
     variable_train_parser.add_argument("--resume", action="store_true")
+    variable_train_parser.add_argument("--initialize-from-manifest")
+    variable_train_parser.add_argument("--initialize-from-checkpoint")
     _add_wandb_options(variable_train_parser)
 
     teacher_seal_parser = subparsers.add_parser(
@@ -551,6 +553,8 @@ def main():
             transition_lengths=args.transition_bars,
             batch_size=args.batch_size,
             resume=args.resume,
+            initialize_from_manifest=args.initialize_from_manifest,
+            initialize_from_checkpoint=args.initialize_from_checkpoint,
             wandb_config=_wandb_config_from_args(args),
         )
         print(json.dumps({

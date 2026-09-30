@@ -190,7 +190,6 @@ def generate_multi_song_batch(
                         candidate_config=candidate_config,
                         top_k=top_transitions,
                         ranking_method=ranking_method,
-                        cue_ranker=learned_ranker,
                         cue_ranker_run=cue_ranker_run,
                         cue_ranker_dataset=cue_ranker_dataset,
                         cue_ranker_feature_cache_root=cue_ranker_feature_cache_root,

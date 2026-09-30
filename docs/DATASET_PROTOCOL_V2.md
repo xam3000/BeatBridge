@@ -61,6 +61,22 @@ Union und speichert ihren kanonischen Hash im Manifest. Eine neue oder
 unbekannte Trackmenge darf eine neue Map erzeugen, aber niemals je Länge eine
 eigene Map.
 
+Für Korpuserweiterungen kann die Altmap mit
+`src.variable_split_extension` unverändert fortgeschrieben werden. Vor der
+Zuweisung werden Audio-SHAs über eine explizite `recording_group_id` gruppiert;
+eine Gruppe erbt eine vorhandene Zuweisung oder erhält deterministisch genau
+einen Split. Gruppen, die bereits mehrere eingefrorene Splits berühren,
+werden abgewiesen. Der Policyblock bindet Altmap und Recording-Group-Map
+jeweils per kanonischem SHA.
+
+Der candidate-only Producer `src.variable_producer` liest ausschließlich eine
+solche eingefrorene Splitmap. Er rankt Targets nur innerhalb des Source-Splits,
+verarbeitet Candidate Protocol 2 längenweise und persistiert je Paar/Länge nur
+Top-k samt aggregierten Rejections. Er schreibt keine Renderer- oder
+Audioartefakte. Beim Datasetexport wird jeder im Root deklarierte
+Pair-Manifest-SHA erneut geprüft; Cross-Split-Paare werden zusätzlich über die
+Audio-SHA-Autorität fail-closed verworfen.
+
 ## Manifest und Reproduzierbarkeit
 
 Das Root-Manifest führt mindestens Dataset-/Exporter-/Feature-/Global-Pair-
@@ -90,6 +106,23 @@ sind damit reproduzierbar prüfbar. Ein vorhandener Datasetroot wird nicht geöf
 
 Der Befehl erzeugt keinen großen Datensatz von selbst; er exportiert nur die
 vom Nutzer angegebene Manifestmenge in einen neuen Zielordner.
+
+Beispiel für die vorgelagerte Splitfortschreibung und Candidate-Produktion:
+
+```powershell
+.venv\Scripts\python.exe -B -m src.variable_split_extension `
+  output\datasets\variable_v2_strict_20260820_selected_roformer_run01\split_authority.json `
+  output\corpora\prive_scantraxx_extension_v2_20260923_run01\recording_groups.json `
+  output\corpora\prive_scantraxx_extension_v2_20260923_run01\split_authority.json
+
+.venv\Scripts\python.exe -B -m src.variable_producer `
+  "musik\PRIVE Hardstyle Top 1000 of all times - by Scantraxx" `
+  --output-dir output\producers\prive_scantraxx_extension_variable_v2_top1x3_20260923_run01 `
+  --split-map output\corpora\prive_scantraxx_extension_v2_20260923_run01\split_authority.json `
+  --analysis-location output\pre_analysis\prive_scantraxx_extension_merge_v2_20260923_run01 `
+  --transition-bars 2 4 6 8 --top-targets 1 --top-candidates-per-length 3 `
+  --min-bpm 145 --max-bpm 165
+```
 ## Verifizierte reale Materialisierung (2026-08-21)
 
 Die erste reale Format-2-Materialisierung wurde unter einem neuen Datasetpfad abgeschlossen:
