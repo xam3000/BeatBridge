@@ -1,0 +1,854 @@
+{
+  "criteria": [
+    "cleanliness",
+    "energy_shape",
+    "low_end_handover",
+    "vocal_clarity",
+    "artifact_freedom"
+  ],
+  "format_version": 1,
+  "ratings": [
+    {
+      "notes": "",
+      "pair_index": 1,
+      "ranking": [],
+      "scores": {
+        "A": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "B": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "C": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "D": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "E": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        }
+      }
+    },
+    {
+      "notes": "",
+      "pair_index": 2,
+      "ranking": [],
+      "scores": {
+        "A": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "B": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "C": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "D": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "E": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        }
+      }
+    },
+    {
+      "notes": "",
+      "pair_index": 3,
+      "ranking": [],
+      "scores": {
+        "A": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "B": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "C": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "D": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "E": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        }
+      }
+    },
+    {
+      "notes": "",
+      "pair_index": 4,
+      "ranking": [],
+      "scores": {
+        "A": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "B": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "C": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "D": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "E": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        }
+      }
+    },
+    {
+      "notes": "",
+      "pair_index": 5,
+      "ranking": [],
+      "scores": {
+        "A": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "B": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "C": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "D": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "E": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        }
+      }
+    },
+    {
+      "notes": "",
+      "pair_index": 6,
+      "ranking": [],
+      "scores": {
+        "A": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "B": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "C": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "D": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "E": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        }
+      }
+    },
+    {
+      "notes": "",
+      "pair_index": 7,
+      "ranking": [],
+      "scores": {
+        "A": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "B": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "C": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "D": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "E": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        }
+      }
+    },
+    {
+      "notes": "",
+      "pair_index": 8,
+      "ranking": [],
+      "scores": {
+        "A": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "B": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "C": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "D": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "E": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        }
+      }
+    },
+    {
+      "notes": "",
+      "pair_index": 9,
+      "ranking": [],
+      "scores": {
+        "A": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "B": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "C": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "D": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "E": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        }
+      }
+    },
+    {
+      "notes": "",
+      "pair_index": 10,
+      "ranking": [],
+      "scores": {
+        "A": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "B": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "C": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "D": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "E": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        }
+      }
+    },
+    {
+      "notes": "",
+      "pair_index": 11,
+      "ranking": [],
+      "scores": {
+        "A": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "B": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "C": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "D": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "E": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        }
+      }
+    },
+    {
+      "notes": "",
+      "pair_index": 12,
+      "ranking": [],
+      "scores": {
+        "A": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "B": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "C": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "D": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "E": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        }
+      }
+    },
+    {
+      "notes": "",
+      "pair_index": 13,
+      "ranking": [],
+      "scores": {
+        "A": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "B": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "C": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "D": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "E": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        }
+      }
+    },
+    {
+      "notes": "",
+      "pair_index": 14,
+      "ranking": [],
+      "scores": {
+        "A": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "B": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "C": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "D": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "E": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        }
+      }
+    },
+    {
+      "notes": "",
+      "pair_index": 15,
+      "ranking": [],
+      "scores": {
+        "A": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "B": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "C": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "D": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "E": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        }
+      }
+    },
+    {
+      "notes": "",
+      "pair_index": 16,
+      "ranking": [],
+      "scores": {
+        "A": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "B": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "C": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "D": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "E": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        }
+      }
+    },
+    {
+      "notes": "",
+      "pair_index": 17,
+      "ranking": [],
+      "scores": {
+        "A": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "B": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "C": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "D": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "E": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        }
+      }
+    },
+    {
+      "notes": "",
+      "pair_index": 18,
+      "ranking": [],
+      "scores": {
+        "A": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "B": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "C": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "D": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "E": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        }
+      }
+    },
+    {
+      "notes": "",
+      "pair_index": 19,
+      "ranking": [],
+      "scores": {
+        "A": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "B": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "C": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "D": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "E": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        }
+      }
+    },
+    {
+      "notes": "",
+      "pair_index": 20,
+      "ranking": [],
+      "scores": {
+        "A": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "B": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "C": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "D": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        },
+        "E": {
+          "artifact_freedom": null,
+          "cleanliness": null,
+          "energy_shape": null,
+          "low_end_handover": null,
+          "vocal_clarity": null
+        }
+      }
+    }
+  ],
+  "status": "unrated",
+  "study_manifest": "manifest.json"
+}
