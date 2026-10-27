@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import argparse
-import json
-from pathlib import Path
 import hashlib
+import json
+import os
+import re
+from pathlib import Path
 
 from torch.utils.data import DataLoader
 
@@ -25,22 +27,29 @@ from .model import (
     VOCAL_FEATURE_CONTROL_MODEL_NAME,
     FeatureControlMLP,
     TCNBiLSTMTransitionControl,
+    TCNBiLSTMTransitionControlConfig,
+    VocalFeatureControlMLPConfig,
     VocalFeatureControlMLP,
 )
-from .runner import TrainingConfig, run_feature_control_training
+from .runner import (
+    TCNBiLSTMTrainingConfig,
+    TrainingConfig,
+    run_feature_control_training,
+)
 from .runner import run_tcn_bilstm_transition_control_training
 from .vocal_runner import VocalTrainingConfig, run_vocal_feature_control_training
 from .variable_runner import (
     VariableTemporalTrainingConfig,
     run_variable_tcn_bilstm_training,
 )
+from .variable_model import VariableTCNBiLSTMControlConfig
 from .variable_waveform_cache import (
     VARIABLE_WAVEFORM_CACHE_ROOT,
     VARIABLE_WAVEFORM_RENDER_SAMPLE_RATE,
     VARIABLE_WAVEFORM_SAMPLE_RATE,
     materialize_variable_waveform_cache,
 )
-from .wandb_logging import WandbConfig
+from .wandb_logging import WandbConfig, load_sweep_parameters
 from .cue_ranker_teacher import (
     TeacherLabelingConfig,
     label_cue_ranker_teacher,
@@ -99,6 +108,28 @@ def _wandb_config_from_args(args):
             else args.wandb_log_checkpoints
         ),
     )
+
+
+def _sweep_trial_directory(output_root, command):
+    sweep_id = os.environ.get("WANDB_SWEEP_ID", "")
+    sweep_run_id = os.environ.get("WANDB_RUN_ID", "")
+    safe_id = re.compile(r"[A-Za-z0-9_-]+\Z")
+    if not safe_id.fullmatch(sweep_id) or not safe_id.fullmatch(sweep_run_id):
+        raise RuntimeError(
+            f"{command} must run under a W&B agent with valid "
+            "WANDB_SWEEP_ID and WANDB_RUN_ID values."
+        )
+    return Path(output_root).resolve() / sweep_id / sweep_run_id
+
+
+def _validate_sweep_parameter_names(parameters, expected_parameters, command):
+    missing_parameters = expected_parameters - set(parameters)
+    unknown_parameters = set(parameters) - expected_parameters
+    if missing_parameters or unknown_parameters:
+        raise ValueError(
+            f"W&B sweep config does not match {command}; "
+            f"missing={sorted(missing_parameters)}, unknown={sorted(unknown_parameters)}"
+        )
 
 
 def build_argument_parser():
@@ -160,25 +191,25 @@ def build_argument_parser():
     tcn_train_parser.add_argument(
         "--cache-root", default=str(DEFAULT_BRIDGE_WAVEFORM_CACHE_ROOT)
     )
-    tcn_train_parser.add_argument("--seed", type=int, default=TrainingConfig.seed)
+    tcn_train_parser.add_argument("--seed", type=int, default=TCNBiLSTMTrainingConfig.seed)
     tcn_train_parser.add_argument(
-        "--max-epochs", type=int, default=TrainingConfig.max_epochs
+        "--max-epochs", type=int, default=TCNBiLSTMTrainingConfig.max_epochs
     )
     tcn_train_parser.add_argument(
-        "--batch-size", type=int, default=TrainingConfig.batch_size
+        "--batch-size", type=int, default=TCNBiLSTMTrainingConfig.batch_size
     )
     tcn_train_parser.add_argument(
-        "--learning-rate", type=float, default=TrainingConfig.learning_rate
+        "--learning-rate", type=float, default=TCNBiLSTMTrainingConfig.learning_rate
     )
     tcn_train_parser.add_argument(
-        "--weight-decay", type=float, default=TrainingConfig.weight_decay
+        "--weight-decay", type=float, default=TCNBiLSTMTrainingConfig.weight_decay
     )
-    tcn_train_parser.add_argument("--patience", type=int, default=TrainingConfig.patience)
-    tcn_train_parser.add_argument("--min-delta", type=float, default=TrainingConfig.min_delta)
+    tcn_train_parser.add_argument("--patience", type=int, default=TCNBiLSTMTrainingConfig.patience)
+    tcn_train_parser.add_argument("--min-delta", type=float, default=TCNBiLSTMTrainingConfig.min_delta)
     tcn_train_parser.add_argument(
         "--gradient-clip-norm",
         type=float,
-        default=TrainingConfig.gradient_clip_norm,
+        default=TCNBiLSTMTrainingConfig.gradient_clip_norm,
     )
     tcn_train_parser.add_argument(
         "--training-sample-rate",
@@ -187,7 +218,7 @@ def build_argument_parser():
     )
     tcn_train_parser.add_argument(
         "--device",
-        default=TrainingConfig.device,
+        default=TCNBiLSTMTrainingConfig.device,
         help="PyTorch device: auto (CUDA if available), cpu, cuda, or cuda:<index>",
     )
     tcn_train_parser.add_argument("--resume", action="store_true")
@@ -286,6 +317,28 @@ def build_argument_parser():
     vocal_train_parser.add_argument("--vocal-model", default=DEFAULT_ROFORMER_MODEL)
     vocal_train_parser.add_argument("--seed", type=int, default=VocalTrainingConfig.seed)
     vocal_train_parser.add_argument(
+        "--hidden-dimensions",
+        nargs="+",
+        type=int,
+        default=list(VocalFeatureControlMLPConfig().hidden_dimensions),
+    )
+    vocal_train_parser.add_argument(
+        "--dropout", type=float, default=VocalFeatureControlMLPConfig().dropout
+    )
+    vocal_train_parser.add_argument(
+        "--maximum-vocal-ducking",
+        type=float,
+        default=VocalFeatureControlMLPConfig().maximum_vocal_ducking,
+    )
+    vocal_train_parser.add_argument(
+        "--initial-vocal-duck-logit",
+        type=float,
+        default=VocalFeatureControlMLPConfig().initial_vocal_duck_logit,
+    )
+    vocal_train_parser.add_argument(
+        "--optimizer", choices=("adam", "adamw"), default=VocalTrainingConfig.optimizer
+    )
+    vocal_train_parser.add_argument(
         "--max-epochs",
         type=int,
         default=VocalTrainingConfig.max_epochs,
@@ -304,6 +357,35 @@ def build_argument_parser():
         "--weight-decay",
         type=float,
         default=VocalTrainingConfig.weight_decay,
+    )
+    vocal_train_parser.add_argument(
+        "--adam-beta1", type=float, default=VocalTrainingConfig.adam_beta1
+    )
+    vocal_train_parser.add_argument(
+        "--adam-beta2", type=float, default=VocalTrainingConfig.adam_beta2
+    )
+    vocal_train_parser.add_argument(
+        "--adam-epsilon", type=float, default=VocalTrainingConfig.adam_epsilon
+    )
+    vocal_train_parser.add_argument(
+        "--lr-scheduler",
+        choices=("none", "reduce_on_plateau", "cosine"),
+        default=VocalTrainingConfig.lr_scheduler,
+    )
+    vocal_train_parser.add_argument(
+        "--scheduler-factor", type=float, default=VocalTrainingConfig.scheduler_factor
+    )
+    vocal_train_parser.add_argument(
+        "--scheduler-patience", type=int, default=VocalTrainingConfig.scheduler_patience
+    )
+    vocal_train_parser.add_argument(
+        "--scheduler-threshold", type=float, default=VocalTrainingConfig.scheduler_threshold
+    )
+    vocal_train_parser.add_argument(
+        "--scheduler-cooldown", type=int, default=VocalTrainingConfig.scheduler_cooldown
+    )
+    vocal_train_parser.add_argument(
+        "--scheduler-min-lr", type=float, default=VocalTrainingConfig.scheduler_min_lr
     )
     vocal_train_parser.add_argument(
         "--patience",
@@ -332,6 +414,75 @@ def build_argument_parser():
     )
     vocal_train_parser.add_argument("--resume", action="store_true")
     _add_wandb_options(vocal_train_parser)
+
+    vocal_sweep_parser = subparsers.add_parser(
+        "sweep-vocal",
+        help="Run one vocal-aware training trial assigned by a W&B sweep agent.",
+    )
+    vocal_sweep_parser.add_argument("dataset_directory")
+    vocal_sweep_parser.add_argument("output_root")
+    vocal_sweep_parser.add_argument(
+        "--cache-root", default=str(DEFAULT_VOCAL_BRIDGE_WAVEFORM_CACHE_ROOT)
+    )
+    vocal_sweep_parser.add_argument(
+        "--feature-cache-root", default=str(DEFAULT_FEATURE_CACHE_ROOT)
+    )
+    vocal_sweep_parser.add_argument("--vocal-model", default=DEFAULT_ROFORMER_MODEL)
+    vocal_sweep_parser.add_argument("--device", default=VocalTrainingConfig.device)
+    vocal_sweep_parser.add_argument("--wandb-project", default="beatbridge")
+    vocal_sweep_parser.add_argument(
+        "--wandb-log-checkpoints",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Upload model checkpoints as W&B artifacts for every sweep trial.",
+    )
+
+    tcn_sweep_parser = subparsers.add_parser(
+        "sweep-tcn-bilstm",
+        help="Run one fixed-length TCN/BiLSTM training trial assigned by a W&B sweep agent.",
+    )
+    tcn_sweep_parser.add_argument("dataset_directory")
+    tcn_sweep_parser.add_argument("output_root")
+    tcn_sweep_parser.add_argument(
+        "--cache-root", default=str(DEFAULT_BRIDGE_WAVEFORM_CACHE_ROOT)
+    )
+    tcn_sweep_parser.add_argument("--device", default=TrainingConfig.device)
+    tcn_sweep_parser.add_argument("--wandb-project", default="beatbridge")
+    tcn_sweep_parser.add_argument(
+        "--save-checkpoints",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Save best/latest checkpoints locally for each fixed-length TCN sweep trial.",
+    )
+    tcn_sweep_parser.add_argument(
+        "--wandb-log-checkpoints",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Upload model checkpoints as W&B artifacts for every sweep trial.",
+    )
+
+    variable_tcn_sweep_parser = subparsers.add_parser(
+        "sweep-variable-tcn-bilstm",
+        help="Run one variable-length TCN/BiLSTM trial assigned by a W&B sweep agent.",
+    )
+    variable_tcn_sweep_parser.add_argument("dataset_directory")
+    variable_tcn_sweep_parser.add_argument("output_root")
+    variable_tcn_sweep_parser.add_argument(
+        "--cache-root", default=str(VARIABLE_WAVEFORM_CACHE_ROOT)
+    )
+    variable_tcn_sweep_parser.add_argument(
+        "--transition-bars", nargs="+", type=int, default=[2, 4, 6, 8]
+    )
+    variable_tcn_sweep_parser.add_argument(
+        "--device", default=VariableTemporalTrainingConfig().device
+    )
+    variable_tcn_sweep_parser.add_argument("--wandb-project", default="beatbridge")
+    variable_tcn_sweep_parser.add_argument(
+        "--wandb-log-checkpoints",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Upload model checkpoints as W&B artifacts for every sweep trial.",
+    )
     return parser
 
 
@@ -490,7 +641,7 @@ def main():
         return 0
 
     if args.command == "train-tcn-bilstm":
-        config = TrainingConfig(
+        config = TCNBiLSTMTrainingConfig(
             seed=args.seed,
             max_epochs=args.max_epochs,
             batch_size=args.batch_size,
@@ -572,18 +723,35 @@ def main():
             seed=args.seed,
             max_epochs=args.max_epochs,
             batch_size=args.batch_size,
+            optimizer=args.optimizer,
             learning_rate=args.learning_rate,
             weight_decay=args.weight_decay,
+            adam_beta1=args.adam_beta1,
+            adam_beta2=args.adam_beta2,
+            adam_epsilon=args.adam_epsilon,
+            lr_scheduler=args.lr_scheduler,
+            scheduler_factor=args.scheduler_factor,
+            scheduler_patience=args.scheduler_patience,
+            scheduler_threshold=args.scheduler_threshold,
+            scheduler_cooldown=args.scheduler_cooldown,
+            scheduler_min_lr=args.scheduler_min_lr,
             patience=args.patience,
             min_delta=args.min_delta,
             gradient_clip_norm=args.gradient_clip_norm,
             training_sample_rate=args.training_sample_rate,
             device=args.device,
         )
+        model_config = VocalFeatureControlMLPConfig(
+            hidden_dimensions=tuple(args.hidden_dimensions),
+            dropout=args.dropout,
+            maximum_vocal_ducking=args.maximum_vocal_ducking,
+            initial_vocal_duck_logit=args.initial_vocal_duck_logit,
+        )
         result = run_vocal_feature_control_training(
             args.dataset_directory,
             args.output_directory,
             config=config,
+            model_config=model_config,
             waveform_cache_root=args.cache_root,
             feature_cache_root=args.feature_cache_root,
             vocal_model=args.vocal_model,
@@ -596,6 +764,190 @@ def main():
             "last_epoch": result.last_epoch,
             "best_epoch": result.best_epoch,
             "best_validation_loss": result.best_validation_loss,
+        }, indent=2))
+        return 0
+
+    if args.command == "sweep-vocal":
+        sweep_id = os.environ.get("WANDB_SWEEP_ID", "")
+        sweep_run_id = os.environ.get("WANDB_RUN_ID", "")
+        safe_id = re.compile(r"[A-Za-z0-9_-]+\Z")
+        if not safe_id.fullmatch(sweep_id) or not safe_id.fullmatch(sweep_run_id):
+            raise RuntimeError(
+                "sweep-vocal must run under a W&B agent with valid "
+                "WANDB_SWEEP_ID and WANDB_RUN_ID values."
+            )
+
+        parameters = load_sweep_parameters()
+        training_fields = set(VocalTrainingConfig.__dataclass_fields__) - {
+            "device",
+            "training_sample_rate",
+            "lowpass_cutoff_hz",
+            "lowpass_kernel_size",
+        }
+        model_fields = {
+            "hidden_dimensions",
+            "dropout",
+            "maximum_vocal_ducking",
+            "initial_vocal_duck_logit",
+        }
+        expected_parameters = training_fields | model_fields
+        missing_parameters = expected_parameters - set(parameters)
+        unknown_parameters = set(parameters) - expected_parameters
+        if missing_parameters or unknown_parameters:
+            raise ValueError(
+                "W&B sweep config does not match the vocal runner; "
+                f"missing={sorted(missing_parameters)}, unknown={sorted(unknown_parameters)}"
+            )
+
+        training_parameters = {
+            name: value for name, value in parameters.items() if name in training_fields
+        }
+        training_parameters["device"] = args.device
+        config = VocalTrainingConfig(**training_parameters)
+        model_parameters = {
+            name: value for name, value in parameters.items() if name in model_fields
+        }
+        model_parameters["hidden_dimensions"] = tuple(
+            model_parameters["hidden_dimensions"]
+        )
+        model_config = VocalFeatureControlMLPConfig(**model_parameters)
+        output_directory = (
+            Path(args.output_root).resolve() / sweep_id / sweep_run_id
+        )
+        result = run_vocal_feature_control_training(
+            args.dataset_directory,
+            output_directory,
+            config=config,
+            model_config=model_config,
+            waveform_cache_root=args.cache_root,
+            feature_cache_root=args.feature_cache_root,
+            vocal_model=args.vocal_model,
+            resume=output_directory.exists(),
+            wandb_config=WandbConfig(
+                mode="online",
+                project=args.wandb_project,
+                tags=("sweep", "vocal_time_shared_mlp_v2"),
+                log_checkpoints=args.wandb_log_checkpoints,
+            ),
+        )
+        print(json.dumps({
+            "output_directory": str(result.output_directory),
+            "status": result.status,
+            "last_epoch": result.last_epoch,
+            "best_epoch": result.best_epoch,
+            "best_validation_loss": result.best_validation_loss,
+        }, indent=2))
+        return 0
+
+    if args.command == "sweep-tcn-bilstm":
+        parameters = load_sweep_parameters()
+        training_fields = set(TCNBiLSTMTrainingConfig.__dataclass_fields__) - {
+            "device",
+            "training_sample_rate",
+            "lowpass_cutoff_hz",
+            "lowpass_kernel_size",
+            "patience",
+            "min_delta",
+        }
+        model_fields = set(TCNBiLSTMTransitionControlConfig.__dataclass_fields__)
+        _validate_sweep_parameter_names(
+            parameters, training_fields | model_fields, args.command
+        )
+        training_parameters = {
+            name: value for name, value in parameters.items() if name in training_fields
+        }
+        training_parameters["patience"] = int(parameters["max_epochs"]) + 1
+        training_parameters["min_delta"] = 0.0
+        training_parameters["device"] = args.device
+        config = TCNBiLSTMTrainingConfig(**training_parameters)
+        model_parameters = {
+            name: value for name, value in parameters.items() if name in model_fields
+        }
+        model_parameters["encoder_channels"] = tuple(
+            model_parameters["encoder_channels"]
+        )
+        model_config = TCNBiLSTMTransitionControlConfig(**model_parameters)
+        output_directory = _sweep_trial_directory(args.output_root, args.command)
+        result = run_tcn_bilstm_transition_control_training(
+            args.dataset_directory,
+            output_directory,
+            config=config,
+            model_config=model_config,
+            waveform_cache_root=args.cache_root,
+            resume=False,
+            save_checkpoints=args.save_checkpoints,
+            wandb_config=WandbConfig(
+                mode="online",
+                project=args.wandb_project,
+                tags=("sweep", "tcn_bilstm_transition_control_v1", "dataset_format_v1"),
+                log_checkpoints=args.wandb_log_checkpoints,
+            ),
+        )
+        print(json.dumps({
+            "output_directory": str(result.output_directory),
+            "status": result.status,
+            "last_epoch": result.last_epoch,
+            "best_epoch": result.best_epoch,
+            "best_validation_loss": result.best_validation_loss,
+        }, indent=2))
+        return 0
+
+    if args.command == "sweep-variable-tcn-bilstm":
+        parameters = load_sweep_parameters()
+        default_training_config = VariableTemporalTrainingConfig()
+        training_fields = set(default_training_config.to_dict()) - {
+            "device",
+            "training_sample_rate",
+            "lowpass_cutoff_hz",
+            "lowpass_kernel_size",
+            "patience",
+            "min_delta",
+        }
+        model_fields = set(VariableTCNBiLSTMControlConfig.__dataclass_fields__)
+        _validate_sweep_parameter_names(
+            parameters, training_fields | model_fields | {"batch_size"}, args.command
+        )
+        training_parameters = {
+            name: value for name, value in parameters.items() if name in training_fields
+        }
+        training_parameters["patience"] = int(parameters["max_epochs"]) + 1
+        training_parameters["min_delta"] = 0.0
+        training_parameters["device"] = args.device
+        config = VariableTemporalTrainingConfig(**training_parameters)
+        model_parameters = {
+            name: value for name, value in parameters.items() if name in model_fields
+        }
+        model_parameters["encoder_channels"] = tuple(
+            model_parameters["encoder_channels"]
+        )
+        model_config = VariableTCNBiLSTMControlConfig(**model_parameters)
+        output_directory = _sweep_trial_directory(args.output_root, args.command)
+        result = run_variable_tcn_bilstm_training(
+            args.dataset_directory,
+            output_directory,
+            config=config,
+            waveform_cache_root=args.cache_root,
+            transition_lengths=args.transition_bars,
+            batch_size=int(parameters["batch_size"]),
+            resume=False,
+            save_checkpoints=False,
+            wandb_config=WandbConfig(
+                mode="online",
+                project=args.wandb_project,
+                tags=(
+                    "sweep",
+                    "variable_tcn_bilstm_transition_control_v1",
+                    "dataset_format_v2",
+                ),
+                log_checkpoints=args.wandb_log_checkpoints,
+            ),
+        )
+        print(json.dumps({
+            "output_directory": str(result["output_directory"]),
+            "status": result["status"],
+            "last_epoch": result["last_epoch"],
+            "best_epoch": result["best_epoch"],
+            "best_validation_loss": result["best_validation_loss"],
         }, indent=2))
         return 0
 

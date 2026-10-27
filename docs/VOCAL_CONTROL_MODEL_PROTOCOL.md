@@ -136,7 +136,7 @@ Demucs-Artefakte. Mix und Target-Vocal werden mit derselben BPM-Geometrie und
 Rubber-Band-Policy ausgerichtet. Datei- und Array-Hashes werden beim Laden
 geprüft; Format-1-Caches bleiben unverändert.
 
-## 6. Versionierter Trainingslauf Format 2
+## 6. Versionierter Trainingslauf Format 3
 
 `VocalFeatureControlDataset` liefert Features, Mixe und Stems.
 `collate_feature_control_examples` hält alle vier Waveformarten als
@@ -149,13 +149,21 @@ Vocal-Bridge-Cacheformat 2. Der separat versionierte v1-Runner kann seine
 alten Checkpoints weiterhin laden.
 
 Der unveränderliche Run-Vertrag bindet Datasetmanifest und Splitgrößen,
-Feature-/Modell-/Renderer-/Objective-Versionen, Demucs-Modellname,
-Optimiererparameter sowie Pfad und SHA-256 jedes tatsächlich verwendeten
+Feature-/Modell-/Renderer-/Objective-Versionen, Vocal-Modellname,
+Optimierertyp, Lernrate, Weight Decay, Adam-Betas/Epsilon, Scheduler samt
+Parametern sowie Pfad und SHA-256 jedes tatsächlich verwendeten
 Vocal-Cachemanifests. Der Testsplit wird weder geladen noch gecacht.
 `manifest.json`, `history.json`, `best.pt` und `latest.pt` werden atomar
-geschrieben und gehasht. Resume akzeptiert nur denselben Vertrag; lediglich
-`max_epochs` darf erhöht werden. Vor dem Laden wird zusätzlich der im
-Runmanifest gespeicherte SHA-256 des Latest-Checkpoints geprüft.
+geschrieben und gehasht. Die Checkpoints enthalten Optimizer- und
+Schedulerzustand; die verwendete Lernrate wird pro Epoche protokolliert.
+Standardmäßig reduziert `ReduceLROnPlateau` die Lernrate anhand des
+Validation-Losses. Alternativ sind `CosineAnnealingLR` oder kein Scheduler
+verfügbar. Resume akzeptiert nur denselben Vertrag; lediglich `max_epochs` darf
+erhöht werden. Checkpoints im alten Trainingsformat 2 können wegen des
+fehlenden Schedulerzustands nicht mit Format 3 fortgesetzt werden; der
+Studienexport unterstützt ihre Auswertung weiterhin. Vor dem Laden wird
+zusätzlich der im Runmanifest gespeicherte SHA-256 des Latest-Checkpoints
+geprüft.
 Resume und Studienexport verwenden ausschließlich
 `torch.load(..., weights_only=True)`; Checkpoints dürfen daher nur Tensoren,
 Zustandswörter und einfache primitive Container enthalten.

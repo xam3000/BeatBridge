@@ -53,7 +53,7 @@ flowchart LR
         VC --> VR[DifferentiableVocalAwareRenderer<br/>Accompaniment + Vocal-Stems]
         W --> VR
         VR --> O5[Objective v5<br/>Self-Supervised Loss]
-        O5 --> U[Gradientenupdate<br/>AdamW + Early Stopping]
+        O5 --> U[Gradientenupdate<br/>AdamW + ReduceLROnPlateau + Early Stopping]
         U --> V
     end
 

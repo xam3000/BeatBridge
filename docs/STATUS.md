@@ -1,4 +1,188 @@
+# Related-Work-Kapitel stilistisch in den Nutzer-Schreibstil überführt am 2026-10-26
+
+`overleaf/chapters/02_relatedWork.tex` wurde auf Wunsch des Nutzers vom
+ChatGPT-Klang in den eigenen Schreibstil des Nutzers überführt (Referenz:
+dessen Bachelorarbeit; Wir-Perspektive, kürzere direkte Sätze, einfache
+Verknüpfungen). Inhalt, Abschnittsstruktur und -titel, alle 23 zitierten
+Primärquellen samt Zahlen und Abschwächungen, `\label{sec:related_work}`
+und beide LaTeX-TODOs sind unverändert erhalten; die Aussagen des
+Claim-Level-Literaturaudits vom 2026-09-16 gelten weiter. Ein lokaler
+LaTeX-Build war nicht möglich, weil auf diesem Rechner kein TeX-Werkzeug
+(pdflatex/latexmk/tectonic) installiert ist; statische Struktur-, Diff- und
+Schlüsselprüfungen bestanden. Der Gesamtbuild mit dem integrierten
+Compiler und eine Sichtprüfung der Related-Work-Seiten stehen aus.
+Testdetails: [`Bemerkungen.md`](./Bemerkungen.md).
+
+# LaTeX-Gesamtbuild lokal wieder möglich am 2026-10-21
+
+Die Thesis unter `overleaf/CGThesis.tex` kompiliert im integrierten
+LaTeX-Compiler wieder vollständig. `overleaf/cg.cls` verwendet für
+BibLaTeX jetzt `backend=bibtex`; der bisherige Build scheiterte nach dem
+LaTeX-Lauf daran, dass Biber in dieser Compilerumgebung nicht vorhanden ist.
+Der Gesamtbuild mit dem tatsächlichen Overleaf-Projekt meldete `success`.
+Eine visuelle Sichtprüfung der PDF-Seiten wurde bei diesem Fix nicht
+durchgeführt. Testverlauf: [`Bemerkungen.md`](./Bemerkungen.md).
+
+# Einleitung nach Blueprint und Aufgabenstellung ausgearbeitet am 2026-10-15
+
+`overleaf/chapters/01_introduction.tex` enthält Problem/Motivation,
+controllerzentrierte Haupt- und drei Teilfragen, Ansatz, eng belegte
+Beiträge, Scope und Kapitelroadmap. Die dreiseitige offizielle
+Aufgabenstellung wurde gelesen; offene Repräsentations-, Interaktions-,
+Ein-/Drei-Takt- und Nutzerevaluationspflichten sind als TODO markiert.
+Vier verwendete Literaturkeys sind in `bibliography.bib` vorhanden und gegen
+Primärveröffentlichungen geprüft. Ein isolierter LaTeX-Build war erfolgreich;
+der Gesamtbuild und die formale Scope-Bestätigung stehen aus. Testdetails:
+[`Bemerkungen.md`](./Bemerkungen.md).
+
+# Diskussionskapitel evidenzgebunden ausgearbeitet am 2026-10-15
+
+`overleaf/chapters/06_discussion.tex` interpretiert die belegten Kapitel-5-
+Ergebnisse nach Controllerlernen, Proxy/Hören, Vocal-Controls, Cue-Ranking,
+Übergangslänge und Validitätsarten. Die Schlussfolgerungen bleiben auf die
+abgeschlossenen Läufe und drei Ein-Rater-Direkt-Control-Studien begrenzt;
+fehlende unabhängige Modell-/Ranker-Evaluation, finale Forschungsfragen,
+GUI-Abnahme sowie Rechte-/Teilnehmerdaten sind als TODO erhalten. Ein
+isolierter gemeinsamer Kapitel-5/6-LaTeX-Build war erfolgreich; der
+Gesamtbuild steht aus. Testdetails: [`Bemerkungen.md`](./Bemerkungen.md).
+
+# Ergebniskapitel evidenzgebunden ausgearbeitet am 2026-10-14
+
+`overleaf/chapters/05_results.tex` berichtet abgeschlossene Datensatz- und
+Batchläufe, vier SHA-geprüfte September-Controllerläufe, den festen
+TCN-Sweep-Snapshot und drei abgeschlossene Ein-Rater-Direkt-Control-Hörsätze.
+Die Zahl-zu-Artefakt-Zuordnung steht in
+[`RESULTS_EVIDENCE_LEDGER.md`](./RESULTS_EVIDENCE_LEDGER.md). Ein isolierter
+LaTeX-Build war erfolgreich; der Gesamtbuild und die unabhängige finale
+Hörevaluation stehen aus. Unbewertete Modellhörsätze und nur synthetische
+Cue-Ranker-Prüfungen werden nicht als Qualitätsresultate ausgegeben. Details
+und Testprotokoll: [`Bemerkungen.md`](./Bemerkungen.md).
+
+# Native Python-Transition-Builder erweitert am 2026-10-06
+
+`src.gui_app` startet standardmaessig eine PySide6/Qt-Widgets-App zum Laden
+mehrerer Audio-Tracks, optionalen Analysieren, Auswaehlen von Song A/B,
+Setzen manueller Cuepoints und Rendern einer Uebergangsvorschau mit der
+bestehenden Pipeline. Vorschau und JSON-Provenienz werden neu unter
+`output/gui_transitions/` gespeichert; Quelldateien bleiben unveraendert. Die
+angezeigte Render-Metrik ist eine technische Baseline und kein trainierter
+Qualitaetsmodell-Score oder Nachweis menschlicher Hoerqualitaet. Der fruehere
+manifestbasierte Review-MVP bleibt mit `--review-manifest` bzw. einem
+Manifestargument erreichbar. Die native Ansicht folgt jetzt staerker der
+Mockup-Hierarchie: App-Leiste mit Preview-Transport, Bibliothek links,
+Mehrtrack-Sequenz, getrennte cyan-/korallfarbene A/B-Wellenformspuren,
+Uebergangs-Inspector rechts und Ergebnisbereich unten. Analyse-Cache-Pfad ist
+konfigurierbar und Cache-Treffer werden angezeigt. Beim Import prueft ein
+Worker einen passenden Cache ohne Cache-Miss automatisch zu analysieren;
+fehlende Eintraege werden als `Nicht analysiert` markiert. Dateien aus dem
+Explorer koennen direkt in die Sequenz gezogen werden, Bibliothekstracks per
+Drag-and-Drop eingefuegt und Sequenzeintraege intern verschoben werden. Die
+Wellenform unterstuetzt Mausrad-Zoom mit Mausanker, Shift-Mausrad/Mittelklick-
+Ziehen zum Verschieben und Doppelklick fuer die Gesamtansicht.
+Songsequenzen erzeugen
+gerichtete Kanten A→B, B→C usw.; Cuepoints, Renderer/Modellwahl und
+Renderergebnisse werden pro Kante im laufenden UI gehalten. Abgeschlossene
+lokale Trainingsruns der unterstuetzten Modellfamilien koennen ausgewaehlt
+werden; Inferenz verwendet deren Dataset-Featurevertrag und SHA-gepruefte
+Checkpoints. Diese Modelle bleiben experimentell. GUI-Abhaengigkeiten sind
+optional. Manuelle Laufzeitverifikation und Abnahmeklicktest stehen aus;
+Details: `Bemerkungen.md` und Startanleitung
+[`prototypes/gui-mockup/README.md`](../prototypes/gui-mockup/README.md).
+
+**GUI-Nachbesserung am 2026-10-06:** Waveform-Zoomhinweise stehen nun in der
+Spurueberschrift statt ueber dem Audiosignal. Songname und BPM stehen neben
+der Spurbezeichnung ausserhalb des Plotbereichs. Die Waveform nutzt eine
+feinere signierte Min/Max-Huellkurve und zeichnet daraus eine gefuellte
+Signalform statt isolierter Balken. Explorer-Dateidrops werden am
+Sequenz-Viewport, auf der
+Sequenzkarte, in der Trackbibliothek und auf der uebrigen App-Flaeche
+angenommen. Windows-Runtime-Durchklick steht noch aus.
+
 # BeatBridge – Stand & Next Steps
+
+**Bestätigungs-Sweeps vorbereitet am 2026-10-02:** Zwei getrennte Grid-YAMLs
+unter `config/wandb/confirm_tcn_bilstm_vlfwfn7a.yaml` und
+`config/wandb/confirm_tcn_bilstm_fxhhidgi.yaml` bestätigen die beiden
+Spitzenkonfigurationen mit denselben fünf Seeds (Originalseed plus vier neue),
+150 Epochen ohne Hyperband und lokalen Best-/Latest-Checkpoints. Die neue
+TCN-Sweep-Option `--save-checkpoints` aktiviert lokale Speicherung; W&B-
+Gewichtsuploads bleiben in diesen YAMLs deaktiviert. 40 feste Parameterwerte
+stimmen mit dem CSV überein; drei CLI-/Grid-Tests bestanden ohne Training
+oder Netzwerkzugriff. Registrierung und reale Bestätigungsläufe stehen aus.
+Startbefehle und Auswertungsplan: [`WANDB.md`](./WANDB.md).
+
+**TCN-Sweep-Snapshot analysiert am 2026-10-02:** Der CSV-Export von 09:20 MESZ
+enthält 92 Runs des festen TCN/BiLSTM-Sweeps `nqntmdi0`: 35 completed,
+56 killed und einen Run ohne Metriken. Alle 91 lokalen Histories und ihre
+Manifest-SHAs stimmen mit dem Export überein. Best-Loss `0,2615873` in
+`vlfwfn7a` (Epoche 77), nahezu gleichauf mit `fxhhidgi` (`0,2616235`).
+Der Gewinn gegenüber einem typischen Sweep-Run stammt überwiegend aus dem
+Energy-Shape-Term. Späte Verbesserungen und ein bei Epoche 57 beendeter
+vielversprechender Run sprechen für einen kontrollierten Pruning-Audit.
+Keiner der geprüften Sweep-Runs referenziert Best-Checkpoints; Nachtraining
+mit mehreren Seeds und Checkpoints sowie ein geblendeter Hörvergleich
+bleiben offen. Details: [Sweep-Analyse](./WANDB_SWEEP_ANALYSE_20261002.md).
+Keine neue Trainings- oder Hörqualitätsfreigabe.
+
+**W&B-Sweeps für beide TCN-BiLSTM-Modelle vorbereitet am 2026-09-30:** Die
+Konfigurationen `config/wandb/sweep_tcn_bilstm.yaml` und
+`config/wandb/sweep_variable_tcn_bilstm.yaml` verwenden getrennte
+Dataset-/Cacheverträge und suchen Lernrate, Regularisierung, Batchgröße,
+Gradient-Clipping sowie TCN-Kernel, Dilatation und Dropout; das variable
+Modell zusätzlich Vocal-Ducking-Parameter. W&B-Hyperband übernimmt die
+frühzeitige Beendigung anhand des pro Epoche geloggten `best_validation_loss`;
+der interne Patience-Abbruch ist für diese Sweeps deaktiviert. Die CLI-Befehle
+`sweep-tcn-bilstm` und `sweep-variable-tcn-bilstm` lesen Agent-Parameter und
+isolieren lokale Artefakte pro Sweep-/Run-ID. Beim Variablenmodell ist der
+verifizierte vollständige Train-/Validation-Waveformcache vorausgesetzt. Beide
+TCN/BiLSTM-Runner verwenden jetzt einen linearen 5-Epochen-LR-Ramp von 10 % bis
+zur gesweepten Lernrate und danach `ReduceLROnPlateau` auf dem Validierungsverlust
+(Faktor 0,5, Geduld 10 Epochen, Mindest-LR 5 % der Basis-LR). Die aktive Lernrate
+wird pro Epoche als `learning_rate` an W&B übertragen und für automatisch
+erzeugte Charts an `epoch` gebunden. Die aktuellen Sweep-YAMLs begrenzen Runs
+auf 150 Epochen; Hyperband prüft ab 50. Ein
+fester TCN-Sweep-Trial (`kux6f586` / `6eqzbl9s`) ist mit 100 Epochen,
+bester Epoche 93 und Validation-Loss 0,3191189 abgeschlossen; W&B bestätigt den
+Run als erfolgreich. Nach dem Run brach der Python-Child-Prozess mit Windows-
+Fast-Fail `0xc0000409` ab; beim Agent-Teardown folgte ein W&B-Protobuf-
+`ValueError` für den zu großen Exit-Code. Ursache des nativen Abbruchs ist noch
+nicht lokalisiert; der WER-Speicherabbild-Dump ist nicht mehr vorhanden. Der
+neue `wandb_agent_guard.py`-Launcher normalisiert den Exit-Code für den Agenten
+nur dann auf Erfolg, wenn Manifest, W&B-Zusammenfassung und abschließende
+Uploadbestätigung denselben erfolgreichen Trial belegen. Andere ungültige
+Exit-Codes bleiben Fehler, werden aber vor dem W&B-Protobuf-Teardown in den
+gültigen Fehlercode 1 umgewandelt. Der Guard ist noch nicht mit einem weiteren
+Agentlauf verifiziert. Ein späterer Trial (`nz2flewh`) wurde nach 38 Epochen
+mit W&B-`stop` beendet; bei Hyperband ist dieses Pruning erwartbar. Unter
+Windows leitet W&B den Stopp als Ctrl+C weiter, daher erscheinen
+`KeyboardInterrupt` und der Dashboard-Status „killed by the user“, auch ohne
+manuelles Stoppen. Der Agent begann anschließend einen neuen Run. Das lokale
+Manifest dieses gestoppten Trials bleibt derzeit auf `running`. Min-Delta ist
+0, lokale Patience liegt über dem Epochenlimit. Die lokalen YAMLs sind nun auf
+Hyperband `min_iter: 50`, `eta: 3` angepasst, damit Pruning frühestens nach
+etwa 50 geloggten Epochen geprüft wird. Der bestehende entfernte Sweep
+`kux6f586` behält seine gespeicherte alte Konfiguration; für `min_iter: 50` ist
+ein neuer Sweep nötig.
+W&B-Modellartefakte sind explizit deaktiviert;
+lokale Checkpoints werden für diese Trials ebenfalls nicht geschrieben.
+Verlauf, Manifest und Variable-IO-Audit bleiben je Trial erhalten; finale
+Gewichte können mit den besten Sweep-Parametern separat trainiert werden. Die
+getrennten Losses sind
+wegen unterschiedlicher Daten-/Feature-/Renderer-/Objective-Verträge nicht
+direkt vergleichbar. Beide Trial-Konfigurationen rufen `.venv/Scripts/python.exe`
+explizit auf; der Agent wird über den Guard vom Repository-Root gestartet.
+Details und Startbefehle: [`WANDB.md`](./WANDB.md).
+
+**W&B-Sweep für das vocal-aware MLP vorbereitet am 2026-09-30:** Die neue
+Konfiguration `config/wandb/sweep_vocal_mlp.yaml` deckt Optimizer, Lernrate,
+Regularisierung, Modellbreite, Dropout, Batchgröße, Early Stopping,
+Gradient-Clipping und einen Learning-Rate-Scheduler ab. Der CLI-Befehl
+`sweep-vocal` liest Agent-Parameter, bindet Läufe an den W&B-Sweep und trennt
+Ausgaben pro Trial. Der Vocal-Runner speichert nun Schedulerzustand und
+Epoch-Lernrate; der Checkpointvertrag wurde auf Format 3 angehoben. Die
+Konfiguration ist vorbereitet, aber noch kein Sweep- oder Trainingslauf damit
+ausgeführt. Frühere Vocal-Checkpoints im Trainingsformat 2 lassen sich mit dem
+neuen Runner nicht fortsetzen. Startanleitung: [`WANDB.md`](./WANDB.md).
 
 **Geblendeter Hörtest mit vier trainierten Modellen auf 20 Beispielen am
 2026-09-30:** Unter

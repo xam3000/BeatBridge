@@ -73,7 +73,7 @@ def test_vocal_runner_persists_v2_contract_terms_and_resume(tmp_path, monkeypatc
     contract = manifest["contract"]
     assert first.status == "completed"
     assert first.last_epoch == 1
-    assert manifest["format_version"] == 2
+    assert manifest["format_version"] == 3
     assert manifest["runner_name"] == "self_supervised_vocal_train_validation_v2"
     assert contract["model"]["format_version"] == 2
     assert contract["model"]["name"] == "vocal_time_shared_mlp_v2"

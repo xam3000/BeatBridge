@@ -35,9 +35,9 @@ from src.evaluation.ml_control_study import _load_candidate_verified
 from src.evaluation.vocal_objective_study import _validate_bridge, _vocal_statistics
 from src.features import SEQUENCE_LENGTH
 from src.ml import (
+    SUPPORTED_VOCAL_TRAINING_RUN_FORMAT_VERSIONS,
     VOCAL_FEATURE_CONTROL_MODEL_FORMAT_VERSION,
     VOCAL_FEATURE_CONTROL_MODEL_NAME,
-    VOCAL_TRAINING_RUN_FORMAT_VERSION,
     VOCAL_TRAINING_RUNNER_NAME,
     VocalFeatureControlDataset,
     VocalFeatureControlMLP,
@@ -450,7 +450,10 @@ def _load_best_vocal_model(training_run_directory):
     manifest = _read_json(manifest_path)
     if manifest.get("status") not in {"completed", "early_stopped"}:
         raise ValueError("Training run must be completed or early_stopped")
-    if manifest.get("format_version") != VOCAL_TRAINING_RUN_FORMAT_VERSION:
+    if (
+        manifest.get("format_version")
+        not in SUPPORTED_VOCAL_TRAINING_RUN_FORMAT_VERSIONS
+    ):
         raise ValueError("Unsupported vocal training-run format")
     if manifest.get("runner_name") != VOCAL_TRAINING_RUNNER_NAME:
         raise ValueError("Unsupported vocal training runner")

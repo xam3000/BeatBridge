@@ -1,0 +1,48 @@
+wandb_version: 1
+
+adam_beta1:
+  value: 0.9
+adam_beta2:
+  value: 0.999
+adam_epsilon:
+  value: 1.0e-07
+batch_size:
+  value: 3
+dropout:
+  value: 0
+gradient_clip_norm:
+  value: 0.5
+hidden_dimensions:
+  value:
+  - 32
+  - 16
+initial_vocal_duck_logit:
+  value: -4
+learning_rate:
+  value: 0.000752610381139776
+lr_scheduler:
+  value: reduce_on_plateau
+max_epochs:
+  value: 100
+maximum_vocal_ducking:
+  value: 0.5
+min_delta:
+  value: 1.0e-05
+optimizer:
+  value: adam
+patience:
+  value: 6
+scheduler_cooldown:
+  value: 0
+scheduler_factor:
+  value: 0.8
+scheduler_min_lr:
+  value: 3.590951358608869e-07
+scheduler_patience:
+  value: 2
+scheduler_threshold:
+  value: 0.001
+seed:
+  value: 20260930
+weight_decay:
+  value: 1.0e-05

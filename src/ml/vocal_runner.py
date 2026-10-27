@@ -50,7 +50,8 @@ from .training import vocal_self_supervised_batch_loss
 from .wandb_logging import WandbConfig, WandbLogger
 
 
-VOCAL_TRAINING_RUN_FORMAT_VERSION = 2
+VOCAL_TRAINING_RUN_FORMAT_VERSION = 3
+SUPPORTED_VOCAL_TRAINING_RUN_FORMAT_VERSIONS = (2, VOCAL_TRAINING_RUN_FORMAT_VERSION)
 VOCAL_TRAINING_RUNNER_NAME = "self_supervised_vocal_train_validation_v2"
 
 
@@ -61,8 +62,18 @@ class VocalTrainingConfig:
     seed: int = 20260805
     max_epochs: int = 30
     batch_size: int = 5
+    optimizer: str = "adamw"
     learning_rate: float = 1e-3
     weight_decay: float = 1e-4
+    adam_beta1: float = 0.9
+    adam_beta2: float = 0.999
+    adam_epsilon: float = 1e-8
+    lr_scheduler: str = "reduce_on_plateau"
+    scheduler_factor: float = 0.5
+    scheduler_patience: int = 3
+    scheduler_threshold: float = 1e-4
+    scheduler_cooldown: int = 0
+    scheduler_min_lr: float = 1e-6
     patience: int = 6
     min_delta: float = 1e-4
     gradient_clip_norm: float = 1.0
@@ -76,8 +87,28 @@ class VocalTrainingConfig:
             raise ValueError("max_epochs must be at least 1")
         if int(self.batch_size) < 1:
             raise ValueError("batch_size must be at least 1")
+        if self.optimizer not in {"adam", "adamw"}:
+            raise ValueError("optimizer must be 'adam' or 'adamw'")
         if float(self.learning_rate) <= 0 or float(self.weight_decay) < 0:
             raise ValueError("learning_rate must be positive and weight_decay non-negative")
+        if not 0 < float(self.adam_beta1) < 1 or not 0 < float(self.adam_beta2) < 1:
+            raise ValueError("Adam beta values must be between 0 and 1")
+        if float(self.adam_epsilon) <= 0:
+            raise ValueError("adam_epsilon must be positive")
+        if self.lr_scheduler not in {"none", "reduce_on_plateau", "cosine"}:
+            raise ValueError(
+                "lr_scheduler must be 'none', 'reduce_on_plateau', or 'cosine'"
+            )
+        if not 0 < float(self.scheduler_factor) < 1:
+            raise ValueError("scheduler_factor must be between 0 and 1")
+        if int(self.scheduler_patience) < 1:
+            raise ValueError("scheduler_patience must be at least 1")
+        if float(self.scheduler_threshold) < 0:
+            raise ValueError("scheduler_threshold must be non-negative")
+        if int(self.scheduler_cooldown) < 0:
+            raise ValueError("scheduler_cooldown must be non-negative")
+        if not 0 <= float(self.scheduler_min_lr) <= float(self.learning_rate):
+            raise ValueError("scheduler_min_lr must be between 0 and learning_rate")
         if int(self.patience) < 1 or float(self.min_delta) < 0:
             raise ValueError("patience must be positive and min_delta non-negative")
         if float(self.gradient_clip_norm) <= 0:
@@ -225,11 +256,32 @@ def train_vocal_feature_control_model(
         energy_frames=32,
     ).to(device=device)
     progress(f"torch_device={device}")
-    optimizer = torch.optim.AdamW(
+    optimizer_type = torch.optim.AdamW if config.optimizer == "adamw" else torch.optim.Adam
+    optimizer = optimizer_type(
         model.parameters(),
         lr=config.learning_rate,
         weight_decay=config.weight_decay,
+        betas=(config.adam_beta1, config.adam_beta2),
+        eps=config.adam_epsilon,
     )
+    if config.lr_scheduler == "reduce_on_plateau":
+        lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer,
+            mode="min",
+            factor=config.scheduler_factor,
+            patience=config.scheduler_patience,
+            threshold=config.scheduler_threshold,
+            cooldown=config.scheduler_cooldown,
+            min_lr=config.scheduler_min_lr,
+        )
+    elif config.lr_scheduler == "cosine":
+        lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer,
+            T_max=config.max_epochs,
+            eta_min=config.scheduler_min_lr,
+        )
+    else:
+        lr_scheduler = None
 
     if resume:
         if not manifest_path.is_file() or not latest_path.is_file():
@@ -244,6 +296,15 @@ def train_vocal_feature_control_model(
         _validate_checkpoint(checkpoint, run_id)
         model.load_state_dict(checkpoint["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        if lr_scheduler is not None:
+            scheduler_state = checkpoint["lr_scheduler_state_dict"]
+            if not isinstance(scheduler_state, dict):
+                raise ValueError(
+                    "Vocal checkpoint has no compatible learning-rate scheduler state"
+                )
+            lr_scheduler.load_state_dict(scheduler_state)
+        elif checkpoint["lr_scheduler_state_dict"] is not None:
+            raise ValueError("Vocal checkpoint includes a scheduler but the requested run does not")
         history = list(checkpoint["history"])
         start_epoch = int(checkpoint["epoch"]) + 1
         best_epoch = int(checkpoint["best_epoch"])
@@ -311,6 +372,7 @@ def train_vocal_feature_control_model(
                 0,
                 model,
                 optimizer,
+                lr_scheduler,
                 best_epoch,
                 best_validation_loss,
                 stale_epochs,
@@ -366,13 +428,14 @@ def train_vocal_feature_control_model(
                 optimizer=None,
                 epoch=epoch,
             )
+            validation_loss = float(validation_metrics["loss"])
+            train_metrics["learning_rate"] = float(optimizer.param_groups[0]["lr"])
             history.append({
                 "epoch": epoch,
                 "phase": "training",
                 "train": train_metrics,
                 "validation": validation_metrics,
             })
-            validation_loss = float(validation_metrics["loss"])
             improved = validation_loss < best_validation_loss - config.min_delta
             if improved:
                 best_validation_loss = validation_loss
@@ -380,12 +443,17 @@ def train_vocal_feature_control_model(
                 stale_epochs = 0
             else:
                 stale_epochs += 1
+            if isinstance(lr_scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
+                lr_scheduler.step(validation_loss)
+            elif lr_scheduler is not None:
+                lr_scheduler.step()
             last_epoch = epoch
             checkpoint = _checkpoint_payload(
                 run_id,
                 epoch,
                 model,
                 optimizer,
+                lr_scheduler,
                 best_epoch,
                 best_validation_loss,
                 stale_epochs,
@@ -643,6 +711,7 @@ def _checkpoint_payload(
     epoch,
     model,
     optimizer,
+    lr_scheduler,
     best_epoch,
     best_validation_loss,
     stale_epochs,
@@ -656,6 +725,9 @@ def _checkpoint_payload(
         "epoch": int(epoch),
         "model_state_dict": model.state_dict(),
         "optimizer_state_dict": optimizer.state_dict(),
+        "lr_scheduler_state_dict": (
+            lr_scheduler.state_dict() if lr_scheduler is not None else None
+        ),
         "best_epoch": int(best_epoch),
         "best_validation_loss": float(best_validation_loss),
         "stale_epochs": int(stale_epochs),
@@ -672,6 +744,8 @@ def _validate_checkpoint(checkpoint, run_id):
         raise ValueError("Vocal checkpoint model differs from the requested model")
     if checkpoint.get("run_id") != run_id:
         raise ValueError("Vocal checkpoint run ID differs from the requested contract")
+    if "lr_scheduler_state_dict" not in checkpoint:
+        raise ValueError("Vocal checkpoint is missing its learning-rate scheduler state")
 
 
 def _write_run_files(

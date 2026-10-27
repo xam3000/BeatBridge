@@ -17,6 +17,43 @@ import warnings
 
 
 WANDB_MODES = ("disabled", "offline", "online")
+WANDB_SWEEP_ID_ENV = "WANDB_SWEEP_ID"
+WANDB_SWEEP_RUN_ID_ENV = "WANDB_RUN_ID"
+WANDB_SWEEP_PARAM_PATH_ENV = "WANDB_SWEEP_PARAM_PATH"
+
+
+def load_sweep_parameters() -> dict:
+    """Read the current agent trial's parameters from W&B's generated YAML."""
+
+    config_path = os.environ.get(WANDB_SWEEP_PARAM_PATH_ENV)
+    if not config_path:
+        raise RuntimeError(
+            "This command must be started by a W&B sweep agent; "
+            f"{WANDB_SWEEP_PARAM_PATH_ENV} is not set."
+        )
+
+    try:
+        import yaml
+    except ImportError as error:
+        raise RuntimeError(
+            "W&B sweep configuration parsing requires the 'PyYAML' dependency."
+        ) from error
+
+    path = Path(config_path)
+    if not path.is_file():
+        raise FileNotFoundError(f"W&B sweep parameter file does not exist: {path}")
+    with path.open("r", encoding="utf-8") as stream:
+        payload = yaml.safe_load(stream) or {}
+    if not isinstance(payload, dict):
+        raise ValueError("W&B sweep parameter file must contain a YAML mapping")
+
+    payload.pop("wandb_version", None)
+    parameters = {}
+    for name, entry in payload.items():
+        if not isinstance(entry, dict) or "value" not in entry:
+            raise ValueError(f"Invalid W&B sweep parameter entry for {name!r}")
+        parameters[name] = entry["value"]
+    return parameters
 
 
 @dataclass(frozen=True)
@@ -98,20 +135,32 @@ class WandbLogger:
         # W&B otherwise defaults artifact staging to a user-global AppData
         # directory, which may be read-only on managed Windows environments.
         os.environ["WANDB_DATA_DIR"] = str(wandb_data_directory)
+        sweep_run = bool(os.environ.get(WANDB_SWEEP_ID_ENV))
         wandb_run_id = hashlib.sha256(
             f"{run_id}|{output_directory.resolve()}".encode("utf-8")
         ).hexdigest()[:20]
         init_kwargs = {
-            "project": config.project,
-            "name": config.name or f"{runner_name}-{run_id}",
-            "id": wandb_run_id,
             "mode": config.mode,
             "job_type": "train",
             "config": _public_contract(contract),
             "dir": str(output_directory / "wandb"),
         }
-        if config.entity:
-            init_kwargs["entity"] = config.entity
+        if sweep_run:
+            # Sweep agents set the run and sweep IDs in the environment. Let
+            # wandb.init() consume those values so this training run remains a
+            # child of the active sweep instead of creating a detached run.
+            init_kwargs["name"] = config.name or (
+                f"{runner_name}-{os.environ.get(WANDB_SWEEP_RUN_ID_ENV, run_id)}"
+            )
+            init_kwargs["resume"] = "allow"
+        else:
+            init_kwargs.update({
+                "project": config.project,
+                "name": config.name or f"{runner_name}-{run_id}",
+                "id": wandb_run_id,
+            })
+            if config.entity:
+                init_kwargs["entity"] = config.entity
         if config.group:
             init_kwargs["group"] = config.group
         if config.tags:
@@ -119,10 +168,19 @@ class WandbLogger:
         # W&B supports server-side resume for online runs. Offline runs are
         # intentionally independent local records and the SDK ignores this
         # option there.
-        if config.mode == "online":
+        if config.mode == "online" and not sweep_run:
             init_kwargs["resume"] = "allow"
         del resume  # The deterministic local run ID remains the source of truth.
-        return cls(wandb.init(**init_kwargs), config, wandb)
+        logger = cls(wandb.init(**init_kwargs), config, wandb)
+        define_metric = getattr(logger._run, "define_metric", None)
+        if callable(define_metric):
+            logger._call(
+                "define learning-rate chart axis",
+                lambda: define_metric(
+                    "learning_rate", step_metric="epoch", summary="last"
+                ),
+            )
+        return logger
 
     @property
     def enabled(self):
@@ -134,11 +192,18 @@ class WandbLogger:
             return
         payload = {
             "epoch": int(epoch),
+            # Keep the sweep objective visible at every epoch so W&B's
+            # Hyperband controller can make early-termination decisions.
+            "best_validation_loss": float(best_validation_loss),
             "best/validation_loss": float(best_validation_loss),
             "early_stopping/stale_epochs": int(stale_epochs),
             "early_stopping/improved": int(bool(improved)),
         }
+        train_metrics = dict(train_metrics)
+        learning_rate = train_metrics.pop("learning_rate", None)
         payload.update(_flatten_metrics("train", train_metrics))
+        if learning_rate is not None:
+            payload["learning_rate"] = float(learning_rate)
         payload.update(_flatten_metrics("validation", validation_metrics))
         self._call("log metrics", lambda: self._run.log(payload, step=int(epoch)))
 

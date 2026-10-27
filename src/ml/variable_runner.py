@@ -30,6 +30,13 @@ from .variable_data import (
     collate_variable_feature_examples,
 )
 from .variable_training import variable_vocal_self_supervised_batch_loss
+from .lr_schedule import (
+    apply_linear_warmup,
+    current_learning_rate,
+    make_plateau_scheduler,
+    step_plateau_after_warmup,
+    validate_lr_schedule_config,
+)
 from .variable_waveform_cache import (
     VARIABLE_WAVEFORM_CACHE_ROOT,
     VARIABLE_WAVEFORM_RENDER_SAMPLE_RATE,
@@ -61,8 +68,14 @@ class VariableTemporalTrainingConfig:
         lowpass_kernel_size=127,
         device=DEFAULT_TORCH_DEVICE,
         length_weighting="equal_length",
-        patience=6,
+        patience=30,
         min_delta=0.0,
+        lr_warmup_epochs=5,
+        lr_warmup_start_factor=0.1,
+        lr_scheduler_patience=10,
+        lr_scheduler_factor=0.5,
+        lr_scheduler_threshold=1e-4,
+        lr_scheduler_min_lr_factor=0.05,
     ):
         self.seed = int(seed)
         self.max_epochs = int(max_epochs)
@@ -76,6 +89,12 @@ class VariableTemporalTrainingConfig:
         self.length_weighting = str(length_weighting)
         self.patience = int(patience)
         self.min_delta = float(min_delta)
+        self.lr_warmup_epochs = int(lr_warmup_epochs)
+        self.lr_warmup_start_factor = float(lr_warmup_start_factor)
+        self.lr_scheduler_patience = int(lr_scheduler_patience)
+        self.lr_scheduler_factor = float(lr_scheduler_factor)
+        self.lr_scheduler_threshold = float(lr_scheduler_threshold)
+        self.lr_scheduler_min_lr_factor = float(lr_scheduler_min_lr_factor)
         if self.max_epochs < 1 or self.learning_rate <= 0 or self.weight_decay < 0:
             raise ValueError("Invalid variable temporal optimization configuration")
         if self.gradient_clip_norm <= 0 or self.training_sample_rate <= 0:
@@ -86,6 +105,14 @@ class VariableTemporalTrainingConfig:
             raise ValueError("Only equal_length weighting is supported by the v1 temporal runner")
         if self.patience < 1 or self.min_delta < 0:
             raise ValueError("patience must be at least 1 and min_delta must be non-negative")
+        validate_lr_schedule_config(
+            warmup_epochs=self.lr_warmup_epochs,
+            warmup_start_factor=self.lr_warmup_start_factor,
+            scheduler_patience=self.lr_scheduler_patience,
+            scheduler_factor=self.lr_scheduler_factor,
+            scheduler_threshold=self.lr_scheduler_threshold,
+            scheduler_min_lr_factor=self.lr_scheduler_min_lr_factor,
+        )
         validate_torch_device_spec(self.device)
 
     def to_dict(self):
@@ -102,6 +129,7 @@ def train_variable_temporal_control_model(
     dataset_manifest_sha256,
     supported_lengths=SUPPORTED_VARIABLE_LENGTHS,
     resume=False,
+    save_checkpoints=True,
     waveform_cache_index_sha256=None,
     waveform_cache_root_manifest_sha256=None,
     initialize_from_manifest=None,
@@ -178,6 +206,8 @@ def train_variable_temporal_control_model(
     checkpoint_directory = output_directory / "checkpoints"
     latest_path = checkpoint_directory / "latest.pt"
     best_path = checkpoint_directory / "best.pt"
+    if not save_checkpoints and resume:
+        raise ValueError("Cannot resume a run when save_checkpoints=False")
     manifest_path = output_directory / "manifest.json"
     history_path = output_directory / "history.json"
     device = torch.device(config.device)
@@ -192,6 +222,7 @@ def train_variable_temporal_control_model(
     ).to(device=device, dtype=torch.float32)
     objective = VariableVocalAwareTransitionObjective().to(device=device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay)
+    lr_scheduler = make_plateau_scheduler(optimizer, config)
     if resume:
         checkpoint = load_variable_checkpoint_for_resume(
             manifest_path,
@@ -201,6 +232,10 @@ def train_variable_temporal_control_model(
         )
         model.load_state_dict(checkpoint["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        scheduler_state = checkpoint.get("lr_scheduler_state_dict")
+        if not isinstance(scheduler_state, dict):
+            raise ValueError("Variable TCN/BiLSTM checkpoint has no compatible learning-rate scheduler state")
+        lr_scheduler.load_state_dict(scheduler_state)
         history = list(checkpoint.get("history", ()))
         start_epoch = int(checkpoint["epoch"]) + 1
         best_loss = float(checkpoint.get("best_validation_loss", math.inf))
@@ -210,7 +245,8 @@ def train_variable_temporal_control_model(
     else:
         if output_directory.exists():
             raise FileExistsError(f"Training output already exists; use resume=True: {output_directory}")
-        checkpoint_directory.mkdir(parents=True)
+        if save_checkpoints:
+            checkpoint_directory.mkdir(parents=True)
         history = []
         start_epoch = 1
         best_loss = math.inf
@@ -226,7 +262,15 @@ def train_variable_temporal_control_model(
     )
     try:
         for epoch in range(start_epoch, config.max_epochs + 1):
+            apply_linear_warmup(
+                optimizer,
+                epoch=epoch,
+                warmup_epochs=config.lr_warmup_epochs,
+                start_factor=config.lr_warmup_start_factor,
+            )
+            epoch_learning_rate = current_learning_rate(optimizer)
             train_metrics = _run_temporal_epoch(model, train_batches, renderer, objective, optimizer, config, device)
+            train_metrics["learning_rate"] = epoch_learning_rate
             validation_metrics = _run_temporal_epoch(model, validation_batches, renderer, objective, None, config, device)
             validation_loss = float(validation_metrics["loss"])
             improved = validation_loss < (best_loss - config.min_delta)
@@ -235,21 +279,29 @@ def train_variable_temporal_control_model(
                 stale_epochs = 0
             else:
                 stale_epochs += 1
+            step_plateau_after_warmup(
+                lr_scheduler,
+                validation_loss,
+                epoch=epoch,
+                warmup_epochs=config.lr_warmup_epochs,
+            )
             epoch_record = {"epoch": epoch, "train": train_metrics, "validation": validation_metrics}
             history.append(epoch_record)
-            checkpoint = variable_checkpoint_payload(
-                run_id=run_id,
-                epoch=epoch,
-                model=model,
-                optimizer=optimizer,
-                contract=contract,
-                history=history,
-                runner_name=VARIABLE_TEMPORAL_TRAINING_RUNNER_NAME,
-            )
-            checkpoint.update({"best_epoch": best_epoch, "best_validation_loss": best_loss})
-            _atomic_torch_save(latest_path, checkpoint)
-            if improved:
-                _atomic_torch_save(best_path, checkpoint)
+            if save_checkpoints:
+                checkpoint = variable_checkpoint_payload(
+                    run_id=run_id,
+                    epoch=epoch,
+                    model=model,
+                    optimizer=optimizer,
+                    contract=contract,
+                    history=history,
+                    runner_name=VARIABLE_TEMPORAL_TRAINING_RUNNER_NAME,
+                    lr_scheduler=lr_scheduler,
+                )
+                checkpoint.update({"best_epoch": best_epoch, "best_validation_loss": best_loss})
+                _atomic_torch_save(latest_path, checkpoint)
+                if improved:
+                    _atomic_torch_save(best_path, checkpoint)
             _write_temporal_run_files(manifest_path, history_path, run_id, contract, history, latest_path, best_path, status="running")
             wandb_logger.log_epoch(
                 epoch,
@@ -275,10 +327,12 @@ def run_variable_tcn_bilstm_training(
     output_directory,
     *,
     config: VariableTemporalTrainingConfig | None = None,
+    model_config: VariableTCNBiLSTMControlConfig | None = None,
     waveform_cache_root=VARIABLE_WAVEFORM_CACHE_ROOT,
     transition_lengths=SUPPORTED_VARIABLE_LENGTHS,
     batch_size=4,
     resume=False,
+    save_checkpoints=True,
     wandb_config: WandbConfig | None = None,
     progress=print,
     initialize_from_manifest=None,
@@ -359,6 +413,8 @@ def run_variable_tcn_bilstm_training(
         validation_batches,
         output_directory,
         config=config,
+        model_config=model_config,
+        save_checkpoints=save_checkpoints,
         dataset_manifest_sha256=dataset_manifest_sha256,
         supported_lengths=lengths,
         resume=resume,
@@ -561,6 +617,7 @@ def variable_checkpoint_payload(
     contract,
     history=(),
     runner_name=VARIABLE_TRAINING_RUNNER_NAME,
+    lr_scheduler=None,
 ):
     """Return a new-format checkpoint payload; old checkpoints are incompatible."""
 
@@ -573,6 +630,9 @@ def variable_checkpoint_payload(
         "epoch": int(epoch),
         "model_state_dict": model.state_dict(),
         "optimizer_state_dict": optimizer.state_dict(),
+        "lr_scheduler_state_dict": (
+            lr_scheduler.state_dict() if lr_scheduler is not None else None
+        ),
         "history": list(history),
         "contract": contract,
     }

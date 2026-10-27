@@ -47,6 +47,13 @@ from .model import (
     TCNBiLSTMTransitionControlConfig,
 )
 from .training import full_band_self_supervised_batch_loss, self_supervised_batch_loss
+from .lr_schedule import (
+    apply_linear_warmup,
+    current_learning_rate,
+    make_plateau_scheduler,
+    step_plateau_after_warmup,
+    validate_lr_schedule_config,
+)
 from .wandb_logging import WandbConfig, WandbLogger
 
 
@@ -95,6 +102,30 @@ class TrainingConfig:
 
 
 @dataclass(frozen=True)
+class TCNBiLSTMTrainingConfig(TrainingConfig):
+    """Optimization settings for TCN/BiLSTM, including its LR schedule."""
+
+    patience: int = 30
+    lr_warmup_epochs: int = 5
+    lr_warmup_start_factor: float = 0.1
+    lr_scheduler_patience: int = 10
+    lr_scheduler_factor: float = 0.5
+    lr_scheduler_threshold: float = 1e-4
+    lr_scheduler_min_lr_factor: float = 0.05
+
+    def __post_init__(self):
+        super().__post_init__()
+        validate_lr_schedule_config(
+            warmup_epochs=self.lr_warmup_epochs,
+            warmup_start_factor=self.lr_warmup_start_factor,
+            scheduler_patience=self.lr_scheduler_patience,
+            scheduler_factor=self.lr_scheduler_factor,
+            scheduler_threshold=self.lr_scheduler_threshold,
+            scheduler_min_lr_factor=self.lr_scheduler_min_lr_factor,
+        )
+
+
+@dataclass(frozen=True)
 class TrainingRunResult:
     """Summary of a completed or early-stopped run."""
 
@@ -115,6 +146,7 @@ def run_feature_control_training(
     objective_config: DifferentiableTransitionObjectiveConfig | None = None,
     waveform_cache_root=DEFAULT_BRIDGE_WAVEFORM_CACHE_ROOT,
     resume=False,
+    save_checkpoints=True,
     progress=print,
     model_factory=FeatureControlMLP,
     model_name=FEATURE_CONTROL_MODEL_NAME,
@@ -167,6 +199,7 @@ def run_feature_control_training(
         objective_config=objective_config,
         dataset_identity=dataset_identity,
         resume=resume,
+        save_checkpoints=save_checkpoints,
         progress=progress,
         model_factory=model_factory,
         model_name=model_name,
@@ -182,15 +215,21 @@ def run_tcn_bilstm_transition_control_training(
     dataset_directory,
     output_directory,
     *,
-    config: TrainingConfig | None = None,
+    config: TCNBiLSTMTrainingConfig | TrainingConfig | None = None,
     model_config: TCNBiLSTMTransitionControlConfig | None = None,
     objective_config: DifferentiableTransitionObjectiveConfig | None = None,
     waveform_cache_root=DEFAULT_BRIDGE_WAVEFORM_CACHE_ROOT,
     resume=False,
+    save_checkpoints=True,
     progress=print,
     wandb_config: WandbConfig | None = None,
 ):
     """Run the versioned self-supervised TCN/BiLSTM architecture probe."""
+
+    if config is None:
+        config = TCNBiLSTMTrainingConfig()
+    elif not isinstance(config, TCNBiLSTMTrainingConfig):
+        config = TCNBiLSTMTrainingConfig(**asdict(config))
 
     return run_feature_control_training(
         dataset_directory,
@@ -200,6 +239,7 @@ def run_tcn_bilstm_transition_control_training(
         objective_config=objective_config,
         waveform_cache_root=waveform_cache_root,
         resume=resume,
+        save_checkpoints=save_checkpoints,
         progress=progress,
         model_factory=TCNBiLSTMTransitionControl,
         model_name=TRANSITION_CONTROL_MODEL_NAME,
@@ -225,6 +265,7 @@ def train_feature_control_model(
     objective_config: DifferentiableTransitionObjectiveConfig | None = None,
     dataset_identity: dict | None = None,
     resume=False,
+    save_checkpoints=True,
     progress=print,
     model_factory=FeatureControlMLP,
     model_name=FEATURE_CONTROL_MODEL_NAME,
@@ -236,6 +277,10 @@ def train_feature_control_model(
 ):
     """Train from pre-materialized examples and persist restartable artifacts."""
     config = _resolve_training_device(config or TrainingConfig())
+    if runner_name == TCN_BILSTM_TRAINING_RUNNER_NAME and not isinstance(
+        config, TCNBiLSTMTrainingConfig
+    ):
+        config = TCNBiLSTMTrainingConfig(**asdict(config))
     model_config = model_config or FeatureControlMLPConfig()
     objective_config = objective_config or DifferentiableTransitionObjectiveConfig()
     train_examples = tuple(train_examples)
@@ -248,6 +293,8 @@ def train_feature_control_model(
     history_path = output_directory / "history.json"
     latest_path = checkpoint_directory / "latest.pt"
     best_path = checkpoint_directory / "best.pt"
+    if not save_checkpoints and resume:
+        raise ValueError("Cannot resume a run when save_checkpoints=False")
     dataset_identity = dict(dataset_identity or {
         "path": None,
         "dataset_id": None,
@@ -288,6 +335,11 @@ def train_feature_control_model(
         lr=config.learning_rate,
         weight_decay=config.weight_decay,
     )
+    lr_scheduler = (
+        make_plateau_scheduler(optimizer, config)
+        if isinstance(config, TCNBiLSTMTrainingConfig)
+        else None
+    )
 
     if resume:
         if not manifest_path.is_file() or not latest_path.is_file():
@@ -302,6 +354,13 @@ def train_feature_control_model(
         _validate_checkpoint(checkpoint, run_id)
         model.load_state_dict(checkpoint["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        scheduler_state = checkpoint.get("lr_scheduler_state_dict")
+        if lr_scheduler is not None:
+            if not isinstance(scheduler_state, dict):
+                raise ValueError("TCN/BiLSTM checkpoint has no compatible learning-rate scheduler state")
+            lr_scheduler.load_state_dict(scheduler_state)
+        elif scheduler_state is not None:
+            raise ValueError("Checkpoint includes a learning-rate scheduler but the requested run does not")
         history = list(checkpoint["history"])
         start_epoch = int(checkpoint["epoch"]) + 1
         best_epoch = int(checkpoint["best_epoch"])
@@ -315,7 +374,8 @@ def train_feature_control_model(
             raise FileExistsError(
                 f"Training output already exists; use resume=True: {output_directory}"
             )
-        checkpoint_directory.mkdir(parents=True)
+        if save_checkpoints:
+            checkpoint_directory.mkdir(parents=True)
         history = []
         start_epoch = 1
         best_epoch = 0
@@ -366,18 +426,20 @@ def train_feature_control_model(
                 "validation": initial_validation,
             })
             best_validation_loss = float(initial_validation["loss"])
-            checkpoint = _checkpoint_payload(
-                run_id,
-                0,
-                model,
-                optimizer,
-                best_epoch,
-                best_validation_loss,
-                stale_epochs,
-                history,
-            )
-            _atomic_torch_save(best_path, checkpoint)
-            _atomic_torch_save(latest_path, checkpoint)
+            if save_checkpoints:
+                checkpoint = _checkpoint_payload(
+                    run_id,
+                    0,
+                    model,
+                    optimizer,
+                    best_epoch,
+                    best_validation_loss,
+                    stale_epochs,
+                    history,
+                    lr_scheduler=lr_scheduler,
+                )
+                _atomic_torch_save(best_path, checkpoint)
+                _atomic_torch_save(latest_path, checkpoint)
             _write_run_files(
                 manifest_path,
                 history_path,
@@ -408,6 +470,14 @@ def train_feature_control_model(
 
         status = "completed"
         for epoch in range(start_epoch, config.max_epochs + 1):
+            if isinstance(config, TCNBiLSTMTrainingConfig):
+                apply_linear_warmup(
+                    optimizer,
+                    epoch=epoch,
+                    warmup_epochs=config.lr_warmup_epochs,
+                    start_factor=config.lr_warmup_start_factor,
+                )
+                epoch_learning_rate = current_learning_rate(optimizer)
             train_metrics = _run_epoch(
                 model,
                 train_examples,
@@ -418,6 +488,8 @@ def train_feature_control_model(
                 epoch=epoch,
                 loss_function=loss_function,
             )
+            if isinstance(config, TCNBiLSTMTrainingConfig):
+                train_metrics["learning_rate"] = epoch_learning_rate
             validation_metrics = _run_epoch(
                 model,
                 validation_examples,
@@ -443,19 +515,31 @@ def train_feature_control_model(
             else:
                 stale_epochs += 1
             last_epoch = epoch
-            checkpoint = _checkpoint_payload(
-                run_id,
-                epoch,
-                model,
-                optimizer,
-                best_epoch,
-                best_validation_loss,
-                stale_epochs,
-                history,
+            step_plateau_after_warmup(
+                lr_scheduler,
+                validation_loss,
+                epoch=epoch,
+                warmup_epochs=(
+                    config.lr_warmup_epochs
+                    if isinstance(config, TCNBiLSTMTrainingConfig)
+                    else 0
+                ),
             )
-            _atomic_torch_save(latest_path, checkpoint)
-            if improved:
-                _atomic_torch_save(best_path, checkpoint)
+            if save_checkpoints:
+                checkpoint = _checkpoint_payload(
+                    run_id,
+                    epoch,
+                    model,
+                    optimizer,
+                    best_epoch,
+                    best_validation_loss,
+                    stale_epochs,
+                    history,
+                    lr_scheduler=lr_scheduler,
+                )
+                _atomic_torch_save(latest_path, checkpoint)
+                if improved:
+                    _atomic_torch_save(best_path, checkpoint)
             _write_run_files(
                 manifest_path,
                 history_path,
@@ -693,6 +777,8 @@ def _checkpoint_payload(
     best_validation_loss,
     stale_epochs,
     history,
+    *,
+    lr_scheduler=None,
 ):
     return {
         "format_version": TRAINING_RUN_FORMAT_VERSION,
@@ -700,6 +786,9 @@ def _checkpoint_payload(
         "epoch": int(epoch),
         "model_state_dict": model.state_dict(),
         "optimizer_state_dict": optimizer.state_dict(),
+        "lr_scheduler_state_dict": (
+            lr_scheduler.state_dict() if lr_scheduler is not None else None
+        ),
         "best_epoch": int(best_epoch),
         "best_validation_loss": float(best_validation_loss),
         "stale_epochs": int(stale_epochs),

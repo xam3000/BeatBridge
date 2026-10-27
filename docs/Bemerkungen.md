@@ -1,5 +1,538 @@
 # Beobachtungen, Entscheidungen und Gelerntes
 
+## 2026-10-26 — Related-Work-Kapitel in den Schreibstil des Nutzers überführt
+
+- **Fragestellung/Reasoning:** Kann Kapitel 2 so umformuliert werden, dass es
+  wie vom Nutzer selbst geschrieben klingt (Referenz: dessen Bachelorarbeit),
+  ohne die am 2026-09-16 auditierten Claims, Zahlen, Quellen, Labels oder
+  TODO-Kommentare zu verändern?
+- **Eingaben/Setup:** Bachelorarbeits-PDF des Nutzers
+  (`Move_to_the_Music__Analyzing_Dance_Synchronicity_using_Smart_Watch_Motion_Sensors.pdf`,
+  51 Seiten, aus `C:\Users\max_h\Downloads`), vorheriger Stand von
+  `overleaf/chapters/02_relatedWork.tex`, `overleaf/bibliography.bib`. Für die
+  PDF-Textextraktion wurde `pypdf` in die Projekt-venv (`.venv`)
+  nachinstalliert; der Extrakt liegt unter
+  `C:\Users\max_h\AppData\Local\Temp\opencode\ba_thesis.txt`.
+- **Prüflauf 1 (Stilanalyse, kein maschineller Test):** Vollständige Lektüre
+  des Extrakts (Introduction, Related Work, Methods, Results, Conclusion).
+  Stilmerkmale des Nutzers: Wir-Perspektive, kurze und direkte Sätze,
+  Aufbau „X et al. machen …, dafür …, Ergebnis …", Verknüpfungen wie „For
+  this"/„To do this"/„Because of this", ehrliche Limitationen („in our
+  testing", „to the best of our knowledge"). Der Rewrite ersetzt die
+  ChatGPT-typische dichte, nominalisierte Schreibweise durch diesen Stil;
+  Inhalt, Abschnittstitel und Abschnittsreihenfolge blieben unverändert.
+- **Prüflauf 2 (statische Strukturprüfung nach dem Rewrite):**
+  `.venv\Scripts\python.exe C:\Users\max_h\AppData\Local\Temp\opencode\check_relatedwork.py`
+  prüfte den neuen Kapiteltext gegen `bibliography.bib`. Ergebnis: 23/23
+  zitierte Schlüssel definiert, Klammern ausgeglichen, keine
+  `\begin`/`\end`-Umgebungen (wie zuvor), Kapitel und acht Abschnitte mit
+  unveränderten Titeln, `\label{sec:related_work}` erhalten, beide
+  TODO-Kommentarblöcke wortgleich erhalten, einziges Nicht-ASCII-Zeichen
+  U+00FC (Argüello, wie zuvor), `$F_1$` zweimal (wie zuvor). Exit 0.
+  `git -C overleaf diff --check` meldete keine Whitespace-Fehler;
+  `diff --stat`: 20 Insertions/20 Deletions (eine Zeile pro Absatz, keine
+  Strukturänderung).
+- **Prüflauf 3 (lokaler LaTeX-Build):** Nicht ausführbar: weder `pdflatex`,
+  `latexmk` noch `tectonic` sind auf diesem Rechner installiert (PATH und
+  übliche Installationspfade geprüft). Der integrierte Compiler-Build vom
+  2026-10-21 wurde in dieser Session nicht wiederholt; ein Kompilat des
+  neuen Texts liegt daher nicht vor.
+- **Schlussfolgerung/nächster Schritt:** Das Kapitel ist stilistisch
+  überführt; Inhalt und Quellenlage sind maschinell geprüft unverändert.
+  Beim nächsten Zugriff auf den integrierten LaTeX-Compiler den Gesamtbuild
+  ausführen und die Related-Work-Seiten visuell prüfen. Hinweis: Kapitel 1
+  und die übrigen Kapitel nutzen weiterhin die unpersönliche
+  ChatGPT-Schreibweise; falls gewünscht, kann der gleiche Stilabgleich dort
+  folgen.
+
+## 2026-10-21 — Lokalen Thesis-Gesamtbuild repariert
+
+- **Fragestellung/Reasoning:** Warum lässt sich das PDF beim Arbeiten im
+  `overleaf`-Ordner nicht vollständig kompilieren, und kann die bestehende
+  BibLaTeX-Literatur mit einem verfügbaren Backend verarbeitet werden?
+- **Eingaben/Setup:** Aktueller unveränderter Overleaf-Inhalt als Baseline,
+  `CGThesis.tex` als Hauptdatei, integrierter Codex-Desktop-LaTeX-Compiler.
+  Die Arbeitskopie enthielt bereits Nutzeränderungen; diese blieben erhalten.
+- **Testlauf 1 (Baseline):** Vollständige Kompilation von `overleaf/CGThesis.tex`
+  mit `backend=biber`. Alle Kapitel wurden bis zum 61-seitigen XDV verarbeitet;
+  danach meldete der Compiler beim externen Biber-Aufruf `program not found`
+  und `compile-failed`. Literatur und Referenzen waren deshalb noch undefiniert.
+  Schluss: Der lokale Bibliographieprozessor ist die konkrete Build-Blockade.
+- **Testlauf 2 (isolierte Variante):** Der erste Python-Kopierversuch für
+  `latex_compile_probe/` scheiterte mit `FileNotFoundError`, weil Unterordner
+  nicht angelegt waren. Nach Korrektur wurden alle Projektquellen in die
+  Testkopie kopiert und nur dort `backend=bibtex` gesetzt. Der vollständige
+  Build dieser Kopie meldete `success`. Schluss: BibTeX ist in der
+  integrierten Compilerumgebung für dieses Dokument nutzbar.
+- **Testlauf 3 (tatsächliches Projekt):** `backend=bibtex` in
+  `overleaf/cg.cls` gesetzt und `overleaf/CGThesis.tex` vollständig kompiliert:
+  `success`. Nach bytegetreuer Wiederherstellung der ursprünglichen
+  Dateiformatierung mit ausschließlich dieser einen Änderung wurde der
+  Gesamtbuild erneut mit `success` ausgeführt. `git -C overleaf diff --check`
+  meldete keine Whitespace-Fehler.
+  Umfang: Build der gesamten Thesis einschließlich Literaturverarbeitung;
+  keine inhaltliche oder visuelle Seitenprüfung. Der Overleaf-Online-Build
+  wurde hier nicht separat ausgeführt.
+- **Schlussfolgerung/nächster Schritt:** Die lokale PDF-Vorschau kann den
+  Gesamttext wieder kompilieren. Bei weiteren Thesis-Änderungen den
+  Gesamtbuild ausführen und die betroffenen Seiten visuell prüfen.
+
+## 2026-10-15 — Einleitung nach Blueprint und Aufgabenstellung
+
+- **Fragestellung/Reasoning:** Kann Kapitel 1 den praktischen
+  Tanz-Mashup-Auftrag, die controllerzentrierte Forschungsfrage und die
+  evidenzgebundenen Beiträge konsistent einführen, ohne offene Anforderungen
+  als erfüllt auszugeben? Die offizielle Aufgabenstellung bleibt
+  Scope-Autorität; das Blueprint liefert die operativen Fragen.
+- **Eingaben/Setup:** Alle drei Seiten von
+  `angepasste_aufgabenstellung_masterarbeit.pdf` wurden mit lokalem
+  `pdfjs-dist` textuell gelesen; `pdftotext.exe` und Python-`pypdf` waren in
+  den geprüften Runtimes nicht verfügbar. Dazu Blueprint, Projektstatus,
+  Ergebnis- und Diskussionskapitel, Evidenzledger, relevante Methoden- und
+  Protokolldateien. Die vier verwendeten Literaturquellen wurden anhand ihrer
+  Primärveröffentlichungen gegengeprüft. Keine Experimentartefakte oder
+  Audio-Dateien verändert.
+- **Prüflauf 1 (statische LaTeX-Struktur):** `.venv\Scripts\python.exe -X
+  utf8 -` prüfte `overleaf/chapters/01_introduction.tex` gegen
+  `overleaf/bibliography.bib` und alle Kapitel-Labels. Ergebnis: vier
+  vorhandene BibTeX-Keys, keine fehlenden `\ref`-Ziele, sechs eigene Labels,
+  ausgeglichene Klammern und `\begin`/`\end`-Anzahlen, drei explizite
+  TODO-Kommentare; Exit 0. Umfang: Textstruktur, keine inhaltliche Evaluation.
+- **Prüflauf 2 (LaTeX-Kompilation):** Temporärer Standalone-Wrapper mit
+  `report`-Klasse und vollständig eingebettetem Kapitel 1 unter
+  `overleaf/introduction_compile_check.tex`. Codex-Desktop-Compiler meldete
+  `success`; Wrapper danach entfernt. Kapitelverweise und Literatur wurden
+  zusätzlich statisch geprüft; ein vollständiger Thesis-/BibLaTeX-Build und
+  eine PDF-Sichtprüfung wurden nicht ausgeführt.
+- **Prüflauf 3 (Diff/Umfang):** `git -C overleaf diff --check --
+  chapters/01_introduction.tex chapters/06_discussion.tex` ohne Befund;
+  `Measure-Object` ergab 1.732 Wörter für die Einleitung. Das ist nur ein
+  Umfangsindikator, keine bestätigte Seitenzahl.
+- **Schlussfolgerung/nächster Schritt:** Einleitung und Forschungsfragen
+  stehen als wissenschaftlicher Text. Formale Scope-Entscheidung,
+  Repräsentationsvergleich, gelernte Controller-Hörstudie, reale
+  Cue-Ranker-Evaluation, Ein-/Drei-Takt-Fälle, GUI-Abnahme, finaler Export,
+  Korrekturaufwand und Tanz-Nutzbarkeit bleiben offene Evidenzgates.
+
+## 2026-10-15 — Evidenzgebundenes Diskussionskapitel
+
+- **Fragestellung/Reasoning:** Kann Kapitel 6 die abgeschlossenen Ergebnisse
+  entlang der operativen Forschungsfragen interpretieren, ohne Proxy-Loss,
+  Direkt-Control-Hörurteile, gelernte Controller und synthetische Ranker-Checks
+  zu vermischen? Offene Evidenz wurde als LaTeX-TODO erhalten.
+- **Eingaben/Setup:** `overleaf/chapters/05_results.tex`,
+  `docs/RESULTS_EVIDENCE_LEDGER.md`, Projektstatus, Methoden-/Implementierungs-
+  kapitel, Kontrollstudien-, Ranking-, Dataset-, Analyse- und Cacheprotokolle
+  sowie vorhandene `bibliography.bib`-Keys. Keine Audio-, Test-NPZ-, Checkpoint-
+  oder Run-Artefakte verändert; kein Training oder Rendering.
+- **Prüflauf 1 (Whitespace/Diff):** `git diff --check --
+  overleaf/chapters/06_discussion.tex` im Repository-Root und
+  `git -C overleaf diff --check -- chapters/06_discussion.tex`. Beide ohne
+  Befund; der zweite Befehl prüft den tatsächlich geänderten Submodule-Text.
+- **Prüflauf 2 (statische LaTeX-Verweise):** Erster `.venv\Scripts\python.exe
+  -X utf8 -c`-Probeaufruf enthielt falsch escapte reguläre Ausdrücke und
+  meldete fälschlich null Zitate/Labels; die Sonde wurde korrigiert. Der
+  korrigierte `.venv\Scripts\python.exe -X utf8 -`-Lauf fand sieben verwendete
+  Zitatschlüssel, alle in `overleaf/bibliography.bib`; keine fehlenden
+  `\ref`-Ziele, acht eigene Labels, ausgeglichene geschweifte Klammern und
+  `\begin`/`\end`-Anzahlen. Dies ist eine Strukturprüfung, keine inhaltliche
+  Quellenverifikation.
+- **Prüflauf 3 (isolierte LaTeX-Kompilation):** Temporärer Standalone-Wrapper
+  `overleaf/discussion_compile_check.tex` mit `report`, `booktabs` und den
+  vollständigen Kapiteln 5 und 6; der Codex-Desktop-Compiler meldete
+  `success`. Wrapper danach entfernt. Keine vollständige Thesis-Kompilation
+  und keine manuelle PDF-Sichtprüfung ausgeführt.
+- **Schlussfolgerung/nächster Schritt:** Kapitel 6 ist syntaktisch
+  kompilierbar und referenziert nur vorhandene BibTeX-Keys. Forschungsfragen
+  in Kapitel 1, unabhängige Controller-/Ranker-Evaluation, GUI-Abnahme,
+  Korpus-/Lizenzdaten und Teilnehmerprotokoll bleiben offene Evidenzgates.
+
+## 2026-10-14 — Evidenzgebundenes Ergebniskapitel
+
+- **Fragestellung/Reasoning:** Welche abgeschlossenen Experimente tragen
+  belastbare Aussagen für `overleaf/chapters/05_results.tex`, und welche
+  Hör- und Ranker-Aussagen bleiben ohne Primärergebnis offen? Zahlen wurden
+  vor dem Schreiben in `docs/RESULTS_EVIDENCE_LEDGER.md` auf konkrete
+  Manifeste, Histories, Audits und Studienergebnisse zurückgeführt.
+- **Eingaben/Setup:** Repository-Regeln und Protokolle, vier lokale
+  Datasetmanifeste, PRIVE-Pairbatches, vier September-Runmanifeste samt
+  Histories/Checkpoints, Sweep-Analyse/CSV und Rating-/Result-Dateien.
+  Ausschließlich Read-only-Prüfung der Experimentartefakte; kein Training,
+  Rendering, Öffnen von Test-NPZ oder Audio, keine Commit-Erstellung.
+- **Prüflauf 1 (Artefakt-Inventur):** PowerShell- und
+  `.venv\Scripts\python.exe -`-Sonden lasen Dataset-`split_counts`,
+  Batch-`sources[].pairs[]`, Runstatus und History-Epochen sowie
+  Study-`status`, `sample` und `preference_counts`. Ergebnis: vier
+  abgeschlossene September-Runs; Datasetzahlen und Batchzahlen wie im
+  Ledger; drei ausgewertete Direkt-Control-Hörsätze; vier neuere Hörsätze
+  ausdrücklich `unrated` ohne `study_results.json`. Die `.venv` meldete
+  bei Python-Starts eine pyenv-Pfadwarnung, führte die Leseprüfungen aber
+  erfolgreich aus. Schluss: Nur ausgewertete Hörsätze als Resultat melden.
+- **Prüflauf 2 (Integrität):** `.venv\Scripts\python.exe -` berechnete
+  SHA-256 für History, Best- und Latest-Checkpoint der vier September-Runs
+  sowie den variablen IO-Audit und verglich sie mit den jeweiligen
+  Runmanifesten. Ergebnis: 13/13 Dateien vorhanden und Hashes identisch;
+  Datasetmanifest-SHAs der beiden verwendeten September-Datensätze stimmten
+  mit den Runverträgen. Die Vocal-MLP-History protokolliert in Epoche 38
+  `0.324840` gegenüber dem deklarierten Best-Checkpoint in Epoche 34 mit
+  `0.324910`; die Differenz wird im Kapitel als Checkpoint-Auswahl unter
+  `min_delta` offengelegt. Nächster Schritt: keine spätere History-Epoche
+  stillschweigend als gespeichertes Bestmodell ausgeben.
+- **Prüflauf 3 (Text-/LaTeX-Struktur):** `git diff --check` für Kapitel und
+  Ledger ohne Befund; Python-Read-only-Sonde fand zwölf Labels, keine
+  ungelösten kapitelinternen Referenzen, ausgeglichene Klammern und drei
+  gepaarte Tabellenumgebungen. Vier Ratingdateien wurden erneut als
+  `unrated` ohne Ergebnisdatei geprüft. Studienmanifeste bestätigten den
+  historischen Testsplit für Objective v4 sowie `train`/`validation` für
+  Objective v5; die Tabellenbezeichnungen wurden entsprechend korrigiert.
+- **Prüflauf 3a (Best-Checkpoint-Metadaten):** Vier
+  `.venv\Scripts\python.exe -`-Leseprüfungen mit
+  `torch.load(..., map_location="cpu", weights_only=True)` öffneten die
+  bereits SHA-geprüften September-Best-Checkpoints. Ergebnis: gespeicherte
+  `epoch`, `best_epoch` und `best_validation_loss` stimmen mit den
+  Kapitelwerten überein (1/0.415208, 34/0.324910, 18/0.320778,
+  34/0.227169); Exit 0. Ein erster kombinierter Aufruf lieferte vor
+  dem Standard-Wartefenster nur die pyenv-Pfadwarnung; die anschließenden
+  getrennten Aufrufe mit 30-s-Wartefenster waren erfolgreich. Keine
+  Modellinferenz oder Testdaten wurden ausgeführt.
+- **Prüflauf 4 (isolierte LaTeX-Kompilation):** Temporärer Standalone-Wrapper
+  mit `report`, `booktabs` und dem Ergebniskapitel unter
+  `overleaf/results_compile_check.tex`; Codex-Desktop-Compiler meldete
+  `success`; nach der Split-Textkorrektur wurde derselbe Standalone-Build
+  erneut mit `success` ausgeführt. Der Wrapper wurde danach entfernt. Eine
+  vollständige Thesis-Kompilation wurde nicht ausgeführt: die lokale Shell bot kein
+  `latexmk`, `pdflatex`, `xelatex` oder `lualatex`, und der Desktop-Compiler
+  unterstützt keine zusätzlichen Projektdateien.
+- **Schlussfolgerung/nächster Schritt:** Das Kapitel berichtet nur
+  manifestierte Daten-/Trainingsläufe, technische Batch-Ergebnisse und drei
+  abgeschlossene Ein-Rater-Direkt-Control-Vergleiche. Finale unabhängige
+  Controller-/Cue-Ranker-Evaluation und unbewertete Hörsätze bleiben TODO.
+
+## 2026-10-02 — Bestätigungs-Sweeps für vlfwfn7a und fxhhidgi
+
+- **Fragestellung/Reasoning:** Der Nutzer fordert Sweep-Konfigurationen,
+  um die besten Konfigurationen zu bestätigen. Die beiden Spitzenruns
+  unterscheiden sich nur um 0,014 %, deshalb unveränderte Parameter und
+  gemeinsame Seeds statt erneuter Hyperparametersuche. Originalseed plus
+  vier neue Seeds pro Konfiguration; volle 150 Epochen ohne Hyperband.
+- **Eingaben/Setup:** CSV-Snapshot vom 2026-10-02, bestehende TCN-Sweep-YAML,
+  `src/ml/__main__.py`, bestehender Runner und Agent-Guard. Vorhandene
+  Nutzeränderungen in CLI und Dokumentation erhalten. Kein Commit erstellt.
+- **Implementierung:** Zwei getrennte `method: grid`-YAMLs mit Seeds
+  20260930–20260934 und unveränderten 20 festen Parameterwerten je Kandidat.
+  Eigenständige Outputroots unter `output/training_runs/wandb_confirmation/`.
+  Neue additive CLI-Option `--save-checkpoints` für den festen TCN-Sweep
+  (Standard false) wird an den Runner weitergegeben. Best-/Latest-Dateien
+  werden bei Bestätigung lokal gespeichert; YAMLs deaktivieren W&B-
+  Checkpointuploads weiterhin explizit. Keine Variable-/Vocal-Runneränderung.
+- **Testlauf 1:**
+  `.venv\Scripts\python.exe -m pytest tests/test_tcn_confirmation_sweeps.py -q`.
+  Umfang: beide YAMLs durch den tatsächlichen CLI-Pfad mit allen fünf Seeds,
+  gemockter Trainingsfunktion und Sweep-Parameterquelle; Prüfung von
+  Parametervertrag, Seed-only-Grid, fehlendem Hyperband, Datasetpfad,
+  Outputisolation, 150 Epochen/Patience 151, min_delta 0,
+  Checkpoints lokal an/Upload aus, Resume aus und unverändertem CLI-Standard.
+  Ergebnis: **3 passed in 3.78s**, Exit 0. Keine Trainings-/Netzwerkaufrufe.
+- **Testlauf 2:** `.venv\Scripts\python.exe -X utf8 -c` mit
+  `csv.DictReader`, `yaml.safe_load` und JSON-Typkonversion der CSV-Werte.
+  Beide YAMLs gegen ihre tatsächlichen Exportzeilen verglichen, alle
+  festen Parameter einschließlich exakter Lernrate/Scheduler/Architektur;
+  identische Seedlisten und getrennte Outputroots geprüft.
+  Ergebnis: **40/40 Parametervergleiche identisch**, Exit 0.
+- **Schlussfolgerung/nächster Schritt:** Konfigurationen lokal vorbereitet
+  und CLI-Weitergabe geprüft, noch keine W&B-Registrierung und keine
+  Bestätigungstrainings. Startbefehle in `docs/WANDB.md`. Nach Ausführung
+  Mittelwert/Streuung und gepaarte Seed-Differenzen auswerten, Originalseed
+  getrennt von den vier neuen Seeds berichten und Best-Checkpoints hören.
+  Testsplit bleibt geschlossen.
+
+## 2026-10-02 — Analyse des W&B-TCN-Sweep-Exports
+
+- **Fragestellung/Reasoning:** Welche Konfigurationen liefern im vom Nutzer
+  bereitgestellten Snapshot gute Validation-Scores, wodurch entstehen die
+  Gewinne und begrenzen Abbrüche die Aussagekraft? Originalexport und
+  vorhandene Arbeitsänderungen erhalten; ausschließlich Datenanalyse.
+- **Eingaben/Setup:** CSV `wandb_export_2026-10-02T09_20_57.391+02_00.csv`
+  (SHA `aa342d7813fcca2a5bdfc4cbb87445bc4d0b7970025ef7b597f125c7267a431e`),
+  92 Runs/329 Spalten, lokale Sweep-Histories/Manifeste, Sweep-YAML und
+  W&B-Logger. Alle Python-Aufrufe mit `.venv\Scripts\python.exe`.
+- **Prüflauf 1:** Read-only CSV-Sonde via `python -X utf8 -c` mit
+  `csv.DictReader`, Countern und Loss-Ranking. Ergebnis: ausschließlich
+  `nqntmdi0`, 35 finished, 56 killed, 1 running ohne Loss. Keine Parsefehler.
+- **Prüflauf 2:** Read-only CSV-Sonde via `python -X utf8 -c` mit
+  Vertrags-Countern, Gruppenmedians, Metrikalias-Abgleich, Best-Epochen und
+  finalen Loss-Abweichungen. Ergebnis: ein gemeinsamer Dataset-/Objective-
+  Vertrag, Alias-Abweichungen 0, Top 4 bei 0,2616–0,2649, zwei deutlich
+  verschlechterte finale Epochen. Die Suche nach `src/ml/objective.py`
+  schlug fehl (Datei existiert dort nicht); Objective-Gewichte wurden danach
+  aus den Runmanifesten gelesen. Kein Produktfehler.
+- **Prüflauf 3:** Struktursonde auf History/Manifest von `vlfwfn7a` via
+  `python -X utf8 -c`. Ergebnis: Epochenlisten mit Train-/Validation-
+  Komponenten vorhanden, Best-Epoche 77 und Checkpointreferenz null.
+- **Prüflauf 4:**
+  `.venv\Scripts\python.exe -X utf8 scripts/analyze_wandb_export_20261002.py`.
+  Scope: alle 91 Metrik-Runs, lokale History-Minima, SHA-Abgleich,
+  Best-Epochen-Komponenten für Top 4 und `1w51w9t6`, Gruppenstatistik und
+  JSON-Ausgabe. Exit 0, 91/91 Histories vorhanden, 0 Loss-Abweichungen,
+  0 Hash-Abweichungen. Weighted-Komponentensummen stimmen innerhalb
+  Floating-Point-Rundung (~1e-8) mit den jeweiligen Losses überein.
+- **Prüflauf 5:** Zusammenfassungs-Sonde via `python -X utf8 -c` auf
+  `summary.json`: Gruppenmedians für completed separat, Komponentensummen,
+  Checkpointreferenzen und Manifestzustände. Ergebnis: 35 completed,
+  56 weiterhin running in lokalen Manifesten trotz CSV killed,
+  0 referenzierte Best-Checkpoints. Gewinner 17,30 % unter Completed-Median,
+  Abstand Platz 1/2 nur 0,01386 %. Kein Ausführungsfehler.
+- **Prüflauf 6:** Derselbe Analysebefehl nach Ergänzung der Matplotlib-Grafik
+  erneut ausgeführt. Exit 0, Ergebnisse unverändert, PNG erfolgreich erzeugt.
+  Grafik per `view_image` visuell geprüft: Achsen, Legenden, Runs und
+  Kurven lesbar. Die eingegrenzte Loss-Achse blendet die hohe Initialisierung
+  aus und ist im Bericht beschrieben. Keine Code-Tests oder Trainingsläufe
+  ausgeführt, Testsplit und Audiodateien nicht geöffnet.
+- **Blockade/Gelernt:** Beim ersten Auslesen des ZIP-basierten Repository-
+  Skills scheiterte nur die Konsolenausgabe an CP1252 (`UnicodeEncodeError`).
+  Wiederholung mit `-X utf8` erfolgreich; keine Änderungen am Skill.
+- **Schlussfolgerung/nächster Schritt:** Export-Ranking und lokale Evidenz
+  stimmen überein. Best-Konfigurationen mit mehreren Seeds und aktivierten
+  Checkpoints bestätigen. `xdmd5cma` (killed nach Epoche 57, Loss 0,293404)
+  mit vollem Budget prüfen; späte Verbesserung von `sifded82` zeigt das
+  Risiko früher Selektion. Hörqualität bleibt offen. Vollständiger Bericht:
+  `docs/WANDB_SWEEP_ANALYSE_20261002.md`. Keine Sweep-Konfiguration geändert,
+  kein Commit erstellt.
+
+## 2026-09-30 — TCN/BiLSTM-LR-Warm-up, Plateau-Scheduler und W&B-Metrik
+
+- **Fragestellung/Reasoning:** Für die beiden TCN/BiLSTM-Modelle soll die
+  gesweepte Basis-Lernrate anfangs linear hochgefahren und danach bei
+  stagnierendem Validierungsverlust reduziert werden. Die Lernrate soll pro
+  Epoche in W&B protokolliert und gegen die Epoche chartbar sein.
+- **Eingaben/Setup:** `src/ml/runner.py`, `src/ml/variable_runner.py`,
+  `src/ml/wandb_logging.py` sowie die beiden YAMLs unter `config/wandb/`.
+  Bestehende Arbeitsänderungen in diesen Dateien blieben erhalten.
+- **Änderung/Prüfumfang:** Beide Modelle verwenden nun 5 Epochen linearen
+  Warm-up von 10 % auf 100 % der jeweiligen Sweep-Lernrate. Danach überwacht
+  `ReduceLROnPlateau` den Validierungsverlust und halbiert die Lernrate nach
+  10 Epochen ohne relevante Verbesserung; der absolute Schwellenwert ist
+  `0.0001`, die Untergrenze 5 % der Basis-Lernrate. Für lokale TCN-Läufe beträgt
+  die Standard-Patience nun 30 Epochen, damit der Plateau-Scheduler reagieren
+  kann; Sweep-Runs behalten die deaktivierte lokale Early-Stop-Logik und laufen
+  bis zum Epochenlimit oder W&B-Hyperband-Stopp. Scheduler-Zustand wird in
+  Checkpoints gesichert und beim Resume geladen. Die Sweep-YAMLs halten die
+  Scheduler-Werte fest. Der W&B-Logger loggt `learning_rate` und weist dieser
+  Metrik `epoch` als Standard-Chartachse zu. Es wurden keine Test-, Trainings-
+  oder Sweep-Läufe ausgeführt.
+- **Schlussfolgerung und nächster Schritt:** Neue Sweeps müssen mit den
+  aktualisierten YAMLs angelegt werden, damit die serverseitig gespeicherte
+  Sweep-Konfiguration den LR-Scheduler enthält. W&B zeigt `learning_rate` in
+  automatisch generierten Charts; bei manuell gepflegten Workspace-Layouts
+  kann die nun verfügbare Metrik als Line-Plot hinzugefügt werden.
+
+## 2026-09-30 — TCN-Sweep-Agent an das Projektvenv gebunden
+
+- **Fragestellung/Reasoning:** Ein TCN-Sweep-Agent schlug beim Import von
+  `librosa` fehl. Der Agent-Log zeigt den gestarteten Befehl als
+  `python wandb_sweep.py ...`; in der interaktiven Shell löst `python` auf
+  `C:\Python314\python.exe` auf. Der Fehler passt dazu, dass der Agent den
+  globalen Interpreter verwendet, beweist dessen Auflösung im damaligen
+  Agent-Prozess aber nicht unmittelbar.
+- **Eingaben/Setup:** `wandb/debug-cli.max_h.log` sowie der Interpreter- und
+  Importcheck
+  `.venv\Scripts\python.exe -c "import sys; print(sys.executable); import librosa; print(librosa.__version__)"`.
+  Das Projektvenv meldet seinen erwarteten Pfad und `librosa` 0.11.0.
+- **Änderung/Prüfumfang:** Die `command`-Einträge der beiden TCN/BiLSTM-Sweep-
+  YAMLs verwenden jetzt `.venv/Scripts/python.exe` statt `${interpreter}`.
+  Die Befehle müssen vom Repository-Root gestartet werden. Es wurde kein
+  Sweep, Training oder Testlauf gestartet.
+- **Schlussfolgerung und nächster Schritt:** Die Trial-Ausführung ist in den
+  geänderten Konfigurationen an das Projektvenv gebunden. W&B interpoliert
+  Command-Makros beim Ausführen eines Sweep-Laufs; deshalb muss ein bereits
+  angelegter Sweep mit der korrigierten YAML neu angelegt werden, damit seine
+  gespeicherte Agent-Konfiguration den expliziten Interpreter enthält. Danach
+  den Agent vom Repository-Root starten.
+
+## 2026-09-30 — Erster TCN-Sweep-Trial abgeschlossen, Agent-Absturz danach
+
+- **Fragestellung/Reasoning:** Der Benutzer meldete, dass der Sweep-Agent nach
+  einem Lauf mit `ValueError: Value out of range: 3221226505` beendet wurde.
+  Zu prüfen war, ob der Trial fehlschlug oder erst der Agent nach Abschluss.
+- **Eingaben/Setup:** Sweep `kux6f586`, W&B-Run `6eqzbl9s`, lokaler Laufordner
+  `output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1/kux6f586/6eqzbl9s`.
+  Interpreter: Projektvenv auf Python 3.14.2, W&B 0.28.1, PyTorch
+  2.13.0+cu130; der Lauf nutzte `cuda:0`. Geprüft wurden `manifest.json`,
+  W&B-`wandb-summary.json`, `debug.log`, `debug-internal.log` und die Windows-
+  Application-/WER-Ereignisse um 19:58 Uhr.
+- **Prüfumfang/Befehle:** Nur vorhandene Laufdateien, W&B-Logs und Windows-
+  Ereignisse gelesen; kein weiterer Sweep, Trainings- oder Testlauf gestartet.
+  Manifest und W&B-Zusammenfassung melden `completed`, Epoche 100, beste
+  Epoche 93 und `best_validation_loss=0.31911887019872665`. Die W&B-interne
+  Abschlussmeldung enthält `exit_code=0` und Uploadstatus `200 OK`. Windows
+  protokolliert um 19:58:14 für Python 3.14.2 in `ucrtbase.dll` den Code
+  `0xc0000409` mit Fast-Fail-Subcode 7 (`FAST_FAIL_FATAL_APP_EXIT`). Rund 20
+  Sekunden später verarbeitet der Agent den Child-Prozess und scheitert beim
+  Übergeben von dessen Code `3221226505` an das W&B-Protobuf-Feld `int32`.
+- **Schlussfolgerung und nächster Schritt:** Der Sweep-Trial wurde erfolgreich
+  geloggt; es wurden wie konfiguriert keine Modellcheckpoint-Dateien erzeugt.
+  Der Python-Child-Prozess ist beim Beenden dennoch nativ abgebrochen. Der
+  sichtbare W&B-`ValueError` ist der Folgefehler beim Agent-Teardown; das
+  Windows-Ereignis benennt `ucrtbase.dll`, lokalisiert aber nicht, welche
+  native Bibliothek den Fatal-Abbruch ausgelöst hat. Der Agent kann mit
+  derselben Sweep-ID für weitere Trials neu gestartet werden. Bei erneutem
+  Abbruch nach einem Trial braucht es einen Dump mit Stacktrace, um den
+  auslösenden nativen Aufrufer zu bestimmen.
+
+## 2026-09-30 — W&B-Agent-Teardown gegen Windows-Exitcode abgesichert
+
+- **Fragestellung/Reasoning:** Den Folgefehler `ValueError: Value out of
+  range: 3221226505` beheben, damit ein erfolgreicher W&B-Trial den Agenten
+  nicht beendet. Gleichzeitig darf ein echter, nicht abgeschlossener Trial
+  nicht als Erfolg gewertet werden.
+- **Eingaben/Setup:** Vorhandene Sweep-Dateien unter
+  `output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1/kux6f586/6eqzbl9s`
+  und dem darin gespeicherten W&B-Lauf; W&B 0.28.1 aus `.venv`; Windows-WER-
+  Ereignis und Archivbericht. Der Archivbericht enthält nur Fehler-Metadaten;
+  der referenzierte temporäre `.dmp`-Speicherabbildpfad existiert nicht mehr.
+  Das Ereignis nennt Python 3.14.2, `ucrtbase.dll`, `0xc0000409` und
+  Fast-Fail-Subcode 7. Geladene Module belegen, dass der Lauf das Projektvenv
+  mit PyTorch/CUDA verwendet hat. Es wurden keine Debugger-Werkzeuge gefunden.
+- **Prüfumfang/Änderung:** Die W&B-Implementierung in der installierten
+  Version wurde lesend geprüft: `AgentProcess.poll()` liefert den Child-
+  Exitcode an `wandb.teardown()`, dessen Protobuf-Feld einen vorzeichen-
+  behafteten 32-Bit-Wert erwartet. Der neue `wandb_agent_guard.py` fängt nur
+  Exitcodes außerhalb dieses Bereichs ab. Er meldet dem W&B-Agenten Erfolg,
+  wenn zum Sweep-/Run-Pfad ein abgeschlossenes Manifest, eine abgeschlossene
+  W&B-Zusammenfassung mit übereinstimmendem Best-Loss und eine abschließende
+  W&B-Uploadbestätigung mit HTTP `200 OK` vorliegen. Sonst übergibt er den
+  gültigen Fehlercode 1, um den Protobuf-Absturz zu verhindern. Die Datei
+  `wandb_sweep.py` wurde als Trial-Einstiegspunkt wiederhergestellt. Die
+  Startanleitung in `docs/WANDB.md` verwendet nun den Guard. Keine Tests,
+  Trainingsläufe oder Sweep-Agentläufe ausgeführt.
+- **Schlussfolgerung und nächster Schritt:** Der konkrete W&B-Teardown-
+  `ValueError` ist im Projekt-Agent-Startpfad abgesichert; ein verifiziert
+  erfolgreicher Trial wird trotz des Windows-Abbruchcodes als abgeschlossen
+  behandelt und kann den Agenten nicht über diesen Fehler beenden. Der native
+  Python-Abbruch selbst bleibt ungelöst, da sein Dump fehlt. Für eine exakte
+  Ursachenanalyse ist bei einer künftigen Reproduktion ein vollständiger
+  Prozess-Dump mit Stacktrace nötig. Der Guard ist implementiert, aber noch
+  nicht durch einen weiteren Sweep-Agentlauf verifiziert.
+
+## 2026-09-30 — Hyperband-Stopp während des TCN-Sweep-Trials
+
+- **Fragestellung/Reasoning:** Ein weiterer TCN-Trial endete nach ungefähr
+  38 Epochen mit `KeyboardInterrupt`; das W&B-Dashboard nennt den Run
+  „killed by the user“, und der Agent startete danach einen neuen Run. Zu
+  klären war, ob dies derselbe native Absturz wie zuvor oder ein vom Sweep
+  ausgelöster Stopp war.
+- **Eingaben/Setup:** W&B-Run `nz2flewh` unter
+  `output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1/kux6f586/nz2flewh`;
+  Sweep-Konfiguration `config/wandb/sweep_tcn_bilstm.yaml`; W&B 0.28.1 aus
+  `.venv`.
+- **Prüfumfang/Befehle:** Lokales `manifest.json`, `wandb-summary.json` und
+  `debug-internal.log` gelesen sowie die installierte W&B-Agent-Implementierung
+  geprüft. Der Agent loggte wiederholt `Agent received command: stop` und
+  `Stop: nz2flewh`. Der Windows-Pfad in W&B 0.28.1 sendet dafür
+  `CTRL_C_EVENT` an den Kindprozess. Der Stacktrace endet mit
+  `KeyboardInterrupt` in `loss.backward()`; W&B protokolliert den finalen
+  Upload als `complete=true`, `exit_code=255`, HTTP `200 OK`. Lokales Manifest
+  und Summary haben Epoche 38, Best-Epoche 14 und
+  `best_validation_loss=0.3229850932955742`; das Manifest bleibt wegen des
+  Interrupts auf `running`. Danach wurde ein weiterer Sweep-Run angefordert.
+  Kein Trainings- oder Testlauf ausgeführt. W&B dokumentiert, dass SIGINT den
+  Run-Status `KILLED` ergeben kann:
+  https://docs.wandb.ai/models/sweeps/signal-handling-sweep-runs.
+- **Schlussfolgerung und nächster Schritt:** Das Stop-Kommando und der folgende
+  `KeyboardInterrupt` sind mit Hyperband-Pruning konsistent; sie sind nicht
+  der vorherige `0xc0000409`-Absturz und lösen keinen Protobuf-Rangefehler aus.
+  Der UI-Text „killed by the user“ beweist nicht, dass eine Person den Run
+  manuell gestoppt hat: auch ein vom Sweep-Agenten weitergeleiteter SIGINT kann
+  diesen Status erzeugen. Da Hyperband für diese Sweeps ausdrücklich aktiviert
+  ist, gehört das Verwerfen schwächerer Trials zum erwarteten Sweep-Verhalten.
+  W&Bs serverseitiger Grund (Hyperband oder manuelles Stoppen) ist allein aus
+  den lokalen Logs nicht unterscheidbar. Falls jeder Trial bis Epoche 100 laufen
+  soll, muss `early_terminate` für einen neu angelegten Sweep deaktiviert werden.
+
+## 2026-09-30 — Hyperband-Pruning später beginnen lassen
+
+- **Fragestellung/Reasoning:** W&B stoppte einen TCN-Trial nach rund 38
+  Epochen. Die TCN-Sweeps sollen weiterhin W&B-Hyperband verwenden, aber jedem
+  Trial mehr Lernzeit geben, bevor Hyperband ihn verwerfen kann.
+- **Eingaben/Setup:** `config/wandb/sweep_tcn_bilstm.yaml`,
+  `config/wandb/sweep_variable_tcn_bilstm.yaml`, je 100 `max_epochs` und ein
+  `best_validation_loss`-Log pro Epoche. Die W&B-Dokumentation erlaubt
+  `min_iter` als ersten Bracket-Punkt anstelle eines `max_iter`-Zeitplans:
+  https://docs.wandb.ai/models/sweeps/define-sweep-configuration.
+- **Änderung/Prüfumfang:** Beide YAMLs verwenden jetzt
+  `early_terminate: {type: hyperband, min_iter: 50, eta: 3}` anstelle von
+  `max_iter: 100, s: 2, eta: 3`. W&B prüft frühestens am 50. geloggten
+  Epochenschritt; die tatsächliche Stop-Meldung kann wegen periodischer
+  Serverprüfungen später eintreffen. Die folgenden Brackets bei 150 und 450
+  liegen über dem 100-Epochen-Limit. Der Sweep-Name markiert `miniter50`. Keine
+  Trainings-, Sweep- oder Testläufe ausgeführt.
+- **Schlussfolgerung und nächster Schritt:** Neue Sweeps erhalten späteres,
+  weniger aggressives Hyperband-Pruning. W&B speichert Sweep-Konfigurationen
+  serverseitig; der bereits angelegte Sweep `kux6f586` verwendet weiterhin
+  `max_iter: 100`, `s: 2`, `eta: 3`. Für die geänderte Schwelle muss ein neuer
+  Sweep mit der passenden YAML angelegt und dessen neue ID für den Agenten
+  verwendet werden.
+
+## 2026-09-30 — W&B-Sweeps für TCN/BiLSTM vorbereitet (nicht ausgeführt)
+
+- **Fragestellung/Reasoning:** Für das feste Vier-Takt-TCN/BiLSTM und das
+  Variable-TCN/BiLSTM sollen getrennte W&B-Sweeps bereitstehen. Beide müssen
+  die echten Runner verwenden und innerhalb einer Sweep-Runde denselben
+  Dataset-, Cache-, Renderer- und Objective-Vertrag behalten. Da die beiden
+  Modellpfade inkompatible Feature-/Datenverträge nutzen, erhalten sie eigene
+  Sweep-IDs und ihre absoluten Validation-Losses werden nicht miteinander
+  verglichen.
+- **Eingaben/Setup:** Fester Pfad: Dataset-v1
+  `52bc9d1cebfd1b82d2ea`, Waveformcache `output/ml_cache/bridge_waveform_v1`.
+  Variabler Pfad: Dataset-v2 `2a124caf5625b4c8f683`, alle vier Längen
+  2/4/6/8 Takte und der vollständige Train-/Validation-Cache
+  `output/ml_cache/variable_bridge_waveform_v2/prive_scantraxx_extension_run02_wandb_full_20260926`.
+  Die YAMLs halten Seed, Epoch-Obergrenze 100, Renderer, Objective und feste
+  Architekturbreiten fest. Sie variieren Lernrate, Weight Decay, Batchgröße,
+  Gradient-Clipping, Kernelgröße, TCN-Dilatation und Dropout; nur der variable
+  Sweep variiert zusätzlich maximale Vocal-Ducking-Stärke und
+  Initiallogit. W&B-Hyperband verwendet `best_validation_loss` pro Epoche mit
+  `max_iter=100`, `s=2` und `eta=3`. Runner-Patience ist auf 101 Epochen
+  gesetzt und kann vor dem 100-Epochen-Limit nicht auslösen; `min_delta=0`
+  übernimmt jede Validationverbesserung in das gemeldete Best-Ergebnis. Jede
+  Trial-Ausgabe wird nach Sweep-ID und Run-ID getrennt. W&B-Modellartefakt-Uploads sind in
+  beiden YAML-Commands explizit ausgeschaltet. Auf Wunsch sollen auch lokale
+  Modellgewichte nicht pro Trial aufgehoben werden: `save_checkpoints=False`
+  verhindert `best.pt`/`latest.pt`; History und Manifest bleiben für die
+  Parameterauswertung erhalten. Das finale Modell kann danach mit der besten
+  W&B-Konfiguration regulär trainiert werden.
+- **Prüfumfang/Befehle:** Kein Sweep, Training oder Testlauf wurde gestartet.
+  Die Parameterfelder wurden anhand der beiden Runner- und Model-Config-
+  Definitionen abgestimmt. Startanleitung: [`WANDB.md`](./WANDB.md).
+- **Schlussfolgerung und nächster Schritt:** Konfigurationen und Agent-CLI-
+  Einstiege sind vorbereitet. Vor dem variablen Sweep muss der vollständige
+  indexgebundene Train-/Validation-Waveformcache am konfigurierten Ort
+  vorhanden sein. Anschließend können beide Sweeps getrennt gestartet werden;
+  Ergebnisse gelten jeweils nur für ihren eigenen Validation-Vertrag.
+
+## 2026-09-30 — W&B-Sweep für vocal-aware MLP vorbereitet (nicht ausgeführt)
+
+- **Fragestellung/Reasoning:** Der dokumentierte Default `vocal_time_shared_mlp_v2`
+  soll reproduzierbar mit W&B-Sweeps optimiert werden. Die Trials müssen echte
+  Runner-Parameter verwenden, einen Learning-Rate-Scheduler unterstützen und
+  Validation-Losses auf demselben Dataset-/Renderer-/Objective-Vertrag
+  vergleichen.
+- **Implementierung/Setup:** `config/wandb/sweep_vocal_mlp.yaml` verwendet
+  Bayesian Minimization von `best_validation_loss` auf dem Feature-Protocol-1-
+  Train/Validation-Dataset. Optimizer/Betas/Epsilon, Lernrate, Weight Decay,
+  Batchgröße, Scheduler samt Parametern, Early Stopping, Gradient-Clipping,
+  Hidden Dimensions, Dropout und Vocal-Ducking-Konfiguration werden gesweept.
+  Neue Trials erhalten je W&B-Sweep-ID und W&B-Run-ID einen eigenen lokalen
+  Outputordner. Schedulerzustand wird mit dem Checkpoint gesichert; die
+  Vocal-Checkpointformatversion ist daher 3. Checkpoints werden standardmäßig
+  nicht hochgeladen. Vorhandene Format-2-Vocal-Checkpoints sind mit dem neuen
+  Runner nicht fortsetzbar.
+- **Prüfumfang/Befehle:** Kein Sweep, Training oder Testlauf wurde gestartet.
+  Die Ausführung ist in [`WANDB.md`](./WANDB.md) dokumentiert.
+- **Schlussfolgerung und nächster Schritt:** Implementierung und Sweep-Konfig
+  sind vorbereitet. Die tatsächlichen W&B-Agent-Runs und ihre Ergebnisse
+  bleiben offen; die gesetzten Suchbereiche sind keine gemessenen Gewinner.
+
 ## 2026-09-30 — Erweiterung des Vier-Modell-Hörtests auf 20 Beispiele (abgeschlossen)
 
 - **Fragestellung/Reasoning:** Korrektur der gewünschten Hörtestgröße von
@@ -5964,3 +6497,338 @@ Caches werden nicht migriert oder überschrieben.
   unveränderliche Datasetroot bleibt unverändert. Für eine aktualisierte
   Stichprobe ist ein neuer Producer- und Datasetroot mit geschlossener
   Testsplitauthorität sowie anschließendem SHA-/Leakage-Audit erforderlich.
+# Desktop-GUI-Prototyp, 2026-10-06
+
+- **Fragestellung und Reasoning:** Wie kann das vorhandene BeatBridge-GUI-
+  Mockup als Desktop-App nutzbar werden, ohne die produktiven Audio-
+  Abhaengigkeiten zu vergroessern oder Mock-Daten als echte Pipeline-Ergebnisse
+  auszugeben? Die GUI-Spezifikation laesst Framework und Packaging offen und
+  sieht eine gestufte Umsetzung vor.
+- **Eingaben/Setup:** Bestehendes Mockup unter `prototypes/gui-mockup/`,
+  Spezifikation `docs/GUI_SPECIFICATION.md`, Windows und Repository-
+  Pythonumgebung `.venv`.
+- **Umfang:** `src.gui_app` startet das lokale Mockup in einem nativen
+  pywebview-Fenster. `requirements-gui.txt` haelt pywebview optional. Das
+  Fenster bindet weiterhin weder Pipeline noch Manifeste an und verwendet
+  keine Netzverbindung. Die Framework-Entscheidung und die Grenze zur
+  manifestbasierten Stufe A sind in `GUI_SPECIFICATION.md` festgehalten.
+- **Testumfang/Ergebnis:** In dieser Umsetzung wurde kein Testlauf und kein
+  manueller App-Durchklick ausgefuehrt. Die Windows-WebView2-Runtime wird fuer
+  den Start benoetigt.
+- **Schlussfolgerung und naechster Schritt:** Der Desktop-Einstiegspunkt ist
+  vorbereitet, der GUI-Prototyp ist damit noch nicht als Laufzeitverhalten
+  verifiziert. Als naechstes Abhaengigkeit installieren, App starten und den
+  Mockup-Durchklick vornehmen; danach den manifestbasierten Review-MVP gemaess
+  Stufe A planen.
+
+## 2026-10-06 — Native Python-Review-GUI
+
+- **Fragestellung/Reasoning:** Der Nutzer praezisiert, dass die GUI nativ in
+  Python laufen soll und keine WebView sein soll. Der zuvor erstellte
+  pywebview-Launcher wird als Zwischenstand verworfen. PySide6/Qt Widgets
+  passt zum bestehenden Python-Backend und erlaubt das Weiterverwenden der
+  HTML-Oberflaeche als visuelle Referenz, ohne sie zur Laufzeit zu benoetigen.
+- **Eingaben/Setup:** Bestehende `GUI_SPECIFICATION.md`,
+  `BATCH_RENDERING_PROTOCOL.md`, `RENDERED_TRANSITION_METRIC_PROTOCOL.md`,
+  `output/batches/help_to_breath_ranked/manifest.json` als lokales
+  Formatbeispiel, Windows-Repository mit `.venv`.
+- **Umfang:** `src.gui_app` startet ein natives Qt-Widgets-Fenster.
+  `src/gui/manifest.py` liest Single-Pair-Batchmanifeste read-only und
+  adaptiert additive/historische Felder; `main_window.py` zeigt Trackpaare,
+  Varianten, Scores, Fehler und Cue-/Rendergrenzen, spielt je eine WAV ab und
+  speichert eine Auswahl separat; `waveform.py` berechnet die WAV-Huellkurve
+  in einem Worker. Auswahlvertrag: `docs/GUI_SELECTION_PROTOCOL.md`.
+  `requirements-gui.txt` fuehrt PySide6 optional. Pipeline-Steuerung,
+  Neurendering, Mehrtrack-Sequenz und Endexport bleiben ausserhalb dieses
+  Review-MVP.
+- **Testumfang/Ergebnis:** Kein Testlauf und kein manueller App-Durchklick in
+  dieser Session. PySide6 wurde nicht installiert. Die UI kann daher noch
+  nicht als Laufzeit-verifiziert gemeldet werden. Vorhandene Aenderungen in
+  nicht GUI-bezogenen Dateien wurden nicht bearbeitet.
+- **Schlussfolgerung/naechster Schritt:** Die native UI und der
+  manifestgebundene Auswahl-Sidecar sind implementiert. PySide6-Abhaengigkeit
+  installieren, ein Paarmanifest oeffnen und Wiedergabe/Wellenform/Sidecar
+  manuell pruefen; Reibungspunkte dokumentieren. Danach die GUI um
+  Pipeline-Aufgaben und spaeter Mehrtrack-Assembly erweitern.
+
+## 2026-10-06 — Nativer Mehrtrack-Transition-Builder
+
+- **Fragestellung und Reasoning:** Der primaere Ablauf soll mehrere Songs
+  aufnehmen, Analyse bei Bedarf erlauben und einen manuellen Uebergang von
+  Song A an Cuepoint A zu Song B an Cuepoint B erzeugen. Der Nutzer moechte
+  dafuer eine echte native Python-App statt eines Webinterfaces. Die vorhandene
+  Pipeline kann ein A/B-Paar mit manuellen Cuepoints rendern; daher wird dieser
+  konkrete Durchstich umgesetzt. Der trainierte Learned-Cue-Ranker ist laut
+  `ML_MODEL_CURRENT_STATE.md` nicht als Standard fuer reale Hoerqualitaet
+  freigegeben; die UI darf die technische Render-Metrik nicht als dessen
+  Modellurteil ausgeben.
+- **Eingaben/Setup:** Vorhandene native PySide6-Review-GUI, GUI-Spezifikation,
+  Pipeline `render_transition`, Trackanalyse `PreAnalysis` und technische
+  Renderbewertung `rank_rendered_transitions`; Repository-Pythonumgebung
+  `.venv`.
+- **Umfang:** `src.gui.transition_builder` stellt eine native Trackbibliothek,
+  optionalen Analyseaufruf, zwei Trackselektoren, klickbare Wellenformen und
+  Zeit-Cuepoints, Laenge-/Rendererauswahl, asynchrones Rendering, Audioplayer,
+  Ergebniswellenform und technische Bewertung bereit. Neu erzeugte WAVs und
+  JSON-Provenienz werden unter `output/gui_transitions/` gespeichert. Der
+  Launcher `src.gui_app` startet dies standardmaessig; der alte Manifestreview
+  bleibt per `--review-manifest` oder Manifestargument erreichbar. Die
+  Spezifikation, Statusseite und Startanleitung wurden an den Ablauf angepasst.
+- **Testumfang/Ergebnis:** Kein Testlauf und kein manueller App-Durchklick in
+  dieser Session; insbesondere sind PySide6-Laufzeit, Audioausgabe, Codec-
+  Unterstuetzung und Pipeline-Render aus der GUI noch nicht verifiziert.
+- **Schlussfolgerung und naechster Schritt:** Funktionaler nativer
+  A/B-Renderdurchstich ist implementiert, aber noch nicht als verwendbar
+  abgenommen. Als naechstes PySide6 installieren, mehrere repräsentative
+  Dateien laden, Analyse/Wiedergabe/Cuepointwechsel und Render pruefen und
+  eventuelle Laufzeitprobleme dokumentieren. Danach Projektpersistenz,
+  automatische Kandidatenerzeugung und spaeter Mashup-Assembly priorisieren.
+
+## 2026-10-06 — Mehrtrack-Kanten, ML-Auswahl und Mockup-Abgleich
+
+- **Fragestellung und Reasoning:** Der Analyse-Cache lud im GUI nicht
+  verlaesslich, Modellruns liessen sich beim Uebergang nicht waehlen und der
+  Ablauf war auf ein A/B-Paar beschraenkt. Zusaetzlich wich die native Ansicht
+  sichtbar vom bestehenden DAW-Mockup ab. Cacheidentitaet bleibt SHA- und
+  analyseversionsgebunden; der Pfad soll waehlbar sein. Fuer laengere
+  Sequenzen braucht jede Nachbarkante eigene Cuepoints, Einstellungen und
+  Vorschauergebnisse. Die Ansicht wird an Mockup-Hierarchie, Spurenfarben und
+  Inspectorposition angenaehert, ohne vorzugeben, dass die noch fehlenden
+  Analyse-/Alternativenpanels bereits integriert sind.
+- **Eingaben/Setup:** Vorhandene PySide6-Oberflaeche, Mockup
+  `docs/gui-mockups/beatbridge-daw-data-concept-v1.png`,
+  `docs/GUI_SPECIFICATION.md`, Analyse-Cache `PreAnalysis`, lokale
+  Trainingsmanifeste/Checkpointloader aus den ML-Evaluationen. Repo-Root und
+  `.venv` als vorgesehene Laufzeitumgebung.
+- **Umfang:** Analyse-Cache nutzt nun einen absoluten Repository-Default oder
+  einen in der UI waehlbaren Ordner und meldet Cachetreffer/Neuanalyse. Die
+  Sequenz kann Tracks anhaengen, umsortieren und entfernen; benachbarte Kanten
+  werden separat bearbeitet. Einfuegen erhaelt Einstellungen und Ergebnisse
+  bereits bestehender Kanten. A/B-Waveforms haben Cyan/Korall-Akzente und
+  stehen gestapelt neben dem Inspector. Eine App-Leiste bietet Kantenwechsel
+  und Wiedergabe der gerenderten Vorschau. Die ML-Liste zeigt abgeschlossene
+  lokale Runs der drei im Adapter unterstuetzten Modellfamilien mit Checkpoint;
+  die Inferenz bindet an Dataset-SHA/Normalisierung und gespeicherte
+  Checkpoint-Provenienz. ML-Vorschauen enthalten Kontext vor/nach dem
+  gerenderten Modellfenster, damit die technische Render-Metrik gueltige
+  Vor-/Nachlaufdaten erhaelt. UI-Status, Spezifikation und Startanleitung
+  wurden entsprechend aktualisiert.
+- **Testumfang/Ergebnis:** In dieser Arbeit wurde kein Testlauf und kein
+  manueller App-Durchklick ausgefuehrt. Keine Laufzeitbehauptung fuer
+  Cachetreffer, Qt-Signale/Layout, Audioausgabe oder die drei ML-Inferenzpfade.
+  Die optische Struktur wurde am gespeicherten Mockup-Bild abgeglichen; ein
+  pixelgenauer Gleichstand ist nicht umgesetzt. Quelldateien der Audios und
+  nicht GUI-bezogene Aenderungen wurden nicht angetastet.
+- **Schlussfolgerung und naechster Schritt:** Der Arbeitsstand deckt jetzt den
+  gewuenschten Mehrtrack-Ablauf und die Modellwahl konzeptionell ab und lehnt
+  sich staerker an das Mockup an. Als naechstes die App mit PySide6 manuell
+  starten, mindestens drei Tracks analysieren, A→B und B→C getrennt einstellen,
+  Cache erneut laden, Baseline sowie einen lokalen ML-Run rendern und die
+  resultierenden Layout-/Laufzeitprobleme nachtragen. Danach erst fehlende
+  Mockup-Bereiche wie Analysepanels, Variantenvergleich und Mashup-Export
+  integrieren.
+
+## 2026-10-06 — Drag-and-Drop, Cache-Pruefung und Waveform-Zoom
+
+- **Fragestellung und Reasoning:** Tracks sollen ohne Dateidialog aus der
+  Bibliothek in eine Mashup-Sequenz eingefuegt, dort per Ziehen sortiert und
+  ebenso aus dem Windows-Explorer importiert werden koennen. Beim Import ist
+  zuerst ein passender Analyse-Cache zu laden; Cache-Misses sollen klar
+  `Nicht analysiert` zeigen, ohne eine moeglicherweise lange Analyse still
+  anzustossen. Die Waveform braucht zoom- und verschiebbare Zeitansicht, wobei
+  Cuepointklicks weiterhin auf die sichtbare Zeitspanne abgebildet werden.
+- **Eingaben/Setup:** Native PySide6-Widgets `transition_builder.py` und
+  `waveform.py`, Cachevertrag der `PreAnalysis`-Klasse, Windows-Explorer-URLs,
+  vorhandene lineare Mehrtrack-Sequenz. Pythonumgebung `.venv`.
+- **Umfang:** Die Bibliothek stellt lokale Audio-URLs fuer Drag-and-Drop
+  bereit. Die Sequenz akzeptiert Explorer-Dateien und Bibliothekstracks an der
+  Drop-Position; interne Drops ordnen Sequenztracks neu. Umordnen verwirft
+  laufende Kantenbindungen, ohne erzeugte Audiodateien zu loeschen. Eine neue
+  Cache-only-API von `PreAnalysis` laedt nur gueltige aktuelle/Legacy-Eintraege
+  und kehrt bei Cache-Miss ohne Analyse zurueck; die GUI prueft dies asynchron
+  und zeigt Cache-Treffer, `Nicht analysiert` oder konkreten Prueffehler an.
+  Waveforms zeigen einen hochaufgeloesten Ausschnitt; Mausrad zoomt am
+  Zeigeranker, Shift+Mausrad oder Ziehen mit mittlerer Taste verschiebt,
+  Doppelklick setzt die Gesamtansicht zurueck. Cuepointklicks verwenden den
+  sichtbaren Ausschnitt.
+- **Testumfang/Ergebnis:** Keine Tests und kein manueller GUI-Durchklick in
+  dieser Arbeit. Drag-and-Drop-Events, Cache-Ladevorgaenge und Zoom/Cuepoint-
+  Interaktion sind daher noch nicht zur Laufzeit verifiziert.
+- **Schlussfolgerung und naechster Schritt:** Implementierung und Anleitung
+  sind aktualisiert. Beim naechsten manuellen Durchklick Explorer-Import,
+  Bibliothek→Sequenz, internes Sortieren, gueltigen Cache-Treffer, Cache-Miss,
+  Zoom/Pan und Cuepointwahl pruefen; Fehler im Log ergaenzen. Die explizite
+  Analyseaktion bleibt fuer Cache-Misses verfuegbar.
+
+## 2026-10-06 — Korrektur: Waveform-Overlay und Explorer-Drop
+
+- **Fragestellung und Reasoning:** Der Nutzer meldet, dass der obere
+  Waveform-Bedienhinweis die Audiodarstellung ueberlagert und Explorer-Drops
+  nicht ankommen. Der Bedienhinweis gehoert in die Spurueberschrift. Qt-Item-
+  Views empfangen native Drops auf ihrem Viewport, daher wird die externe
+  Dropannahme explizit dort und zusaetzlich auf der Sequenzflaeche behandelt;
+  interne Sequenzbewegungen laufen weiter ueber den Item-View.
+- **Eingaben/Setup:** Nutzerfeedback zum laufenden GUI, `WaveformWidget`,
+  `SequenceListWidget`, `SequenceDropPanel`; native Qt-/Windows-URL-Mime-Daten.
+- **Umfang:** Bei geladener Waveform zeichnet der Painter keinen Hinweistext
+  mehr in die Kurve. Zoom-/Pan-Hinweise stehen in der Spurueberschrift.
+  Sequenz-Viewport und Sequenzpanel akzeptieren lokale Datei-URLs und den
+  internen BeatBridge-Track-Mime-Typ. Externe Drops werden als Kopie an die
+  bestehende Import-/Cache-Pruefung uebergeben; interne Moves bleiben
+  Umsortierungen.
+- **Testumfang/Ergebnis:** Kein Test und kein manueller Windows-GUI-Durchklick
+  in dieser Arbeit; der gemeldete Fehler ist daher noch nicht am laufenden
+  Explorer bestaetigt behoben.
+- **Schlussfolgerung und naechster Schritt:** Der Qt-Drop-Pfad ist expliziter
+  und der Text wurde aus der Waveform entfernt. Im naechsten Durchklick jeweils
+  eine Datei auf die Sequenzliste und auf den freien Sequenzbereich ziehen,
+  dann interne Sortierung pruefen und die Waveform bei mehreren Zoomstufen
+  visuell kontrollieren.
+
+## 2026-10-06 — Korrektur: Drops ausserhalb der Sequenz und Waveformdetail
+
+- **Fragestellung und Reasoning:** Rueckmeldung: Explorer-Drops werden nur in
+  der Sequenz angenommen und Zoom zeigt einen Balken statt einer lesbaren
+  Wellenform. Die Importannahme muss auch die Bibliothek und den uebrigen
+  App-Arbeitsbereich umfassen. Die bisherige Min/Max-Huellkurve nutzte nur
+  `abs(signal)` und lag dadurch einseitig ueber der Nulllinie; signierte
+  Minima/Maxima stellen beide Signalhalbwellen dar.
+- **Eingaben/Setup:** Nutzerfeedback zum laufenden Qt-GUI, `ApplicationDropWidget`,
+  `TrackLibraryList`, `SequenceDropPanel`, `SequenceListWidget` und
+  `_WaveformTask`.
+- **Umfang:** Lokale Explorer-Dateien werden jetzt auch auf der gesamten
+  App-Arbeitsflaeche und direkt in der Trackbibliothek angenommen; Sequenz-
+  und Bibliothekseintrag-Drops bleiben speziell behandelt. Alle Pfade laufen
+  durch dieselbe Erweiterungs-/Dateipruefung und Cache-Pruefung. Die
+  Waveformaggregation berechnet pro Zeit-Bin signierte Kanalminima und
+  -maxima, die um die Nulllinie gezeichnet werden.
+- **Testumfang/Ergebnis:** Kein Test und kein manueller Windows-GUI-Durchklick
+  ausgefuehrt. Explorer-Propagation ueber Kindwidgets und Darstellung mehrerer
+  Audioformate/Zoomstufen sind noch nicht zur Laufzeit verifiziert.
+- **Schlussfolgerung und naechster Schritt:** Die Importbereiche und die
+  Datenbasis fuer eine beidseitige Waveform sind erweitert. Explorer-Datei auf
+  Bibliothek, Sequenz, Waveform und freien Arbeitsbereich ziehen und die
+  sichtbare Kurve bei 1x/mehrfach Zoom pruefen; bei weiterem Drop-Verlust die
+  konkreten `QDragEnterEvent`-/`QDropEvent`-Empfaenger instrumentieren.
+
+## 2026-10-06 — Waveform-Worker: veralteter Variablenname
+
+- **Fragestellung und Reasoning:** Nutzer meldet beim Oeffnen des Fensters
+  `Name levels is not defined`. Die signierte Waveformaggregation hatte
+  `levels` durch `frame_minimums`/`frame_maximums` ersetzt, eine Laengenreferenz
+  im Bucket-Index aber nicht aktualisiert.
+- **Eingaben/Setup:** Nutzerbericht und `_WaveformTask.run()` in
+  `src/gui/waveform.py`.
+- **Umfang:** Die Bucket-Index-Laenge verwendet nun `len(frame_minimums)`, also
+  exakt die Anzahl Frames, fuer die Minima und Maxima berechnet werden.
+- **Testumfang/Ergebnis:** Kein Testlauf und kein App-Neustart ausgefuehrt.
+  Der berichtete Namensfehler wurde statisch lokalisiert und die Referenz
+  angepasst; Waveformdarstellung bleibt zur Laufzeit zu pruefen.
+- **Schlussfolgerung und naechster Schritt:** Die `NameError`-Ursache ist im
+  Code beseitigt. App erneut starten und Waveform laden; bei weiterem Fehler
+  den vollstaendigen Traceback erfassen.
+
+## 2026-10-06 — Waveform-Zoomdarstellung und Trackkopf
+
+- **Fragestellung und Reasoning:** Nutzer meldet, dass beim Hineinzoomen nur
+  Balken sichtbar sind und Songname/BPM in die Waveform hineinragen.
+  Vereinzelte vertikale Min/Max-Striche wirken bei grober Aufloesung wie ein
+  Balkendiagramm. Eine feinere signed Min/Max-Huellkurve mit verbundener,
+  gefuellter Ober-/Unterkante bildet die Audioform lesbarer ab. Trackidentitaet
+  und BPM gehoeren in die Spur-Kopfzeile, ausserhalb des Plotbereichs.
+- **Eingaben/Setup:** Nutzerfeedback; `WaveformWidget.paintEvent`,
+  `_WaveformTask.run` und `_build_track_wave_panel`.
+- **Umfang:** Die Waveformaggregation erfasst bis zu 160.000 zeitliche Bins
+  (begrenzt auf die Anzahl Audiosamples) und uebergibt NumPy-Arrays statt
+  Python-Listen. Beim Zeichnen werden Bins passend zur Widgetbreite aggregiert;
+  obere und untere Signalgrenze werden als verbundene, leicht gefuellte Form
+  gezeichnet. Songdatei und BPM erscheinen in einer einzeiligen Trackkopf-
+  Zusammenfassung, Gridprovenienz steht im Tooltip.
+- **Testumfang/Ergebnis:** Kein Testlauf und kein GUI-Neustart ausgefuehrt.
+  Darstellungsqualitaet und Zeichenlast bei Wiedergabe/Zoom sind noch nicht
+  zur Laufzeit geprueft.
+- **Schlussfolgerung und naechster Schritt:** Die visuelle Struktur ist
+  korrigiert; bei der naechsten manuellen Nutzung die Gesamtansicht und starke
+  Zoomstufen vergleichen und auf fluessiges Neuzeichnen achten.
+
+## 2026-10-06 — Waveform nach NumPy-Umstellung leer
+
+- **Fragestellung und Reasoning:** Nutzer meldet, dass die Waveform nach der
+  letzten Huellkurven-Aenderung gar nicht mehr gezeichnet wird. Die
+  Hintergrundaufgabe liefert jetzt NumPy-Arrays; `paintEvent` und `wheelEvent`
+  verwendeten noch Listen-Wahrheitspruefungen, die bei mehrdimensionalen
+  Arrays einen `ValueError` ausloesen.
+- **Eingaben/Setup:** Nutzerfeedback und alle Referenzen auf `_minimums` in
+  `src/gui/waveform.py`.
+- **Umfang:** Beide Wahrheitspruefungen nutzen nun explizit `len(...)`; die
+  Typannotationen erlauben Arraydaten und leere Listen fuer den Initialzustand.
+- **Testumfang/Ergebnis:** Kein Testlauf und kein App-Neustart ausgefuehrt.
+  Fehlerursache statisch identifiziert und korrigiert; Rendern bleibt
+  laufzeitlich unverifiziert.
+- **Schlussfolgerung und naechster Schritt:** Waveform- und Zoompfad koennen
+  NumPy-Daten jetzt ohne implizite Array-Wahrheitspruefung verarbeiten. App
+  neu starten und Audio laden; bei weiterem Fehler den GUI-Traceback erfassen.
+
+## 2026-10-20 — Redaktioneller Humanize-Durchgang im Overleaf-Entwurf
+
+- **Fragestellung und Reasoning:** Prüfen, ob die englische Thesis-Prosa erkennbare
+  formelhafte Wiederholungen enthält, ohne wissenschaftliche Aussagen,
+  Einschränkungen oder LaTeX-Verweise zu verändern. Der Durchgang betrifft die
+  Kapitel 1 bis 6; Abstract, Conclusion und Appendix enthalten derzeit nur
+  TODOs und wurden nicht umformuliert.
+- **Eingaben/Setup:** `overleaf/chapters/*.tex`, Humanize-Referenzen und
+  `surface_scan.py`; ausgeführt mit `.venv\Scripts\python.exe -X utf8` im
+  Repository. Der Scanner liest rohes TeX, sodass Befehle, Tabellen und
+  wiederkehrende Fachbegriffe manche Kennzahlen verfälschen können.
+- **Testlauf 1 — Ausgangsscan:** `surface_scan.py` zunächst für
+  `01_introduction.tex`, danach als Batch für die sechs ausgearbeiteten
+  Kapitel. Ergebnis: Introduction 1.791 Wörter, 26 Trikolons, vier parallele
+  Satzanfänge; Results 2.083 Wörter, 24 Trikolons, drei parallele Satzanfänge;
+  Discussion 2.166 Wörter, 34 Trikolons, drei parallele Satzanfänge. Der
+  Scanner meldete Wiederholungen, überwiegend technische Wendungen wie
+  Längenangaben und Protokollbegriffe. Schlussfolgerung: Frage-Überschriften,
+  nummerierte Beitrags-/Prioritätsformeln und einige doppelte Vorbehalte
+  gezielt bearbeiten; technische Listen beibehalten.
+- **Testlauf 2 — Nachscan:** Derselbe Batchbefehl nach den Textänderungen
+  und erneut nach der abschließenden Faktenprüfung. Final: Introduction
+  1.742 Wörter, 25 Trikolons, drei parallele Satzanfänge; Results 2.054
+  Wörter, 22 Trikolons, zwei parallele Satzanfänge; Discussion nach der
+  letzten Einzelkorrektur 2.118 Wörter, 33 Trikolons, zwei parallele
+  Satzanfänge. Die Satzlängen-CV blieb bei
+  Introduction 0,448→0,440, Results 0,809→0,827 und Discussion
+  0,423→0,412 ungefähr stabil. Die Frage-Überschriften in Results wurden
+  als Sachüberschriften formuliert; der Scanner zählt diese TeX-Überschriften
+  nicht als rhetorische Fragen. Schlussfolgerung: Der Durchgang reduziert die
+  tatsächlich bearbeiteten Muster, ohne die Satzlängen stark zu glätten.
+- **Testlauf 2a — Trefferprüfung:** Die JSON-Treffer für wiederholte Phrasen,
+  partizipiale Enden und Wortliste wurden je Kapitel ausgegeben. Viele Treffer
+  waren TeX-Formeln oder Fachbegriffe (`\ref`-Ziele, Tabellenbefehle,
+  Übergangslängen); einzelne Partizipialtreffer waren Satzmitten statt
+  Nachträge. In Discussion blieb `Moreover` als entbehrlicher Übergang und
+  wurde entfernt. Ein anschließender `--text`-Scan dieses Kapitels meldete
+  Wortliste 0,0/1.000 Wörter und Satzlängen-CV 0,412. Schlussfolgerung:
+  Scanner-Zahlen nur nach Prüfung der zitierten Stellen als Stilbefund nutzen.
+- **Testlauf 3 — Diff und Inhaltsanker:** `git -C overleaf diff --check`
+  bestand ohne Whitespace-Fehler. Ein `.venv`-Python-Vergleich der fünf
+  geänderten Kapitel mit `HEAD` fand dieselben `\cite`-, `\ref`- und
+  `\label`-Befehle sowie dieselben Ziffern-Tokens; alle fünf Dateien hatten
+  eine geschlossene Klammerbilanz. Das prüft syntaktische und numerische
+  Anker, nicht die vollständige semantische Gleichwertigkeit. Der Diff wurde
+  deshalb zusätzlich gelesen; ausgelassene Aussagen zu globalem
+  Similarity-Score, explizitem Renderer und artefaktorientiertem Design
+  wurden vor dem letzten Check wiederhergestellt.
+- **Testlauf 4 — LaTeX-Gesamtbuild:**
+  `compile_latex_document(path=overleaf, mainFile=CGThesis.tex)` erreichte
+  die Kapitel, scheiterte aber mit `error: program not found` beim
+  Bibliographie-Schritt. `CGThesis.tex` verwendet `\addbibresource` und
+  `\printbibliography`; der Build meldete zunächst undefinierte Zitate und
+  mehrere Overfull-/Underfull-Boxen. `Get-Command` fand lokal weder
+  `latexmk`, `biber`, `pdflatex` noch `xelatex`. Schlussfolgerung: Kein
+  erfolgreicher Gesamt-PDF-Build nachweisbar; Bibliographie-Programm in der
+  Build-Umgebung klären und dann erneut kompilieren.
+- **Redaktionelle Beobachtung:** Kapitel 4 bezeichnet die GUI noch als
+  geplant und behauptet, es gebe keinen GUI-Code. `src/gui_app.py` und der
+  aktuelle `docs/STATUS.md` belegen inzwischen einen nativen GUI-Pfad.
+  Dieser sachliche Aktualisierungsbedarf wurde beim reinen Stil-Durchgang
+  nicht stillschweigend umgeschrieben; der Implementierungsstand muss vor
+  Abgabe separat mit Kapitel 4 abgeglichen werden.

@@ -1,0 +1,83 @@
+program: wandb_sweep.py
+name: variable-tcn-bilstm-transition-control-v1-bayesian-miniter50-warmup5-plateau10-20260930
+method: bayes
+metric:
+  name: best_validation_loss
+  goal: minimize
+early_terminate:
+  type: hyperband
+  min_iter: 50
+  eta: 3
+
+# Tune the 2/4/6/8-bar Dataset Format 2 model. The v2 dataset, verified
+# train/validation waveform cache, equal-length weighting, renderer and
+# objective stay fixed across trials.
+parameters:
+  seed:
+    value: 20260930
+  max_epochs:
+    value: 150
+  batch_size:
+    values: [2, 4, 8]
+  learning_rate:
+    distribution: log_uniform_values
+    min: 0.0002
+    max: 0.002
+  lr_warmup_epochs:
+    value: 5
+  lr_warmup_start_factor:
+    value: 0.1
+  lr_scheduler_patience:
+    value: 10
+  lr_scheduler_factor:
+    value: 0.5
+  lr_scheduler_threshold:
+    value: 0.0001
+  lr_scheduler_min_lr_factor:
+    value: 0.05
+  weight_decay:
+    values: [0.00001, 0.0001, 0.0003]
+  gradient_clip_norm:
+    values: [0.5, 1.0, 2.0]
+  length_weighting:
+    value: equal_length
+  encoder_channels:
+    value: [64, 128]
+  tcn_kernel_size:
+    values: [3, 5, 7]
+  tcn_dilation:
+    values: [1, 2, 4]
+  fusion_dimension:
+    value: 256
+  controller_hidden_size:
+    value: 128
+  controller_layers:
+    value: 2
+  output_dimension:
+    value: 10
+  dropout:
+    values: [0.0, 0.1, 0.2]
+  increment_logit_bound:
+    value: 0.6
+  maximum_vocal_ducking:
+    values: [0.5, 0.65, 0.75]
+  initial_vocal_duck_logit:
+    values: [-5.0, -4.0, -3.0]
+
+command:
+  - ${env}
+  - .venv/Scripts/python.exe
+  - ${program}
+  - sweep-variable-tcn-bilstm
+  - output/datasets/prive_scantraxx_extension_variable_v2_fp2_roformer_2-4-6-8bar_top1x3_split20260923_run02_local_four_four
+  - output/training_runs/wandb_sweeps/variable_tcn_bilstm_transition_control_v1
+  - --cache-root
+  - output/ml_cache/variable_bridge_waveform_v2/prive_scantraxx_extension_run02_wandb_full_20260926
+  - --transition-bars
+  - "2"
+  - "4"
+  - "6"
+  - "8"
+  - --device
+  - auto
+  - --no-wandb-log-checkpoints

@@ -280,6 +280,41 @@ class PreAnalysis:
         
         return self._result()
 
+    def load_cached_analysis(self, song_path):
+        """Load a matching analysis cache without analysing a cache miss.
+
+        Returns ``None`` when no valid current or legacy cache entry exists.
+        This is used by the desktop importer to report analysis state without
+        unexpectedly starting the comparatively expensive analysis pipeline.
+        """
+        self.song_path = Path(song_path)
+        self.missing_beats = {"librosa": [], "auftakt": []}
+        self.merge_diagnostics = None
+        self.song_hash = _file_sha256(self.song_path)
+        self.cache_directory = (
+            self.analysis_location
+            / ANALYSIS_CACHE_NAMESPACE
+            / self.song_hash
+            / self.analysis_id
+        )
+        self.grid_metadata = None
+        self.previous_analysis = self.find_previous_analysis()
+        if self.previous_analysis and self.load_previous_analysis():
+            try:
+                self.beat_frames, self.grid_metadata = ensure_bar_metadata_with_provenance(
+                    self.beat_frames,
+                    bpm=self.bpm,
+                    existing_metadata=self.grid_metadata,
+                )
+            except ValueError:
+                pass
+            else:
+                self._finalize_grid_metadata()
+                return self._result()
+        self.previous_analysis = None
+        self.previous_analysis_kind = None
+        return None
+
     def _result(self):
         return AnalysisResult(
             bpm=float(self.bpm),

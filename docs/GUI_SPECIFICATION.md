@@ -525,19 +525,44 @@ Screenreadern geprueft werden.
 
 ## 14. Umsetzungsstufen
 
-### Stufe A: Manifestbasierter Review-MVP
+### Stufe A: Manueller Paar-Transition-Builder
 
-Ziel ist ein frueh nutzbarer, risikoarmer Durchstich ohne neue fachliche
-Pipeline:
+Ziel ist ein frueh nutzbarer nativer Durchstich in die vorhandene
+Analyse-/Render-Pipeline:
 
-- vorhandenes Batchmanifest oeffnen,
-- zwei Tracks und Cuepoints darstellen,
-- gerenderte WAV-Varianten abspielen,
-- Rankingkomponenten und Fehler anzeigen,
-- Varianten vergleichen und eine Auswahl lokal speichern.
+- mehrere Audiodateien in eine temporaere Trackbibliothek laden,
+- Audiodateien aus dem Windows-Explorer direkt in eine Sequenzkante/Position
+  ziehen und Bibliothekseintraege per Drag-and-Drop zur Sequenz hinzufuegen,
+- Sequenzabschnitte innerhalb der Sequenz per Drag-and-Drop umsortieren,
+- Tracks bei Bedarf analysieren und BPM/Gridstatus anzeigen,
+- mehrere Tracks in eine lineare Sequenz aufnehmen und benachbarte gerichtete
+  Kanten A→B, B→C usw. einzeln bearbeiten,
+- Cuepoints auf den Trackwellenformen setzen oder als Zeit eingeben,
+- Uebergangslaenge und vorhandenen Renderer waehlen; abgeschlossene lokale
+  Runs unterstuetzter ML-Control-Modelle koennen alternativ zur Baseline
+  ausgewaehlt werden,
+- eine Vorschau mit der bestehenden Pipeline rendern, abspielen und technisch
+  bewerten,
+- Ergebnis und Quellen-SHAs als neue Artefakte speichern, ohne Originale zu
+  ueberschreiben,
+- Cachebasis auswaehlen und Cachetreffer sichtbar melden.
 
-Noch nicht enthalten: neuer Audioimport, Pipeline-Start aus der GUI,
-Cuepoint-Dragging, Neurendering und kompletter Mashup-Export.
+Beim Import wird zuerst ein gueltiger Cacheeintrag gesucht und geladen. Ein
+Cache-Miss startet keine implizite Analyse; der Track wird als `Nicht
+analysiert` markiert und kann explizit analysiert werden. Die Wellenform bietet
+Mausrad-Zoom um die Zeigerposition, horizontales Verschieben per
+Shift+Mausrad oder Ziehen mit der mittleren Maustaste und Doppelklick fuer die
+Gesamtansicht.
+
+Der aktuelle Durchstich haelt Sequenz und Kantenstatus nur fuer die laufende
+Sitzung; er speichert noch kein wiedereroeffnbares Mehrtrackprojekt und erzeugt
+keine automatische Kandidatenauswahl. Modellkontrollen sind experimentell und
+vier Takte lang; die Render-Metrik bleibt eine technische Bewertung des
+gerenderten Audios, keine gelernte oder menschliche Qualitaetsbewertung. Ein
+optional manifestbasierter Review-MVP bleibt fuer vorhandene Batchartefakte
+verfuegbar. Die native Qt-Oberflaeche folgt der Mockup-Hierarchie, bildet aber
+noch nicht alle Mockup-Analysepanels, Alternativenkarten, Audioeinstellungen
+oder Exportfunktionen ab.
 
 ### Stufe B: Interaktiver Paar-Editor
 
@@ -573,24 +598,25 @@ Kanten konkret.
 
 Stufe A gilt erst als umgesetzt, wenn alle folgenden Punkte erfuellt sind:
 
-1. Ein vorhandenes gueltiges Batchmanifest kann ohne Veraenderung geoeffnet
-   werden.
-2. A/B-Track, Candidate-ID, Cuepoints, Taktlaenge, Renderer und WAV-Pfad
-   stimmen mit dem Manifest ueberein.
-3. Timeline und Analysecharts folgen beim Abspielen derselben Zeitautoritaet.
-4. Preview-Kontext und Uebergangsgrenzen sind visuell unterscheidbar.
-5. Mindestens drei vorhandene Varianten koennen ohne ueberlappende Wiedergabe
-   verglichen werden.
-6. Fehlende optionale Metriken erscheinen als nicht verfuegbar und nicht als
-   `0`.
-7. Ein fehlerhafter WAV-Pfad blockiert andere gueltige Varianten nicht.
-8. Feature-, Render- und Modellscores sind eindeutig benannt.
-9. Eine Auswahl wird als Referenz gespeichert, ohne Audio oder Manifest zu
-   ueberschreiben.
-10. Bedienung von Laden, Wiedergabe, Variantenwahl und Uebernahme funktioniert
-    per Tastatur.
-11. Ein manueller Durchklick dokumentiert Reibungspunkte; ein spaeterer
-    automatisierter UI-Test ersetzt diesen Durchklick nicht.
+1. Mindestens drei unterschiedliche Audiodateien lassen sich gleichzeitig
+   laden und als Song A/B waehlen.
+2. Cuepoints koennen per Wellenformklick und Zeitfeld gesetzt werden;
+   Trackwechsel uebernehmen keine alten Cuepoints.
+3. Trackanalyse laeuft ausserhalb des UI-Threads und zeigt BPM/Gridstatus oder
+   den konkreten Fehler.
+4. Der manuelle Render nutzt die ausgewaehlten Tracks, Cuepoints, Taktlaenge
+   und Renderer der vorhandenen Pipeline.
+5. Das Ergebnis laesst sich abspielen; Rendergrenzen werden in der
+   Ergebniswellenform markiert.
+6. Render-Metrik, Provenienz und Fehler sind als technische Baseline benannt
+   und werden nicht als menschliche Hoerqualitaet dargestellt.
+7. Vorschau und Sidecar werden neu geschrieben; Quelldateien bleiben
+   unveraendert.
+8. Ein manueller Durchklick dokumentiert Reibungspunkte; ein spaeterer
+   automatisierter UI-Test ersetzt diesen Durchklick nicht.
+
+Der optionale manifestbasierte Review-Modus besitzt eigene
+Abnahmekriterien aus dem urspruenglichen Review-MVP.
 
 ## 16. Zusaetzliche Abnahmekriterien fuer Mehrtrack-Projekte
 
@@ -613,13 +639,25 @@ Stufe A gilt erst als umgesetzt, wenn alle folgenden Punkte erfuellt sind:
 
 ## 17. Noch zu entscheidende Implementierungsfragen
 
-Diese Punkte sind bewusst nicht durch das Mockup entschieden:
+Die Implementierungsfragen werden vor dem jeweiligen Bauabschnitt datiert
+entschieden. Beschlossene Entscheidungen:
 
-- GUI-Framework und Packaging-Ziel,
+- **Native Python-GUI, 2026-10-06:** Die produktive Desktop-Oberflaeche wird
+  mit PySide6/Qt Widgets umgesetzt. Das HTML-Mockup bleibt visuelle Referenz,
+  ist aber nicht Laufzeitbestandteil der nativen GUI. Ein zuvor angelegter
+  pywebview-Launcher war ein Zwischenstand und wurde auf Nutzerwunsch ersetzt.
+  Der native Einstieg ist `src.gui_app`; GUI-Abhaengigkeiten bleiben optional.
+  Der primaere Einstieg ist der manuelle Paar-Transition-Builder aus Stufe A.
+  Ein manifestbasierter Review-MVP bleibt als optionaler Modus erhalten und
+  speichert Auswahlen gemaess [`GUI_SELECTION_PROTOCOL.md`](./GUI_SELECTION_PROTOCOL.md).
+
+Weiter offen:
+
+- Packaging als installierbare/distributable Anwendung,
 - Audio-Engine und Strategie fuer samplegenauen Variantenwechsel,
-- Ort und Versionierung des GUI-Projektformats,
-- ob Stufe A ein vorhandenes Manifest per Dateidialog oder ueber einen
-  Projektkatalog oeffnet,
+- Ort und Versionierung des Mehrtrack-GUI-Projektformats,
+- welche Codec-Kombination fuer Wellenform, Wiedergabe und Rendering auf den
+  Zielplattformen verbindlich unterstuetzt wird,
 - genaue Herkunft der Waveform-Pyramiden fuer schnelles Zoomen,
 - ob Tonartdarstellung als Camelot, klassische Tonart oder beides erfolgt,
 - welche Scorekomponenten ueber unterschiedliche Methoden hinweg gemeinsam

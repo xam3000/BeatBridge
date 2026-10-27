@@ -1,0 +1,71 @@
+program: wandb_sweep_vocal.py
+name: vocal-time-shared-mlp-v2-bayesian-20260930
+method: bayes
+metric:
+  name: best_validation_loss
+  goal: minimize
+
+# This sweep tunes the active vocal-aware MLP on the fixed Feature Protocol 1
+# train/validation dataset. Dataset, renderer, and objective stay unchanged.
+parameters:
+  seed:
+    value: 20260930
+  max_epochs:
+    value: 100
+  batch_size:
+    values: [3, 5, 7]
+  optimizer:
+    values: [adamw, adam]
+  learning_rate:
+    distribution: log_uniform_values
+    min: 0.0001
+    max: 0.003
+  weight_decay:
+    values: [0.000001, 0.00001, 0.0001, 0.0003]
+  adam_beta1:
+    values: [0.85, 0.9, 0.95]
+  adam_beta2:
+    values: [0.99, 0.999]
+  adam_epsilon:
+    values: [0.00000001, 0.0000001]
+  lr_scheduler:
+    value: reduce_on_plateau
+  scheduler_factor:
+    values: [0.2, 0.5, 0.8]
+  scheduler_patience:
+    values: [2, 3, 4]
+  scheduler_threshold:
+    values: [0.00001, 0.0001, 0.001]
+  scheduler_cooldown:
+    values: [0, 1, 2]
+  scheduler_min_lr:
+    distribution: log_uniform_values
+    min: 0.0000001
+    max: 0.00001
+  patience:
+    values: [6, 8, 10]
+  min_delta:
+    values: [0.00001, 0.0001, 0.0005]
+  gradient_clip_norm:
+    values: [0.5, 1.0, 2.0]
+  hidden_dimensions:
+    values:
+      - [32, 16]
+      - [64, 32]
+      - [128, 64]
+  dropout:
+    values: [0.0, 0.1, 0.2, 0.3]
+  maximum_vocal_ducking:
+    values: [0.5, 0.65, 0.75]
+  initial_vocal_duck_logit:
+    values: [-5.0, -4.0, -3.0]
+
+command:
+  - ${env}
+  - ${interpreter}
+  - ${program}
+  - sweep-vocal
+  - output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805
+  - output/training_runs/wandb_sweeps/vocal_time_shared_mlp_v2
+  - --device
+  - auto

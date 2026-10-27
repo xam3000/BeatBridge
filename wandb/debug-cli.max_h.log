@@ -2,3 +2,3827 @@
 2026-08-20 12:04:32 INFO Closing mailbox, abandoning 0 handles.
 2026-08-20 12:04:40 INFO Reached EOF.
 2026-08-20 12:04:40 INFO Closing mailbox, abandoning 0 handles.
+2026-09-30 18:22:36 INFO Reached EOF.
+2026-09-30 18:22:36 INFO Closing mailbox, abandoning 0 handles.
+2026-09-30 18:23:58 INFO Running runs: []
+2026-09-30 18:23:59 INFO Agent received command: run
+2026-09-30 18:23:59 INFO Agent starting run with config:
+	adam_beta1: 0.9
+	adam_beta2: 0.999
+	adam_epsilon: 1e-07
+	batch_size: 3
+	dropout: 0
+	gradient_clip_norm: 0.5
+	hidden_dimensions: [32, 16]
+	initial_vocal_duck_logit: -4
+	learning_rate: 0.000752610381139776
+	lr_scheduler: reduce_on_plateau
+	max_epochs: 100
+	maximum_vocal_ducking: 0.5
+	min_delta: 1e-05
+	optimizer: adam
+	patience: 6
+	scheduler_cooldown: 0
+	scheduler_factor: 0.8
+	scheduler_min_lr: 3.590951358608869e-07
+	scheduler_patience: 2
+	scheduler_threshold: 0.001
+	seed: 20260930
+	weight_decay: 1e-05
+2026-09-30 18:23:59 INFO About to run command: python wandb_sweep_vocal.py sweep-vocal output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/vocal_time_shared_mlp_v2 --device auto
+2026-09-30 18:24:04 INFO Running runs: ['r682f2lj']
+2026-09-30 18:24:04 INFO Cleaning up finished run: r682f2lj
+2026-09-30 18:24:04 INFO Reached EOF.
+2026-09-30 18:24:04 INFO Closing mailbox, abandoning 0 handles.
+2026-09-30 18:24:07 INFO Agent received command: run
+2026-09-30 18:24:07 INFO Agent starting run with config:
+	adam_beta1: 0.95
+	adam_beta2: 0.999
+	adam_epsilon: 1e-07
+	batch_size: 5
+	dropout: 0.3
+	gradient_clip_norm: 1
+	hidden_dimensions: [32, 16]
+	initial_vocal_duck_logit: -3
+	learning_rate: 0.0011540926761056934
+	lr_scheduler: reduce_on_plateau
+	max_epochs: 100
+	maximum_vocal_ducking: 0.75
+	min_delta: 1e-05
+	optimizer: adam
+	patience: 10
+	scheduler_cooldown: 2
+	scheduler_factor: 0.5
+	scheduler_min_lr: 7.20334354686531e-07
+	scheduler_patience: 3
+	scheduler_threshold: 0.0001
+	seed: 20260930
+	weight_decay: 1e-06
+2026-09-30 18:24:07 INFO About to run command: python wandb_sweep_vocal.py sweep-vocal output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/vocal_time_shared_mlp_v2 --device auto
+2026-09-30 18:24:09 INFO Reached EOF.
+2026-09-30 18:24:09 INFO Closing mailbox, abandoning 0 handles.
+2026-09-30 19:31:55 INFO Reached EOF.
+2026-09-30 19:31:55 INFO Closing mailbox, abandoning 0 handles.
+2026-09-30 19:32:20 INFO Running runs: []
+2026-09-30 19:32:21 INFO Agent received command: run
+2026-09-30 19:32:21 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0015681517664438334
+	max_epochs: 100
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 3
+	weight_decay: 1e-05
+2026-09-30 19:32:21 INFO About to run command: python wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-09-30 19:32:23 INFO Reached EOF.
+2026-09-30 19:32:23 INFO Closing mailbox, abandoning 0 handles.
+2026-09-30 19:36:29 INFO Reached EOF.
+2026-09-30 19:36:29 INFO Closing mailbox, abandoning 0 handles.
+2026-09-30 19:36:51 INFO Running runs: []
+2026-09-30 19:36:51 INFO Agent received command: run
+2026-09-30 19:36:51 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.000512642182886323
+	max_epochs: 100
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 5
+	weight_decay: 0.0003
+2026-09-30 19:36:51 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-09-30 19:36:56 INFO Running runs: ['6eqzbl9s']
+2026-09-30 19:58:34 INFO Cleaning up finished run: 6eqzbl9s
+2026-09-30 20:47:48 INFO Running runs: []
+2026-09-30 20:47:48 INFO Agent received command: run
+2026-09-30 20:47:48 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.001975072463797402
+	max_epochs: 100
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 7
+	weight_decay: 0.0001
+2026-09-30 20:47:48 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-09-30 20:47:54 INFO Running runs: ['1b2wt91q']
+2026-09-30 20:55:01 INFO Agent received command: stop
+2026-09-30 20:55:01 INFO Stop: 1b2wt91q
+2026-09-30 20:55:07 INFO Agent received command: stop
+2026-09-30 20:55:12 INFO Agent received command: stop
+2026-09-30 20:55:17 INFO Agent received command: stop
+2026-09-30 20:55:23 INFO Agent received command: stop
+2026-09-30 20:55:28 INFO Agent received command: stop
+2026-09-30 20:55:33 INFO Cleaning up finished run: 1b2wt91q
+2026-09-30 20:55:33 INFO Reached EOF.
+2026-09-30 20:55:33 INFO Closing mailbox, abandoning 0 handles.
+2026-09-30 20:55:36 INFO Agent received command: run
+2026-09-30 20:55:36 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0017241664378653725
+	max_epochs: 100
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 3
+	weight_decay: 1e-05
+2026-09-30 20:55:36 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-09-30 20:55:41 INFO Running runs: ['nz2flewh']
+2026-09-30 21:02:01 INFO Agent received command: stop
+2026-09-30 21:02:01 INFO Stop: nz2flewh
+2026-09-30 21:02:06 INFO Agent received command: stop
+2026-09-30 21:02:11 INFO Agent received command: stop
+2026-09-30 21:02:17 INFO Agent received command: stop
+2026-09-30 21:02:22 INFO Agent received command: stop
+2026-09-30 21:02:27 INFO Agent received command: stop
+2026-09-30 21:02:32 INFO Cleaning up finished run: nz2flewh
+2026-09-30 21:02:32 INFO Reached EOF.
+2026-09-30 21:02:32 INFO Closing mailbox, abandoning 0 handles.
+2026-09-30 21:02:35 INFO Agent received command: run
+2026-09-30 21:02:35 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.0006509166308303365
+	max_epochs: 100
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 5
+	weight_decay: 0.0003
+2026-09-30 21:02:35 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-09-30 21:02:40 INFO Running runs: ['vw8a9coq']
+2026-09-30 21:02:56 INFO Reached EOF.
+2026-09-30 21:02:56 INFO Closing mailbox, abandoning 0 handles.
+2026-09-30 21:09:44 INFO Running runs: []
+2026-09-30 21:09:45 INFO Agent received command: run
+2026-09-30 21:09:45 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.0003991520222893949
+	max_epochs: 100
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 5
+	weight_decay: 0.0003
+2026-09-30 21:09:45 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-09-30 21:09:50 INFO Running runs: ['ft6m2v4h']
+2026-09-30 21:13:05 INFO Agent received command: stop
+2026-09-30 21:13:05 INFO Stop: ft6m2v4h
+2026-09-30 21:13:10 INFO Agent received command: stop
+2026-09-30 21:13:16 INFO Agent received command: stop
+2026-09-30 21:13:21 INFO Agent received command: stop
+2026-09-30 21:13:26 INFO Cleaning up finished run: ft6m2v4h
+2026-09-30 21:13:26 INFO Reached EOF.
+2026-09-30 21:13:26 INFO Closing mailbox, abandoning 0 handles.
+2026-09-30 21:13:29 INFO Agent received command: run
+2026-09-30 21:13:29 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0003641321890435782
+	max_epochs: 100
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 3
+	weight_decay: 0.0001
+2026-09-30 21:13:29 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-09-30 21:13:34 INFO Running runs: ['tj45giji']
+2026-09-30 21:16:05 INFO Agent received command: stop
+2026-09-30 21:16:05 INFO Stop: tj45giji
+2026-09-30 21:16:11 INFO Agent received command: stop
+2026-09-30 21:16:16 INFO Agent received command: stop
+2026-09-30 21:16:21 INFO Agent received command: stop
+2026-09-30 21:16:26 INFO Agent received command: stop
+2026-09-30 21:16:32 INFO Agent received command: stop
+2026-09-30 21:16:37 INFO Agent received command: stop
+2026-09-30 21:16:37 INFO Kill: tj45giji
+2026-09-30 21:16:42 INFO Cleaning up finished run: tj45giji
+2026-09-30 21:16:42 INFO Reached EOF.
+2026-09-30 21:16:42 INFO Closing mailbox, abandoning 0 handles.
+2026-09-30 21:16:45 INFO Agent received command: run
+2026-09-30 21:16:45 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0017779575277599516
+	max_epochs: 100
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 7
+	weight_decay: 1e-05
+2026-09-30 21:16:45 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-09-30 21:16:50 INFO Running runs: ['m5no488r']
+2026-09-30 21:23:04 INFO Agent received command: stop
+2026-09-30 21:23:04 INFO Stop: m5no488r
+2026-09-30 21:23:09 INFO Agent received command: stop
+2026-09-30 21:23:15 INFO Agent received command: stop
+2026-09-30 21:23:20 INFO Agent received command: stop
+2026-09-30 21:23:25 INFO Cleaning up finished run: m5no488r
+2026-09-30 21:23:25 INFO Reached EOF.
+2026-09-30 21:23:25 INFO Closing mailbox, abandoning 0 handles.
+2026-09-30 21:23:28 INFO Agent received command: run
+2026-09-30 21:23:28 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.0005831302911102945
+	max_epochs: 100
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 5
+	weight_decay: 0.0003
+2026-09-30 21:23:28 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-09-30 21:23:33 INFO Running runs: ['hufq0gc9']
+2026-09-30 21:26:04 INFO Agent received command: stop
+2026-09-30 21:26:04 INFO Stop: hufq0gc9
+2026-09-30 21:26:09 INFO Agent received command: stop
+2026-09-30 21:26:15 INFO Agent received command: stop
+2026-09-30 21:26:20 INFO Agent received command: stop
+2026-09-30 21:26:25 INFO Agent received command: stop
+2026-09-30 21:26:31 INFO Agent received command: stop
+2026-09-30 21:26:36 INFO Cleaning up finished run: hufq0gc9
+2026-09-30 21:26:36 INFO Reached EOF.
+2026-09-30 21:26:36 INFO Closing mailbox, abandoning 0 handles.
+2026-09-30 21:26:39 INFO Agent received command: run
+2026-09-30 21:26:39 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.00039934987738787987
+	max_epochs: 100
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 7
+	weight_decay: 0.0003
+2026-09-30 21:26:39 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-09-30 21:26:44 INFO Running runs: ['pmzyje8f']
+2026-09-30 21:29:05 INFO Agent received command: stop
+2026-09-30 21:29:05 INFO Stop: pmzyje8f
+2026-09-30 21:29:11 INFO Agent received command: stop
+2026-09-30 21:29:16 INFO Agent received command: stop
+2026-09-30 21:29:21 INFO Agent received command: stop
+2026-09-30 21:29:26 INFO Agent received command: stop
+2026-09-30 21:29:31 ERROR Detected 5 failed runs in a row, shutting down.
+2026-09-30 21:29:31 INFO To change this value set WANDB_AGENT_MAX_INITIAL_FAILURES=val
+2026-09-30 21:29:31 INFO Reached EOF.
+2026-09-30 21:29:31 INFO Closing mailbox, abandoning 0 handles.
+2026-09-30 21:48:58 INFO Reached EOF.
+2026-09-30 21:48:58 INFO Closing mailbox, abandoning 0 handles.
+2026-09-30 21:49:25 INFO Running runs: []
+2026-09-30 21:49:26 INFO Agent received command: run
+2026-09-30 21:49:26 INFO Agent starting run with config:
+	batch_size: 4
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	initial_vocal_duck_logit: -5
+	learning_rate: 0.0019460691030709929
+	length_weighting: equal_length
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	maximum_vocal_ducking: 0.75
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 5
+	weight_decay: 0.0003
+2026-09-30 21:49:26 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-variable-tcn-bilstm output/datasets/prive_scantraxx_extension_variable_v2_fp2_roformer_2-4-6-8bar_top1x3_split20260923_run02_local_four_four output/training_runs/wandb_sweeps/variable_tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/variable_bridge_waveform_v2/prive_scantraxx_extension_run02_wandb_full_20260926 --transition-bars 2 4 6 8 --device auto --no-wandb-log-checkpoints
+2026-09-30 21:49:31 INFO Running runs: ['f43zmlcj']
+2026-09-30 21:55:20 INFO Reached EOF.
+2026-09-30 21:55:20 INFO Closing mailbox, abandoning 0 handles.
+2026-09-30 21:56:00 INFO Running runs: []
+2026-09-30 21:56:00 INFO Agent received command: run
+2026-09-30 21:56:00 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.0016561388210059892
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 3
+	weight_decay: 0.0003
+2026-09-30 21:56:00 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-09-30 21:56:05 INFO Running runs: ['snsj93kj']
+2026-09-30 22:20:04 INFO Cleaning up finished run: snsj93kj
+2026-09-30 22:20:04 INFO Reached EOF.
+2026-09-30 22:20:04 INFO Closing mailbox, abandoning 0 handles.
+2026-09-30 22:20:08 INFO Agent received command: run
+2026-09-30 22:20:08 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.00024736206769602613
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 5
+	weight_decay: 0.0003
+2026-09-30 22:20:08 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-09-30 22:20:13 INFO Running runs: ['9xgstr4s']
+2026-09-30 22:29:05 INFO Agent received command: stop
+2026-09-30 22:29:05 INFO Stop: 9xgstr4s
+2026-09-30 22:29:10 INFO Agent received command: stop
+2026-09-30 22:29:15 INFO Agent received command: stop
+2026-09-30 22:29:20 INFO Agent received command: stop
+2026-09-30 22:29:26 INFO Agent received command: stop
+2026-09-30 22:29:31 INFO Cleaning up finished run: 9xgstr4s
+2026-09-30 22:29:31 INFO Reached EOF.
+2026-09-30 22:29:31 INFO Closing mailbox, abandoning 0 handles.
+2026-09-30 22:29:34 INFO Agent received command: run
+2026-09-30 22:29:34 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.0010995683952953605
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 3
+	weight_decay: 1e-05
+2026-09-30 22:29:34 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-09-30 22:29:39 INFO Running runs: ['i8bpeuyc']
+2026-09-30 22:54:32 INFO Cleaning up finished run: i8bpeuyc
+2026-09-30 22:54:32 INFO Reached EOF.
+2026-09-30 22:54:32 INFO Closing mailbox, abandoning 0 handles.
+2026-09-30 22:54:36 INFO Agent received command: run
+2026-09-30 22:54:36 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.001765366597641758
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 3
+	weight_decay: 0.0003
+2026-09-30 22:54:36 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-09-30 22:54:41 INFO Running runs: ['c81fwh49']
+2026-09-30 23:04:04 INFO Agent received command: stop
+2026-09-30 23:04:04 INFO Stop: c81fwh49
+2026-09-30 23:04:10 INFO Agent received command: stop
+2026-09-30 23:04:15 INFO Agent received command: stop
+2026-09-30 23:04:20 INFO Agent received command: stop
+2026-09-30 23:04:25 INFO Agent received command: stop
+2026-09-30 23:04:31 INFO Agent received command: stop
+2026-09-30 23:04:36 INFO Cleaning up finished run: c81fwh49
+2026-09-30 23:04:36 INFO Reached EOF.
+2026-09-30 23:04:36 INFO Closing mailbox, abandoning 0 handles.
+2026-09-30 23:04:39 INFO Agent received command: run
+2026-09-30 23:04:39 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0016824081323741592
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 5
+	weight_decay: 1e-05
+2026-09-30 23:04:39 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-09-30 23:04:44 INFO Running runs: ['1t6tmnsr']
+2026-09-30 23:32:52 INFO Cleaning up finished run: 1t6tmnsr
+2026-09-30 23:32:52 INFO Reached EOF.
+2026-09-30 23:32:52 INFO Closing mailbox, abandoning 0 handles.
+2026-09-30 23:32:56 INFO Agent received command: run
+2026-09-30 23:32:56 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.00039024455205244584
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 5
+	weight_decay: 0.0001
+2026-09-30 23:32:56 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-09-30 23:33:01 INFO Running runs: ['terb79ru']
+2026-09-30 23:57:01 INFO Cleaning up finished run: terb79ru
+2026-09-30 23:57:01 INFO Reached EOF.
+2026-09-30 23:57:01 INFO Closing mailbox, abandoning 0 handles.
+2026-09-30 23:57:04 INFO Agent received command: run
+2026-09-30 23:57:04 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0002685573961131874
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 7
+	weight_decay: 0.0003
+2026-09-30 23:57:04 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-09-30 23:57:09 INFO Running runs: ['t65puxo0']
+2026-10-01 00:22:30 INFO Cleaning up finished run: t65puxo0
+2026-10-01 00:22:30 INFO Reached EOF.
+2026-10-01 00:22:30 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 00:22:33 INFO Agent received command: run
+2026-10-01 00:22:33 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.00035500191231287187
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 5
+	weight_decay: 0.0001
+2026-10-01 00:22:33 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 00:22:38 INFO Running runs: ['brql6who']
+2026-10-01 00:46:02 INFO Cleaning up finished run: brql6who
+2026-10-01 00:46:02 INFO Reached EOF.
+2026-10-01 00:46:02 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 00:46:05 INFO Agent received command: run
+2026-10-01 00:46:05 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.00030419818093783957
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 7
+	weight_decay: 0.0003
+2026-10-01 00:46:05 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 00:46:10 INFO Running runs: ['yj1sj7hc']
+2026-10-01 00:55:00 INFO Agent received command: stop
+2026-10-01 00:55:00 INFO Stop: yj1sj7hc
+2026-10-01 00:55:06 INFO Agent received command: stop
+2026-10-01 00:55:11 INFO Agent received command: stop
+2026-10-01 00:55:16 INFO Agent received command: stop
+2026-10-01 00:55:22 INFO Agent received command: stop
+2026-10-01 00:55:27 INFO Agent received command: stop
+2026-10-01 00:55:32 INFO Cleaning up finished run: yj1sj7hc
+2026-10-01 00:55:32 INFO Reached EOF.
+2026-10-01 00:55:32 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 00:55:35 INFO Agent received command: run
+2026-10-01 00:55:35 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.0005883442135558045
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 7
+	weight_decay: 0.0001
+2026-10-01 00:55:35 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 00:55:40 INFO Running runs: ['4vrohscp']
+2026-10-01 01:18:02 INFO Cleaning up finished run: 4vrohscp
+2026-10-01 01:18:02 INFO Reached EOF.
+2026-10-01 01:18:02 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 01:18:05 INFO Agent received command: run
+2026-10-01 01:18:05 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.0004934553452967366
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 5
+	weight_decay: 0.0003
+2026-10-01 01:18:05 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 01:18:10 INFO Running runs: ['w5cokzhd']
+2026-10-01 01:26:03 INFO Agent received command: stop
+2026-10-01 01:26:03 INFO Stop: w5cokzhd
+2026-10-01 01:26:09 INFO Agent received command: stop
+2026-10-01 01:26:14 INFO Agent received command: stop
+2026-10-01 01:26:19 INFO Agent received command: stop
+2026-10-01 01:26:24 INFO Agent received command: stop
+2026-10-01 01:26:29 INFO Cleaning up finished run: w5cokzhd
+2026-10-01 01:26:29 INFO Reached EOF.
+2026-10-01 01:26:29 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 01:26:33 INFO Agent received command: run
+2026-10-01 01:26:33 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.0002660735439008898
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 5
+	weight_decay: 0.0003
+2026-10-01 01:26:33 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 01:26:38 INFO Running runs: ['ilghh5rj']
+2026-10-01 01:35:02 INFO Agent received command: stop
+2026-10-01 01:35:02 INFO Stop: ilghh5rj
+2026-10-01 01:35:08 INFO Agent received command: stop
+2026-10-01 01:35:13 INFO Agent received command: stop
+2026-10-01 01:35:18 INFO Agent received command: stop
+2026-10-01 01:35:23 INFO Agent received command: stop
+2026-10-01 01:35:28 INFO Cleaning up finished run: ilghh5rj
+2026-10-01 01:35:28 INFO Reached EOF.
+2026-10-01 01:35:28 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 01:35:32 INFO Agent received command: run
+2026-10-01 01:35:32 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.0003391277614404587
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 5
+	weight_decay: 0.0001
+2026-10-01 01:35:32 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 01:35:37 INFO Running runs: ['4ky8saq1']
+2026-10-01 01:37:34 INFO Cleaning up finished run: f43zmlcj
+2026-10-01 01:37:34 INFO Reached EOF.
+2026-10-01 01:37:34 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 01:37:37 INFO Agent received command: run
+2026-10-01 01:37:37 INFO Agent starting run with config:
+	batch_size: 8
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	initial_vocal_duck_logit: -3
+	learning_rate: 0.0015653620298051855
+	length_weighting: equal_length
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	maximum_vocal_ducking: 0.75
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 7
+	weight_decay: 0.0001
+2026-10-01 01:37:37 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-variable-tcn-bilstm output/datasets/prive_scantraxx_extension_variable_v2_fp2_roformer_2-4-6-8bar_top1x3_split20260923_run02_local_four_four output/training_runs/wandb_sweeps/variable_tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/variable_bridge_waveform_v2/prive_scantraxx_extension_run02_wandb_full_20260926 --transition-bars 2 4 6 8 --device auto --no-wandb-log-checkpoints
+2026-10-01 01:37:42 INFO Running runs: ['jvgwal94']
+2026-10-01 01:44:03 INFO Agent received command: stop
+2026-10-01 01:44:03 INFO Stop: 4ky8saq1
+2026-10-01 01:44:08 INFO Agent received command: stop
+2026-10-01 01:44:13 INFO Agent received command: stop
+2026-10-01 01:44:19 INFO Agent received command: stop
+2026-10-01 01:44:24 INFO Agent received command: stop
+2026-10-01 01:44:29 INFO Cleaning up finished run: 4ky8saq1
+2026-10-01 01:44:29 INFO Reached EOF.
+2026-10-01 01:44:29 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 01:44:32 INFO Agent received command: run
+2026-10-01 01:44:32 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0003161328528526042
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 3
+	weight_decay: 0.0003
+2026-10-01 01:44:32 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 01:44:37 INFO Running runs: ['isvoix92']
+2026-10-01 01:53:01 INFO Agent received command: stop
+2026-10-01 01:53:01 INFO Stop: isvoix92
+2026-10-01 01:53:06 INFO Agent received command: stop
+2026-10-01 01:53:12 INFO Agent received command: stop
+2026-10-01 01:53:17 INFO Agent received command: stop
+2026-10-01 01:53:22 INFO Agent received command: stop
+2026-10-01 01:53:27 INFO Cleaning up finished run: isvoix92
+2026-10-01 01:53:27 INFO Reached EOF.
+2026-10-01 01:53:27 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 01:53:31 INFO Agent received command: run
+2026-10-01 01:53:31 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.001014072537050657
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 7
+	weight_decay: 1e-05
+2026-10-01 01:53:31 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 01:53:36 INFO Running runs: ['pi1dq182']
+2026-10-01 02:02:05 INFO Agent received command: stop
+2026-10-01 02:02:05 INFO Stop: pi1dq182
+2026-10-01 02:02:10 INFO Agent received command: stop
+2026-10-01 02:02:15 INFO Agent received command: stop
+2026-10-01 02:02:20 INFO Agent received command: stop
+2026-10-01 02:02:25 INFO Cleaning up finished run: pi1dq182
+2026-10-01 02:02:25 INFO Reached EOF.
+2026-10-01 02:02:25 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 02:02:29 INFO Agent received command: run
+2026-10-01 02:02:29 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.00035887151885957594
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 3
+	weight_decay: 0.0001
+2026-10-01 02:02:29 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 02:02:34 INFO Running runs: ['vs6h0xpf']
+2026-10-01 02:27:41 INFO Cleaning up finished run: vs6h0xpf
+2026-10-01 02:27:41 INFO Reached EOF.
+2026-10-01 02:27:41 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 02:27:44 INFO Agent received command: run
+2026-10-01 02:27:44 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.001747210299897444
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 7
+	weight_decay: 1e-05
+2026-10-01 02:27:45 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 02:27:50 INFO Running runs: ['zwjn9xpw']
+2026-10-01 02:50:59 INFO Cleaning up finished run: zwjn9xpw
+2026-10-01 02:50:59 INFO Reached EOF.
+2026-10-01 02:50:59 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 02:51:02 INFO Agent received command: run
+2026-10-01 02:51:02 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.0007080022184916826
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 7
+	weight_decay: 0.0001
+2026-10-01 02:51:02 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 02:51:07 INFO Running runs: ['do24qyfr']
+2026-10-01 03:13:22 INFO Cleaning up finished run: do24qyfr
+2026-10-01 03:13:22 INFO Reached EOF.
+2026-10-01 03:13:22 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 03:13:25 INFO Agent received command: run
+2026-10-01 03:13:25 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.0008471084555937117
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 5
+	weight_decay: 0.0001
+2026-10-01 03:13:25 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 03:13:30 INFO Running runs: ['vizqcvra']
+2026-10-01 03:22:04 INFO Agent received command: stop
+2026-10-01 03:22:04 INFO Stop: vizqcvra
+2026-10-01 03:22:10 INFO Agent received command: stop
+2026-10-01 03:22:15 INFO Agent received command: stop
+2026-10-01 03:22:20 INFO Agent received command: stop
+2026-10-01 03:22:25 INFO Agent received command: stop
+2026-10-01 03:22:31 INFO Agent received command: stop
+2026-10-01 03:22:36 INFO Cleaning up finished run: vizqcvra
+2026-10-01 03:22:36 INFO Reached EOF.
+2026-10-01 03:22:36 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 03:22:39 INFO Agent received command: run
+2026-10-01 03:22:39 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.0017448745004015331
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 7
+	weight_decay: 1e-05
+2026-10-01 03:22:39 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 03:22:44 INFO Running runs: ['5ti68lyj']
+2026-10-01 03:32:02 INFO Agent received command: stop
+2026-10-01 03:32:02 INFO Stop: 5ti68lyj
+2026-10-01 03:32:07 INFO Agent received command: stop
+2026-10-01 03:32:13 INFO Agent received command: stop
+2026-10-01 03:32:18 INFO Agent received command: stop
+2026-10-01 03:32:23 INFO Agent received command: stop
+2026-10-01 03:32:29 INFO Agent received command: stop
+2026-10-01 03:32:34 INFO Cleaning up finished run: 5ti68lyj
+2026-10-01 03:32:34 INFO Reached EOF.
+2026-10-01 03:32:34 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 03:32:37 INFO Agent received command: run
+2026-10-01 03:32:37 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0015109388006758638
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 7
+	weight_decay: 0.0001
+2026-10-01 03:32:37 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 03:32:42 INFO Running runs: ['82tq67dv']
+2026-10-01 03:54:55 INFO Cleaning up finished run: 82tq67dv
+2026-10-01 03:54:55 INFO Reached EOF.
+2026-10-01 03:54:55 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 03:54:59 INFO Agent received command: run
+2026-10-01 03:54:59 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.000558464423470933
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 5
+	weight_decay: 0.0003
+2026-10-01 03:54:59 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 03:55:04 INFO Running runs: ['2c7uz0f5']
+2026-10-01 04:03:05 INFO Agent received command: stop
+2026-10-01 04:03:05 INFO Stop: 2c7uz0f5
+2026-10-01 04:03:10 INFO Agent received command: stop
+2026-10-01 04:03:15 INFO Agent received command: stop
+2026-10-01 04:03:21 INFO Agent received command: stop
+2026-10-01 04:03:26 INFO Cleaning up finished run: 2c7uz0f5
+2026-10-01 04:03:26 INFO Reached EOF.
+2026-10-01 04:03:26 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 04:03:29 INFO Agent received command: run
+2026-10-01 04:03:29 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.001986986737265091
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 7
+	weight_decay: 0.0001
+2026-10-01 04:03:29 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 04:03:34 INFO Running runs: ['h5gcxxb4']
+2026-10-01 04:26:32 INFO Cleaning up finished run: h5gcxxb4
+2026-10-01 04:26:32 INFO Reached EOF.
+2026-10-01 04:26:32 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 04:26:35 INFO Agent received command: run
+2026-10-01 04:26:35 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.000508576784564779
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 3
+	weight_decay: 0.0003
+2026-10-01 04:26:35 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 04:26:40 INFO Running runs: ['zg2qcg0c']
+2026-10-01 04:47:54 INFO Cleaning up finished run: jvgwal94
+2026-10-01 04:47:54 INFO Reached EOF.
+2026-10-01 04:47:54 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 04:47:57 INFO Agent received command: run
+2026-10-01 04:47:57 INFO Agent starting run with config:
+	batch_size: 8
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	initial_vocal_duck_logit: -4
+	learning_rate: 0.0005071018682681421
+	length_weighting: equal_length
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	maximum_vocal_ducking: 0.65
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 3
+	weight_decay: 0.0003
+2026-10-01 04:47:57 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-variable-tcn-bilstm output/datasets/prive_scantraxx_extension_variable_v2_fp2_roformer_2-4-6-8bar_top1x3_split20260923_run02_local_four_four output/training_runs/wandb_sweeps/variable_tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/variable_bridge_waveform_v2/prive_scantraxx_extension_run02_wandb_full_20260926 --transition-bars 2 4 6 8 --device auto --no-wandb-log-checkpoints
+2026-10-01 04:48:02 INFO Running runs: ['009sqd3y']
+2026-10-01 04:51:57 INFO Cleaning up finished run: zg2qcg0c
+2026-10-01 04:51:57 INFO Reached EOF.
+2026-10-01 04:51:57 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 04:52:00 INFO Agent received command: run
+2026-10-01 04:52:00 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0008410598613582466
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 5
+	weight_decay: 0.0003
+2026-10-01 04:52:00 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 04:52:05 INFO Running runs: ['4ytdgqx9']
+2026-10-01 05:00:03 INFO Agent received command: stop
+2026-10-01 05:00:03 INFO Stop: 4ytdgqx9
+2026-10-01 05:00:09 INFO Agent received command: stop
+2026-10-01 05:00:14 INFO Agent received command: stop
+2026-10-01 05:00:19 INFO Cleaning up finished run: 4ytdgqx9
+2026-10-01 05:00:19 INFO Reached EOF.
+2026-10-01 05:00:19 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 05:00:22 INFO Agent received command: run
+2026-10-01 05:00:22 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.001621857988870188
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 5
+	weight_decay: 0.0001
+2026-10-01 05:00:23 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 05:00:28 INFO Running runs: ['aaqh77b3']
+2026-10-01 05:10:03 INFO Agent received command: stop
+2026-10-01 05:10:03 INFO Stop: aaqh77b3
+2026-10-01 05:10:09 INFO Agent received command: stop
+2026-10-01 05:10:14 INFO Agent received command: stop
+2026-10-01 05:10:19 INFO Agent received command: stop
+2026-10-01 05:10:25 INFO Agent received command: stop
+2026-10-01 05:10:30 INFO Agent received command: stop
+2026-10-01 05:10:35 INFO Cleaning up finished run: aaqh77b3
+2026-10-01 05:10:35 INFO Reached EOF.
+2026-10-01 05:10:35 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 05:10:38 INFO Agent received command: run
+2026-10-01 05:10:38 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.00044559010486374333
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 5
+	weight_decay: 0.0001
+2026-10-01 05:10:38 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 05:10:43 INFO Running runs: ['f3uw2y2z']
+2026-10-01 05:32:34 INFO Cleaning up finished run: f3uw2y2z
+2026-10-01 05:32:34 INFO Reached EOF.
+2026-10-01 05:32:34 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 05:32:37 INFO Agent received command: run
+2026-10-01 05:32:37 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.001953152148247423
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 5
+	weight_decay: 0.0003
+2026-10-01 05:32:37 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 05:32:42 INFO Running runs: ['rwlec0n9']
+2026-10-01 05:41:05 INFO Agent received command: stop
+2026-10-01 05:41:05 INFO Stop: rwlec0n9
+2026-10-01 05:41:11 INFO Agent received command: stop
+2026-10-01 05:41:16 INFO Agent received command: stop
+2026-10-01 05:41:21 INFO Agent received command: stop
+2026-10-01 05:41:27 INFO Agent received command: stop
+2026-10-01 05:41:32 INFO Cleaning up finished run: rwlec0n9
+2026-10-01 05:41:32 INFO Reached EOF.
+2026-10-01 05:41:32 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 05:41:35 INFO Agent received command: run
+2026-10-01 05:41:35 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.0012987068764263791
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 7
+	weight_decay: 0.0001
+2026-10-01 05:41:35 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 05:41:40 INFO Running runs: ['6voa7jah']
+2026-10-01 05:50:03 INFO Agent received command: stop
+2026-10-01 05:50:03 INFO Stop: 6voa7jah
+2026-10-01 05:50:09 INFO Agent received command: stop
+2026-10-01 05:50:14 INFO Agent received command: stop
+2026-10-01 05:50:19 INFO Agent received command: stop
+2026-10-01 05:50:24 INFO Cleaning up finished run: 6voa7jah
+2026-10-01 05:50:24 INFO Reached EOF.
+2026-10-01 05:50:24 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 05:50:27 INFO Agent received command: run
+2026-10-01 05:50:27 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.00037059419652318864
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 3
+	weight_decay: 0.0001
+2026-10-01 05:50:27 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 05:50:32 INFO Running runs: ['xdmd5cma']
+2026-10-01 06:00:05 INFO Agent received command: stop
+2026-10-01 06:00:05 INFO Stop: xdmd5cma
+2026-10-01 06:00:10 INFO Agent received command: stop
+2026-10-01 06:00:15 INFO Agent received command: stop
+2026-10-01 06:00:21 INFO Agent received command: stop
+2026-10-01 06:00:26 INFO Agent received command: stop
+2026-10-01 06:00:31 INFO Agent received command: stop
+2026-10-01 06:00:36 INFO Agent received command: stop
+2026-10-01 06:00:36 INFO Kill: xdmd5cma
+2026-10-01 06:00:41 INFO Cleaning up finished run: xdmd5cma
+2026-10-01 06:00:41 INFO Reached EOF.
+2026-10-01 06:00:41 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 06:00:45 INFO Agent received command: run
+2026-10-01 06:00:45 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.0010704191336487372
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 3
+	weight_decay: 0.0001
+2026-10-01 06:00:45 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 06:00:50 INFO Running runs: ['sifded82']
+2026-10-01 06:22:44 INFO Cleaning up finished run: sifded82
+2026-10-01 06:22:44 INFO Reached EOF.
+2026-10-01 06:22:44 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 06:22:47 INFO Agent received command: run
+2026-10-01 06:22:47 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.0005366894231230226
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 7
+	weight_decay: 0.0001
+2026-10-01 06:22:47 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 06:22:52 INFO Running runs: ['j0re3sub']
+2026-10-01 06:45:12 INFO Cleaning up finished run: j0re3sub
+2026-10-01 06:45:12 INFO Reached EOF.
+2026-10-01 06:45:12 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 06:45:15 INFO Agent received command: run
+2026-10-01 06:45:15 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.00020224271478934956
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 5
+	weight_decay: 0.0001
+2026-10-01 06:45:15 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 06:45:20 INFO Running runs: ['32z4tflc']
+2026-10-01 06:54:05 INFO Agent received command: stop
+2026-10-01 06:54:05 INFO Stop: 32z4tflc
+2026-10-01 06:54:10 INFO Agent received command: stop
+2026-10-01 06:54:15 INFO Agent received command: stop
+2026-10-01 06:54:21 INFO Agent received command: stop
+2026-10-01 06:54:26 INFO Cleaning up finished run: 32z4tflc
+2026-10-01 06:54:26 INFO Reached EOF.
+2026-10-01 06:54:26 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 06:54:29 INFO Agent received command: run
+2026-10-01 06:54:29 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.001460720255993436
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 7
+	weight_decay: 1e-05
+2026-10-01 06:54:29 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 06:54:34 INFO Running runs: ['7gmbe4ar']
+2026-10-01 07:03:03 INFO Agent received command: stop
+2026-10-01 07:03:03 INFO Stop: 7gmbe4ar
+2026-10-01 07:03:08 INFO Agent received command: stop
+2026-10-01 07:03:13 INFO Agent received command: stop
+2026-10-01 07:03:19 INFO Agent received command: stop
+2026-10-01 07:03:24 INFO Agent received command: stop
+2026-10-01 07:03:29 INFO Cleaning up finished run: 7gmbe4ar
+2026-10-01 07:03:29 INFO Reached EOF.
+2026-10-01 07:03:29 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 07:03:32 INFO Agent received command: run
+2026-10-01 07:03:32 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.00032269429622974527
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 5
+	weight_decay: 1e-05
+2026-10-01 07:03:32 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 07:03:37 INFO Running runs: ['vh8isxfr']
+2026-10-01 07:12:06 INFO Agent received command: stop
+2026-10-01 07:12:06 INFO Stop: vh8isxfr
+2026-10-01 07:12:11 INFO Agent received command: stop
+2026-10-01 07:12:16 INFO Agent received command: stop
+2026-10-01 07:12:21 INFO Agent received command: stop
+2026-10-01 07:12:26 INFO Cleaning up finished run: vh8isxfr
+2026-10-01 07:12:26 INFO Reached EOF.
+2026-10-01 07:12:26 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 07:12:30 INFO Agent received command: run
+2026-10-01 07:12:30 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.0011305092775771015
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 3
+	weight_decay: 0.0001
+2026-10-01 07:12:30 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 07:12:35 INFO Running runs: ['x32d9ib7']
+2026-10-01 07:34:40 INFO Cleaning up finished run: x32d9ib7
+2026-10-01 07:34:40 INFO Reached EOF.
+2026-10-01 07:34:40 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 07:34:43 INFO Agent received command: run
+2026-10-01 07:34:43 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.0006039474298347421
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 3
+	weight_decay: 0.0003
+2026-10-01 07:34:43 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 07:34:48 INFO Running runs: ['i0wj53xb']
+2026-10-01 07:57:45 INFO Cleaning up finished run: i0wj53xb
+2026-10-01 07:57:45 INFO Reached EOF.
+2026-10-01 07:57:45 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 07:57:48 INFO Agent received command: run
+2026-10-01 07:57:48 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0004432068269969856
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 3
+	weight_decay: 0.0001
+2026-10-01 07:57:48 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 07:57:53 INFO Running runs: ['9odljdiw']
+2026-10-01 07:59:17 INFO Cleaning up finished run: 009sqd3y
+2026-10-01 07:59:17 INFO Reached EOF.
+2026-10-01 07:59:17 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 07:59:20 INFO Agent received command: run
+2026-10-01 07:59:20 INFO Agent starting run with config:
+	batch_size: 8
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	initial_vocal_duck_logit: -5
+	learning_rate: 0.0008201193902973137
+	length_weighting: equal_length
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	maximum_vocal_ducking: 0.75
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 3
+	weight_decay: 0.0001
+2026-10-01 07:59:20 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-variable-tcn-bilstm output/datasets/prive_scantraxx_extension_variable_v2_fp2_roformer_2-4-6-8bar_top1x3_split20260923_run02_local_four_four output/training_runs/wandb_sweeps/variable_tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/variable_bridge_waveform_v2/prive_scantraxx_extension_run02_wandb_full_20260926 --transition-bars 2 4 6 8 --device auto --no-wandb-log-checkpoints
+2026-10-01 07:59:25 INFO Running runs: ['7zxu7qr3']
+2026-10-01 08:06:02 INFO Agent received command: stop
+2026-10-01 08:06:02 INFO Stop: 9odljdiw
+2026-10-01 08:06:07 INFO Agent received command: stop
+2026-10-01 08:06:12 INFO Agent received command: stop
+2026-10-01 08:06:17 INFO Agent received command: stop
+2026-10-01 08:06:22 INFO Cleaning up finished run: 9odljdiw
+2026-10-01 08:06:22 INFO Reached EOF.
+2026-10-01 08:06:22 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 08:06:26 INFO Agent received command: run
+2026-10-01 08:06:26 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.0019755442788015783
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 7
+	weight_decay: 1e-05
+2026-10-01 08:06:26 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 08:06:31 INFO Running runs: ['z1ljzdb4']
+2026-10-01 08:15:01 INFO Agent received command: stop
+2026-10-01 08:15:01 INFO Stop: z1ljzdb4
+2026-10-01 08:15:06 INFO Agent received command: stop
+2026-10-01 08:15:12 INFO Agent received command: stop
+2026-10-01 08:15:17 INFO Agent received command: stop
+2026-10-01 08:15:22 INFO Agent received command: stop
+2026-10-01 08:15:27 INFO Agent received command: stop
+2026-10-01 08:15:32 INFO Cleaning up finished run: z1ljzdb4
+2026-10-01 08:15:32 INFO Reached EOF.
+2026-10-01 08:15:32 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 08:15:36 INFO Agent received command: run
+2026-10-01 08:15:36 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0015152874474141551
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 5
+	weight_decay: 0.0003
+2026-10-01 08:15:36 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 08:15:41 INFO Running runs: ['c5aic0hb']
+2026-10-01 08:25:01 INFO Agent received command: stop
+2026-10-01 08:25:01 INFO Stop: c5aic0hb
+2026-10-01 08:25:06 INFO Agent received command: stop
+2026-10-01 08:25:12 INFO Agent received command: stop
+2026-10-01 08:25:17 INFO Agent received command: stop
+2026-10-01 08:25:22 INFO Agent received command: stop
+2026-10-01 08:25:27 INFO Cleaning up finished run: c5aic0hb
+2026-10-01 08:25:27 INFO Reached EOF.
+2026-10-01 08:25:27 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 08:25:30 INFO Agent received command: run
+2026-10-01 08:25:30 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.000878597148587675
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 7
+	weight_decay: 0.0001
+2026-10-01 08:25:30 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 08:25:35 INFO Running runs: ['0y2cntg6']
+2026-10-01 08:48:35 INFO Cleaning up finished run: 0y2cntg6
+2026-10-01 08:48:35 INFO Reached EOF.
+2026-10-01 08:48:35 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 08:48:38 INFO Agent received command: run
+2026-10-01 08:48:38 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.00026987912458654003
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 5
+	weight_decay: 1e-05
+2026-10-01 08:48:38 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 08:48:43 INFO Running runs: ['vlfwfn7a']
+2026-10-01 09:14:01 INFO Cleaning up finished run: vlfwfn7a
+2026-10-01 09:14:01 INFO Reached EOF.
+2026-10-01 09:14:01 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 09:14:04 INFO Agent received command: run
+2026-10-01 09:14:04 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.000981947322251747
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 3
+	weight_decay: 0.0003
+2026-10-01 09:14:04 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 09:14:09 INFO Running runs: ['5btrj1sc']
+2026-10-01 09:23:01 INFO Agent received command: stop
+2026-10-01 09:23:01 INFO Stop: 5btrj1sc
+2026-10-01 09:23:06 INFO Agent received command: stop
+2026-10-01 09:23:11 INFO Agent received command: stop
+2026-10-01 09:23:17 INFO Agent received command: stop
+2026-10-01 09:23:22 INFO Cleaning up finished run: 5btrj1sc
+2026-10-01 09:23:22 INFO Reached EOF.
+2026-10-01 09:23:22 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 09:23:25 INFO Agent received command: run
+2026-10-01 09:23:25 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.00031098142403718134
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 5
+	weight_decay: 0.0003
+2026-10-01 09:23:25 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 09:23:30 INFO Running runs: ['37916rx9']
+2026-10-01 09:46:40 INFO Cleaning up finished run: 37916rx9
+2026-10-01 09:46:40 INFO Reached EOF.
+2026-10-01 09:46:40 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 09:46:43 INFO Agent received command: run
+2026-10-01 09:46:43 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0005286517925465351
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 5
+	weight_decay: 1e-05
+2026-10-01 09:46:43 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 09:46:48 INFO Running runs: ['5tvxznt0']
+2026-10-01 10:12:38 INFO Cleaning up finished run: 5tvxznt0
+2026-10-01 10:12:38 INFO Reached EOF.
+2026-10-01 10:12:38 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 10:12:41 INFO Agent received command: run
+2026-10-01 10:12:41 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.00028598236778845155
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 7
+	weight_decay: 0.0001
+2026-10-01 10:12:41 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 10:12:46 INFO Running runs: ['6yzme3vt']
+2026-10-01 10:22:03 INFO Agent received command: stop
+2026-10-01 10:22:03 INFO Stop: 6yzme3vt
+2026-10-01 10:22:08 INFO Agent received command: stop
+2026-10-01 10:22:13 INFO Agent received command: stop
+2026-10-01 10:22:19 INFO Agent received command: stop
+2026-10-01 10:22:24 INFO Agent received command: stop
+2026-10-01 10:22:29 INFO Agent received command: stop
+2026-10-01 10:22:34 INFO Cleaning up finished run: 6yzme3vt
+2026-10-01 10:22:34 INFO Reached EOF.
+2026-10-01 10:22:34 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 10:22:37 INFO Agent received command: run
+2026-10-01 10:22:37 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0010957380464725536
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 7
+	weight_decay: 1e-05
+2026-10-01 10:22:37 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 10:22:42 INFO Running runs: ['rwolufyx']
+2026-10-01 10:32:04 INFO Agent received command: stop
+2026-10-01 10:32:04 INFO Stop: rwolufyx
+2026-10-01 10:32:09 INFO Agent received command: stop
+2026-10-01 10:32:14 INFO Agent received command: stop
+2026-10-01 10:32:20 INFO Agent received command: stop
+2026-10-01 10:32:25 INFO Agent received command: stop
+2026-10-01 10:32:30 INFO Agent received command: stop
+2026-10-01 10:32:35 INFO Cleaning up finished run: rwolufyx
+2026-10-01 10:32:35 INFO Reached EOF.
+2026-10-01 10:32:35 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 10:32:39 INFO Agent received command: run
+2026-10-01 10:32:39 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.0002911713231156917
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 5
+	weight_decay: 0.0003
+2026-10-01 10:32:39 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 10:32:44 INFO Running runs: ['ru2dyxj5']
+2026-10-01 10:42:06 INFO Agent received command: stop
+2026-10-01 10:42:06 INFO Stop: ru2dyxj5
+2026-10-01 10:42:11 INFO Agent received command: stop
+2026-10-01 10:42:16 INFO Agent received command: stop
+2026-10-01 10:42:22 INFO Agent received command: stop
+2026-10-01 10:42:27 INFO Agent received command: stop
+2026-10-01 10:42:32 INFO Agent received command: stop
+2026-10-01 10:42:37 INFO Cleaning up finished run: ru2dyxj5
+2026-10-01 10:42:37 INFO Reached EOF.
+2026-10-01 10:42:37 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 10:42:41 INFO Agent received command: run
+2026-10-01 10:42:41 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0006443886023184378
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 3
+	weight_decay: 0.0001
+2026-10-01 10:42:41 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 10:42:46 INFO Running runs: ['mwo0f3wi']
+2026-10-01 10:51:05 INFO Agent received command: stop
+2026-10-01 10:51:05 INFO Stop: mwo0f3wi
+2026-10-01 10:51:10 INFO Agent received command: stop
+2026-10-01 10:51:15 INFO Agent received command: stop
+2026-10-01 10:51:21 INFO Agent received command: stop
+2026-10-01 10:51:26 INFO Agent received command: stop
+2026-10-01 10:51:31 INFO Agent received command: stop
+2026-10-01 10:51:36 INFO Cleaning up finished run: mwo0f3wi
+2026-10-01 10:51:36 INFO Reached EOF.
+2026-10-01 10:51:36 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 10:51:40 INFO Agent received command: run
+2026-10-01 10:51:40 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.0019916869679329004
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 5
+	weight_decay: 0.0003
+2026-10-01 10:51:40 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 10:51:45 INFO Running runs: ['5x97zung']
+2026-10-01 11:00:04 INFO Agent received command: stop
+2026-10-01 11:00:04 INFO Stop: 5x97zung
+2026-10-01 11:00:09 INFO Agent received command: stop
+2026-10-01 11:00:14 INFO Agent received command: stop
+2026-10-01 11:00:20 INFO Agent received command: stop
+2026-10-01 11:00:25 INFO Agent received command: stop
+2026-10-01 11:00:30 INFO Agent received command: stop
+2026-10-01 11:00:35 INFO Cleaning up finished run: 5x97zung
+2026-10-01 11:00:35 INFO Reached EOF.
+2026-10-01 11:00:35 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 11:00:39 INFO Agent received command: run
+2026-10-01 11:00:39 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.0008431937698196721
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 7
+	weight_decay: 0.0001
+2026-10-01 11:00:39 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 11:00:44 INFO Running runs: ['jn9kvokk']
+2026-10-01 11:16:48 INFO Cleaning up finished run: 7zxu7qr3
+2026-10-01 11:16:48 INFO Reached EOF.
+2026-10-01 11:16:48 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 11:16:51 INFO Agent received command: run
+2026-10-01 11:16:51 INFO Agent starting run with config:
+	batch_size: 8
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	initial_vocal_duck_logit: -5
+	learning_rate: 0.0003021359383339691
+	length_weighting: equal_length
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	maximum_vocal_ducking: 0.75
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 3
+	weight_decay: 0.0003
+2026-10-01 11:16:51 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-variable-tcn-bilstm output/datasets/prive_scantraxx_extension_variable_v2_fp2_roformer_2-4-6-8bar_top1x3_split20260923_run02_local_four_four output/training_runs/wandb_sweeps/variable_tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/variable_bridge_waveform_v2/prive_scantraxx_extension_run02_wandb_full_20260926 --transition-bars 2 4 6 8 --device auto --no-wandb-log-checkpoints
+2026-10-01 11:16:56 INFO Running runs: ['v3wpjvp9']
+2026-10-01 11:26:11 INFO Cleaning up finished run: jn9kvokk
+2026-10-01 11:26:11 INFO Reached EOF.
+2026-10-01 11:26:11 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 11:26:15 INFO Agent received command: run
+2026-10-01 11:26:15 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.0013786476155181165
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 3
+	weight_decay: 1e-05
+2026-10-01 11:26:15 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 11:26:20 INFO Running runs: ['r5o9vk1v']
+2026-10-01 11:50:49 INFO Cleaning up finished run: r5o9vk1v
+2026-10-01 11:50:49 INFO Reached EOF.
+2026-10-01 11:50:49 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 11:50:52 INFO Agent received command: run
+2026-10-01 11:50:52 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.000206479368326562
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 5
+	weight_decay: 0.0003
+2026-10-01 11:50:52 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 11:50:57 INFO Running runs: ['f0ngcual']
+2026-10-01 12:01:03 INFO Agent received command: stop
+2026-10-01 12:01:03 INFO Stop: f0ngcual
+2026-10-01 12:01:08 INFO Agent received command: stop
+2026-10-01 12:01:14 INFO Agent received command: stop
+2026-10-01 12:01:19 INFO Agent received command: stop
+2026-10-01 12:01:24 INFO Agent received command: stop
+2026-10-01 12:01:29 INFO Cleaning up finished run: f0ngcual
+2026-10-01 12:01:29 INFO Reached EOF.
+2026-10-01 12:01:29 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 12:01:33 INFO Agent received command: run
+2026-10-01 12:01:33 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0007198670887390348
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 3
+	weight_decay: 1e-05
+2026-10-01 12:01:33 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 12:01:38 INFO Running runs: ['pvrkh86s']
+2026-10-01 12:11:05 INFO Agent received command: stop
+2026-10-01 12:11:05 INFO Stop: pvrkh86s
+2026-10-01 12:11:10 INFO Agent received command: stop
+2026-10-01 12:11:16 INFO Agent received command: stop
+2026-10-01 12:11:21 INFO Agent received command: stop
+2026-10-01 12:11:26 INFO Agent received command: stop
+2026-10-01 12:11:31 INFO Cleaning up finished run: pvrkh86s
+2026-10-01 12:11:31 INFO Reached EOF.
+2026-10-01 12:11:31 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 12:11:34 INFO Agent received command: run
+2026-10-01 12:11:34 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.0002095581675805896
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 5
+	weight_decay: 0.0001
+2026-10-01 12:11:34 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 12:11:39 INFO Running runs: ['btczqazt']
+2026-10-01 12:21:02 INFO Agent received command: stop
+2026-10-01 12:21:02 INFO Stop: btczqazt
+2026-10-01 12:21:07 INFO Agent received command: stop
+2026-10-01 12:21:13 INFO Agent received command: stop
+2026-10-01 12:21:18 INFO Agent received command: stop
+2026-10-01 12:21:23 INFO Agent received command: stop
+2026-10-01 12:21:28 INFO Cleaning up finished run: btczqazt
+2026-10-01 12:21:28 INFO Reached EOF.
+2026-10-01 12:21:28 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 12:21:31 INFO Agent received command: run
+2026-10-01 12:21:31 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.00038742749251303527
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 7
+	weight_decay: 0.0001
+2026-10-01 12:21:31 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 12:21:36 INFO Running runs: ['ycijlepr']
+2026-10-01 12:32:04 INFO Agent received command: stop
+2026-10-01 12:32:04 INFO Stop: v3wpjvp9
+2026-10-01 12:32:09 INFO Agent received command: stop
+2026-10-01 12:32:14 INFO Agent received command: stop
+2026-10-01 12:32:20 INFO Agent received command: stop
+2026-10-01 12:32:25 INFO Cleaning up finished run: v3wpjvp9
+2026-10-01 12:32:25 INFO Reached EOF.
+2026-10-01 12:32:25 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 12:32:28 INFO Agent received command: run
+2026-10-01 12:32:28 INFO Agent starting run with config:
+	batch_size: 8
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	initial_vocal_duck_logit: -3
+	learning_rate: 0.0013402579808900544
+	length_weighting: equal_length
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	maximum_vocal_ducking: 0.65
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 5
+	weight_decay: 0.0001
+2026-10-01 12:32:28 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-variable-tcn-bilstm output/datasets/prive_scantraxx_extension_variable_v2_fp2_roformer_2-4-6-8bar_top1x3_split20260923_run02_local_four_four output/training_runs/wandb_sweeps/variable_tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/variable_bridge_waveform_v2/prive_scantraxx_extension_run02_wandb_full_20260926 --transition-bars 2 4 6 8 --device auto --no-wandb-log-checkpoints
+2026-10-01 12:32:33 INFO Running runs: ['gusxgj67']
+2026-10-01 12:46:42 INFO Cleaning up finished run: ycijlepr
+2026-10-01 12:46:42 INFO Reached EOF.
+2026-10-01 12:46:42 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 12:46:46 INFO Agent received command: run
+2026-10-01 12:46:46 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.0006468912938410932
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 3
+	weight_decay: 0.0003
+2026-10-01 12:46:46 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 12:46:51 INFO Running runs: ['uwqbg7er']
+2026-10-01 12:56:02 INFO Agent received command: stop
+2026-10-01 12:56:02 INFO Stop: uwqbg7er
+2026-10-01 12:56:08 INFO Agent received command: stop
+2026-10-01 12:56:13 INFO Agent received command: stop
+2026-10-01 12:56:18 INFO Agent received command: stop
+2026-10-01 12:56:24 INFO Agent received command: stop
+2026-10-01 12:56:29 INFO Cleaning up finished run: uwqbg7er
+2026-10-01 12:56:29 INFO Reached EOF.
+2026-10-01 12:56:29 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 12:56:32 INFO Agent received command: run
+2026-10-01 12:56:32 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.001343472796076624
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 5
+	weight_decay: 0.0003
+2026-10-01 12:56:32 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 12:56:37 INFO Running runs: ['7v933l35']
+2026-10-01 13:22:58 INFO Cleaning up finished run: 7v933l35
+2026-10-01 13:22:58 INFO Reached EOF.
+2026-10-01 13:22:58 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 13:23:02 INFO Agent received command: run
+2026-10-01 13:23:02 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.00028527891493750095
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 3
+	weight_decay: 1e-05
+2026-10-01 13:23:02 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 13:23:07 INFO Running runs: ['a1xibibt']
+2026-10-01 13:32:01 INFO Agent received command: stop
+2026-10-01 13:32:01 INFO Stop: a1xibibt
+2026-10-01 13:32:07 INFO Agent received command: stop
+2026-10-01 13:32:12 INFO Agent received command: stop
+2026-10-01 13:32:17 INFO Agent received command: stop
+2026-10-01 13:32:23 INFO Agent received command: stop
+2026-10-01 13:32:28 INFO Agent received command: stop
+2026-10-01 13:32:33 INFO Cleaning up finished run: a1xibibt
+2026-10-01 13:32:33 INFO Reached EOF.
+2026-10-01 13:32:33 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 13:32:36 INFO Agent received command: run
+2026-10-01 13:32:36 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0004350581730190446
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 3
+	weight_decay: 0.0003
+2026-10-01 13:32:36 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 13:32:41 INFO Running runs: ['csuxrz4l']
+2026-10-01 13:41:05 INFO Agent received command: stop
+2026-10-01 13:41:05 INFO Stop: csuxrz4l
+2026-10-01 13:41:10 INFO Agent received command: stop
+2026-10-01 13:41:16 INFO Agent received command: stop
+2026-10-01 13:41:21 INFO Agent received command: stop
+2026-10-01 13:41:26 INFO Agent received command: stop
+2026-10-01 13:41:31 INFO Agent received command: stop
+2026-10-01 13:41:36 INFO Cleaning up finished run: csuxrz4l
+2026-10-01 13:41:36 INFO Reached EOF.
+2026-10-01 13:41:36 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 13:41:40 INFO Agent received command: run
+2026-10-01 13:41:40 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0004591325715574992
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 3
+	weight_decay: 1e-05
+2026-10-01 13:41:40 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 13:41:45 INFO Running runs: ['nw1mkr9x']
+2026-10-01 13:51:02 INFO Agent received command: stop
+2026-10-01 13:51:02 INFO Stop: nw1mkr9x
+2026-10-01 13:51:08 INFO Agent received command: stop
+2026-10-01 13:51:13 INFO Agent received command: stop
+2026-10-01 13:51:18 INFO Agent received command: stop
+2026-10-01 13:51:23 INFO Agent received command: stop
+2026-10-01 13:51:29 INFO Agent received command: stop
+2026-10-01 13:51:34 INFO Agent received command: stop
+2026-10-01 13:51:34 INFO Kill: nw1mkr9x
+2026-10-01 13:51:39 INFO Cleaning up finished run: nw1mkr9x
+2026-10-01 13:51:39 INFO Reached EOF.
+2026-10-01 13:51:39 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 13:51:43 INFO Agent received command: run
+2026-10-01 13:51:43 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0006019528404297705
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 5
+	weight_decay: 0.0001
+2026-10-01 13:51:43 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 13:51:48 INFO Running runs: ['2kxzwcpl']
+2026-10-01 14:18:45 INFO Cleaning up finished run: 2kxzwcpl
+2026-10-01 14:18:45 INFO Reached EOF.
+2026-10-01 14:18:45 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 14:18:49 INFO Agent received command: run
+2026-10-01 14:18:49 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.0006502866140878236
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 3
+	weight_decay: 0.0001
+2026-10-01 14:18:49 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 14:18:54 INFO Running runs: ['fs39bgph']
+2026-10-01 14:49:48 INFO Cleaning up finished run: fs39bgph
+2026-10-01 14:49:48 INFO Reached EOF.
+2026-10-01 14:49:48 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 14:49:52 INFO Agent received command: run
+2026-10-01 14:49:52 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.0003821528788724503
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 5
+	weight_decay: 0.0003
+2026-10-01 14:49:52 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 14:49:57 INFO Running runs: ['xsu56ghy']
+2026-10-01 15:00:02 INFO Agent received command: stop
+2026-10-01 15:00:02 INFO Stop: xsu56ghy
+2026-10-01 15:00:07 INFO Agent received command: stop
+2026-10-01 15:00:13 INFO Agent received command: stop
+2026-10-01 15:00:18 INFO Agent received command: stop
+2026-10-01 15:00:23 INFO Agent received command: stop
+2026-10-01 15:00:28 INFO Agent received command: stop
+2026-10-01 15:00:34 INFO Agent received command: stop
+2026-10-01 15:00:34 INFO Kill: xsu56ghy
+2026-10-01 15:00:39 INFO Cleaning up finished run: xsu56ghy
+2026-10-01 15:00:39 INFO Reached EOF.
+2026-10-01 15:00:39 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 15:00:42 INFO Agent received command: run
+2026-10-01 15:00:42 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.00020965964870338743
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 3
+	weight_decay: 1e-05
+2026-10-01 15:00:42 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 15:00:47 INFO Running runs: ['1lsp4k4c']
+2026-10-01 15:10:03 INFO Agent received command: stop
+2026-10-01 15:10:03 INFO Stop: 1lsp4k4c
+2026-10-01 15:10:09 INFO Agent received command: stop
+2026-10-01 15:10:14 INFO Agent received command: stop
+2026-10-01 15:10:19 INFO Agent received command: stop
+2026-10-01 15:10:25 INFO Agent received command: stop
+2026-10-01 15:10:30 INFO Agent received command: stop
+2026-10-01 15:10:36 INFO Agent received command: stop
+2026-10-01 15:10:36 INFO Kill: 1lsp4k4c
+2026-10-01 15:10:41 INFO Cleaning up finished run: 1lsp4k4c
+2026-10-01 15:10:41 INFO Reached EOF.
+2026-10-01 15:10:41 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 15:10:44 INFO Agent received command: run
+2026-10-01 15:10:44 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0014920670456897995
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 3
+	weight_decay: 0.0001
+2026-10-01 15:10:44 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 15:10:49 INFO Running runs: ['4uijumd9']
+2026-10-01 15:20:06 INFO Agent received command: stop
+2026-10-01 15:20:06 INFO Stop: 4uijumd9
+2026-10-01 15:20:11 INFO Agent received command: stop
+2026-10-01 15:20:17 INFO Agent received command: stop
+2026-10-01 15:20:22 INFO Agent received command: stop
+2026-10-01 15:20:27 INFO Cleaning up finished run: 4uijumd9
+2026-10-01 15:20:27 INFO Reached EOF.
+2026-10-01 15:20:27 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 15:20:30 INFO Agent received command: run
+2026-10-01 15:20:30 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.0011170356336493558
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 5
+	weight_decay: 1e-05
+2026-10-01 15:20:30 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 15:20:35 INFO Running runs: ['qta2ruhw']
+2026-10-01 15:30:02 INFO Agent received command: stop
+2026-10-01 15:30:02 INFO Stop: qta2ruhw
+2026-10-01 15:30:07 INFO Agent received command: stop
+2026-10-01 15:30:13 INFO Agent received command: stop
+2026-10-01 15:30:18 INFO Cleaning up finished run: qta2ruhw
+2026-10-01 15:30:18 INFO Reached EOF.
+2026-10-01 15:30:18 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 15:30:21 INFO Agent received command: run
+2026-10-01 15:30:21 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.000314153415778176
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 5
+	weight_decay: 0.0001
+2026-10-01 15:30:21 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 15:30:26 INFO Running runs: ['kdg0961b']
+2026-10-01 15:39:02 INFO Agent received command: stop
+2026-10-01 15:39:02 INFO Stop: kdg0961b
+2026-10-01 15:39:07 INFO Agent received command: stop
+2026-10-01 15:39:13 INFO Agent received command: stop
+2026-10-01 15:39:18 INFO Agent received command: stop
+2026-10-01 15:39:23 INFO Agent received command: stop
+2026-10-01 15:39:28 INFO Agent received command: stop
+2026-10-01 15:39:33 INFO Cleaning up finished run: kdg0961b
+2026-10-01 15:39:33 INFO Reached EOF.
+2026-10-01 15:39:33 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 15:39:37 INFO Agent received command: run
+2026-10-01 15:39:37 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0003474943062957251
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 5
+	weight_decay: 0.0001
+2026-10-01 15:39:37 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 15:39:42 INFO Running runs: ['efagf33p']
+2026-10-01 15:49:07 INFO Agent received command: stop
+2026-10-01 15:49:07 INFO Stop: efagf33p
+2026-10-01 15:49:12 INFO Agent received command: stop
+2026-10-01 15:49:17 INFO Agent received command: stop
+2026-10-01 15:49:22 INFO Agent received command: stop
+2026-10-01 15:49:28 INFO Agent received command: stop
+2026-10-01 15:49:33 INFO Agent received command: stop
+2026-10-01 15:49:38 INFO Cleaning up finished run: efagf33p
+2026-10-01 15:49:38 INFO Reached EOF.
+2026-10-01 15:49:38 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 15:49:42 INFO Agent received command: run
+2026-10-01 15:49:42 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.001244763204803673
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 7
+	weight_decay: 0.0003
+2026-10-01 15:49:42 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 15:49:47 INFO Running runs: ['d648s56x']
+2026-10-01 16:09:03 INFO Cleaning up finished run: gusxgj67
+2026-10-01 16:09:03 INFO Reached EOF.
+2026-10-01 16:09:03 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 16:09:07 INFO Agent received command: run
+2026-10-01 16:09:07 INFO Agent starting run with config:
+	batch_size: 2
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	initial_vocal_duck_logit: -4
+	learning_rate: 0.00021413703135606492
+	length_weighting: equal_length
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	maximum_vocal_ducking: 0.65
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 7
+	weight_decay: 1e-05
+2026-10-01 16:09:07 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-variable-tcn-bilstm output/datasets/prive_scantraxx_extension_variable_v2_fp2_roformer_2-4-6-8bar_top1x3_split20260923_run02_local_four_four output/training_runs/wandb_sweeps/variable_tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/variable_bridge_waveform_v2/prive_scantraxx_extension_run02_wandb_full_20260926 --transition-bars 2 4 6 8 --device auto --no-wandb-log-checkpoints
+2026-10-01 16:09:12 INFO Running runs: ['uh47f5g5']
+2026-10-01 16:14:52 INFO Cleaning up finished run: d648s56x
+2026-10-01 16:14:52 INFO Reached EOF.
+2026-10-01 16:14:52 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 16:14:56 INFO Agent received command: run
+2026-10-01 16:14:56 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0011641634361202811
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 5
+	weight_decay: 0.0001
+2026-10-01 16:14:56 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 16:15:01 INFO Running runs: ['s23it8p1']
+2026-10-01 16:24:05 INFO Agent received command: stop
+2026-10-01 16:24:05 INFO Stop: s23it8p1
+2026-10-01 16:24:11 INFO Agent received command: stop
+2026-10-01 16:24:16 INFO Agent received command: stop
+2026-10-01 16:24:22 INFO Agent received command: stop
+2026-10-01 16:24:27 INFO Agent received command: stop
+2026-10-01 16:24:32 INFO Agent received command: stop
+2026-10-01 16:24:37 INFO Cleaning up finished run: s23it8p1
+2026-10-01 16:24:37 INFO Reached EOF.
+2026-10-01 16:24:37 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 16:24:41 INFO Agent received command: run
+2026-10-01 16:24:41 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.0015069251898623534
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 5
+	weight_decay: 1e-05
+2026-10-01 16:24:41 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 16:24:46 INFO Running runs: ['bm0ivcwo']
+2026-10-01 16:34:02 INFO Agent received command: stop
+2026-10-01 16:34:02 INFO Stop: bm0ivcwo
+2026-10-01 16:34:07 INFO Agent received command: stop
+2026-10-01 16:34:12 INFO Agent received command: stop
+2026-10-01 16:34:18 INFO Agent received command: stop
+2026-10-01 16:34:23 INFO Agent received command: stop
+2026-10-01 16:34:28 INFO Agent received command: stop
+2026-10-01 16:34:33 INFO Cleaning up finished run: bm0ivcwo
+2026-10-01 16:34:33 INFO Reached EOF.
+2026-10-01 16:34:33 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 16:34:40 INFO Agent received command: run
+2026-10-01 16:34:40 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0012291237983778735
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 7
+	weight_decay: 0.0001
+2026-10-01 16:34:40 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 16:34:45 INFO Running runs: ['zae7xwnw']
+2026-10-01 16:59:40 INFO Cleaning up finished run: zae7xwnw
+2026-10-01 16:59:40 INFO Reached EOF.
+2026-10-01 16:59:40 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 16:59:44 INFO Agent received command: run
+2026-10-01 16:59:44 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0005265423933465211
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 3
+	weight_decay: 0.0001
+2026-10-01 16:59:44 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 16:59:49 INFO Running runs: ['0bj5ruec']
+2026-10-01 17:10:04 INFO Agent received command: stop
+2026-10-01 17:10:04 INFO Stop: 0bj5ruec
+2026-10-01 17:10:10 INFO Agent received command: stop
+2026-10-01 17:10:15 INFO Agent received command: stop
+2026-10-01 17:10:20 INFO Agent received command: stop
+2026-10-01 17:10:25 INFO Cleaning up finished run: 0bj5ruec
+2026-10-01 17:10:25 INFO Reached EOF.
+2026-10-01 17:10:25 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 17:10:29 INFO Agent received command: run
+2026-10-01 17:10:29 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0004795508660331043
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 5
+	weight_decay: 0.0001
+2026-10-01 17:10:29 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 17:10:34 INFO Running runs: ['fxhhidgi']
+2026-10-01 17:33:51 INFO Cleaning up finished run: fxhhidgi
+2026-10-01 17:33:51 INFO Reached EOF.
+2026-10-01 17:33:51 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 17:33:56 INFO Agent received command: run
+2026-10-01 17:33:56 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.00024662337936722444
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 7
+	weight_decay: 0.0001
+2026-10-01 17:33:56 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 17:34:01 INFO Running runs: ['8jbx6lxq']
+2026-10-01 17:43:04 INFO Agent received command: stop
+2026-10-01 17:43:04 INFO Stop: 8jbx6lxq
+2026-10-01 17:43:09 INFO Agent received command: stop
+2026-10-01 17:43:15 INFO Agent received command: stop
+2026-10-01 17:43:20 INFO Agent received command: stop
+2026-10-01 17:43:26 INFO Agent received command: stop
+2026-10-01 17:43:31 INFO Agent received command: stop
+2026-10-01 17:43:37 INFO Agent received command: stop
+2026-10-01 17:43:37 INFO Kill: 8jbx6lxq
+2026-10-01 17:43:42 INFO Cleaning up finished run: 8jbx6lxq
+2026-10-01 17:43:42 INFO Reached EOF.
+2026-10-01 17:43:42 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 17:43:46 INFO Agent received command: run
+2026-10-01 17:43:46 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0008805861756347485
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 3
+	weight_decay: 0.0003
+2026-10-01 17:43:46 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 17:43:51 INFO Running runs: ['g8wofwo8']
+2026-10-01 17:53:05 INFO Agent received command: stop
+2026-10-01 17:53:05 INFO Stop: g8wofwo8
+2026-10-01 17:53:11 INFO Agent received command: stop
+2026-10-01 17:53:16 INFO Agent received command: stop
+2026-10-01 17:53:22 INFO Agent received command: stop
+2026-10-01 17:53:28 INFO Agent received command: stop
+2026-10-01 17:53:33 INFO Agent received command: stop
+2026-10-01 17:53:38 INFO Cleaning up finished run: g8wofwo8
+2026-10-01 17:53:38 INFO Reached EOF.
+2026-10-01 17:53:38 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 17:53:42 INFO Agent received command: run
+2026-10-01 17:53:42 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.0007382320372911884
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 3
+	weight_decay: 0.0001
+2026-10-01 17:53:42 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 17:53:47 INFO Running runs: ['zlu0fyvu']
+2026-10-01 18:03:07 INFO Agent received command: stop
+2026-10-01 18:03:07 INFO Stop: zlu0fyvu
+2026-10-01 18:03:12 INFO Agent received command: stop
+2026-10-01 18:03:17 INFO Agent received command: stop
+2026-10-01 18:03:22 INFO Agent received command: stop
+2026-10-01 18:03:27 INFO Cleaning up finished run: zlu0fyvu
+2026-10-01 18:03:27 INFO Reached EOF.
+2026-10-01 18:03:27 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 18:03:31 INFO Agent received command: run
+2026-10-01 18:03:31 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.0005462193100551677
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 5
+	weight_decay: 0.0003
+2026-10-01 18:03:31 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 18:03:36 INFO Running runs: ['l1fctblh']
+2026-10-01 18:13:02 INFO Agent received command: stop
+2026-10-01 18:13:02 INFO Stop: l1fctblh
+2026-10-01 18:13:07 INFO Agent received command: stop
+2026-10-01 18:13:13 INFO Agent received command: stop
+2026-10-01 18:13:18 INFO Agent received command: stop
+2026-10-01 18:13:23 INFO Agent received command: stop
+2026-10-01 18:13:29 INFO Agent received command: stop
+2026-10-01 18:13:34 INFO Cleaning up finished run: l1fctblh
+2026-10-01 18:13:34 INFO Reached EOF.
+2026-10-01 18:13:34 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 18:13:38 INFO Agent received command: run
+2026-10-01 18:13:38 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.0016279684128418597
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 5
+	weight_decay: 1e-05
+2026-10-01 18:13:38 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 18:13:43 INFO Running runs: ['cm7x9rta']
+2026-10-01 18:25:06 INFO Agent received command: stop
+2026-10-01 18:25:06 INFO Stop: cm7x9rta
+2026-10-01 18:25:11 INFO Agent received command: stop
+2026-10-01 18:25:16 INFO Agent received command: stop
+2026-10-01 18:25:22 INFO Agent received command: stop
+2026-10-01 18:25:27 INFO Agent received command: stop
+2026-10-01 18:25:32 INFO Agent received command: stop
+2026-10-01 18:25:37 INFO Cleaning up finished run: cm7x9rta
+2026-10-01 18:25:37 INFO Reached EOF.
+2026-10-01 18:25:37 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 18:25:41 INFO Agent received command: run
+2026-10-01 18:25:41 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.00025741200737435194
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 7
+	weight_decay: 1e-05
+2026-10-01 18:25:41 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 18:25:46 INFO Running runs: ['90gahpkk']
+2026-10-01 18:35:02 INFO Agent received command: stop
+2026-10-01 18:35:02 INFO Stop: 90gahpkk
+2026-10-01 18:35:07 INFO Agent received command: stop
+2026-10-01 18:35:12 INFO Agent received command: stop
+2026-10-01 18:35:18 INFO Agent received command: stop
+2026-10-01 18:35:23 INFO Agent received command: stop
+2026-10-01 18:35:28 INFO Agent received command: stop
+2026-10-01 18:35:33 INFO Agent received command: stop
+2026-10-01 18:35:33 INFO Kill: 90gahpkk
+2026-10-01 18:35:38 INFO Cleaning up finished run: 90gahpkk
+2026-10-01 18:35:38 INFO Reached EOF.
+2026-10-01 18:35:38 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 18:35:42 INFO Agent received command: run
+2026-10-01 18:35:42 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.0005855073550621102
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 7
+	weight_decay: 0.0001
+2026-10-01 18:35:42 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 18:35:47 INFO Running runs: ['9rblxula']
+2026-10-01 19:04:45 INFO Cleaning up finished run: 9rblxula
+2026-10-01 19:04:45 INFO Reached EOF.
+2026-10-01 19:04:45 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 19:04:48 INFO Agent received command: run
+2026-10-01 19:04:48 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.000753390409170105
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 3
+	weight_decay: 0.0003
+2026-10-01 19:04:48 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 19:04:53 INFO Running runs: ['19643dyj']
+2026-10-01 19:14:05 INFO Agent received command: stop
+2026-10-01 19:14:05 INFO Stop: 19643dyj
+2026-10-01 19:14:10 INFO Agent received command: stop
+2026-10-01 19:14:16 INFO Agent received command: stop
+2026-10-01 19:14:21 INFO Agent received command: stop
+2026-10-01 19:14:26 INFO Cleaning up finished run: 19643dyj
+2026-10-01 19:14:26 INFO Reached EOF.
+2026-10-01 19:14:26 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 19:14:29 INFO Agent received command: run
+2026-10-01 19:14:29 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.0003251909529141623
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 3
+	weight_decay: 0.0003
+2026-10-01 19:14:29 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 19:14:34 INFO Running runs: ['dbo2krx3']
+2026-10-01 19:41:33 INFO Cleaning up finished run: dbo2krx3
+2026-10-01 19:41:33 INFO Reached EOF.
+2026-10-01 19:41:33 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 19:41:37 INFO Agent received command: run
+2026-10-01 19:41:37 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.00020275624208477915
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 2
+	tcn_kernel_size: 7
+	weight_decay: 0.0003
+2026-10-01 19:41:37 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 19:41:42 INFO Running runs: ['26r4aiqf']
+2026-10-01 19:51:05 INFO Agent received command: stop
+2026-10-01 19:51:05 INFO Stop: 26r4aiqf
+2026-10-01 19:51:10 INFO Agent received command: stop
+2026-10-01 19:51:15 INFO Agent received command: stop
+2026-10-01 19:51:21 INFO Agent received command: stop
+2026-10-01 19:51:26 INFO Agent received command: stop
+2026-10-01 19:51:31 INFO Agent received command: stop
+2026-10-01 19:51:36 INFO Cleaning up finished run: 26r4aiqf
+2026-10-01 19:51:36 INFO Reached EOF.
+2026-10-01 19:51:36 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 19:51:40 INFO Agent received command: run
+2026-10-01 19:51:40 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.0010060866924568805
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 7
+	weight_decay: 0.0003
+2026-10-01 19:51:40 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 19:51:45 INFO Running runs: ['10bv7dza']
+2026-10-01 20:02:04 INFO Agent received command: stop
+2026-10-01 20:02:04 INFO Stop: 10bv7dza
+2026-10-01 20:02:09 INFO Agent received command: stop
+2026-10-01 20:02:14 INFO Agent received command: stop
+2026-10-01 20:02:20 INFO Agent received command: stop
+2026-10-01 20:02:25 INFO Agent received command: stop
+2026-10-01 20:02:30 INFO Agent received command: stop
+2026-10-01 20:02:36 INFO Agent received command: stop
+2026-10-01 20:02:36 INFO Kill: 10bv7dza
+2026-10-01 20:02:41 INFO Cleaning up finished run: 10bv7dza
+2026-10-01 20:02:41 INFO Reached EOF.
+2026-10-01 20:02:41 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 20:02:44 INFO Agent received command: run
+2026-10-01 20:02:44 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.0004940805093462216
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 5
+	weight_decay: 1e-05
+2026-10-01 20:02:44 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 20:02:49 INFO Running runs: ['frkvsfqi']
+2026-10-01 20:25:49 INFO Cleaning up finished run: frkvsfqi
+2026-10-01 20:25:49 INFO Reached EOF.
+2026-10-01 20:25:49 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 20:25:52 INFO Agent received command: run
+2026-10-01 20:25:52 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0002144557731767442
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 7
+	weight_decay: 0.0003
+2026-10-01 20:25:52 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 20:25:57 INFO Running runs: ['twd61sm5']
+2026-10-01 20:35:05 INFO Agent received command: stop
+2026-10-01 20:35:05 INFO Stop: twd61sm5
+2026-10-01 20:35:11 INFO Agent received command: stop
+2026-10-01 20:35:16 INFO Agent received command: stop
+2026-10-01 20:35:21 INFO Agent received command: stop
+2026-10-01 20:35:26 INFO Agent received command: stop
+2026-10-01 20:35:32 INFO Agent received command: stop
+2026-10-01 20:35:37 INFO Cleaning up finished run: twd61sm5
+2026-10-01 20:35:37 INFO Reached EOF.
+2026-10-01 20:35:37 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 20:35:40 INFO Agent received command: run
+2026-10-01 20:35:40 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.00027161945401522685
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 3
+	weight_decay: 0.0003
+2026-10-01 20:35:40 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 20:35:45 INFO Running runs: ['abgeq9c9']
+2026-10-01 20:45:04 INFO Agent received command: stop
+2026-10-01 20:45:04 INFO Stop: abgeq9c9
+2026-10-01 20:45:09 INFO Agent received command: stop
+2026-10-01 20:45:14 INFO Agent received command: stop
+2026-10-01 20:45:19 INFO Agent received command: stop
+2026-10-01 20:45:25 INFO Agent received command: stop
+2026-10-01 20:45:30 INFO Agent received command: stop
+2026-10-01 20:45:35 INFO Agent received command: stop
+2026-10-01 20:45:35 INFO Kill: abgeq9c9
+2026-10-01 20:45:40 INFO Cleaning up finished run: abgeq9c9
+2026-10-01 20:45:40 INFO Reached EOF.
+2026-10-01 20:45:40 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 20:45:44 INFO Agent received command: run
+2026-10-01 20:45:44 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.0015488342856219126
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 3
+	weight_decay: 1e-05
+2026-10-01 20:45:44 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 20:45:49 INFO Running runs: ['yhv86q5t']
+2026-10-01 20:56:04 INFO Agent received command: stop
+2026-10-01 20:56:04 INFO Stop: yhv86q5t
+2026-10-01 20:56:09 INFO Agent received command: stop
+2026-10-01 20:56:15 INFO Agent received command: stop
+2026-10-01 20:56:20 INFO Agent received command: stop
+2026-10-01 20:56:25 INFO Cleaning up finished run: yhv86q5t
+2026-10-01 20:56:25 INFO Reached EOF.
+2026-10-01 20:56:25 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 20:56:28 INFO Agent received command: run
+2026-10-01 20:56:28 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.2
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 1
+	increment_logit_bound: 0.6
+	learning_rate: 0.0013558292820058844
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 7
+	weight_decay: 0.0001
+2026-10-01 20:56:28 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-01 20:56:33 INFO Running runs: ['1w51w9t6']
+2026-10-01 21:06:57 INFO Reached EOF.
+2026-10-01 21:06:57 INFO Closing mailbox, abandoning 0 handles.
+2026-10-01 21:25:55 INFO Reached EOF.
+2026-10-01 21:25:55 INFO Closing mailbox, abandoning 0 handles.
+2026-10-02 09:19:42 INFO Running runs: []
+2026-10-02 09:19:43 INFO Agent received command: run
+2026-10-02 09:19:43 INFO Agent starting run with config:
+	batch_size: 5
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.00022977356726223332
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 1
+	tcn_kernel_size: 7
+	weight_decay: 1e-05
+2026-10-02 09:19:43 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-02 09:19:48 INFO Running runs: ['b8r509c1']
+2026-10-02 09:29:03 INFO Agent received command: stop
+2026-10-02 09:29:03 INFO Stop: b8r509c1
+2026-10-02 09:29:09 INFO Agent received command: stop
+2026-10-02 09:29:14 INFO Agent received command: stop
+2026-10-02 09:29:19 INFO Agent received command: stop
+2026-10-02 09:29:24 INFO Cleaning up finished run: b8r509c1
+2026-10-02 09:29:24 INFO Reached EOF.
+2026-10-02 09:29:24 INFO Closing mailbox, abandoning 0 handles.
+2026-10-02 09:29:28 INFO Agent received command: run
+2026-10-02 09:29:28 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0013492233317106714
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 3
+	weight_decay: 0.0001
+2026-10-02 09:29:28 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1 --cache-root output/ml_cache/bridge_waveform_v1 --device auto --no-wandb-log-checkpoints
+2026-10-02 09:29:33 INFO Running runs: ['qd4qad9a']
+2026-10-02 09:36:30 INFO Reached EOF.
+2026-10-02 09:36:30 INFO Closing mailbox, abandoning 0 handles.
+2026-10-02 09:36:49 INFO Reached EOF.
+2026-10-02 09:36:49 INFO Closing mailbox, abandoning 0 handles.
+2026-10-02 09:36:50 INFO Reached EOF.
+2026-10-02 09:36:50 INFO Closing mailbox, abandoning 0 handles.
+2026-10-02 09:37:14 INFO Running runs: []
+2026-10-02 09:37:14 INFO Agent received command: run
+2026-10-02 09:37:14 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0004795508660331043
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 5
+	weight_decay: 0.0001
+2026-10-02 09:37:14 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_confirmation/tcn_bilstm_fxhhidgi --cache-root output/ml_cache/bridge_waveform_v1 --device auto --save-checkpoints --no-wandb-log-checkpoints
+2026-10-02 09:37:19 INFO Running runs: ['8ws9jh2d']
+2026-10-02 09:37:27 INFO Running runs: []
+2026-10-02 09:37:28 INFO Agent received command: run
+2026-10-02 09:37:28 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.00026987912458654003
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260930
+	tcn_dilation: 4
+	tcn_kernel_size: 5
+	weight_decay: 1e-05
+2026-10-02 09:37:28 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_confirmation/tcn_bilstm_vlfwfn7a --cache-root output/ml_cache/bridge_waveform_v1 --device auto --save-checkpoints --no-wandb-log-checkpoints
+2026-10-02 09:37:33 INFO Running runs: ['fyv6pg33']
+2026-10-02 10:01:00 INFO Cleaning up finished run: 8ws9jh2d
+2026-10-02 10:01:00 INFO Reached EOF.
+2026-10-02 10:01:00 INFO Closing mailbox, abandoning 0 handles.
+2026-10-02 10:01:03 INFO Agent received command: run
+2026-10-02 10:01:03 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0004795508660331043
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260931
+	tcn_dilation: 4
+	tcn_kernel_size: 5
+	weight_decay: 0.0001
+2026-10-02 10:01:03 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_confirmation/tcn_bilstm_fxhhidgi --cache-root output/ml_cache/bridge_waveform_v1 --device auto --save-checkpoints --no-wandb-log-checkpoints
+2026-10-02 10:01:08 INFO Running runs: ['ypbf4g4x']
+2026-10-02 10:04:36 INFO Cleaning up finished run: fyv6pg33
+2026-10-02 10:04:36 INFO Reached EOF.
+2026-10-02 10:04:36 INFO Closing mailbox, abandoning 0 handles.
+2026-10-02 10:04:39 INFO Agent received command: run
+2026-10-02 10:04:39 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.00026987912458654003
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260931
+	tcn_dilation: 4
+	tcn_kernel_size: 5
+	weight_decay: 1e-05
+2026-10-02 10:04:39 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_confirmation/tcn_bilstm_vlfwfn7a --cache-root output/ml_cache/bridge_waveform_v1 --device auto --save-checkpoints --no-wandb-log-checkpoints
+2026-10-02 10:04:44 INFO Running runs: ['y4sxdv94']
+2026-10-02 10:25:06 INFO Cleaning up finished run: ypbf4g4x
+2026-10-02 10:25:06 INFO Reached EOF.
+2026-10-02 10:25:06 INFO Closing mailbox, abandoning 0 handles.
+2026-10-02 10:25:09 INFO Agent received command: run
+2026-10-02 10:25:09 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0004795508660331043
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260932
+	tcn_dilation: 4
+	tcn_kernel_size: 5
+	weight_decay: 0.0001
+2026-10-02 10:25:09 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_confirmation/tcn_bilstm_fxhhidgi --cache-root output/ml_cache/bridge_waveform_v1 --device auto --save-checkpoints --no-wandb-log-checkpoints
+2026-10-02 10:25:14 INFO Running runs: ['7fpe13hb']
+2026-10-02 10:31:58 INFO Cleaning up finished run: y4sxdv94
+2026-10-02 10:31:58 INFO Reached EOF.
+2026-10-02 10:31:58 INFO Closing mailbox, abandoning 0 handles.
+2026-10-02 10:32:01 INFO Agent received command: run
+2026-10-02 10:32:01 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.00026987912458654003
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260932
+	tcn_dilation: 4
+	tcn_kernel_size: 5
+	weight_decay: 1e-05
+2026-10-02 10:32:01 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_confirmation/tcn_bilstm_vlfwfn7a --cache-root output/ml_cache/bridge_waveform_v1 --device auto --save-checkpoints --no-wandb-log-checkpoints
+2026-10-02 10:32:06 INFO Running runs: ['mbyu3y1x']
+2026-10-02 10:49:06 INFO Cleaning up finished run: 7fpe13hb
+2026-10-02 10:49:06 INFO Reached EOF.
+2026-10-02 10:49:06 INFO Closing mailbox, abandoning 0 handles.
+2026-10-02 10:49:10 INFO Agent received command: run
+2026-10-02 10:49:10 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0004795508660331043
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260933
+	tcn_dilation: 4
+	tcn_kernel_size: 5
+	weight_decay: 0.0001
+2026-10-02 10:49:10 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_confirmation/tcn_bilstm_fxhhidgi --cache-root output/ml_cache/bridge_waveform_v1 --device auto --save-checkpoints --no-wandb-log-checkpoints
+2026-10-02 10:49:15 INFO Running runs: ['e0h5y001']
+2026-10-02 10:59:15 INFO Cleaning up finished run: mbyu3y1x
+2026-10-02 10:59:15 INFO Reached EOF.
+2026-10-02 10:59:15 INFO Closing mailbox, abandoning 0 handles.
+2026-10-02 10:59:18 INFO Agent received command: run
+2026-10-02 10:59:18 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.00026987912458654003
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260933
+	tcn_dilation: 4
+	tcn_kernel_size: 5
+	weight_decay: 1e-05
+2026-10-02 10:59:18 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_confirmation/tcn_bilstm_vlfwfn7a --cache-root output/ml_cache/bridge_waveform_v1 --device auto --save-checkpoints --no-wandb-log-checkpoints
+2026-10-02 10:59:23 INFO Running runs: ['2j0x43u8']
+2026-10-02 11:12:51 INFO Cleaning up finished run: e0h5y001
+2026-10-02 11:12:51 INFO Reached EOF.
+2026-10-02 11:12:51 INFO Closing mailbox, abandoning 0 handles.
+2026-10-02 11:12:54 INFO Agent received command: run
+2026-10-02 11:12:54 INFO Agent starting run with config:
+	batch_size: 7
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 0.5
+	increment_logit_bound: 0.6
+	learning_rate: 0.0004795508660331043
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260934
+	tcn_dilation: 4
+	tcn_kernel_size: 5
+	weight_decay: 0.0001
+2026-10-02 11:12:54 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_confirmation/tcn_bilstm_fxhhidgi --cache-root output/ml_cache/bridge_waveform_v1 --device auto --save-checkpoints --no-wandb-log-checkpoints
+2026-10-02 11:12:59 INFO Running runs: ['2an8lnmz']
+2026-10-02 11:25:47 INFO Cleaning up finished run: 2j0x43u8
+2026-10-02 11:25:47 INFO Reached EOF.
+2026-10-02 11:25:47 INFO Closing mailbox, abandoning 0 handles.
+2026-10-02 11:25:50 INFO Agent received command: run
+2026-10-02 11:25:50 INFO Agent starting run with config:
+	batch_size: 3
+	controller_hidden_size: 128
+	controller_layers: 2
+	dropout: 0.1
+	encoder_channels: [64, 128]
+	fusion_dimension: 256
+	gradient_clip_norm: 2
+	increment_logit_bound: 0.6
+	learning_rate: 0.00026987912458654003
+	lr_scheduler_factor: 0.5
+	lr_scheduler_min_lr_factor: 0.05
+	lr_scheduler_patience: 10
+	lr_scheduler_threshold: 0.0001
+	lr_warmup_epochs: 5
+	lr_warmup_start_factor: 0.1
+	max_epochs: 150
+	output_dimension: 10
+	seed: 20260934
+	tcn_dilation: 4
+	tcn_kernel_size: 5
+	weight_decay: 1e-05
+2026-10-02 11:25:50 INFO About to run command: .venv/Scripts/python.exe wandb_sweep.py sweep-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output/training_runs/wandb_confirmation/tcn_bilstm_vlfwfn7a --cache-root output/ml_cache/bridge_waveform_v1 --device auto --save-checkpoints --no-wandb-log-checkpoints
+2026-10-02 11:25:55 INFO Running runs: ['l0qd6fol']
+2026-10-02 11:36:09 INFO Cleaning up finished run: 2an8lnmz
+2026-10-02 11:36:09 INFO Reached EOF.
+2026-10-02 11:36:09 INFO Closing mailbox, abandoning 0 handles.
+2026-10-02 11:36:12 INFO Agent received command: exit
+2026-10-02 11:36:12 INFO Received exit command. Killing runs and quitting.
+2026-10-02 11:36:12 INFO Reached EOF.
+2026-10-02 11:36:12 INFO Closing mailbox, abandoning 0 handles.
+2026-10-02 11:52:11 INFO Cleaning up finished run: l0qd6fol
+2026-10-02 11:52:11 INFO Reached EOF.
+2026-10-02 11:52:11 INFO Closing mailbox, abandoning 0 handles.
+2026-10-02 11:52:14 INFO Agent received command: exit
+2026-10-02 11:52:14 INFO Received exit command. Killing runs and quitting.
+2026-10-02 11:52:14 INFO Reached EOF.
+2026-10-02 11:52:14 INFO Closing mailbox, abandoning 0 handles.

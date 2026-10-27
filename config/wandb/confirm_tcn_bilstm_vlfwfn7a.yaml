@@ -1,0 +1,67 @@
+program: wandb_sweep.py
+name: tcn-bilstm-confirm-vlfwfn7a-5seeds-20261002
+description: Confirm nqntmdi0/vlfwfn7a over five shared seeds with full training and local checkpoints.
+method: grid
+metric:
+  name: best_validation_loss
+  goal: minimize
+
+# Only seed varies. No Hyperband; runner patience is max_epochs + 1.
+# Includes the original seed and four additional seeds shared with fxhhidgi.
+parameters:
+  seed:
+    values: [20260930, 20260931, 20260932, 20260933, 20260934]
+  max_epochs:
+    value: 150
+  batch_size:
+    value: 3
+  learning_rate:
+    value: 0.00026987912458654003
+  lr_warmup_epochs:
+    value: 5
+  lr_warmup_start_factor:
+    value: 0.1
+  lr_scheduler_patience:
+    value: 10
+  lr_scheduler_factor:
+    value: 0.5
+  lr_scheduler_threshold:
+    value: 0.0001
+  lr_scheduler_min_lr_factor:
+    value: 0.05
+  weight_decay:
+    value: 0.00001
+  gradient_clip_norm:
+    value: 2.0
+  encoder_channels:
+    value: [64, 128]
+  tcn_kernel_size:
+    value: 5
+  tcn_dilation:
+    value: 4
+  fusion_dimension:
+    value: 256
+  controller_hidden_size:
+    value: 128
+  controller_layers:
+    value: 2
+  output_dimension:
+    value: 10
+  dropout:
+    value: 0.1
+  increment_logit_bound:
+    value: 0.6
+
+command:
+  - ${env}
+  - .venv/Scripts/python.exe
+  - ${program}
+  - sweep-tcn-bilstm
+  - output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805
+  - output/training_runs/wandb_confirmation/tcn_bilstm_vlfwfn7a
+  - --cache-root
+  - output/ml_cache/bridge_waveform_v1
+  - --device
+  - auto
+  - --save-checkpoints
+  - --no-wandb-log-checkpoints
