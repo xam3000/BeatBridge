@@ -1,5 +1,367 @@
 # Beobachtungen, Entscheidungen und Gelerntes
 
+## 2026-11-04 — Alle verbleibenden Thesis-Kapitel in den Schreibstil des Nutzers überführt
+
+- **Fragestellung/Reasoning:** Gleiche Aufgabe wie am 2026-10-26, jetzt für die
+  restlichen Kapitel mit Fließtext: Können die Kapitel 1, 3, 4, 5 und 6 so
+  umformuliert werden, dass sie wie vom Nutzer selbst geschrieben klingen,
+  ohne Details, Claims, Zahlen, Quellen, Labels, Referenzen, Mathematik,
+  Tabellen, Listings, TODO-Kommentare oder auskommentierte Blöcke zu ändern?
+- **Eingaben/Setup:** Stilreferenz weiterhin die Bachelorarbeit des Nutzers
+  (Extrakt vom 2026-10-26). Ausgangspunkt ist der committed Stand nach dem
+  Overleaf-Merge (HEAD enthält den Related-Work-Rewrite vom 2026-10-26).
+  `00_abstract*.tex`, `07_conclusion.tex` und `A0_appendixA.tex` enthalten nur
+  TODO-Stubs und wurden nicht verändert.
+- **Prüflauf 1 (Invarianten-Vergleich gegen git-HEAD):**
+  `.venv\Scripts\python.exe C:\Users\max_h\AppData\Local\Temp\opencode\check_chapters.py`
+  verglich für alle fünf Kapitel jeweils HEAD mit dem neuen Stand.
+  Ergebnis pro Datei OK: identische Zitationsschlüssel (Reihenfolge),
+  identische Labels und `\ref`-Ziele, identische
+  Kapitel-/Sections-/Subsections-/Paragraph-Struktur, alle Kommentarzeilen
+  (TODOs und die auskommentierten Abschnitte in Kapitel 5) wortgleich, alle
+  Environments (`equation`, `align`, `table`, `tabular(x)`, `lstlisting`,
+  `figure`, `enumerate`, `quote`, `minipage`) byteweise identisch, Klammern
+  ausgeglichen. Wortzahlen annähernd gleich (z. B. Kapitel 3: 4.884 → 4.908).
+- **Prüflauf 2 (Whitespace/Diff-Umfang):** `git -C overleaf diff --check`
+  ohne Whitespace-Fehler; `diff --stat`: 74 Insertions/72 Deletions über
+  genau die fünf Zieldateien, eine Zeile pro Absatz.
+- **Prüflauf 3 (lokaler LaTeX-Build):** Weiterhin nicht ausführbar (kein
+  pdflatex/latexmk/tectonic auf diesem Rechner, Stand unverändert zu
+  2026-10-26). Kompilat und Sichtprüfung stehen aus.
+- **Beobachtung (bewusst nicht geändert):** Kapitel 6 referenziert
+  `sec:results-user-evaluation` und `sec:results-failures`; diese Labels
+  existieren nur in auskommentierten Abschnitten von Kapitel 5
+  (Zeilen 125/135). Das ist ein vorbestehender Zustand und erzeugt im Build
+  undefinierte Referenzen. Stil-Rewrite ändert daran nichts; Klärung dem
+  Nutzer überlassen.
+- **Schlussfolgerung/nächster Schritt:** Alle Fließtext-Kapitel sind im
+  Nutzer-Stil mit maschinell geprüft unverändertem Inhalt. Beim nächsten
+  Zugriff auf den integrierten LaTeX-Compiler Gesamtbuild ausführen und die
+  betroffenen Seiten visuell prüfen; dabei auch die undefinierten Referenzen
+  aus der Beobachtung oben prüfen.
+
+## 2026-10-29 — Funktionsweise der Metriken visualisiert
+
+- **Fragestellung/Reasoning:** Der Nutzer möchte zusätzlich sehen, wie die
+  verwendeten Metriken arbeiten. Die neue Serie trennt Eingaben,
+  Teilberechnungen, Defaultgewichte und Interpretation. Auswahl-Scores,
+  gerendertes Audio, differenzierbare Trainingslosses, Teacher-Agreement und
+  menschliche Ratings werden nicht als austauschbare Qualitätswerte gezeigt.
+- **Eingaben/Setup:** Aktuelle Implementierungen von
+  `src/ranking/{song_compatibility,feature_baseline,rendered_transition}.py`,
+  `src/control/{differentiable,variable_differentiable}.py`,
+  `src/ml/cue_ranker_runner.py` sowie Control-Rating-/Auswertungscode und die
+  zugehörigen Protokolle. Pflichtdokumente und Projektdisziplin berücksichtigt.
+  Die bereits vorhandenen GUI-/Kandidaten-/Dokumentationsänderungen und das
+  geänderte Thesis-Submodul blieben erhalten. Es wurden nur neue Metrik-SVGs,
+  deren Generator und Dokumentation ergänzt.
+- **Ergebnisartefakte:** `docs/figures/flowcharts/12-*.svg` bis `23-*.svg`
+  (zwölf Dateien), `generate_metric_figures.py`, `METRICS_README.md` mit
+  englischen Captions, codegebundenen Formeln und Grenzen. Die vorhandenen
+  Pipelinebilder 01–11 werden vom neuen Generator nicht geschrieben.
+  Eine Matplotlib-Sonde bestätigte, dass die bestehende venv Matplotlib
+  bereits enthält; es wurden keine Pakete installiert.
+- **Prüflauf 1 — erster SVG-Export:**
+  `.venv\Scripts\python.exe -X utf8 docs/figures/flowcharts/generate_metric_figures.py --preview-dir output/metric_figure_previews_20261029`.
+  Der Prozess lieferte `PASS` mit zwölf gültigen QtSvg-Dateien und 77 Nodes,
+  Exit 0. Die strukturellen Text-/Glyphen-/Knoten-/Kantenprüfungen bestanden.
+  Die Sichtprüfung des Kontaktbogens fand dennoch einen **leeren Plotbereich
+  in Abb. 18**: QtSvg renderte den eingebetteten Matplotlib-`<svg>`-Viewport
+  nicht. Ein gültiges SVG und ein erfolgreicher Renderaufruf allein belegen
+  somit nicht die Sichtbarkeit aller Inhalte.
+- **Prüflauf 2 — Plot korrigiert:** Derselbe Befehl, Exit 0. Die
+  Matplotlib-Kindelemente werden nun in eine skalierte/verschobene SVG-Gruppe
+  eingebettet; das Vektordiagramm bleibt erhalten. Die Einzelansicht von
+  Abb. 18 zeigte danach beide Kurven, Legende, Achsen und Beschriftungen;
+  Abb. 17 wurde ebenfalls einzeln gesichtet. Der Plot bezeichnet Pegel und
+  Verlauf explizit als Illustration ohne Experimentdaten.
+- **Prüflauf 3 — Einheiten und Datenfluss präzisiert:** Derselbe Befehl,
+  Exit 0, zwölf gültige SVGs mit 78 Nodes. Die Grenzglätteformel benennt
+  RMS-Pegel ausdrücklich in dB; der Beat-Lag führt den echten `max(1,...)`-
+  Guard. Im Rankerbild versorgt eine gemeinsame Candidate-Gruppe alle
+  Kennzahlen direkt; NDCG wird nicht optisch aus dem Top-1-Ergebnis
+  abgeleitet. Die aktualisierten Abb. 21/22 wurden zusätzlich einzeln
+  visuell gelesen. Keine Text-/Glyphen-/Knotenüberläufe beobachtet.
+- **Prüflauf 4 — synthetische Gegenrechnung mit Produktionscode:**
+  `.venv\Scripts\python.exe -B -X utf8 output/metric_figure_previews_20261029/verify_definitions.py`.
+  Exit 0, `PASS`. Die drei Score-Defaultgewichtssätze und alle v4/v5-
+  Objectivegewichte wurden gegen die tatsächlichen Dataclasses geprüft.
+  Ein rein synthetisches Songpaar ergab `0.8`. Aus injizierten synthetischen
+  Fenster-/Trackprofilen ergaben sich High Power `0.75`, Non-Overlap
+  `sqrt(0.5)=0.70710678`, Harmonie/Klang/Tempo `1` und Energie `0.875`;
+  die Gesamtgewichtung stimmte. Konstantes Audio erzielte im Grenzhelfer
+  Score `1`, ein synthetischer Pegelsprung `0.00864427`; stille Rhythmik
+  lieferte neutral `0.5`. Energiezielkurve, leere Validitätsmasken sowie
+  aktive/stille Stemstärke stimmten mit den Produktionshelfern überein.
+  Der erfundene Rankervergleich A/B/C/D gegen B/A/D/C ergab Top-1 `0`,
+  Top-2 `1`, NDCG@2 `0.9373691761`, gerundet wie in Abb. 22 `0.937`.
+  Der Ratingsummary-Helfer wurde mit `[3,4,5]` geprüft. Das sind
+  Definitionschecks, keine neuen musikalischen Qualitätsresultate.
+- **Prüflauf 5 — SVG-Inhalt, Quellen und Lieferpakete:** Ein Here-String
+  über `.venv\Scripts\python.exe -B -X utf8 -` prüfte zwölf neue XMLs auf
+  160-mm-Breite, `viewBox`, editierbaren Text, eindeutige IDs, fehlende
+  Rasterbilder/Skripte/externe Assetreferenzen und alle 32 lokalen
+  Quellen-/Dateilinks. Zusätzlich wurden im korrigierten Plotbereich
+  24.349 nichtweiße Pixel gezählt (Guard gegen den ersten Blank-Render).
+  Die ZIPs `beatbridge-metrics-svg.zip` (15 Einträge) und
+  `beatbridge-all-flowcharts-svg.zip` (27 Einträge einschließlich der
+  bisherigen Serie) liegen unter `output/metric_figure_previews_20261029/`
+  und bestanden `ZipFile.testzip()`. Exit 0, `PASS`; eine nicht blockierende
+  Pillow-Deprecationwarnung zu `Image.getdata` wurde ausgegeben.
+- **Prüflauf 6 — Diff-Hygiene:**
+  `git diff --check -- docs/figures/flowcharts docs/README.md docs/PIPELINE_UEBERSICHT.md docs/STATUS.md docs/Bemerkungen.md`
+  vor diesem Status-/Lognachtrag: Exit 0; nur die bekannten LF→CRLF-Hinweise
+  für bestehende Dokumente. Die neuen ungetrackten SVGs wurden separat durch
+  den Generator und Prüflauf 5 geprüft.
+- **Verifizierte Invarianten:** Die Render-Energiekomponente misst
+  Pre-/Bridge-/Post-RMS-Kontrast, während Objective-Energie eine normalisierte
+  Frame-Sollkurvenabweichung misst. Render-Grenzglätte enthält einen lokalen
+  Sample-Sprungtest; Objective-Boundary vergleicht Endpoint-RMS. Der als
+  Smoothness geloggte Controlterm regularisiert Abweichungen von gleichmäßigen
+  Inkrementen. Objective v5 deaktiviert standardmäßig die beiden geerbten
+  featurebasierten Vocal-Overlap-/Boundarygewichte, fügt stem-basierte
+  Overlap-/Audibility-/Mid-Phrase-Terme hinzu und behält den Transiententerm.
+  Ranker-NDCG verwendet ordinale Gains N bis 1, keine Exponential-Gains.
+- **Schlussfolgerung/nächster Schritt:** Zwölf Erklärbilder sind als weitere
+  Thesis-SVGs verfügbar. Gewichte sind als Code-Defaults gekennzeichnet;
+  echte Run-Manifeste bleiben autoritativ. Es wurden keine Musikdateien,
+  Dataset-NPZs, echten Ratings/Antwortschlüssel oder Modellgewichte gelesen,
+  kein Training gestartet, keine laufende GUI automatisiert, keine
+  Thesisdatei verändert und kein Commit angelegt. Die tatsächliche
+  Einbindung und finale Skalierung im Thesislayout bleiben separat.
+
+## 2026-10-28 — Cuepoint-Suche in markierten Waveform-Bereichen
+
+- **Fragestellung und Reasoning:** Kann die native GUI je Song einen Bereich
+  markieren, dort passende Übergangs-Cuepoints bewerten und diese direkt
+  rendern? Die vorhandene Candidate-Generation und `feature_baseline_v3`
+  liefern die wiederverwendbare, erklärbare Auswahlstrecke. Der gelernte
+  Cue-Ranker wurde wegen ausschließlich synthetischer Verifikation nicht als
+  zuverlässiger Auto-Selector eingesetzt.
+- **Eingaben/Setup:** Bestehende PySide6-Transition-Builder-GUI, Analysecache,
+  Beatgrid-Metadaten, Candidate-Generation und Feature-Ranker. Quell-Audio wird
+  unverändert referenziert.
+- **Testumfang/Befehl:** Kein Testlauf ausgeführt. Die Repository-Anweisung
+  verlangt `.venv\Scripts\python.exe` für Python-Prüfungen; gemäß Arbeitsauftrag
+  wurde keine Test- oder Check-Suite gestartet. Änderungen wurden nur im Code
+  und in den Projektdokumenten vorgenommen.
+- **Ergebnis einschließlich Blockaden:** Ziehen in einer Waveform markiert
+  einen Bereich, Klick setzt weiterhin einen Cuepoint. Der Button
+  „Beste Cuepoints in Bereichen suchen“ analysiert bei Bedarf, begrenzt die
+  Candidate-Generation auf beide Zeitbereiche, wählt den bestbewerteten
+  Feature-Kandidaten aus und setzt damit die Cuepoints der aktiven Sequenzkante.
+  Bereiche werden je Kante erhalten. Test-/Laufzeitverhalten ist daher noch
+  nicht bestätigt.
+- **Schlussfolgerung und nächster Schritt:** Implementierung ist dokumentiert,
+  aber vor Nutzung sind ein manueller GUI-Abnahmeklicktest mit realen Tracks
+  (Bereichsauswahl, Wechsel der Sequenzkante, Analyzer, Rendern) und die
+  visuelle Waveform-Prüfung erforderlich.
+
+## 2026-10-28 — Absturzpfad der Cuepoint-Suche abgesichert
+
+- **Fragestellung/Reasoning:** Die GUI wurde beim Suchen nach einigen Sekunden
+  beendet. Ein Volltrackbereich kann viele tausend Quell-/Zielpaare erzeugen;
+  zusätzlich musste die Threadgrenze für das GUI-Update explizit sein.
+- **Eingaben/Setup:** Codepfad `TransitionBuilderWindow` →
+  `_CueAnalysisTask` → `generate_candidates` → `rank_candidates`; keine
+  Audiodateien geöffnet und kein Absturz lokal reproduziert.
+- **Testumfang/Befehl:** Kein Testlauf oder GUI-Neustart durchgeführt.
+  Statische Codeinspektion; `.venv\Scripts\python.exe` wurde nicht gestartet.
+- **Ergebnis einschließlich Blockaden:** Der Worker bewertet jetzt höchstens
+  400 deterministisch über die erzeugte Kandidatenfolge verteilte Kandidaten.
+  Sein Abschlusscallback ist explizit als `QueuedConnection` an den GUI-Thread
+  gebunden. Das adressiert Lastspitzen und einen möglichen threadunsicheren
+  Widgetzugriff, belegt aber ohne Reproduktion nicht, welche Ursache den
+  beobachteten Absturz ausgelöst hat.
+- **Schlussfolgerung/nächster Schritt:** Nutzer soll die Suche erneut mit
+  denselben Dateien/Bereichen ausführen. Bei weiterem Absturz werden
+  vollständiger Konsolen-/Crashlog und die betroffenen Dateien/Bereiche für
+  eine gezielte Diagnose benötigt.
+
+## 2026-10-28 — Renderstatus bleibt nach fertigem Export aktiv
+
+- **Fragestellung/Reasoning:** Der Nutzer meldet, dass der Renderer lange läuft
+  und die GUI anscheinend nicht fertig wird. Zuerst ist zwischen langsamer
+  Audioverarbeitung und einem nur ausbleibenden Abschlussstatus zu trennen.
+- **Eingaben/Setup:** Read-only-Sichtung von `output/gui_transitions`, dem
+  Sidecar des letzten Exports sowie `_TransitionRenderTask` und
+  `render_transition`. Die Prozessabfrage via CIM war in dieser Umgebung nicht
+  verfügbar; `Get-Process` zeigte keinen passenden Python-/BeatBridge-Prozess.
+- **Testumfang/Befehl:** Kein Renderlauf neu gestartet und keine Tests
+  ausgeführt. Vorhandenes Sidecar gelesen und vorhandene WAV-Datei aufgelistet.
+- **Ergebnis einschließlich Blockaden:** Für den letzten Lauf liegen eine
+  2.998.844 Byte große WAV-Datei und ihr vollständiges JSON-Sidecar vor. Das
+  Sidecar enthält WAV-Abmessungen, `ffmpeg_librubberband` als Tempo-Backend
+  und eine abgeschlossene Render-Metrik. Damit war dieser Export fertig.
+  Ursache für die lange Rechenzeit wurde nicht gemessen. Der Render-Worker
+  lieferte sein fertiges Ergebnis über einen Lambda-Slot ohne explizite
+  Qt-Thread-Zustellung zurück; das kann den UI-Abschluss verhindern. Die
+  Verbindung nutzt nun `QueuedConnection`, damit Status und Controls im
+  Hauptthread aktualisiert werden.
+- **Schlussfolgerung/nächster Schritt:** Neu rendern und prüfen, ob die GUI
+  nach dem Export wieder freigibt und WAV/Vorschau anzeigt. Falls der eigentliche
+  Render weiterhin sehr lange dauert, Rendering-Stufen separat messen und den
+  vollständigen Song-Tempo-Stretch als mögliche Laufzeitquelle profilieren.
+
+## 2026-10-28 — Thesis-Flowcharts als elf eigenständige SVGs
+
+- **Fragestellung/Reasoning:** Der Nutzer benötigt verwendbare SVGs mit
+  mehreren Farben und weniger Details pro Abbildung. Deshalb wurde die große
+  Gesamtlandkarte in eine reduzierte Übersicht und zehn Komponentenbilder
+  zerlegt. Englisch folgt der Sprache der bestehenden Thesis; Captions und
+  Quellen stehen getrennt von den Bildflächen, damit sie beim Satz nicht
+  mit Abbildungsnummern konkurrieren. Standentscheidungen vom 27.10. bleiben
+  erhalten: real trainierte Controller, synthetischer Cue-Ranker, getrennte
+  Render-/Objective-/Hörevidenz, unterschiedliche feste/variable Renderer.
+- **Eingaben/Setup:** Projektpflichtlektüre, `PIPELINE_UEBERSICHT.md`,
+  Feature-/Dataset-/Analyse-/Modellverträge und Modellcode. Neue Dateien unter
+  `docs/figures/flowcharts/`; keine bestehende Thesisdatei verändert.
+  Interpreter ausschließlich `.venv\Scripts\python.exe`. Die reine
+  Werkzeugsonde per `importlib.util.find_spec`/`shutil.which` fand
+  PySide6/QtSvg und Pillow; Graphviz, Inkscape, CairoSVG und ReportLab waren
+  nicht verfügbar. Verwendet werden direkt erzeugtes SVG und eine
+  Offscreen-QtSvg-Vorschau, kein externer Renderingdienst.
+- **Prüflauf 1 — erster Generatorlauf:**
+  `.venv\Scripts\python.exe -X utf8 docs/figures/flowcharts/generate_flowcharts.py --preview-dir output/flowchart_previews_20261028`.
+  Exit 1: Die Text-/Höhenprüfung der Gesamtübersicht schlug an. Die Fontmetrik
+  behandelte jedes Zeichen wie ein Ersatzquadrat. Es wurde keine scheinbar
+  fertige Abbildung ausgeliefert.
+- **Diagnoseproben:** Zwei venv-Python-Here-Strings prüften dieselbe
+  Arial-22-Beschriftung mit `QFontMetricsF.horizontalAdvance`: native
+  Windows-Plattform 290 Einheiten, Offscreen-Plattform 594 Einheiten.
+  Der Offscreen-Import zerlegte deshalb kurze Texte fälschlich in vier Zeilen.
+  Ursache: Offscreen-Qt enumeriert hier die Windows-Systemfonts nicht.
+  Der Generator lädt nun `arial.ttf` und `arialbd.ttf` explizit mit
+  `QFontDatabase.addApplicationFont`; Schriftdateien werden nicht kopiert.
+- **Prüflauf 2 — nach Fontkorrektur:** Derselbe Generatorbefehl. Exit 1:
+  Der Layoutcheck fand einen nicht orthogonalen Pfeil zwischen Input-Aufbereitung
+  und Datasetknoten in Abb. 01 (unterschiedliche Knotenmitten durch 100/110
+  Einheiten Höhe). Die Höhen wurden vereinheitlicht.
+- **Prüflauf 3 — vollständiger Erstexport:** Derselbe Generatorbefehl.
+  Exit 0, `PASS`: elf SVGs, insgesamt 92 Nodes, alle elf QtSvg-Dateien gültig
+  und gerendert; keine überlappenden Nodes, keine Textüberläufe, keine Kante
+  durch fremde Nodes und nur orthogonale Verbindungen. PNGs,
+  `contact-sheet.png` und `verification.json` wurden im getrennten
+  `output/flowchart_previews_20261028/` abgelegt. Der Kontaktbogen wurde gelesen.
+- **Prüflauf 4 — fachliche Präzisierung nach Sichtprüfung:** Derselbe Befehl,
+  Exit 0, erneut elf gültige/gemessene/gerenderte SVGs. Im Datasetbild wurde
+  die direkte Trainingsdatenzufuhr zum Export ergänzt und die Anwendung der
+  Trainingsnormalisierung benannt. Im lokalen Bridgebild wurde auch für
+  A explizit Mix/Vocal angegeben. Ein datumsabhängiger Ratingstatus wurde
+  aus der allgemeinen Evaluationsgrafik entfernt und in die Doku verlagert.
+- **Sichtprüfung / Prüflauf 5:** Detailansichten von Abb. 07 und 08 wurden
+  geöffnet. Abb. 07 zeigte für das elementweise Produktsymbol ein fehlendes
+  Glyph. Die Formel verwendet jetzt das mit dem Code übereinstimmende
+  `A * B`; die Caption erklärt das elementweise Produkt. Zusätzlich prüft
+  `QFontMetricsF.inFontUcs4` jedes tatsächlich geschriebene Zeichen.
+  Derselbe Generatorbefehl bestand danach mit Exit 0, elf gültigen SVGs und
+  92 Nodes. Der aktualisierte Kontaktbogen aller elf Bilder und die
+  korrigierte TCN-Detailansicht wurden nochmals visuell gelesen: keine
+  Ersatzkästchen, abgeschnittenen Texte oder erkennbaren Knotenüberlagerungen.
+- **Prüflauf 6 — Format, Quellen und Paket:** Ein Here-String über
+  `.venv\Scripts\python.exe -X utf8 -` prüfte alle elf XML-Dateien auf
+  SVG-Namespace, `viewBox`, 160-mm-Breite, editierbare Texte, mehrere
+  Kategorien/Farben und eindeutige IDs. Keine Rasterbilder, Skripte oder
+  externen Assetreferenzen. Alle 46 lokalen README-/Quellenverweise
+  existieren. Ein ZIP aus elf SVGs, README und Generator (13 Einträge,
+  31.985 Byte) unter
+  `output/flowchart_previews_20261028/beatbridge-flowcharts-svg.zip` bestand
+  `ZipFile.testzip()`; Exit 0, `PASS`.
+- **Prüflauf 7 — Diff-Hygiene:**
+  `git diff --check -- docs/PIPELINE_UEBERSICHT.md docs/README.md docs/STATUS.md docs/Bemerkungen.md`
+  vor diesem Log-/Statusnachtrag: Exit 0, nur bekannte Git-Hinweise auf
+  LF→CRLF-Konvertierung. Neue SVGs wurden durch den Generator und die
+  XML-Prüfung geprüft; sie waren zu diesem Zeitpunkt ungetrackt und nicht
+  Teil dieses Git-Diffs.
+- **Schlussfolgerung/nächster Schritt:** Die SVG-Serie ist separat nutzbar
+  und reproduzierbar. Form und Details sind an Textbreite mit nominell
+  160 mm ausgelegt; beim späteren Satz ist die endgültige Skalierung zu
+  kontrollieren. Keine Audiodateien, Dataset-NPZs, Antwortschlüssel oder
+  Gewichte wurden für diese Lieferung gelesen; kein Training und kein
+  LaTeX-Gesamtbuild wurde gestartet. Die bestehende Thesisintegration und
+  die finale Abbildungsnummerierung bleiben ein eigener Schritt. Bestehende
+  Nutzeränderungen wurden erhalten, kein Commit erstellt.
+
+## 2026-10-27 — Gesamtpipeline quellengebunden visualisiert
+
+- **Fragestellung/Reasoning:** Wie hängen die tatsächlich implementierten und
+  ausgeführten Analyse-, Auswahl-, Daten-, Trainings-, Render- und
+  Evaluationspfade zusammen? Die Grafik soll historische Zielbilder nicht
+  als abgeschlossenen Stand darstellen. Besonders kritisch sind die Trennung
+  von Cue-Ranker und Controller, von Trainingsobjective und Render-Metrik
+  sowie von festem Drei-Band-TCN und variablem Vocal-TCN.
+- **Eingaben/Setup:** Pflichtdokumentation und Projektdisziplin gelesen;
+  aktuelle Statusblöcke, Protokolle, `RESULTS_EVIDENCE_LEDGER.md`,
+  Modell-/Trainingsmodule und GUI-Adapter abgeglichen. Der bereits veränderte
+  Inhalt dieser Datei und das veränderte `overleaf`-Submodul wurden erhalten.
+  Ergebnis: neue `docs/PIPELINE_UEBERSICHT.md` mit Gesamtgraph,
+  Fenstergeometrie, Modelltabelle, Evidenzgrenzen und Quellen; verlinkt in
+  `docs/README.md` und `docs/STATUS.md`.
+- **Prüflauf 1 — lokale Artefaktmetadaten:** Ein PowerShell-Here-String wurde
+  mit `.venv\Scripts\python.exe -X utf8 -` ausgeführt. Gelesen wurden die
+  Manifeste des erweiterten Format-1-Datasets vom 05.08. und des
+  PRIVE-Format-2-Datasets `run02_local_four_four`, die vier im Evidence Ledger
+  genannten September-Controller-Runmanifeste und der öffentliche Ratingstatus
+  unter `output/four_models_shared_20pairs_validation_20260930/ratings.json`.
+  Ergebnis: alle sieben Dateien vorhanden; v1 370/50/60, v2 je Länge
+  663/159/0 (2/4/6 Takte) beziehungsweise 660/159/0 (8 Takte).
+  Drei feste Runs `early_stopped`, variabler Run `completed`, Hörsatz
+  `unrated`. Exit-Code 0. Keine NPZ-, Audio-, Antwortschlüssel- oder
+  Gewichtedatei geöffnet; kein erneuter SHA-/Checkpointaudit.
+- **Prüflauf 2 — Dokument-/Vertragskonsistenz:** Wiederum
+  `.venv\Scripts\python.exe -X utf8 -` mit Assertions: 28 lokale
+  Markdown-Quellenlinks existieren; zwei Mermaid-Blöcke haben ausgeglichene
+  Knotenkammern, Anführungszeichen sowie Subgraph-/End-Paare und echte
+  Zeilenumbrüche; `SUPPORTED_GUI_MODELS` wird per AST gelesen und enthält
+  exakt MLP, Vocal-MLP und festen TCN. Datasetcounts wurden direkt gegen
+  die beiden Manifeste geprüft (v2 summiert 2.649/636/0 = 3.285),
+  Ratingstatus erneut `unrated`. Ergebnis `PASS`, Exit-Code 0.
+  Dies ist eine strukturelle Diagrammprüfung, kein ausgeführter
+  Mermaid-Renderlauf und keine visuelle Layoutabnahme.
+- **Prüflauf 3 — Diff-Hygiene:**
+  `git diff --check -- docs/PIPELINE_UEBERSICHT.md docs/README.md docs/STATUS.md docs/Bemerkungen.md`
+  vor Ergänzung dieses Logblocks: Exit-Code 0, keine Whitespacefehler;
+  Git meldet für Bemerkungen/Status lediglich die konfigurierte spätere
+  LF→CRLF-Konvertierung. Die damals noch ungetrackte neue Übersicht wurde
+  durch Prüflauf 2 inhaltlich/strukturell gelesen, nicht durch Git geprüft.
+- **Werkzeugbeobachtung:** Die `.skill`-Datei ist ein ZIP-Archiv. Der erste
+  reine Leseversuch per venv-Python scheiterte an der Windows-cp1252-Ausgabe
+  eines Unicode-Pfeils; Wiederholung mit `-X utf8` las den Skill vollständig.
+  Das war keine Projekt-/Modelltestblockade.
+- **Schlussfolgerung/nächster Schritt:** Der aktuelle Gesamtfluss ist
+  dauerhaft dokumentiert. Die Grafik zeigt Featurefenster und
+  Bridge-Waveforms als getrennte Zweige; der GUI-Pfad umgeht die automatische
+  Cue-Auswahl. Der variable Trainingsrenderer bleibt vom festen Full-Band-
+  Renderer getrennt. Historische Testsplit-Nutzung wird nicht als unberührte
+  finale Evaluation ausgegeben. Keine neue Trainings-/Hörqualitätsfreigabe,
+  kein Commit und keine Änderung an Originalaudio oder existierenden
+  Datenartefakten. Fachliche nächste Gates bleiben die ausstehenden Ratings,
+  eine unabhängige Modellevaluation und der reale Cue-Ranker-Pilot.
+
+## 2026-10-27 — Git-Status der GUI geprüft
+
+- **Fragestellung/Reasoning:** Ist die aktuelle GUI bereits in das zentrale
+  Git-Repository gepusht, oder liegen GUI-Änderungen noch ausschließlich lokal?
+- **Eingaben/Setup:** Repository `D:\Documents\00Uni\00master\BeatBridge`,
+  Branch `main`, Remote `origin`, GUI-Dateien unter `src/gui/` und
+  `src/gui_app.py`.
+- **Testumfang/Befehle:** `git status --short --branch`, `git branch -vv`,
+  `git log --all --oneline -- src/gui_app.py src/gui`,
+  `git diff origin/main..HEAD -- src/gui_app.py src` sowie
+  `git ls-remote origin refs/heads/main`.
+- **Ergebnis:** Lokal steht `main` auf `7918338` und zeigt
+  `main...origin/main`; der Commit enthält `src/gui/` und `src/gui_app.py`.
+  Der Diff zwischen `HEAD` und dem lokalen Tracking-Stand `origin/main` ist
+  leer. Das `overleaf`-Submodul hat eine separate lokale Änderung, ist aber
+  nicht Teil der GUI-Prüfung. Der direkte Remote-Aufruf scheiterte an einer
+  lokalen SSH-Windows-Berechtigungsstörung (`NtCreateDirectoryObject`, danach
+  kein Zugriff auf das Repository), daher konnte der aktuell serverseitige
+  Stand nicht unabhängig abgefragt werden.
+- **Schlussfolgerung/nächster Schritt:** Nach dem lokalen Git-Tracking-Stand
+  ist die GUI gepusht und synchron. Für eine unabhängige Bestätigung des
+  Servers muss der SSH-Zugriff repariert oder ein funktionierender Remote-
+  Zugriff verwendet werden. Die lokale `overleaf`-Änderung bleibt unverändert.
+
 ## 2026-10-26 — Related-Work-Kapitel in den Schreibstil des Nutzers überführt
 
 - **Fragestellung/Reasoning:** Kann Kapitel 2 so umformuliert werden, dass es
@@ -6832,3 +7194,397 @@ Caches werden nicht migriert oder überschrieben.
   Dieser sachliche Aktualisierungsbedarf wurde beim reinen Stil-Durchgang
   nicht stillschweigend umgeschrieben; der Implementierungsstand muss vor
   Abgabe separat mit Kapitel 4 abgeglichen werden.
+
+## 2026-11-05 — Platzwahl je Kandidat im letzten Modell-Hörtest
+
+- **Fragestellung und Reasoning:** Der Nutzer möchte gleich gute Kandidaten
+  auf denselben Platz setzen. Das bisherige Permutationsdropdown erzwingt
+  eine strikte Reihenfolge; deshalb erhält jeder Player eine eigene Platzwahl.
+- **Eingaben/Setup:** Gemeinsamer Seitengenerator in
+  `src/evaluation/all_models_control_study.py`, letzter Hörsatz unter
+  `output/four_models_shared_20pairs_validation_20260930/`; synthetische
+  Drei-/Fünf-Kandidaten-Manifeste und Node.js mit kleinem DOM-Adapter.
+- **Testlauf 1:** `.venv\Scripts\python.exe -m pytest
+  tests/test_all_models_control_study.py -q -p no:cacheprovider`.
+  Ergebnis: 1 bestanden, 2 fehlgeschlagen, 1 Setupfehler (4,67 s). Die neuen
+  JavaScript-Tests fanden einen beim Bearbeiten falsch escapten Zeilenumbruch
+  im Download-Blob (SyntaxError); der unabhängige lesende Kreuz-Review
+  bestätigte ihn. Der vorhandene Discovery-Test konnte sein temporäres
+  Verzeichnis im Sandbox-Temp wegen PermissionError nicht anlegen.
+- **Schlussfolgerung/nächster Schritt:** Überflüssigen Zeilenumbruch am Ende
+  des JSON-Downloads entfernt; Wiederholung mit explizitem neuem
+  `--basetemp` innerhalb des Repositorys. Kein Audio oder Training ausgeführt.
+- **Testlauf 2:** Derselbe pytest-Befehl mit
+  `--basetemp output/pytest_candidate_places_20261105_run02`: **4 bestanden
+  in 3,23 s**. Der erzeugte JavaScript-Code wurde mit Node tatsächlich
+  ausgeführt: alte Reihenfolge migrieren, Notizen/Scores bewahren,
+  Gleichstände und alle Kandidaten auf Platz 1 setzen, Browserzustand neu
+  laden, einzelne Plätze leeren, unbearbeitete Bewertung und gültigen
+  JSON-Download prüfen; jeweils mit drei und fünf Kandidaten.
+- **Testlauf 3 — vorhandener Player:** HTML aus dem bestehenden Manifest
+  neu erzeugt. Vergleich mit Generator und eingebettetem Vorher-Manifest
+  erfolgreich, aber `node --check` konnte zunächst wegen der Windows-
+  Standardcodierung cp1252 den Pfeil im JavaScript nicht über stdin
+  empfangen. Der wartende Prüfprozess wurde abgebrochen; kein Syntaxurteil
+  aus diesem Versuch. Die anschließende rein lesende Prozesssuche per
+  `Get-CimInstance` war durch fehlenden CIM-Zugriff blockiert.
+- **Testlauf 4 — Wiederholung mit UTF-8:** `.venv`-Python-Sonde mit
+  `subprocess.run(['node', '--check'], ..., encoding='utf-8', timeout=20)`:
+  bestanden. Die tatsächliche 20-Beispiele-Seite entspricht dem Generator;
+  eingebettetes Manifest, Dateireferenzen und Studienidentität sind gegenüber
+  `index.before_candidate_ranks.html` unverändert. Die alte HTML-Seite bleibt
+  dort als lokale Sicherung erhalten. Manifest-/Bewertungsdateien und Audio
+  wurden nicht geschrieben; Antwortschlüssel nicht inhaltlich gelesen.
+- **Testlauf 5 — Diffprüfung:** `git diff --check --
+  src/evaluation/all_models_control_study.py
+  tests/test_all_models_control_study.py docs/STATUS.md docs/Bemerkungen.md`
+  bestand; lediglich Git-Hinweise zur künftigen LF-/CRLF-Konvertierung.
+- **Entscheidung/Exportvertrag:** Format 1 bleibt additiv lesbar. Neues
+  `ranks` enthält pro Label einen Integer 1..N oder `null` für unbewertet.
+  Derselbe Integer bedeutet Gleichstand; Lücken werden nicht automatisch
+  umnummeriert. `ranking` bleibt nur für vollständige, eindeutige Plätze
+  eine sortierte Labelliste, sonst `[]`, damit Gleichstände nicht als
+  künstliche Reihenfolge ausgegeben werden. Für eine spätere Auswertung
+  ist `ranks` maßgeblich. Vorhandene Browser-Rankings ohne `ranks` werden
+  positionsgetreu übernommen; Speicherschlüssel bleibt unverändert.
+- **Kreuz-Review:** Unabhängiger lesender Agent bestätigte nach der Korrektur
+  Migration, Notiz-/Scoreerhalt, Gleichstandexport und gezieltes Leeren;
+  keine weiteren konkreten Fehler. Keine eigenen Testläufe im Review.
+- **Schlussfolgerung/nächster Schritt:** Der letzte lokale Hörtest und sein
+  Generator unterstützen die gewünschte Platzwahl. Browserseite neu laden
+  und die manuelle Sicht-/Bedienprüfung durchführen. Kein neuer Hörbefund
+  und keine Qualitätsfreigabe aus dieser UI-Änderung.
+
+## 2026-11-05 — Antwortschlüssel des letzten Hörtests für Beispiele 1–3 geöffnet
+
+- **Fragestellung und Reasoning:** Der Nutzer möchte wissen, welches Modell
+  hinter seinen Platzwahl-Präferenzen im letzten Hörtest steht: Beispiel 1 →
+  Kandidat C, Beispiel 2 → Kandidat D, Beispiel 3 → Kandidat A.
+- **Eingaben/Setup:** `output/four_models_shared_20pairs_validation_20260930/answer_key.json`
+  (20 Beispiele, je fünf Kandidaten A–E, per Beispiel zufällig gemappt);
+  die Repository-`ratings.json` bleibt `status=unrated` — die Platzwahlen des
+  Nutzers existieren bisher nur im Browser-Speicher.
+- **Testumfang:** Reine Leseabfrage
+  `.venv\Scripts\python.exe -X utf8 -B -c ...` über `index`, `mapping` und
+  `methods` des Antwortschlüssels; kein Schreiben, kein Audio, kein Training.
+- **Ergebnis:** Alle drei Präferenzen zeigen auf dasselbe Modell,
+  `variable_tcn_bilstm_transition_control_v1_best` (Variable TCN/BiLSTM v1):
+  Beispiel 1 ist C, Beispiel 2 ist D und Beispiel 3 ist A dieses Modell. Die
+  Mappings der Beispiele 4–20 wurden nicht eingesehen.
+- **Schlussfolgerung und nächster Schritt:** Der Warnhinweis im
+  Antwortschlüssel („Do not inspect before completing ratings.json") betrifft
+  den Zeitpunkt der Öffnung relativ zur Bewertung. **Korrektur nach
+  Nutzerangabe (2026-11-05):** Die Beispiele 1–3 waren vor der
+  Schlüsselöffnung bereits vollständig bewertet; diese drei Bewertungen sind
+  vor dem Schlüsselwissen entstanden und bleiben als verblindete Hörurteile
+  verwertbar. Erst künftige Bewertungen der noch unbewerteten Beispiele 4–20
+  können durch das Wissen über die Beispiel-1–3-Zuordnung beeinflusst sein.
+  Für die Auswertung (P4 im Ergebnisdokument) entsprechend kennzeichnen. Kein
+  neuer Hörbefund.
+
+## 2026-11-05 — Ursache der schlechten Audioqualität der variablen Kandidaten gemessen
+
+- **Fragestellung und Reasoning:** Der Nutzer hatte die Beispiele 1–3 des
+  20-Beispiele-Hörtests vor der Antwortschlüssel-Öffnung bewertet und dabei
+  bemerkt, dass genau die drei benannten Kandidaten (Beispiel 1 C, Beispiel 2
+  D, Beispiel 3 A — alle das variable Modell) eine schlechte Audioqualität
+  nach dem Übergang zeigen, während die übrigen Kandidaten je Beispiel gut
+  klingen. Messen statt raten: Ist das ein Modellbefund oder ein
+  Export-/Renderer-Artefakt?
+- **Eingaben/Setup:** Reine Lese-Sonden
+  `bridge_quality_probe.py` (Beispiele 1–5, Detailprofil) und
+  `bridge_quality_scan_all.py` (alle 20 Beispiele; librosa-STFT,
+  Rolloff84, HF-Anteil >5,5 kHz, Kantensprünge) gegen die unveränderten WAVs
+  unter `output/four_models_shared_20pairs_validation_20260930/`.
+  Codevergleich: `src/evaluation/four_model_listening_study.py`
+  (`_render_variable`, Zeilen 435–463) gegenüber
+  `src/evaluation/all_models_control_study.py` (`_render_loaded_model`,
+  Zeilen 476–524).
+- **Befund 1 — Ursache im Renderpfad:** `_render_variable` resampelt alle
+  Stim-Arrays von 44,1 kHz auf die Trainings-Samplerate des variablen
+  Modells (11.025 Hz, Lowpass-Kernel 127), rendert dort und resampelt zurück
+  auf 44,1 kHz. Die festen Modelle und Equal Power rendern
+  `_render_loaded_model`/`_render_equal_power` direkt bei 44,1 kHz mit
+  auf Kernel 511 skalierten Filtern. Nyquist der 11,025-kHz-Kette ist
+  5.512,5 Hz; damit kann die variable Bridge physikalisch keine Anteile
+  darüber enthalten. Der Studiengenerator dokumentiert diese Asymmetrie in
+  seinem `rendering`-Feld selbst.
+- **Befund 2 — Messung 20/20:** In jedem der 20 Beispiele hat die
+  variablen Kandidaten-Brücke praktisch null HF-Energie über 5,5 kHz
+  (0,0000–0,0007) und Rolloff84 bei ~3,35–3,80 kHz; die vier übrigen
+  Kandidaten desselben Beispiels liegen bei Rolloff84 ~8,9–12,5 kHz und
+  HF-Anteil 0,32–0,43. Vor-/Nachlauf sind kandidatenidentisch und
+  volles Band. Der Effekt ist also systematisch an das Modell (den
+  Renderpfad) gebunden, nicht an einzelne Beispiele — konsistent damit,
+  dass der Nutzer ihn an den drei variablen Kandidaten hörte.
+- **Befund 3 — Nebeneffekt an den Brückenkanten:** Die variablen Kandidaten
+  zeigen teilweise deutlich größere Sample-Sprünge an den Übergangskanten
+  als die übrigen Kandidaten desselben Beispiels (z. B. Beispiel 1:
+  0,081/0,356 gegenüber ~0,006/0,151; Beispiel 3: 0,240/0,361 gegenüber
+  ~0,07/0,04). Das passt zu einer zusätzlichen Zeit-/Phasenverschiebung
+  durch die Resampling-Kette und kann Knackser bzw. den Qualitätseinbruch
+  „nach dem Übergang" verstärken.
+- **Schlussfolgerung:** Die schlechte Qualität ist ein Export-Artefakt des
+  geteilten Hörtest-Generators (Bandbegrenzung auf <5,5 kHz plus
+  Kantensprünge im 11-kHz-Renderpfad), kein Qualitätsurteil über das
+  gelernte Modell. Der Methodenvergleich im 20er-Satz benachteiligt das
+  variable Modell systematisch; seine Platzierungen (und ein etwaiger
+  Vorsprung) sind dadurch confounded und dürfen nicht als Modellqualität
+  interpretiert werden.
+- **Nächster Schritt:** Entscheiden, ob der Satz fair neu gerendert wird —
+  variable Brücke direkt bei 44,1 kHz mit wie bei den festen Modellen auf
+  511 skaliertem Kernel — oder ob das Artefakt als bekannte Einschränkung
+  in die Auswertung eingeht. Browser-Bewertungen (Beispiele 1–3) als JSON
+  exportieren und in `ratings.json` sichern. Keine Audio-, Manifest- oder
+  Bewertungsdateien verändert; Sonden rein lesend; Antwortschlüssel nur für
+  Beispiele 1–3 und Labelauflösung der Scans gelesen (Beispiele 4–20:
+  Buchstaben→Modell jetzt bekannt für variable Position — Hinweis für
+  verblindetes Weiterhören beachten).
+
+## 2026-11-05 — Renderer-Fix für variable Kandidaten und Prüfbeispiel exportiert
+
+- **Fragestellung und Reasoning:** Der Nutzer möchte den in der
+  Voruntersuchung nachgewiesenen Fix (variable Brücke direkt bei 44,1 kHz wie
+  bei den festen Modellen) an einem Beispiel hören. Umsetzung im Generator
+  plus messtechnischer Nachweis, dass nur das variable Rendering beeinflusst
+  wird.
+- **Eingaben/Setup:** `src/evaluation/four_model_listening_study.py`
+  geändert: `_render_variable` rendert jetzt bei `DEFAULT_SAMPLE_RATE`
+  (44,1 kHz) mit `DifferentiableVocalAwareRenderer` und Kernel 511 — analog
+  zu `_render_loaded_model` für das Vocal MLP v2 (127@11.025 kHz ≈ 4×
+  Zeitkonstante); der 11,025-kHz-Hinweg mit Resampling entfiel, toter
+  `linear`/`zero`-Code und der ungenutzte `librosa`-Import entfernt,
+  Manifest-Beschreibungsfeld `contracts.rendering` berichtigt. Originaler
+  Studienordner unverändert.
+- **Testlauf 1 (Import):**
+  `.venv\Scripts\python.exe -X utf8 -B -c "import src.evaluation.four_model_listening_study ..."`
+  bestanden.
+- **Testlauf 2 (Export, deterministisch):**
+  `.venv\Scripts\python.exe -X utf8 -B -m src.evaluation.four_model_listening_study --pair-count 1 --allow-track-reuse --output-directory output/four_models_variable_renderfix_check_20261105 --feature-cache-root output/four_model_shared_feature_cache_20260927 --vocal-cache-root output/feature_cache`
+  → dasselbe Beispiel 1 (`example-ae259f6abfb18c72`), dieselbe
+  Labelzuordnung (variable wieder C), gleicher `raw_joint_peak` 1,3574 und
+  gemeinsame Peak-Gain 0,7220.
+- **Testlauf 3 (Messung, Sonde `renderfix_verify.py`):**
+  Variable-Brücke: Rolloff84 3.402→10.040 Hz, HF-Anteil >5,5 kHz
+  0,0002→0,3573 (Baseline: 0,3736); Kantensprünge 0,081/0,356→0,0062/0,1509
+  und damit identisch zu den übrigen Kandidaten. Vor-/Nachlauf bitgleich.
+- **Testlauf 4 (Bit-Diff, Sonde `renderfix_bitdiff.py`):** Die
+  Audio-Payloads von A/B/D/E sind zu 100 % identisch zum Originalsatz;
+  nur C (variable) unterscheidet sich in 31,2 % der Samples — exakt der
+  Brückenbereich, maximaler Delta 0,761. Datei-Shas wichen bei A/B/D/E nur
+  durch 3 Header-Bytes (Schreib-Zeitstempel).
+- **Testlauf 5 (pytest-Regression):**
+  `.venv\Scripts\python.exe -X utf8 -B -m pytest tests/test_all_models_control_study.py -q -p no:cacheprovider --basetemp output/pytest_renderfix_20261105`:
+  4 bestanden in 3,20 s.
+- **Schlussfolgerung und nächster Schritt:** Der Fix ist messtechnisch
+  bestätigt und auf das variable Rendering begrenzt. Hörprobe für den
+  Nutzer: alte `output/four_models_shared_20pairs_validation_20260930/01__…__b18c72/C.wav`
+  gegen neue `output/four_models_variable_renderfix_check_20261105/01__…__b18c72/C.wav`
+  (Player: `index.html` im neuen Ordner). Nach Bestand des Abhörtests kann
+  ein voller Neurender aller 20 Beispiele in einen neuen Ordner folgen
+  (~674 MB); der alte Satz bleibt unverändert erhalten. Keine
+  Browser-Bewertungen exportiert; Entscheidung 20er-Neurender und
+  Bewertungs-Export stehen aus.
+
+## 2026-11-05 — Voller Neurender des 20-Beispiele-Satzes mit Fix; alter Vergleich ausgemustert
+
+- **Fragestellung und Reasoning:** Der Nutzer hat das Prüfbeispiel gehört und
+  befunden: „klingt gut". Auftrag: alle 20 Beispiele mit dem gefixten
+  Generator neu rendern, die Buchstaben neu sortieren und dokumentieren,
+  dass der alte Vergleich wegen des Renderproblems nicht genutzt wird.
+- **Eingaben/Setup:** Gefixter Exporter aus Testlauf 2 (44,1-kHz-Pfad,
+  Kernel 511); neuer Ausgabepfad
+  `output/four_models_shared_20pairs_validation_20261105_renderfix`;
+  **neuer Seed 20261105** statt Default 20260927, damit die
+  Blind-Zuordnung nicht die alte ist; dieselben Dataset-/Run-/Cache-Eingaben
+  wie der Originalexport vom 2026-09-30.
+- **Testlauf 1 (Export):**
+  `.venv\Scripts\python.exe -X utf8 -B -m src.evaluation.four_model_listening_study --pair-count 20 --seed 20261105 --allow-track-reuse --output-directory output/four_models_shared_20pairs_validation_20261105_renderfix --feature-cache-root output/four_model_shared_feature_cache_20260927 --vocal-cache-root output/feature_cache`
+  → 20/20 Beispiele, 100 WAVs, 674.794.398 Bytes; Beispiel-IDs, Reihenfolge
+  und Cue-/Track-SHA256 deterministisch identisch zum alten Satz.
+- **Testlauf 2 (Verifikation, Sonde `renderfix_full_verify.py`):** In allen
+  20 Beispielen misst die variable Brücke Rolloff84 9,1–12,6 kHz und
+  HF-Anteil >5,5 kHz 0,36–0,44 und liegt damit auf Augenhöhe der übrigen
+  Kandidaten (alt: 3,3–3,8 kHz / ~0,0000). Variable-Label gegenüber alt in
+  19/20 Beispielen geändert (Beispiel 06 zufällig wieder B). Player-Schlüssel
+  in `localStorage` ist `beatbridge:<dataset_id>:<created_at_utc>`; wegen
+  neuer Erzeugungszeit startet der neue Player mit leerem Bewertungsstand, alte
+  Browser-Eingaben werden nicht übernommen.
+- **Entscheidung (Nutzer, 2026-11-05) — alter Vergleich nicht genutzt:** Der
+  Satz `output/four_models_shared_20pairs_validation_20260930/` wird wegen
+  des Renderproblems (variable Kandidaten bandbegrenzt <5,5 kHz,
+  kantensprungbehaftet; methodenspezifische Verzerrung des Vergleichs) **als
+  Evidenz verworfen** — einschließlich der drei vor der
+  Schlüsselöffnung bewerteten Browser-Beispiele 1–3; die
+  Repository-`ratings.json` war nie exportiert/gefüllt. Das Ordner-Archiv
+  bleibt mit einer `DEPRECATED.md`-Notiz unverändert erhalten. Amtlicher
+  Hörtest ist der neue renderfix-Satz; Antwortschlüssel-Warnung unverändert:
+  erst nach vollständiger Bewertung öffnen.
+- **Einschränkung:** Vollständige Verblindung des neuen Satzes ist nicht
+  erreichbar — der Bewerter erkennt das variable Modell an seinem (nun
+  korrigierten) Klang und kennt die alte Zuordnung der Beispiele 1–3.
+  Bewertungen bleiben Ein-Rater-explorativ.
+- **Schlussfolgerung und nächster Schritt:** Der 20er-Satz ist bereit unter
+  `output/four_models_shared_20pairs_validation_20261105_renderfix/index.html`.
+  Nächster Schritt: komplettes Neuhören mit Platzwahl, danach JSON-Export in
+  die `ratings.json`. Keine Audios/Gewichte des alten Satzes verändert;
+  Sonden rein lesend.
+
+## 2026-11-06 — Finaler adversarialer Thesis-Audit und belegte Korrekturen
+
+- **Fragestellung und Reasoning:** Ein strenger Gutachter soll jede
+  Contribution und jeden numerischen Claim prüfen. Zu klären war, ob Titel,
+  Abstract, Forschungsfragen, Beiträge, Methoden, Ergebnisse, Diskussion und
+  Konklusion zusammenpassen, ob alle Forschungsfragen belegt beantwortet sind,
+  ob Trainings-/Validierungs-/Testdaten lecken, ob Validierungsentwicklung als
+  Held-out-Evaluation erscheint, ob synthetische und reale Evidenz getrennt
+  bleiben, ob Modell-/Renderer-Vergleiche fair sind, ob die Terminologie
+  konsistent ist, ob alle Zahlen zu den unveränderlichen Artefakten passen, ob
+  die Bibliographie sauber ist, ob TODOs/LaTeX-Struktur/privacy/Rechte/
+  Consent/Reproduzierbarkeit offen sind.
+- **Eingaben/Setup:** `overleaf/CGThesis.tex`, `meta.tex`, alle aktiven
+  Kapitel, `bibliography.bib`, `docs/RESULTS_EVIDENCE_LEDGER.md`, die
+  Dataset-/Run-/Batch-/Sweep-/Studienmanifeste und
+  `docs/masterarbeit/audit_thesis.py`. Keine Audio-, Test-NPZ-, Test-JSONL-
+  oder Antwortschlüssel geöffnet.
+- **Testlauf 1 (Audit vor Korrekturen):**
+  `.venv\Scripts\python.exe -X utf8 -B docs\masterarbeit\audit_thesis.py --report docs\masterarbeit\audit_20261106.json`
+  → 51 Hashprüfungen, 0 Fehler, 0 undefinierte Referenzen, 0
+  Dataset-Zeilenfehler, 40 TODO-Marker.
+- **Testlauf 2 (Audit nach Korrekturen):**
+  derselbe Befehl mit
+  `--report docs\masterarbeit\audit_20261106_final.json` → 51 Hashprüfungen,
+  0 Fehler, 0 undefinierte Referenzen, 0 Dataset-Zeilenfehler, 41
+  TODO-Marker (der neue SQ1-Baseline-TODO). 26 Citation-Keys, 26
+  Bibliography-Einträge, keine doppelten oder ungenutzten Keys, keine
+  fehlenden Includes/Graphics, keine Environment-Fehler.
+- **Testlauf 3 (Bibliographie-Metadaten):** Alle DOI-tragenden Einträge gegen
+  Crossref beziehungsweise DataCite aufgelöst. Vier DOIs zeigten auf fremde
+  Publikationen: `korzeniowski2017endtoendkey` (Motorparameter-Arbeit),
+  `kim2020djmixanalysis` (Key-Structure-Arbeit), `spijkervet2021clmr`
+  (Paracerella) und `huang2021stemcompat` (Share-Recommendation-Arbeit).
+  Korrigiert auf `10.23919/EUSIPCO.2017.8081351` (Seiten 966–970),
+  `10.5281/zenodo.4245543`, `10.5281/zenodo.5624573` und
+  `10.1609/aaai.v35i1.16092`. Ergänzt: `rouard2023hybrid` DOI
+  `10.1109/ICASSP49357.2023.10096956` und Seiten 1–5, `mcfee2015librosa`
+  Seiten 18–24, `bittner2017playlist` DOI `10.5281/zenodo.1417027`.
+- **Testlauf 4 (statische Zusatzprüfungen):** BibTeX-Klammerbilanz 0,
+  26 eindeutige Keys, keine doppelten Wörter in den Kapiteln, keine
+  undefinierten Referenzen; die numerischen Claims zu Datasetgrößen,
+  Epochen, Best-Epochen, Loss-Werten, Batch-Summen, Studienpräferenzen,
+  Kriterienmittelwerten, Sweep und 20er-Exposure wurden gegen die Manifeste
+  und Historien gelesen und stimmen überein.
+- **Testlauf 5 (LaTeX-Build-Versuch):**
+  `Get-Command pdflatex,latexmk,tectonic,xelatex,lualatex,bibtex,biber` →
+  keine Treffer; übliche TeX-Live-/MiKTeX-Pfade nicht vorhanden;
+  `wsl -e sh -lc "command -v pdflatex; ..."` → keine WSL-Distribution;
+  `Get-Command docker` → nicht vorhanden. Ein lokaler Build war daher nicht
+  möglich; die statischen Prüfungen sind kein Compile-, Layout- oder
+  Bibliography-Formatierungsnachweis.
+- **Ergebnis einschließlich Fehlern oder Blockaden:** Korrigiert wurden die
+  vier falschen DOIs und fehlenden Metadaten, der im Ergebniskapitel noch
+  beschriebene ausgemusterte 20er-Satz (jetzt renderfix-Neurender mit
+  ausgeschlossenen Browser-Rankings), die mehrdeutige Exposure-Zählung
+  (8 Cues mit ausschließlich reservierten Test-Tracks, 7 mit einem
+  Trainings-Track, 5 nur außerhalb), die
+  abgeleitete Aggregatzeile in der Dataset-Tabelle, die
+  Sweep-Checkpoint-Aussage (leere Einträge statt fehlender Referenz), die
+  fehlende Kennzeichnung des SQ1-Baseline- und SQ3-Kompatibilitätsproblems,
+  der Teacher-Erstgebrauch, der Mid-Band-Querverweis, der
+  Repository-Status-Verweis, die Vocal-Overall-Mittelwert-Aussage und die
+  fehlende rhythmic-stability-Nennung. Keine neuen Experimente, keine
+  erfundenen Teilnehmer-, Rechte- oder Versionsangaben.
+- **Schlussfolgerung und nächster Schritt:** Der Thesis-Stand ist weiterhin
+  nicht abgabereif. Blocker bleiben: leere deutsche/englische Abstracts, leere
+  Konklusion, unbestätigter Titel/Datum/Studiengang, unbelegte
+  Forschungsverpflichtungen (SQ1-Attribution/Baseline, SQ2
+  Trainierten-Controller-Hören, SQ3-Baseline, Repräsentation, realer Ranker,
+  1-/3-Takt, Korrekturaufwand/Tanznutzen), fehlende globale
+  Held-out-Population, Rechte-/Consent-/Reproduktionsangaben und der leere
+  Anhang. Nächster Schritt: diese Entscheidungen und Experimente abarbeiten,
+  danach mit dem Institutscompiler sauber bauen und das PDF sichten. Kein
+  Commit; keine Audio-/Test-/Antwortschlüssel geöffnet.
+
+## 2026-11-06 — Auswertung des abgeschlossenen renderfix-Modellhörtests
+
+- **Fragestellung und Reasoning:** Der Nutzer meldete den neuesten Hörtest
+  als abgeschlossen und beauftragte die Auswertung. Zu prüfen war, ob der
+  offizielle korrigierte Satz vollständig bewertet ist und ob eines der vier
+  gelernten Modelle gegenüber Equal Power bevorzugt wird. Gleichstände
+  müssen erhalten bleiben; der ausgemusterte September-Satz ist ausgeschlossen.
+- **Eingaben/Setup:** Ausschließlich die Manifeste, der Player, der
+  Bewertungsexport vom `2026-11-06T10:00:13.657Z` und die 100 WAV-Dateien
+  (nur Datei-Hashes, kein Dekodieren/Abhören) unter
+  `output/four_models_shared_20pairs_validation_20261105_renderfix/`.
+  Keine Gewichte, Trainings-/Test-NPZ oder Originalsongs geladen.
+- **Testlauf 1 — Vollständigkeitsprüfung vor Entblindung:** Inline-Python
+  über `.venv\Scripts\python.exe -X utf8 -B -`; Prüfung der 20 eindeutigen
+  Beispiel-IDs, Labelmengen und ganzzahligen Plätze 1..5 gegen das öffentliche
+  Manifest. Die Annahme „20 vollständig gerankte Beispiele“ scheiterte mit
+  `AssertionError` bei Beispiel 11: alle fünf Plätze sind `null`, die Notiz
+  lautet „song b ist schneller in der passage“. Beispiele 1–10 enthielten
+  explizite Fünffach-Gleichstände. Der Antwortschlüssel war zu diesem
+  Zeitpunkt inhaltlich ungeöffnet. Schlussfolgerung: fehlende Werte weder
+  als Gleichstand auffüllen noch die gesamte Studie als unbewertet verwerfen;
+  die Absicht des Raters klären.
+- **Entscheidung des Nutzers (2026-11-06):** Auf die Frage, ob Beispiel 11
+  bewusst ohne Ranking bleiben soll oder die Plätze versehentlich fehlen,
+  antwortete er **„Wegen Tempoproblem ohne Ranking lassen“**. Beispiel 11
+  bleibt als kommentiertes gehörtes Beispiel erhalten, ist aber aus sämtlichen
+  Präferenzaggregaten ausgeschlossen. Danach wurde der Antwortschlüssel
+  für die abgeschlossene Auswertung geöffnet. Keine nachträgliche
+  Bewertung ergänzt oder geändert.
+- **Testlauf 2 — Reproduzierbare Auswertung und Artefaktintegrität:**
+  `.venv\Scripts\python.exe -X utf8 -B scripts/analyze_listening_export_20261106.py`.
+  Das rein lesende Skript prüft alle Zuordnungen zwischen öffentlichem
+  Manifest, Antworten und Schlüssel, verlangt die bestätigte leere Zeile 11
+  und vollständige gültige Ränge für alle übrigen Zeilen, löst Methoden auf,
+  berechnet Paarvergleiche, mittlere Ränge und Songpaargruppen und prüft alle
+  WAV-SHA256. Ergebnis: **19 gerankte Beispiele, 95 gültige Plätze,
+  19 vollständige Fünffach-Gleichstände, fünf gerichtete Songpaare,
+  fünf eindeutige Trackhashes, 100/100 WAV-Hashes passend**. Die vier
+  Eingangsdateien `manifest.json`, `ratings.json`, `answer_key.json` und
+  `index.html` sind vor/nach dem Lauf hashgleich. Kein Fehler. Ergebnisdatei:
+  `docs/LISTENING_STUDY_ANALYSE_20261106.json`; vorhandene Ergebnisse werden
+  vom Skript nicht überschrieben.
+- **Ergebnisprüfung der Aggregate:** Separates Inline-Python las die
+  gespeicherten Methodensummen, zehn Paarvergleiche und Songpaargruppen.
+  Je Methode: 0 alleinige und 19 geteilte erste Plätze, mittlere eingegebene
+  Platznummer 1,0, mittlerer Rang mit Gleichständen 3,0. Je Methodenpaar:
+  0 Siege / 19 Gleichstände / 0 Niederlagen. Gerankte Cues je gerichteter
+  Trackgruppe: 4/5/3/4/3. Auch Beispiel 8 bleibt als gültiger Gleichstand
+  mit der Originalnotiz „störende note im übergang in allen “ enthalten.
+- **Testlauf 3 — Unabhängige Gegenrechnung und Dokumentprüfung:** Separates
+  Inline-Python mit `.venv\Scripts\python.exe -X utf8 -B -` berechnete direkt
+  aus dem Originalexport die 19 gültigen Gleichstandszeilen, den alleinigen
+  Ausschluss 11 und die 95 Plätze neu und verglich sie mit dem Ergebnis-JSON.
+  Zusätzlich geprüft: alle zehn 0/19/0-Vergleiche und ihre Summe 190,
+  alle fünf Methodensummen mit Mittelwerten 1,0/3,0, Gruppenzahlen und fünf
+  Trackhashes, unveränderte Originalnotizen, aktuelle SHA-256 aller vier
+  Eingangsdokumente, Vollständigkeit der 100 protokollierten WAV-Hashes
+  gegenüber dem Manifest, Syntax und SHA des Auswertungsskripts, lokale
+  Berichtslinks und Ledger-Eintrag P5. **PASS**, keine Abweichung.
+  `git diff --check -- docs/STATUS.md docs/README.md docs/RESULTS_EVIDENCE_LEDGER.md docs/Bemerkungen.md`
+  zeigte keine Whitespacefehler; nur die bestehenden Git-Hinweise zur
+  künftigen LF→CRLF-Konvertierung. Keine vollständige pytest-Suite:
+  Produktionscode wurde nicht geändert, der datenspezifische Analyzer lief
+  erfolgreich auf den realen Artefakten. Schlussfolgerung: Ergebnis und
+  Quellenzuordnung sind konsistent; akustische Ursachen bleiben ungeprüft.
+- **Werkzeugfehler beim Einlesen der Pflichtlektüre:** Das `.skill`-Archiv
+  ist ZIP, kein Klartext. Nach Öffnen per `zipfile` scheiterte die erste
+  Konsolenausgabe an `UnicodeEncodeError` (Windows-cp1252); die vollständige
+  Lektüre gelang mit UTF-8-Ausgabe. Dies war kein Experiment oder Datenfehler.
+- **Schlussfolgerung und nächster Schritt:** Kein beobachteter
+  Präferenzvorteil der gelernten Controller gegenüber Equal Power auf den
+  19 bewerteten Cues. Vollständige Gleichstände erlauben keinen Nachweis
+  genereller Gleichwertigkeit, hoher absoluter Qualität oder eines
+  Modell-Rankings; es gibt keine absoluten Kriterienscores. Ein Rater,
+  wiederholte Trackpaare, fehlende globale Held-out-Trennung, unterschiedliche
+  Modellverträge und die bekannte Restentblindung begrenzen die Aussage.
+  Keine inferenzstatistischen p-Werte aus den 190 nur abgeleiteten
+  Paar-Gleichständen. Nächster fachlicher Schritt ist die separate Prüfung
+  der gemeinsamen Störung in Beispiel 8 und des lokalen Tempoeindrucks in
+  Beispiel 11; keine Ursache wurde durch diese Metadatenanalyse bewiesen.
+  Bericht in `docs/LISTENING_STUDY_ANALYSE_20261106.md`, Evidenz P5 im Ledger
+  und neuer STATUS-Einstieg. Keine Audio-/Ratingänderung, kein Training,
+  keine Thesisänderung, kein Commit.

@@ -1,0 +1,14 @@
+{
+  "cwd": "D:\\Documents\\00Uni\\00master\\BeatBridge\\overleaf",
+  "command": [
+    "pdflatex",
+    "-interaction=nonstopmode",
+    "-halt-on-error",
+    "-file-line-error",
+    "-output-directory=D:/Documents/00Uni/00master/BeatBridge/tmp/thesis_adversarial_audit_20261105_clean",
+    "CGThesis.tex"
+  ],
+  "status": "blocked_no_compiler",
+  "error": "[WinError 2] Das System kann die angegebene Datei nicht finden",
+  "pdf_created": false
+}

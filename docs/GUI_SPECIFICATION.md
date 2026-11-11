@@ -223,6 +223,21 @@ Sample-Dragging ist nicht Teil des MVP. Das Verschieben eines Markers waehlt
 einen vorhandenen Kandidaten oder fordert eine neue Kandidatengenerierung an;
 es veraendert nie heimlich ein bestehendes Kandidatenmanifest.
 
+In der nativen Transition-Builder-GUI gilt eine direkte Mausgeste getrennt
+davon: Ein einfacher Klick auf eine Waveform setzt einen manuellen Cuepoint;
+Ziehen markiert einen Suchbereich. Die Bereiche werden je gerichteter
+Sequenzkante gespeichert. „Beste Cuepoints in Bereichen suchen“ begrenzt die
+bar-ausgerichtete Kandidatengenerierung auf die Downbeats innerhalb beider
+Bereiche und bewertet die Kandidaten mit `feature_baseline_v3`. Bei mehr als
+400 Treffern wird die deterministische Kandidatenfolge gleichmäßig abgetastet,
+um Volltrackauswahlen speicherschonend zu bewerten. Der Kandidat mit dem
+höchsten Score setzt die beiden Cuepoints des aktiven Übergangs und wird vom
+anschließenden Rendern verwendet. Der gelernte Cue-Ranker bleibt bis zu einer
+Evaluation mit realen Tracks von der automatischen Auswahl ausgeschlossen;
+die Feature-Baseline ist eine nachvollziehbare Heuristik und keine
+Hörqualitätsgarantie. Die UI erlaubt approximative/Fallback-Grids, damit die
+Suche auf importierten Audiodateien unmittelbar nutzbar ist.
+
 ### 5.5 Uebergangs-Inspector
 
 Der Inspector trennt drei Gruppen.

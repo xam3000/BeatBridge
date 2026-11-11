@@ -1,0 +1,60 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="160mm" height="161.60mm" viewBox="0 0 1000 1010" role="img" aria-labelledby="figure-title figure-description">
+  <title id="figure-title">Beat-synchronous feature extraction</title>
+  <desc id="figure-description">Reusable full-track features are cropped at cues, combined with global pair features and passed to the controller; waveform caches are separate.</desc>
+  <metadata>BeatBridge; evidence baseline 2026-10-27; artwork 2026-10-28; see README.md.</metadata>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 Z" fill="#48535E" />
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1000" height="1010" fill="#FFFFFF" />
+  <g id="connections" fill="none" stroke="#48535E" stroke-width="2" stroke-linejoin="round">
+    <path d="M 240,130 L 240,210" marker-end="url(#arrow)" />
+    <path d="M 440,80 L 760,80 L 760,210" marker-end="url(#arrow)" />
+    <path d="M 240,310 L 240,410" marker-end="url(#arrow)" />
+    <path d="M 760,320 L 760,365 L 500,365 L 500,477.5 L 440,477.5" marker-end="url(#arrow)" />
+    <path d="M 240,545 L 240,630" marker-end="url(#arrow)" />
+    <path d="M 440,685 L 560,685" marker-end="url(#arrow)" />
+    <path d="M 240,740 L 240,800 L 500,800 L 500,850" marker-end="url(#arrow)" />
+    <path d="M 760,740 L 760,800 L 500,800 L 500,850" marker-end="url(#arrow)" />
+  </g>
+  <g id="nodes">
+    <g id="audio" data-category="neutral">
+      <rect x="40" y="30" width="400" height="100" rx="18" fill="#F1F3F5" stroke="#697783" stroke-width="1.5" />
+      <text x="240.0" y="87.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Track audio + detected grid</text>
+    </g>
+    <g id="align" data-category="analysis">
+      <rect x="40" y="210" width="400" height="100" rx="5" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" />
+      <text x="240.0" y="267.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Align track B to source tempo</text>
+    </g>
+    <g id="vocals" data-category="analysis">
+      <rect x="560" y="210" width="400" height="110" rx="5" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" />
+      <text x="760.0" y="259.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Vocal analysis</text>
+      <text x="760.0" y="286.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">BS-RoFormer by default</text>
+    </g>
+    <g id="features" data-category="data">
+      <rect x="40" y="410" width="400" height="135" rx="5" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="240.0" y="458.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Full-track feature cache</text>
+      <text x="240.0" y="485.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Timing, energy, spectrum, harmony,</text>
+      <text x="240.0" y="512.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">vocals and masks</text>
+    </g>
+    <g id="windows" data-category="data">
+      <rect x="40" y="630" width="400" height="110" rx="5" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="240.0" y="679.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Extract cue windows</text>
+      <text x="240.0" y="706.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">A postroll and B preroll</text>
+    </g>
+    <g id="globals" data-category="data">
+      <rect x="560" y="630" width="400" height="110" rx="5" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="760.0" y="679.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Global pair features</text>
+      <text x="760.0" y="706.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Tempo, tonal and context information</text>
+    </g>
+    <g id="inputs" data-category="data">
+      <rect x="240" y="850" width="520" height="130" rx="18" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="500.0" y="895.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Controller inputs</text>
+      <text x="500.0" y="922.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">A/B: T × 54; globals: 16</text>
+      <text x="500.0" y="949.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Protocol 2 also supplies L/8</text>
+    </g>
+  </g>
+  <g id="edge-labels" />
+</svg>

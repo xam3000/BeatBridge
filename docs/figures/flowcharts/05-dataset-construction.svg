@@ -1,0 +1,58 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="160mm" height="153.60mm" viewBox="0 0 1000 960" role="img" aria-labelledby="figure-title figure-description">
+  <title id="figure-title">Dataset construction and split isolation</title>
+  <desc id="figure-description">Track-hash splits and training-only normalisation precede immutable, versioned dataset export. Test export depends on the corpus protocol.</desc>
+  <metadata>BeatBridge; evidence baseline 2026-10-27; artwork 2026-10-28; see README.md.</metadata>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 Z" fill="#48535E" />
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1000" height="960" fill="#FFFFFF" />
+  <g id="connections" fill="none" stroke="#48535E" stroke-width="2" stroke-linejoin="round">
+    <path d="M 500,320 L 500,365 L 165,365 L 165,410" marker-end="url(#arrow)" />
+    <path d="M 500,320 L 500,365 L 500,365 L 500,410" marker-end="url(#arrow)" />
+    <path d="M 500,320 L 500,365 L 835,365 L 835,410" marker-end="url(#arrow)" />
+    <path d="M 500,135 L 500,220" marker-end="url(#arrow)" />
+    <path d="M 165,510 L 165,560 L 230,560 L 230,610" marker-end="url(#arrow)" />
+    <path d="M 30,460 L 10,460 L 10,877.5 L 280,877.5" marker-end="url(#arrow)" />
+    <path d="M 230,740 L 230,780 L 500,780 L 500,820" marker-end="url(#arrow)" />
+    <path d="M 500,510 L 500,780 L 500,820" marker-end="url(#arrow)" />
+    <path d="M 835,510 L 835,780 L 500,780 L 500,820" marker-end="url(#arrow)" stroke-dasharray="8 5" />
+  </g>
+  <g id="nodes">
+    <g id="records" data-category="data">
+      <rect x="230" y="30" width="540" height="105" rx="18" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="500.0" y="90.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Selected records + feature artifacts</text>
+    </g>
+    <g id="split" data-category="data">
+      <rect x="230" y="220" width="540" height="100" rx="5" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="500.0" y="264.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Apply track-level split authority</text>
+      <text x="500.0" y="291.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Reject cross-split pairs</text>
+    </g>
+    <g id="train" data-category="data">
+      <rect x="30" y="410" width="270" height="100" rx="18" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="165.0" y="467.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Training split</text>
+    </g>
+    <g id="val" data-category="data">
+      <rect x="365" y="410" width="270" height="100" rx="18" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="500.0" y="467.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Validation split</text>
+    </g>
+    <g id="test" data-category="neutral">
+      <rect x="700" y="410" width="270" height="100" rx="18" fill="#F1F3F5" stroke="#697783" stroke-width="1.5" stroke-dasharray="8 5" />
+      <text x="835.0" y="454.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Test split</text>
+      <text x="835.0" y="481.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">When exported</text>
+    </g>
+    <g id="stats" data-category="data">
+      <rect x="30" y="610" width="400" height="130" rx="5" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="230.0" y="669.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Fit normalisation statistics</text>
+      <text x="230.0" y="696.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Training artifacts only</text>
+    </g>
+    <g id="dataset" data-category="data">
+      <rect x="280" y="820" width="440" height="115" rx="18" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="500.0" y="871.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Normalise and export dataset</text>
+      <text x="500.0" y="898.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Features, metadata and hashes</text>
+    </g>
+  </g>
+  <g id="edge-labels" />
+</svg>

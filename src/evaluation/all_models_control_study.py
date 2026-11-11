@@ -564,6 +564,11 @@ def _select_examples(items, pair_count, max_track_uses):
 
 
 def _empty_ratings(manifest):
+    """Use per-label ranks (null or 1..N); equal ranks represent ties.
+
+    The legacy ranking list is populated by the player only for complete,
+    strict orders. Existing format-1 fields remain available unchanged.
+    """
     return {
         "format_version": ALL_MODELS_STUDY_FORMAT_VERSION,
         "study_manifest": "manifest.json",
@@ -573,6 +578,7 @@ def _empty_ratings(manifest):
             {
                 "pair_index": pair["index"],
                 "ranking": [],
+                "ranks": {label: None for label in pair["labels"]},
                 "scores": {
                     label: {criterion: None for criterion in RATING_CRITERIA}
                     for label in pair["labels"]
@@ -594,8 +600,9 @@ def build_listening_page(manifest):
             "instructions",
             "Alle Varianten einer Zeile verwenden denselben Cuepoint, Kontext und "
             "gemeinsamen Peak-Gain. Die Buchstaben sind pro Zeile neu gemischt. "
-            "Höre mit gleicher Systemlautstärke und lege eine Reihenfolge vom besten "
-            "zum schwächsten Übergang fest.",
+            "Höre mit gleicher Systemlautstärke und wähle für jeden Kandidaten einen "
+            "Platz (1 = bester Übergang). Gleich gute Kandidaten können denselben "
+            "Platz erhalten; Plätze dürfen frei bleiben.",
         )
     )
     return f"""<!doctype html>
@@ -622,12 +629,23 @@ const manifest=JSON.parse(document.getElementById('manifest').textContent); cons
 let ratings=JSON.parse(localStorage.getItem(key)||'{{}}'); const root=document.getElementById('pairs');
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}}[c]));
 function persist(){{localStorage.setItem(key,JSON.stringify(ratings)); document.getElementById('state').textContent='lokal gespeichert';}}
-for(const pair of manifest.pairs){{const section=document.createElement('section');section.className='pair';const current=ratings[pair.index]||{{ranking:[],notes:''}};
- section.innerHTML=`<h2>${{pair.index}}. ${{esc(pair.source_track.split(/[\\\\/]/).pop())}} → ${{esc(pair.target_track.split(/[\\\\/]/).pop())}}</h2><div class="meta">${{pair.transition_length_bars}} Takte · ${{(100*pair.tempo_adjustment_fraction).toFixed(2)}} % Tempoanpassung</div><div class="variants">${{pair.labels.map(label=>`<div class="variant"><div class="label">${{label}}</div><audio controls preload="metadata" src="${{encodeURI(pair.directory+'/'+label+'.wav')}}"></audio></div>`).join('')}}</div><label>Reihenfolge (beste zuerst; jedes Label genau einmal)<select class="ranking"><option value="">– auswählen –</option>${{permutations(pair.labels).map(order=>`<option value="${{order.join(',')}}" ${{current.ranking.join(',')===order.join(',')?'selected':''}}>${{order.join(' › ')}}</option>`).join('')}}</select></label><label>Notizen<textarea class="notes">${{esc(current.notes||'')}}</textarea></label>`;
- section.querySelector('.ranking').addEventListener('change',e=>{{ratings[pair.index]=ratings[pair.index]||{{}};ratings[pair.index].ranking=e.target.value?e.target.value.split(','):[];persist();}});
+function normalizeRating(pair,stored={{}}){{
+ const ranks=Object.fromEntries(pair.labels.map(label=>{{
+  const oldIndex=(stored.ranking||[]).indexOf(label);
+  const rank=stored.ranks ? stored.ranks[label] : (oldIndex<0?null:oldIndex+1);
+  return [label,Number.isInteger(rank)&&rank>=1&&rank<=pair.labels.length?rank:null];
+ }}));
+ const values=Object.values(ranks);
+ // Keep the legacy strict order only when it can represent the chosen places.
+ const ranking=values.every(rank=>rank!==null)&&new Set(values).size===pair.labels.length
+  ? [...pair.labels].sort((a,b)=>ranks[a]-ranks[b]) : [];
+ return {{...stored,ranks,ranking,notes:stored.notes||''}};
+}}
+for(const pair of manifest.pairs){{const section=document.createElement('section');section.className='pair';const current=normalizeRating(pair,ratings[pair.index]);ratings[pair.index]=current;
+ section.innerHTML=`<h2>${{pair.index}}. ${{esc(pair.source_track.split(/[\\\\/]/).pop())}} → ${{esc(pair.target_track.split(/[\\\\/]/).pop())}}</h2><div class="meta">${{pair.transition_length_bars}} Takte · ${{(100*pair.tempo_adjustment_fraction).toFixed(2)}} % Tempoanpassung</div><div class="variants">${{pair.labels.map(label=>`<div class="variant"><div class="label">${{esc(label)}}</div><audio controls preload="metadata" src="${{encodeURI(pair.directory+'/'+label+'.wav')}}"></audio><label>Platz für Kandidat ${{esc(label)}}<select class="rank" data-label="${{esc(label)}}"><option value="">– auswählen –</option>${{pair.labels.map((_,i)=>`<option value="${{i+1}}" ${{current.ranks[label]===i+1?'selected':''}}>${{i+1}}${{i===0?' (bester)':''}}</option>`).join('')}}</select></label></div>`).join('')}}</div><p class="meta">Gleicher Platz = gleich gut. Plätze dürfen frei bleiben.</p><label>Notizen<textarea class="notes">${{esc(current.notes||'')}}</textarea></label>`;
+ section.querySelectorAll('.rank').forEach(select=>select.addEventListener('change',e=>{{const updated=ratings[pair.index];updated.ranks[e.target.dataset.label]=e.target.value?Number(e.target.value):null;ratings[pair.index]=normalizeRating(pair,updated);persist();}}));
  section.querySelector('.notes').addEventListener('input',e=>{{ratings[pair.index]=ratings[pair.index]||{{}};ratings[pair.index].notes=e.target.value;persist();}});root.appendChild(section);}}
-function permutations(xs){{if(xs.length<2)return [xs];return xs.flatMap((x,i)=>permutations(xs.filter((_,j)=>i!==j)).map(rest=>[x,...rest]));}}
-document.getElementById('save').onclick=()=>{{const out={{format_version:1,study_manifest:'manifest.json',exported_at_utc:new Date().toISOString(),ratings:manifest.pairs.map(p=>({{pair_index:p.index,...(ratings[p.index]||{{ranking:[],notes:''}})}}))}};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(out,null,2)+'\\n'],{{type:'application/json'}}));a.download='ratings.json';a.click();URL.revokeObjectURL(a.href);}};
+document.getElementById('save').onclick=()=>{{const out={{format_version:1,study_manifest:'manifest.json',exported_at_utc:new Date().toISOString(),ratings:manifest.pairs.map(p=>({{...normalizeRating(p,ratings[p.index]),pair_index:p.index}}))}};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(out,null,2)],{{type:'application/json'}}));a.download='ratings.json';a.click();URL.revokeObjectURL(a.href);}};
 document.getElementById('clear').onclick=()=>{{if(confirm('Alle lokalen Eingaben dieser Studie löschen?')){{localStorage.removeItem(key);location.reload();}}}};
 </script></main></body></html>"""
 
@@ -637,7 +655,8 @@ def _readme(manifest):
 
 Öffne `index.html` in einem Browser. Pro Songpaar stehen
 {manifest['method_count']} zufällig beschriftete Varianten desselben Übergangs
-bereit. Lege die Reihenfolge fest und lade anschließend `ratings.json`
+bereit. Wähle pro Kandidat einen Platz (1 = bester; Gleichstände sind erlaubt)
+und lade anschließend `ratings.json`
 herunter. Erst danach `answer_key.json` öffnen.
 
 Der Vergleich enthält Equal Power und je einen repräsentativen, zum Datensatz

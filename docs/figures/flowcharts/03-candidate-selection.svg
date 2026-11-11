@@ -1,0 +1,61 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="160mm" height="172.80mm" viewBox="0 0 1000 1080" role="img" aria-labelledby="figure-title figure-description">
+  <title id="figure-title">Automatic transition-candidate selection</title>
+  <desc id="figure-description">Candidate generation, strict feasibility filters, feature ranking and top-k selection; manual cues form a separate workflow.</desc>
+  <metadata>BeatBridge; evidence baseline 2026-10-27; artwork 2026-10-28; see README.md.</metadata>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 Z" fill="#48535E" />
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1000" height="1080" fill="#FFFFFF" />
+  <g id="connections" fill="none" stroke="#48535E" stroke-width="2" stroke-linejoin="round">
+    <path d="M 470,125 L 470,195" marker-end="url(#arrow)" />
+    <path d="M 470,310 L 470,380" marker-end="url(#arrow)" />
+    <path d="M 705,465 L 795,465" marker-end="url(#arrow)" />
+    <path d="M 470,550 L 470,620" marker-end="url(#arrow)" />
+    <path d="M 470,710 L 470,790" marker-end="url(#arrow)" />
+    <path d="M 470,900 L 470,970" marker-end="url(#arrow)" />
+  </g>
+  <g id="nodes">
+    <g id="pair" data-category="analysis">
+      <rect x="180" y="25" width="580" height="100" rx="5" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" />
+      <text x="470.0" y="69.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Rank compatible song targets</text>
+      <text x="470.0" y="96.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">song_compatibility_v1</text>
+    </g>
+    <g id="boundaries" data-category="analysis">
+      <rect x="180" y="195" width="580" height="115" rx="5" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" />
+      <text x="470.0" y="246.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Generate cue-pair candidates</text>
+      <text x="470.0" y="273.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Bar boundaries for each requested length</text>
+    </g>
+    <g id="filters" data-category="analysis">
+      <polygon points="470.0,380 705,465.0 470.0,550 235,465.0" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" />
+      <text x="470.0" y="459.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Feasible windows?</text>
+      <text x="470.0" y="486.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Grid, meter and tempo</text>
+    </g>
+    <g id="reject" data-category="reject">
+      <rect x="795" y="410" width="180" height="110" rx="5" fill="#FBEAE6" stroke="#A65A4B" stroke-width="1.5" />
+      <text x="885.0" y="459.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Reject</text>
+      <text x="885.0" y="486.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Record reason</text>
+    </g>
+    <g id="accepted" data-category="data">
+      <rect x="180" y="620" width="580" height="90" rx="18" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="470.0" y="672.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Accepted candidates</text>
+    </g>
+    <g id="rank" data-category="analysis">
+      <rect x="180" y="790" width="580" height="110" rx="5" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" />
+      <text x="470.0" y="839.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Rank cue combinations</text>
+      <text x="470.0" y="866.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">High power, non-overlap, harmony, energy, timbre, tempo</text>
+    </g>
+    <g id="top" data-category="data">
+      <rect x="180" y="970" width="580" height="85" rx="18" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="470.0" y="1020.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Select top-k candidates</text>
+    </g>
+  </g>
+  <g id="edge-labels">
+    <rect x="733.0" y="425" width="34.0" height="26" fill="#FFFFFF" />
+    <text x="750" y="444" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="400" text-anchor="middle">no</text>
+    <rect x="484.0" y="576" width="42.0" height="26" fill="#FFFFFF" />
+    <text x="505" y="595" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="400" text-anchor="middle">yes</text>
+  </g>
+</svg>

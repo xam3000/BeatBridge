@@ -1,0 +1,82 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="160mm" height="164.80mm" viewBox="0 0 1000 1030" role="img" aria-labelledby="figure-title figure-description">
+  <title id="figure-title">Cue-window high power and non-overlap</title>
+  <desc id="figure-description">Four unrendered cue windows provide track-relative energy percentiles and local energy contrasts.</desc>
+  <metadata>BeatBridge; metric definitions audited 2026-10-29; code defaults, not run-specific weights; see METRICS_README.md.</metadata>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 Z" fill="#48535E" />
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1000" height="1030" fill="#FFFFFF" />
+  <g id="connections" fill="none" stroke="#48535E" stroke-width="2" stroke-linejoin="round">
+    <path d="M 140,150 L 140,205 L 500,205 L 500,250" marker-end="url(#arrow)" />
+    <path d="M 380,150 L 380,205 L 500,205 L 500,250" marker-end="url(#arrow)" />
+    <path d="M 620,150 L 620,205 L 500,205 L 500,250" marker-end="url(#arrow)" />
+    <path d="M 860,150 L 860,205 L 500,205 L 500,250" marker-end="url(#arrow)" />
+    <path d="M 500,360 L 500,410 L 240,410 L 240,460" marker-end="url(#arrow)" />
+    <path d="M 500,360 L 500,410 L 760,410 L 760,460" marker-end="url(#arrow)" />
+    <path d="M 880,305 L 990,305 L 990,720 L 970,720" marker-end="url(#arrow)" />
+    <path d="M 550,530 L 510,530 L 510,820 L 760,820 L 760,870" marker-end="url(#arrow)" />
+    <path d="M 760,780 L 760,870" marker-end="url(#arrow)" />
+    <path d="M 240,590 L 240,870" marker-end="url(#arrow)" />
+    <path d="M 550,925 L 450,925" marker-end="url(#arrow)" />
+  </g>
+  <g id="nodes">
+    <g id="apre" data-category="control">
+      <rect x="30" y="35" width="220" height="115" rx="18" fill="#FFF0D7" stroke="#9C641B" stroke-width="1.5" />
+      <text x="140.0" y="86.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">A before cue</text>
+      <text x="140.0" y="113.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Drop window</text>
+    </g>
+    <g id="apost" data-category="analysis">
+      <rect x="270" y="35" width="220" height="115" rx="18" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" />
+      <text x="380.0" y="86.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">A after cue</text>
+      <text x="380.0" y="113.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Source postroll</text>
+    </g>
+    <g id="bpre" data-category="analysis">
+      <rect x="510" y="35" width="220" height="115" rx="18" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" />
+      <text x="620.0" y="86.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">B before cue</text>
+      <text x="620.0" y="113.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Target preroll</text>
+    </g>
+    <g id="bpost" data-category="control">
+      <rect x="750" y="35" width="220" height="115" rx="18" fill="#FFF0D7" stroke="#9C641B" stroke-width="1.5" />
+      <text x="860.0" y="86.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">B after cue</text>
+      <text x="860.0" y="113.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Drop window</text>
+    </g>
+    <g id="extract" data-category="data">
+      <rect x="120" y="250" width="760" height="110" rx="5" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="500.0" y="299.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Measure window RMS and track energy percentiles</text>
+      <text x="500.0" y="326.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Each window is compared with its own track's RMS distribution</text>
+    </g>
+    <g id="hp" data-category="analysis">
+      <rect x="30" y="460" width="420" height="130" rx="5" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" />
+      <text x="240.0" y="519.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">High-power score</text>
+      <text x="240.0" y="546.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">HP = min(p_A_before, p_B_after)</text>
+    </g>
+    <g id="contrast" data-category="analysis">
+      <rect x="550" y="460" width="420" height="140" rx="5" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" />
+      <text x="760.0" y="510.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Boundary contrast</text>
+      <text x="760.0" y="537.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">d_A = clip(fall_A_dB / 6, 0, 1)</text>
+      <text x="760.0" y="564.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">d_B = clip(rise_B_dB / 6, 0, 1)</text>
+    </g>
+    <g id="quiet" data-category="analysis">
+      <rect x="550" y="660" width="420" height="120" rx="5" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" />
+      <text x="760.0" y="714.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Transition quietness</text>
+      <text x="760.0" y="741.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">q = 1 - max(p_A_after, p_B_before)</text>
+    </g>
+    <g id="no" data-category="analysis">
+      <rect x="550" y="870" width="420" height="110" rx="5" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" />
+      <text x="760.0" y="919.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Non-overlap score</text>
+      <text x="760.0" y="946.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">NO = sqrt(q * min(d_A, d_B))</text>
+    </g>
+    <g id="contribution" data-category="evaluation">
+      <rect x="30" y="870" width="420" height="110" rx="18" fill="#E6F2E4" stroke="#4F7643" stroke-width="1.5" />
+      <text x="240.0" y="905.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Contribution to cue score</text>
+      <text x="240.0" y="932.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">0.30 * HP + 0.30 * NO</text>
+      <text x="240.0" y="959.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">+ four other components</text>
+    </g>
+  </g>
+  <g id="edge-labels">
+    <text x="500" y="1015" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="400" text-anchor="middle">p denotes an empirical percentile, not an absolute loudness threshold.</text>
+  </g>
+</svg>

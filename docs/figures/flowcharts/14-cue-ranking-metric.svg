@@ -1,0 +1,71 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="160mm" height="204.80mm" viewBox="0 0 1000 1280" role="img" aria-labelledby="figure-title figure-description">
+  <title id="figure-title">Feature-based cue ranking</title>
+  <desc id="figure-description">Feature-based cue ranking</desc>
+  <metadata>BeatBridge; metric definitions audited 2026-10-29; code defaults, not run-specific weights; see METRICS_README.md.</metadata>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 Z" fill="#48535E" />
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1000" height="1280" fill="#FFFFFF" />
+  <g id="connections" fill="none" stroke="#48535E" stroke-width="2" stroke-linejoin="round">
+    <path d="M 120,75 L 50,75 L 50,240 L 120,240" marker-end="url(#arrow)" />
+    <path d="M 880,240 L 950,240 L 950,1170 L 880,1170" marker-end="url(#arrow)" />
+    <path d="M 120,75 L 50,75 L 50,390 L 120,390" marker-end="url(#arrow)" />
+    <path d="M 880,390 L 950,390 L 950,1170 L 880,1170" marker-end="url(#arrow)" />
+    <path d="M 120,75 L 50,75 L 50,540 L 120,540" marker-end="url(#arrow)" />
+    <path d="M 880,540 L 950,540 L 950,1170 L 880,1170" marker-end="url(#arrow)" />
+    <path d="M 120,75 L 50,75 L 50,690 L 120,690" marker-end="url(#arrow)" />
+    <path d="M 880,690 L 950,690 L 950,1170 L 880,1170" marker-end="url(#arrow)" />
+    <path d="M 120,75 L 50,75 L 50,840 L 120,840" marker-end="url(#arrow)" />
+    <path d="M 880,840 L 950,840 L 950,1170 L 880,1170" marker-end="url(#arrow)" />
+    <path d="M 120,75 L 50,75 L 50,990 L 120,990" marker-end="url(#arrow)" />
+    <path d="M 880,990 L 950,990 L 950,1170 L 880,1170" marker-end="url(#arrow)" />
+  </g>
+  <g id="nodes">
+    <g id="inputs" data-category="data">
+      <rect x="120" y="30" width="760" height="90" rx="18" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="500.0" y="82.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Four raw windows around source and target cues</text>
+    </g>
+    <g id="component_0" data-category="analysis">
+      <rect x="120" y="180" width="760" height="120" rx="5" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" />
+      <text x="500.0" y="234.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">High power · weight 0.30</text>
+      <text x="500.0" y="261.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Minimum of the two drop-window energy percentiles</text>
+    </g>
+    <g id="component_1" data-category="analysis">
+      <rect x="120" y="330" width="760" height="120" rx="5" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" />
+      <text x="500.0" y="370.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Non-overlap · weight 0.30</text>
+      <text x="500.0" y="397.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Combine quiet transition windows with energy fall and rise</text>
+      <text x="500.0" y="424.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">See Figure 15 for the component calculation</text>
+    </g>
+    <g id="component_2" data-category="analysis">
+      <rect x="120" y="480" width="760" height="120" rx="5" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" />
+      <text x="500.0" y="534.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Harmonic similarity · weight 0.18</text>
+      <text x="500.0" y="561.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Cosine similarity of the two drop-window chroma profiles</text>
+    </g>
+    <g id="component_3" data-category="analysis">
+      <rect x="120" y="630" width="760" height="120" rx="5" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" />
+      <text x="500.0" y="684.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Energy similarity · weight 0.10</text>
+      <text x="500.0" y="711.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">max(0, 1 - |drop_A_dB - drop_B_dB| / 24)</text>
+    </g>
+    <g id="component_4" data-category="analysis">
+      <rect x="120" y="780" width="760" height="120" rx="5" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" />
+      <text x="500.0" y="834.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Timbre similarity · weight 0.05</text>
+      <text x="500.0" y="861.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">exp(-|log2((centroid_A + 20) / (centroid_B + 20))|)</text>
+    </g>
+    <g id="component_5" data-category="analysis">
+      <rect x="120" y="930" width="760" height="120" rx="5" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" />
+      <text x="500.0" y="984.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Tempo similarity · weight 0.07</text>
+      <text x="500.0" y="1011.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">max(0, 1 - relative_BPM_difference / 0.15)</text>
+    </g>
+    <g id="output" data-category="evaluation">
+      <rect x="120" y="1120" width="760" height="100" rx="18" fill="#E6F2E4" stroke="#4F7643" stroke-width="1.5" />
+      <text x="500.0" y="1164.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Weighted sum → cue ranking</text>
+      <text x="500.0" y="1191.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Score in [0,1] · higher is better; renderer has not run yet</text>
+    </g>
+  </g>
+  <g id="edge-labels">
+    <text x="500" y="1260" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="400" text-anchor="middle">Code defaults shown; each run's saved configuration is authoritative.</text>
+  </g>
+</svg>

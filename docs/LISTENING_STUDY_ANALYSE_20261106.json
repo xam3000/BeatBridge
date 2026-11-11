@@ -1,0 +1,1406 @@
+{
+  "analysis_date": "2026-11-06",
+  "generated_at_utc": "2026-11-06T10:03:36.123298+00:00",
+  "study_directory": "output/four_models_shared_20pairs_validation_20261105_renderfix",
+  "ratings_exported_at_utc": "2026-11-06T10:00:13.657Z",
+  "input_sha256": {
+    "manifest.json": "a3c1edc7fd4e68399777f733c1364cdb84782cfbf43176824a21df48cd8e4909",
+    "ratings.json": "c32b48d50fb19590201b5cf3943fc1f558f051fd4a58d223528502b09c0091a0",
+    "answer_key.json": "dd991b096de0738b05c44c1265e8f6dfbec4014d184e5a86f141717d020205f2",
+    "index.html": "d02b292025b339309aa746958349ac7d9983a9cb90fece058fe6cac822b67fc2"
+  },
+  "analysis_script_sha256": "7af270d6bc3c2f10b21f233edb2f597a6566e29ad117ca7b0d3a055b5b80c100",
+  "status": "listening_finished_one_confirmed_unranked_exclusion",
+  "pair_count": 20,
+  "ranked_pair_count": 19,
+  "valid_explicit_rank_count": 95,
+  "excluded_pairs": {
+    "11": "Rater confirmed on 2026-11-06: leave unranked because of tempo mismatch."
+  },
+  "full_five_way_tie_count": 19,
+  "directed_track_pair_count": 5,
+  "unique_track_hash_count": 5,
+  "method_summaries": {
+    "baseline_equal_power": {
+      "entered_places": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "midranks": [
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0
+      ],
+      "sole_best_count": 0,
+      "shared_best_count": 19,
+      "display_name": "Equal Power",
+      "ranked_example_count": 19,
+      "mean_entered_place": 1.0,
+      "mean_midrank": 3.0
+    },
+    "time_shared_mlp_v1_best": {
+      "entered_places": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "midranks": [
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0
+      ],
+      "sole_best_count": 0,
+      "shared_best_count": 19,
+      "display_name": "Time-shared MLP v1",
+      "ranked_example_count": 19,
+      "mean_entered_place": 1.0,
+      "mean_midrank": 3.0
+    },
+    "vocal_time_shared_mlp_v2_best": {
+      "entered_places": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "midranks": [
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0
+      ],
+      "sole_best_count": 0,
+      "shared_best_count": 19,
+      "display_name": "Vocal MLP v2",
+      "ranked_example_count": 19,
+      "mean_entered_place": 1.0,
+      "mean_midrank": 3.0
+    },
+    "tcn_bilstm_transition_control_v1_best": {
+      "entered_places": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "midranks": [
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0
+      ],
+      "sole_best_count": 0,
+      "shared_best_count": 19,
+      "display_name": "TCN/BiLSTM v1",
+      "ranked_example_count": 19,
+      "mean_entered_place": 1.0,
+      "mean_midrank": 3.0
+    },
+    "variable_tcn_bilstm_transition_control_v1_best": {
+      "entered_places": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "midranks": [
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0
+      ],
+      "sole_best_count": 0,
+      "shared_best_count": 19,
+      "display_name": "Variable TCN/BiLSTM v1",
+      "ranked_example_count": 19,
+      "mean_entered_place": 1.0,
+      "mean_midrank": 3.0
+    }
+  },
+  "pairwise": [
+    {
+      "left": "baseline_equal_power",
+      "right": "time_shared_mlp_v1_best",
+      "win": 0,
+      "tie": 19,
+      "loss": 0
+    },
+    {
+      "left": "baseline_equal_power",
+      "right": "vocal_time_shared_mlp_v2_best",
+      "win": 0,
+      "tie": 19,
+      "loss": 0
+    },
+    {
+      "left": "baseline_equal_power",
+      "right": "tcn_bilstm_transition_control_v1_best",
+      "win": 0,
+      "tie": 19,
+      "loss": 0
+    },
+    {
+      "left": "baseline_equal_power",
+      "right": "variable_tcn_bilstm_transition_control_v1_best",
+      "win": 0,
+      "tie": 19,
+      "loss": 0
+    },
+    {
+      "left": "time_shared_mlp_v1_best",
+      "right": "vocal_time_shared_mlp_v2_best",
+      "win": 0,
+      "tie": 19,
+      "loss": 0
+    },
+    {
+      "left": "time_shared_mlp_v1_best",
+      "right": "tcn_bilstm_transition_control_v1_best",
+      "win": 0,
+      "tie": 19,
+      "loss": 0
+    },
+    {
+      "left": "time_shared_mlp_v1_best",
+      "right": "variable_tcn_bilstm_transition_control_v1_best",
+      "win": 0,
+      "tie": 19,
+      "loss": 0
+    },
+    {
+      "left": "vocal_time_shared_mlp_v2_best",
+      "right": "tcn_bilstm_transition_control_v1_best",
+      "win": 0,
+      "tie": 19,
+      "loss": 0
+    },
+    {
+      "left": "vocal_time_shared_mlp_v2_best",
+      "right": "variable_tcn_bilstm_transition_control_v1_best",
+      "win": 0,
+      "tie": 19,
+      "loss": 0
+    },
+    {
+      "left": "tcn_bilstm_transition_control_v1_best",
+      "right": "variable_tcn_bilstm_transition_control_v1_best",
+      "win": 0,
+      "tie": 19,
+      "loss": 0
+    }
+  ],
+  "track_pair_groups": [
+    {
+      "source_sha256": "6224702167f439f6524b5f3fd0c8db68759b73baec54dc154940f0be48dd11e9",
+      "target_sha256": "bf84dfc9237065e7e0af12882d39a490aef76e389138a269d0f30ef54780a82c",
+      "examples": [
+        1,
+        6,
+        11,
+        16,
+        19
+      ],
+      "ranked": [
+        1,
+        6,
+        16,
+        19
+      ],
+      "excluded": [
+        11
+      ],
+      "source_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Mess Of My Creation - Phuture Noize.flac",
+      "target_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Who Is She - Phuture Noize.flac"
+    },
+    {
+      "source_sha256": "86f9ee103e2e4411c3aed3f4c5ec710102008b644bbb52f48ae16e80ea084c6c",
+      "target_sha256": "a2eb136aaf58ae0c64d1fc6342e4749ed7900093cf54b85df4e67b959fd2720d",
+      "examples": [
+        2,
+        7,
+        12,
+        17,
+        20
+      ],
+      "ranked": [
+        2,
+        7,
+        12,
+        17,
+        20
+      ],
+      "excluded": [],
+      "source_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Brazil - Sound Rush.flac",
+      "target_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Won’t Let Me Down - Sub Zero Project.flac"
+    },
+    {
+      "source_sha256": "882af34c013d438f6f37d4019b5051def1bc5cf5b5cc88d5b393b9efa7884f08",
+      "target_sha256": "a2eb136aaf58ae0c64d1fc6342e4749ed7900093cf54b85df4e67b959fd2720d",
+      "examples": [
+        3,
+        8,
+        13
+      ],
+      "ranked": [
+        3,
+        8,
+        13
+      ],
+      "excluded": [],
+      "source_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\2 The Dancefloor - Bioweapon.flac",
+      "target_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Won’t Let Me Down - Sub Zero Project.flac"
+    },
+    {
+      "source_sha256": "a2eb136aaf58ae0c64d1fc6342e4749ed7900093cf54b85df4e67b959fd2720d",
+      "target_sha256": "882af34c013d438f6f37d4019b5051def1bc5cf5b5cc88d5b393b9efa7884f08",
+      "examples": [
+        4,
+        9,
+        14,
+        18
+      ],
+      "ranked": [
+        4,
+        9,
+        14,
+        18
+      ],
+      "excluded": [],
+      "source_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Won’t Let Me Down - Sub Zero Project.flac",
+      "target_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\2 The Dancefloor - Bioweapon.flac"
+    },
+    {
+      "source_sha256": "bf84dfc9237065e7e0af12882d39a490aef76e389138a269d0f30ef54780a82c",
+      "target_sha256": "6224702167f439f6524b5f3fd0c8db68759b73baec54dc154940f0be48dd11e9",
+      "examples": [
+        5,
+        10,
+        15
+      ],
+      "ranked": [
+        5,
+        10,
+        15
+      ],
+      "excluded": [],
+      "source_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Who Is She - Phuture Noize.flac",
+      "target_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Mess Of My Creation - Phuture Noize.flac"
+    }
+  ],
+  "examples": [
+    {
+      "pair_index": 1,
+      "directory": "01__Mess_Of_My_Creation_Phuture_Noize__to__Who_Is_She_Phuture_Noize__b18c72",
+      "source_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Mess Of My Creation - Phuture Noize.flac",
+      "target_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Who Is She - Phuture Noize.flac",
+      "tempo_adjustment_fraction": 0.0,
+      "ranks_by_method": {
+        "tcn_bilstm_transition_control_v1_best": 1,
+        "baseline_equal_power": 1,
+        "vocal_time_shared_mlp_v2_best": 1,
+        "variable_tcn_bilstm_transition_control_v1_best": 1,
+        "time_shared_mlp_v1_best": 1
+      },
+      "notes": "",
+      "excluded_reason": null,
+      "midranks_by_method": {
+        "tcn_bilstm_transition_control_v1_best": 3.0,
+        "baseline_equal_power": 3.0,
+        "vocal_time_shared_mlp_v2_best": 3.0,
+        "variable_tcn_bilstm_transition_control_v1_best": 3.0,
+        "time_shared_mlp_v1_best": 3.0
+      }
+    },
+    {
+      "pair_index": 2,
+      "directory": "02__Brazil_Sound_Rush__to__Won_t_Let_Me_Down_Sub_Zero_Project__99afef",
+      "source_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Brazil - Sound Rush.flac",
+      "target_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Won’t Let Me Down - Sub Zero Project.flac",
+      "tempo_adjustment_fraction": 0.0,
+      "ranks_by_method": {
+        "baseline_equal_power": 1,
+        "vocal_time_shared_mlp_v2_best": 1,
+        "variable_tcn_bilstm_transition_control_v1_best": 1,
+        "time_shared_mlp_v1_best": 1,
+        "tcn_bilstm_transition_control_v1_best": 1
+      },
+      "notes": "",
+      "excluded_reason": null,
+      "midranks_by_method": {
+        "baseline_equal_power": 3.0,
+        "vocal_time_shared_mlp_v2_best": 3.0,
+        "variable_tcn_bilstm_transition_control_v1_best": 3.0,
+        "time_shared_mlp_v1_best": 3.0,
+        "tcn_bilstm_transition_control_v1_best": 3.0
+      }
+    },
+    {
+      "pair_index": 3,
+      "directory": "03__2_The_Dancefloor_Bioweapon__to__Won_t_Let_Me_Down_Sub_Zero_Project__3e3feb",
+      "source_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\2 The Dancefloor - Bioweapon.flac",
+      "target_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Won’t Let Me Down - Sub Zero Project.flac",
+      "tempo_adjustment_fraction": 0.0,
+      "ranks_by_method": {
+        "baseline_equal_power": 1,
+        "variable_tcn_bilstm_transition_control_v1_best": 1,
+        "vocal_time_shared_mlp_v2_best": 1,
+        "tcn_bilstm_transition_control_v1_best": 1,
+        "time_shared_mlp_v1_best": 1
+      },
+      "notes": "",
+      "excluded_reason": null,
+      "midranks_by_method": {
+        "baseline_equal_power": 3.0,
+        "variable_tcn_bilstm_transition_control_v1_best": 3.0,
+        "vocal_time_shared_mlp_v2_best": 3.0,
+        "tcn_bilstm_transition_control_v1_best": 3.0,
+        "time_shared_mlp_v1_best": 3.0
+      }
+    },
+    {
+      "pair_index": 4,
+      "directory": "04__Won_t_Let_Me_Down_Sub_Zero_Project__to__2_The_Dancefloor_Bioweapon__d067d1",
+      "source_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Won’t Let Me Down - Sub Zero Project.flac",
+      "target_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\2 The Dancefloor - Bioweapon.flac",
+      "tempo_adjustment_fraction": 0.0,
+      "ranks_by_method": {
+        "vocal_time_shared_mlp_v2_best": 1,
+        "tcn_bilstm_transition_control_v1_best": 1,
+        "baseline_equal_power": 1,
+        "variable_tcn_bilstm_transition_control_v1_best": 1,
+        "time_shared_mlp_v1_best": 1
+      },
+      "notes": "",
+      "excluded_reason": null,
+      "midranks_by_method": {
+        "vocal_time_shared_mlp_v2_best": 3.0,
+        "tcn_bilstm_transition_control_v1_best": 3.0,
+        "baseline_equal_power": 3.0,
+        "variable_tcn_bilstm_transition_control_v1_best": 3.0,
+        "time_shared_mlp_v1_best": 3.0
+      }
+    },
+    {
+      "pair_index": 5,
+      "directory": "05__Who_Is_She_Phuture_Noize__to__Mess_Of_My_Creation_Phuture_Noize__3d9701",
+      "source_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Who Is She - Phuture Noize.flac",
+      "target_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Mess Of My Creation - Phuture Noize.flac",
+      "tempo_adjustment_fraction": 0.0,
+      "ranks_by_method": {
+        "tcn_bilstm_transition_control_v1_best": 1,
+        "time_shared_mlp_v1_best": 1,
+        "baseline_equal_power": 1,
+        "variable_tcn_bilstm_transition_control_v1_best": 1,
+        "vocal_time_shared_mlp_v2_best": 1
+      },
+      "notes": "",
+      "excluded_reason": null,
+      "midranks_by_method": {
+        "tcn_bilstm_transition_control_v1_best": 3.0,
+        "time_shared_mlp_v1_best": 3.0,
+        "baseline_equal_power": 3.0,
+        "variable_tcn_bilstm_transition_control_v1_best": 3.0,
+        "vocal_time_shared_mlp_v2_best": 3.0
+      }
+    },
+    {
+      "pair_index": 6,
+      "directory": "06__Mess_Of_My_Creation_Phuture_Noize__to__Who_Is_She_Phuture_Noize__c1a52d",
+      "source_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Mess Of My Creation - Phuture Noize.flac",
+      "target_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Who Is She - Phuture Noize.flac",
+      "tempo_adjustment_fraction": 0.0,
+      "ranks_by_method": {
+        "time_shared_mlp_v1_best": 1,
+        "variable_tcn_bilstm_transition_control_v1_best": 1,
+        "vocal_time_shared_mlp_v2_best": 1,
+        "tcn_bilstm_transition_control_v1_best": 1,
+        "baseline_equal_power": 1
+      },
+      "notes": "",
+      "excluded_reason": null,
+      "midranks_by_method": {
+        "time_shared_mlp_v1_best": 3.0,
+        "variable_tcn_bilstm_transition_control_v1_best": 3.0,
+        "vocal_time_shared_mlp_v2_best": 3.0,
+        "tcn_bilstm_transition_control_v1_best": 3.0,
+        "baseline_equal_power": 3.0
+      }
+    },
+    {
+      "pair_index": 7,
+      "directory": "07__Brazil_Sound_Rush__to__Won_t_Let_Me_Down_Sub_Zero_Project__d3bac2",
+      "source_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Brazil - Sound Rush.flac",
+      "target_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Won’t Let Me Down - Sub Zero Project.flac",
+      "tempo_adjustment_fraction": 0.0,
+      "ranks_by_method": {
+        "baseline_equal_power": 1,
+        "variable_tcn_bilstm_transition_control_v1_best": 1,
+        "vocal_time_shared_mlp_v2_best": 1,
+        "time_shared_mlp_v1_best": 1,
+        "tcn_bilstm_transition_control_v1_best": 1
+      },
+      "notes": "",
+      "excluded_reason": null,
+      "midranks_by_method": {
+        "baseline_equal_power": 3.0,
+        "variable_tcn_bilstm_transition_control_v1_best": 3.0,
+        "vocal_time_shared_mlp_v2_best": 3.0,
+        "time_shared_mlp_v1_best": 3.0,
+        "tcn_bilstm_transition_control_v1_best": 3.0
+      }
+    },
+    {
+      "pair_index": 8,
+      "directory": "08__2_The_Dancefloor_Bioweapon__to__Won_t_Let_Me_Down_Sub_Zero_Project__7e0283",
+      "source_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\2 The Dancefloor - Bioweapon.flac",
+      "target_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Won’t Let Me Down - Sub Zero Project.flac",
+      "tempo_adjustment_fraction": 0.0,
+      "ranks_by_method": {
+        "variable_tcn_bilstm_transition_control_v1_best": 1,
+        "vocal_time_shared_mlp_v2_best": 1,
+        "time_shared_mlp_v1_best": 1,
+        "tcn_bilstm_transition_control_v1_best": 1,
+        "baseline_equal_power": 1
+      },
+      "notes": "störende note im übergang in allen ",
+      "excluded_reason": null,
+      "midranks_by_method": {
+        "variable_tcn_bilstm_transition_control_v1_best": 3.0,
+        "vocal_time_shared_mlp_v2_best": 3.0,
+        "time_shared_mlp_v1_best": 3.0,
+        "tcn_bilstm_transition_control_v1_best": 3.0,
+        "baseline_equal_power": 3.0
+      }
+    },
+    {
+      "pair_index": 9,
+      "directory": "09__Won_t_Let_Me_Down_Sub_Zero_Project__to__2_The_Dancefloor_Bioweapon__3abbcb",
+      "source_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Won’t Let Me Down - Sub Zero Project.flac",
+      "target_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\2 The Dancefloor - Bioweapon.flac",
+      "tempo_adjustment_fraction": 0.0,
+      "ranks_by_method": {
+        "time_shared_mlp_v1_best": 1,
+        "variable_tcn_bilstm_transition_control_v1_best": 1,
+        "vocal_time_shared_mlp_v2_best": 1,
+        "tcn_bilstm_transition_control_v1_best": 1,
+        "baseline_equal_power": 1
+      },
+      "notes": "",
+      "excluded_reason": null,
+      "midranks_by_method": {
+        "time_shared_mlp_v1_best": 3.0,
+        "variable_tcn_bilstm_transition_control_v1_best": 3.0,
+        "vocal_time_shared_mlp_v2_best": 3.0,
+        "tcn_bilstm_transition_control_v1_best": 3.0,
+        "baseline_equal_power": 3.0
+      }
+    },
+    {
+      "pair_index": 10,
+      "directory": "10__Who_Is_She_Phuture_Noize__to__Mess_Of_My_Creation_Phuture_Noize__d16fb5",
+      "source_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Who Is She - Phuture Noize.flac",
+      "target_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Mess Of My Creation - Phuture Noize.flac",
+      "tempo_adjustment_fraction": 0.0,
+      "ranks_by_method": {
+        "baseline_equal_power": 1,
+        "vocal_time_shared_mlp_v2_best": 1,
+        "time_shared_mlp_v1_best": 1,
+        "variable_tcn_bilstm_transition_control_v1_best": 1,
+        "tcn_bilstm_transition_control_v1_best": 1
+      },
+      "notes": "",
+      "excluded_reason": null,
+      "midranks_by_method": {
+        "baseline_equal_power": 3.0,
+        "vocal_time_shared_mlp_v2_best": 3.0,
+        "time_shared_mlp_v1_best": 3.0,
+        "variable_tcn_bilstm_transition_control_v1_best": 3.0,
+        "tcn_bilstm_transition_control_v1_best": 3.0
+      }
+    },
+    {
+      "pair_index": 11,
+      "directory": "11__Mess_Of_My_Creation_Phuture_Noize__to__Who_Is_She_Phuture_Noize__c10876",
+      "source_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Mess Of My Creation - Phuture Noize.flac",
+      "target_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Who Is She - Phuture Noize.flac",
+      "tempo_adjustment_fraction": 0.0,
+      "ranks_by_method": {
+        "tcn_bilstm_transition_control_v1_best": null,
+        "vocal_time_shared_mlp_v2_best": null,
+        "baseline_equal_power": null,
+        "time_shared_mlp_v1_best": null,
+        "variable_tcn_bilstm_transition_control_v1_best": null
+      },
+      "notes": "song b ist schneller in der passage",
+      "excluded_reason": "Rater confirmed on 2026-11-06: leave unranked because of tempo mismatch."
+    },
+    {
+      "pair_index": 12,
+      "directory": "12__Brazil_Sound_Rush__to__Won_t_Let_Me_Down_Sub_Zero_Project__ce8717",
+      "source_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Brazil - Sound Rush.flac",
+      "target_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Won’t Let Me Down - Sub Zero Project.flac",
+      "tempo_adjustment_fraction": 0.0,
+      "ranks_by_method": {
+        "variable_tcn_bilstm_transition_control_v1_best": 1,
+        "tcn_bilstm_transition_control_v1_best": 1,
+        "vocal_time_shared_mlp_v2_best": 1,
+        "baseline_equal_power": 1,
+        "time_shared_mlp_v1_best": 1
+      },
+      "notes": "",
+      "excluded_reason": null,
+      "midranks_by_method": {
+        "variable_tcn_bilstm_transition_control_v1_best": 3.0,
+        "tcn_bilstm_transition_control_v1_best": 3.0,
+        "vocal_time_shared_mlp_v2_best": 3.0,
+        "baseline_equal_power": 3.0,
+        "time_shared_mlp_v1_best": 3.0
+      }
+    },
+    {
+      "pair_index": 13,
+      "directory": "13__2_The_Dancefloor_Bioweapon__to__Won_t_Let_Me_Down_Sub_Zero_Project__f9b3d2",
+      "source_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\2 The Dancefloor - Bioweapon.flac",
+      "target_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Won’t Let Me Down - Sub Zero Project.flac",
+      "tempo_adjustment_fraction": 0.0,
+      "ranks_by_method": {
+        "tcn_bilstm_transition_control_v1_best": 1,
+        "vocal_time_shared_mlp_v2_best": 1,
+        "variable_tcn_bilstm_transition_control_v1_best": 1,
+        "baseline_equal_power": 1,
+        "time_shared_mlp_v1_best": 1
+      },
+      "notes": "",
+      "excluded_reason": null,
+      "midranks_by_method": {
+        "tcn_bilstm_transition_control_v1_best": 3.0,
+        "vocal_time_shared_mlp_v2_best": 3.0,
+        "variable_tcn_bilstm_transition_control_v1_best": 3.0,
+        "baseline_equal_power": 3.0,
+        "time_shared_mlp_v1_best": 3.0
+      }
+    },
+    {
+      "pair_index": 14,
+      "directory": "14__Won_t_Let_Me_Down_Sub_Zero_Project__to__2_The_Dancefloor_Bioweapon__3f328c",
+      "source_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Won’t Let Me Down - Sub Zero Project.flac",
+      "target_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\2 The Dancefloor - Bioweapon.flac",
+      "tempo_adjustment_fraction": 0.0,
+      "ranks_by_method": {
+        "vocal_time_shared_mlp_v2_best": 1,
+        "time_shared_mlp_v1_best": 1,
+        "variable_tcn_bilstm_transition_control_v1_best": 1,
+        "baseline_equal_power": 1,
+        "tcn_bilstm_transition_control_v1_best": 1
+      },
+      "notes": "",
+      "excluded_reason": null,
+      "midranks_by_method": {
+        "vocal_time_shared_mlp_v2_best": 3.0,
+        "time_shared_mlp_v1_best": 3.0,
+        "variable_tcn_bilstm_transition_control_v1_best": 3.0,
+        "baseline_equal_power": 3.0,
+        "tcn_bilstm_transition_control_v1_best": 3.0
+      }
+    },
+    {
+      "pair_index": 15,
+      "directory": "15__Who_Is_She_Phuture_Noize__to__Mess_Of_My_Creation_Phuture_Noize__044a93",
+      "source_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Who Is She - Phuture Noize.flac",
+      "target_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Mess Of My Creation - Phuture Noize.flac",
+      "tempo_adjustment_fraction": 0.0,
+      "ranks_by_method": {
+        "baseline_equal_power": 1,
+        "time_shared_mlp_v1_best": 1,
+        "tcn_bilstm_transition_control_v1_best": 1,
+        "vocal_time_shared_mlp_v2_best": 1,
+        "variable_tcn_bilstm_transition_control_v1_best": 1
+      },
+      "notes": "",
+      "excluded_reason": null,
+      "midranks_by_method": {
+        "baseline_equal_power": 3.0,
+        "time_shared_mlp_v1_best": 3.0,
+        "tcn_bilstm_transition_control_v1_best": 3.0,
+        "vocal_time_shared_mlp_v2_best": 3.0,
+        "variable_tcn_bilstm_transition_control_v1_best": 3.0
+      }
+    },
+    {
+      "pair_index": 16,
+      "directory": "16__Mess_Of_My_Creation_Phuture_Noize__to__Who_Is_She_Phuture_Noize__0c3195",
+      "source_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Mess Of My Creation - Phuture Noize.flac",
+      "target_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Who Is She - Phuture Noize.flac",
+      "tempo_adjustment_fraction": 0.0,
+      "ranks_by_method": {
+        "baseline_equal_power": 1,
+        "tcn_bilstm_transition_control_v1_best": 1,
+        "time_shared_mlp_v1_best": 1,
+        "variable_tcn_bilstm_transition_control_v1_best": 1,
+        "vocal_time_shared_mlp_v2_best": 1
+      },
+      "notes": "",
+      "excluded_reason": null,
+      "midranks_by_method": {
+        "baseline_equal_power": 3.0,
+        "tcn_bilstm_transition_control_v1_best": 3.0,
+        "time_shared_mlp_v1_best": 3.0,
+        "variable_tcn_bilstm_transition_control_v1_best": 3.0,
+        "vocal_time_shared_mlp_v2_best": 3.0
+      }
+    },
+    {
+      "pair_index": 17,
+      "directory": "17__Brazil_Sound_Rush__to__Won_t_Let_Me_Down_Sub_Zero_Project__d984a5",
+      "source_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Brazil - Sound Rush.flac",
+      "target_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Won’t Let Me Down - Sub Zero Project.flac",
+      "tempo_adjustment_fraction": 0.0,
+      "ranks_by_method": {
+        "tcn_bilstm_transition_control_v1_best": 1,
+        "vocal_time_shared_mlp_v2_best": 1,
+        "variable_tcn_bilstm_transition_control_v1_best": 1,
+        "time_shared_mlp_v1_best": 1,
+        "baseline_equal_power": 1
+      },
+      "notes": "",
+      "excluded_reason": null,
+      "midranks_by_method": {
+        "tcn_bilstm_transition_control_v1_best": 3.0,
+        "vocal_time_shared_mlp_v2_best": 3.0,
+        "variable_tcn_bilstm_transition_control_v1_best": 3.0,
+        "time_shared_mlp_v1_best": 3.0,
+        "baseline_equal_power": 3.0
+      }
+    },
+    {
+      "pair_index": 18,
+      "directory": "18__Won_t_Let_Me_Down_Sub_Zero_Project__to__2_The_Dancefloor_Bioweapon__af9064",
+      "source_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Won’t Let Me Down - Sub Zero Project.flac",
+      "target_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\2 The Dancefloor - Bioweapon.flac",
+      "tempo_adjustment_fraction": 0.0,
+      "ranks_by_method": {
+        "time_shared_mlp_v1_best": 1,
+        "vocal_time_shared_mlp_v2_best": 1,
+        "variable_tcn_bilstm_transition_control_v1_best": 1,
+        "baseline_equal_power": 1,
+        "tcn_bilstm_transition_control_v1_best": 1
+      },
+      "notes": "",
+      "excluded_reason": null,
+      "midranks_by_method": {
+        "time_shared_mlp_v1_best": 3.0,
+        "vocal_time_shared_mlp_v2_best": 3.0,
+        "variable_tcn_bilstm_transition_control_v1_best": 3.0,
+        "baseline_equal_power": 3.0,
+        "tcn_bilstm_transition_control_v1_best": 3.0
+      }
+    },
+    {
+      "pair_index": 19,
+      "directory": "19__Mess_Of_My_Creation_Phuture_Noize__to__Who_Is_She_Phuture_Noize__d24e8f",
+      "source_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Mess Of My Creation - Phuture Noize.flac",
+      "target_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Who Is She - Phuture Noize.flac",
+      "tempo_adjustment_fraction": 0.0,
+      "ranks_by_method": {
+        "variable_tcn_bilstm_transition_control_v1_best": 1,
+        "tcn_bilstm_transition_control_v1_best": 1,
+        "time_shared_mlp_v1_best": 1,
+        "vocal_time_shared_mlp_v2_best": 1,
+        "baseline_equal_power": 1
+      },
+      "notes": "",
+      "excluded_reason": null,
+      "midranks_by_method": {
+        "variable_tcn_bilstm_transition_control_v1_best": 3.0,
+        "tcn_bilstm_transition_control_v1_best": 3.0,
+        "time_shared_mlp_v1_best": 3.0,
+        "vocal_time_shared_mlp_v2_best": 3.0,
+        "baseline_equal_power": 3.0
+      }
+    },
+    {
+      "pair_index": 20,
+      "directory": "20__Brazil_Sound_Rush__to__Won_t_Let_Me_Down_Sub_Zero_Project__581cf7",
+      "source_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Brazil - Sound Rush.flac",
+      "target_track": "musik\\Hardstyle Top 100 2025 by Q-dance\\Won’t Let Me Down - Sub Zero Project.flac",
+      "tempo_adjustment_fraction": 0.0,
+      "ranks_by_method": {
+        "vocal_time_shared_mlp_v2_best": 1,
+        "baseline_equal_power": 1,
+        "variable_tcn_bilstm_transition_control_v1_best": 1,
+        "tcn_bilstm_transition_control_v1_best": 1,
+        "time_shared_mlp_v1_best": 1
+      },
+      "notes": "",
+      "excluded_reason": null,
+      "midranks_by_method": {
+        "vocal_time_shared_mlp_v2_best": 3.0,
+        "baseline_equal_power": 3.0,
+        "variable_tcn_bilstm_transition_control_v1_best": 3.0,
+        "tcn_bilstm_transition_control_v1_best": 3.0,
+        "time_shared_mlp_v1_best": 3.0
+      }
+    }
+  ],
+  "audio_sha256_checks": [
+    {
+      "pair_index": 1,
+      "label": "A",
+      "sha256": "a555f455b241e70202a6b7888b23e2738c955b2190582c1eabc1d9eeaaa6c8d4"
+    },
+    {
+      "pair_index": 1,
+      "label": "B",
+      "sha256": "5a25c6aa5192786f2b5bcaab8b4595bf4b6561c3e5f9ec869f48caf8a0f9aa6b"
+    },
+    {
+      "pair_index": 1,
+      "label": "C",
+      "sha256": "0bdf356e1de761f143fc958f8ab69ddb2f495bce03207824e771b9471d634b4c"
+    },
+    {
+      "pair_index": 1,
+      "label": "D",
+      "sha256": "647f981a5653d28b18f275ef78ca7350234ced0639e657e2f9e651b754f5f02f"
+    },
+    {
+      "pair_index": 1,
+      "label": "E",
+      "sha256": "89d5213f54cf24e08daba17063fb0a079a642552db14f0f3963a84a648b17988"
+    },
+    {
+      "pair_index": 2,
+      "label": "A",
+      "sha256": "e51fa237553a5741f4952d82f6674618dda843ce19f8461814660888d2839e99"
+    },
+    {
+      "pair_index": 2,
+      "label": "B",
+      "sha256": "16aa09b675816c1a988cd9dcb2c9495c87c4564d58f273f99cda05ea264690db"
+    },
+    {
+      "pair_index": 2,
+      "label": "C",
+      "sha256": "a49fac659199e6d9e9696f2057a0884e0db8aa5ded4096e35846e412e0960802"
+    },
+    {
+      "pair_index": 2,
+      "label": "D",
+      "sha256": "b426e0d53054bee942237b70af88fc39e583cb1f914fedb19e13c170da986d55"
+    },
+    {
+      "pair_index": 2,
+      "label": "E",
+      "sha256": "57cab20720f4bfd96a088796ed6d1d031325b679a9288290bbc58c0cdeb54c92"
+    },
+    {
+      "pair_index": 3,
+      "label": "A",
+      "sha256": "e7cfb6c8a3c76968b1709bb39d9b7b2369353116ddf6cb09abc55b437221b3b1"
+    },
+    {
+      "pair_index": 3,
+      "label": "B",
+      "sha256": "f58e9388c3cde6fcbf645903e9fd4f4779ebb4daa7dc204a3db83bf8013f4c33"
+    },
+    {
+      "pair_index": 3,
+      "label": "C",
+      "sha256": "a3feba2d6b7700aa420ab26ae051d408015b2e26c14c8096194596e277849283"
+    },
+    {
+      "pair_index": 3,
+      "label": "D",
+      "sha256": "accb2276248f25a773620c1fd3734a8e11141312d297739b43917cb6b8fe61e9"
+    },
+    {
+      "pair_index": 3,
+      "label": "E",
+      "sha256": "1eaf5ae8cf1350ff8868de7dbbfa583677a14165b9fcab5d7d5f6e842803c0af"
+    },
+    {
+      "pair_index": 4,
+      "label": "A",
+      "sha256": "9344ad4be7724521b7bf90eba19c4582aa67557352ac33d1063637b32fd0c2ad"
+    },
+    {
+      "pair_index": 4,
+      "label": "B",
+      "sha256": "63e6b1c6f03ba06aed4c75c17aff5d1cded2a1ee886eee2ae61fbaf1237efb01"
+    },
+    {
+      "pair_index": 4,
+      "label": "C",
+      "sha256": "17fd0ab225f97bd87a647ecddbcb874c71e4ac09018462163df585edc7842423"
+    },
+    {
+      "pair_index": 4,
+      "label": "D",
+      "sha256": "6239b3283c258c8561da8630fe7a1bd011bfcd31c82aafdb15b7dc83add7b098"
+    },
+    {
+      "pair_index": 4,
+      "label": "E",
+      "sha256": "0f5102ed1da9b96fafe7b3a76adb34df13da7524f2a1eaca1f7fb79cad0312d4"
+    },
+    {
+      "pair_index": 5,
+      "label": "A",
+      "sha256": "ea5d76fc2b1a6c0133f9ea453837ca49b6a5eb0d2f8989abc06129ff242992d2"
+    },
+    {
+      "pair_index": 5,
+      "label": "B",
+      "sha256": "016aa1746ace56f75f4545dcdf0a18d3ad119275d26475edac4331cee92b7536"
+    },
+    {
+      "pair_index": 5,
+      "label": "C",
+      "sha256": "b1a991ec41bf81e6f65fab0be919beed4ec46deb06b0f1990f6bfc820211bded"
+    },
+    {
+      "pair_index": 5,
+      "label": "D",
+      "sha256": "fc11a71bfd850146f565e0b6fe950b394dc84f1179c216a4b55fb6bcc703deca"
+    },
+    {
+      "pair_index": 5,
+      "label": "E",
+      "sha256": "4f1182e336d13aa6f8e0dd9ff4608f81c4e35b86fa158cbc025c9bd01e694036"
+    },
+    {
+      "pair_index": 6,
+      "label": "A",
+      "sha256": "25de6d9f647cd27db23e52bf48196808ff5c43ebe39fa4a56dcfc21346ee4c1c"
+    },
+    {
+      "pair_index": 6,
+      "label": "B",
+      "sha256": "fc3333ffdf029b0dd493f4c6f766c051f1ac7567e47ad9d77acd334462c3fbec"
+    },
+    {
+      "pair_index": 6,
+      "label": "C",
+      "sha256": "a97d9efad0ef7645342852309419c344f09d9ed609f95c2f9efd41f23bc147b7"
+    },
+    {
+      "pair_index": 6,
+      "label": "D",
+      "sha256": "90bbf08bfa31bf2d261bd9dd377598a46fdc3715dc648a3733fd1bb3c6114082"
+    },
+    {
+      "pair_index": 6,
+      "label": "E",
+      "sha256": "ddfca718f43ad7eebcf6a6b83f962fc9ba16ec88582b66a12f64cf2004b3b090"
+    },
+    {
+      "pair_index": 7,
+      "label": "A",
+      "sha256": "7509e2af2896a373e12ba744bfe23fdf804327d9c25865b03934d92fb90967d3"
+    },
+    {
+      "pair_index": 7,
+      "label": "B",
+      "sha256": "c2b4795a4b2bc931eb079b2ddf60da064a625e46affd102e1d10db19c9699f8e"
+    },
+    {
+      "pair_index": 7,
+      "label": "C",
+      "sha256": "609a89b8ecd507801b8b29af96b3294cf746edfc96e465babbb80d9c4c37c6c4"
+    },
+    {
+      "pair_index": 7,
+      "label": "D",
+      "sha256": "341d70864e35451fe780488877b939eb7438c5256323a6b5a210ae10e6939445"
+    },
+    {
+      "pair_index": 7,
+      "label": "E",
+      "sha256": "1314bfa20ee9537bb86070352e49c5979a8ca3fd11da570c441f8303836245d7"
+    },
+    {
+      "pair_index": 8,
+      "label": "A",
+      "sha256": "5dd33db8b6d73661e16e5ec7f66e2a6934dae6b39bb944e7f27b45df59ee5943"
+    },
+    {
+      "pair_index": 8,
+      "label": "B",
+      "sha256": "4debe110c8843aa4e5c4e6b6ff69c5465f07554bf3cd592ed0754a89f2d476f6"
+    },
+    {
+      "pair_index": 8,
+      "label": "C",
+      "sha256": "a750e7cd80d35d970eeab9f9da0e4a1f02ebd8d4fc2d3b53d52efd5a19860c5b"
+    },
+    {
+      "pair_index": 8,
+      "label": "D",
+      "sha256": "fa633bbfc2c39cf974430b0a19e58801e3f3b96f3c3057b4ecfc5bef8a10ef48"
+    },
+    {
+      "pair_index": 8,
+      "label": "E",
+      "sha256": "b21320f5267e210f32d5425e0cfcacbe4e8ef0f4cbc6ea2d2f69d2551802d23f"
+    },
+    {
+      "pair_index": 9,
+      "label": "A",
+      "sha256": "7dc12d316babda96749284ec7ab30362cf185f8f57a72e73c1bb8623f6c314a3"
+    },
+    {
+      "pair_index": 9,
+      "label": "B",
+      "sha256": "71cca1fca35d3ed510394bd0358ef9dac980a60f90d370dd633d030b4ce5f666"
+    },
+    {
+      "pair_index": 9,
+      "label": "C",
+      "sha256": "f872cea7357e88891498b397d442d126dc52f2e3505997da6b711e37478b878c"
+    },
+    {
+      "pair_index": 9,
+      "label": "D",
+      "sha256": "e27469836b0cf60ee85937f390d9804a90c5c0b63a3f0ab7ec7f36b834e63544"
+    },
+    {
+      "pair_index": 9,
+      "label": "E",
+      "sha256": "cb212b0026030af72dbe3a4042d5a8696506a207025a75031ed449e08a807bc6"
+    },
+    {
+      "pair_index": 10,
+      "label": "A",
+      "sha256": "a7331e9427b0269a9afdac060d3509cad589aec1469c0919d503758eb2d08988"
+    },
+    {
+      "pair_index": 10,
+      "label": "B",
+      "sha256": "d85e3dc11396f48230d1224a6a60938808a486dcd237ca8303ea573bde789559"
+    },
+    {
+      "pair_index": 10,
+      "label": "C",
+      "sha256": "4e5fd7abed5e67a4ff802458e39d9ad4c0e372028af5c5cf769fd7e4f62e65ed"
+    },
+    {
+      "pair_index": 10,
+      "label": "D",
+      "sha256": "d9e3af420d4468325327e105228ddca5b4af987819118990e33044a527252a52"
+    },
+    {
+      "pair_index": 10,
+      "label": "E",
+      "sha256": "e938edbefdb7aad19cd10bc06d4c75511f2de9dbb553c309b684d82e67e22a31"
+    },
+    {
+      "pair_index": 11,
+      "label": "A",
+      "sha256": "c96f74923acbac728fcaee520569d9f7b23f9de8494b5567b890a4285b7bd483"
+    },
+    {
+      "pair_index": 11,
+      "label": "B",
+      "sha256": "435dbfbffa1bf064d12e2fcdf678d3caf6e8d4241a7b4c2abcf5e0a295aad649"
+    },
+    {
+      "pair_index": 11,
+      "label": "C",
+      "sha256": "2991c2056bc9ac9482fbcd1fb249a50d4d14e3fac2a6706b8790fcd5cf2814b9"
+    },
+    {
+      "pair_index": 11,
+      "label": "D",
+      "sha256": "879185251c7db37a75df499fbd96d7b25aeeea4aa24004bb6780c999aafd0520"
+    },
+    {
+      "pair_index": 11,
+      "label": "E",
+      "sha256": "ceb6ea99437e37f36a92d387ba4b1e63c3ef124c1fde231d49eb51e00756a724"
+    },
+    {
+      "pair_index": 12,
+      "label": "A",
+      "sha256": "cd328840d8b01c6abfeacd32be8b6f239ed2a93d4a6aef9e41cbb26ca0f5153d"
+    },
+    {
+      "pair_index": 12,
+      "label": "B",
+      "sha256": "59ba57e9a40bbd1d49d82709e16974ef71c99eb0978a5f38a8a127739c836f6c"
+    },
+    {
+      "pair_index": 12,
+      "label": "C",
+      "sha256": "2acf2100012d2ed4e6a2cc9ccf2f089654bb86739a4366d9cf7b2a47b02f5543"
+    },
+    {
+      "pair_index": 12,
+      "label": "D",
+      "sha256": "c57eb928a83d934ddf1624b9097989ff83add7e1f24af5daa5cb903a0a8521fc"
+    },
+    {
+      "pair_index": 12,
+      "label": "E",
+      "sha256": "603c4ca2bf266ae0a514147724ddb1a25bb2b41850f93861ea9a963646496b57"
+    },
+    {
+      "pair_index": 13,
+      "label": "A",
+      "sha256": "b05d9b9ad005a2b1dfb0f21e56d17996fce731945b63471e7c46b2658f9ba44c"
+    },
+    {
+      "pair_index": 13,
+      "label": "B",
+      "sha256": "60fa1af28fd7934dee89b3edd5f0e0664056d50c3e0f1f592acb1efe73c62947"
+    },
+    {
+      "pair_index": 13,
+      "label": "C",
+      "sha256": "95ce8a7120bb23b0158be4bfcec18fe52a0e5ef59a5a4d6fdad3fa2b0589a594"
+    },
+    {
+      "pair_index": 13,
+      "label": "D",
+      "sha256": "e1f05b28a01101db327e5b9542ff8cfc3bfdac93d10d1333ebdfed028a9b1551"
+    },
+    {
+      "pair_index": 13,
+      "label": "E",
+      "sha256": "8096ef0ad401dc43290052da0df8454538c308cd72f1c9eb573aa87e77c74bbd"
+    },
+    {
+      "pair_index": 14,
+      "label": "A",
+      "sha256": "3a845b34a5efd1ab4153a0ce43e4b49d499c817fec67387a022176c22219efee"
+    },
+    {
+      "pair_index": 14,
+      "label": "B",
+      "sha256": "00544539703e250f81630bf3ea11540992d46d39a9df3fe730a835f364076bcb"
+    },
+    {
+      "pair_index": 14,
+      "label": "C",
+      "sha256": "0fa0c9630c45e3acf2e79ec30e3eb7d6a6d42dce63f11f75e9ca97d5d831268b"
+    },
+    {
+      "pair_index": 14,
+      "label": "D",
+      "sha256": "3ffc519f0b1822d155c6f21e71c63b272cf394fefdf3f454f402410ba403e839"
+    },
+    {
+      "pair_index": 14,
+      "label": "E",
+      "sha256": "90602327cbfede158c11e4fcdc6a4311ae63a8e071ef2c7ee50c7bc47f7d4ee9"
+    },
+    {
+      "pair_index": 15,
+      "label": "A",
+      "sha256": "40b7d19ffd3b93332e34bd496736a6240d3fcd48040f810963519767ab30a3ff"
+    },
+    {
+      "pair_index": 15,
+      "label": "B",
+      "sha256": "46e77cf2a8cfcfda87db4fd16cc5a2b8499203b5df48d098a6334700d7973857"
+    },
+    {
+      "pair_index": 15,
+      "label": "C",
+      "sha256": "9a896f97c8fe7f0ebf09bb8ec353b8561278915cd22ffa659199f800ed4511d2"
+    },
+    {
+      "pair_index": 15,
+      "label": "D",
+      "sha256": "88a4c9edc25d5bbf14e99c1d665415fc197b87f087f0b557462df6352e122b52"
+    },
+    {
+      "pair_index": 15,
+      "label": "E",
+      "sha256": "97693673aa24769fa666652c85a5a6eece71f29510becce70665f0da9c5fbbd4"
+    },
+    {
+      "pair_index": 16,
+      "label": "A",
+      "sha256": "138a0c03eb1108e1e51fb223ff6f011de9503ea2c457e040751e904481d29bcd"
+    },
+    {
+      "pair_index": 16,
+      "label": "B",
+      "sha256": "7f43bcffda97135493c0001b7a79cd31a912d8b5fdb18ff7d69d06db8fefdf66"
+    },
+    {
+      "pair_index": 16,
+      "label": "C",
+      "sha256": "256a0b9cfeaef8ab84c07a281e79f73068f36a6f6b1ba931a9949214373b551b"
+    },
+    {
+      "pair_index": 16,
+      "label": "D",
+      "sha256": "8f1b550a0d49639c46c97d44aaf611a9b927baec3e36a2ed7be493747b8f66c3"
+    },
+    {
+      "pair_index": 16,
+      "label": "E",
+      "sha256": "2c45b8fbb625b6e4f5fa72f8ee2386f7022562d7b91d99683ab4ef27aaeea487"
+    },
+    {
+      "pair_index": 17,
+      "label": "A",
+      "sha256": "bdab5fba4f85f8100697c1e0767a4814c91319556c13fd088ce9b30815696944"
+    },
+    {
+      "pair_index": 17,
+      "label": "B",
+      "sha256": "44aef048fcf2090ab37958120a6c2a52c9320adc6b5d8dd92a26109ceaead1cf"
+    },
+    {
+      "pair_index": 17,
+      "label": "C",
+      "sha256": "16b02526a65ff7b5e016303fa6d29c58e8ae29157145d688f551840626d282f6"
+    },
+    {
+      "pair_index": 17,
+      "label": "D",
+      "sha256": "b151f3156396350fc3679818e6a350801edf32789352a0c3416ed957555da062"
+    },
+    {
+      "pair_index": 17,
+      "label": "E",
+      "sha256": "1b738727006d959a87c4fe1b080cd442fa81e604d6e6daf6003adbbfdf151096"
+    },
+    {
+      "pair_index": 18,
+      "label": "A",
+      "sha256": "5f3a5926f3b425eeb1c5ed89a10542880d589357f00d7745d44185c4d0b3114b"
+    },
+    {
+      "pair_index": 18,
+      "label": "B",
+      "sha256": "92874abf68811719922225f58d2093e5d3c89505b85e19db39a9445fdce5e928"
+    },
+    {
+      "pair_index": 18,
+      "label": "C",
+      "sha256": "57eb0ee696853d80085b05dd43a3baeb3c280d7cdc09338e8578eb194bea3c04"
+    },
+    {
+      "pair_index": 18,
+      "label": "D",
+      "sha256": "28518e71c82297f5e89dbd66786fe32e95174eac55744c7d836c8205070d3d5a"
+    },
+    {
+      "pair_index": 18,
+      "label": "E",
+      "sha256": "85ad4f3f2428dff1a27aeac69c4810aaf0391f5cb08c9aef6d35b4f2598ad868"
+    },
+    {
+      "pair_index": 19,
+      "label": "A",
+      "sha256": "2a9575222eabf8af6ffe62e1645abb44ffe081278ff8e729844caf740ef56595"
+    },
+    {
+      "pair_index": 19,
+      "label": "B",
+      "sha256": "83c481fe715cc0c6e5ac02f5890075427830679cd1e7ac4517760a015bc8a34e"
+    },
+    {
+      "pair_index": 19,
+      "label": "C",
+      "sha256": "b4bc9d286bc4c8385cc5f6392cca887c5de704d4d278990ae7e6c65b819f5f4c"
+    },
+    {
+      "pair_index": 19,
+      "label": "D",
+      "sha256": "8720d666bd3da0cfaa8cadfacf48bc774f3100b31872e5e404940ed8a5e6651a"
+    },
+    {
+      "pair_index": 19,
+      "label": "E",
+      "sha256": "c875e80bbfbfd47272b212d45c28f14e7a7f16dbf975e9d9dc57581ef6d0957b"
+    },
+    {
+      "pair_index": 20,
+      "label": "A",
+      "sha256": "e11d05f1d6ed0cb540bf7ac465dc6b22d8d8dbbafe098d82895e3cfe67c086d5"
+    },
+    {
+      "pair_index": 20,
+      "label": "B",
+      "sha256": "bb26996e370a688e6ea15ff7e6e90322c99b9cfb26e9c2981cb6ff33a130ae36"
+    },
+    {
+      "pair_index": 20,
+      "label": "C",
+      "sha256": "fa47e67ddbccafe6b13b78737c4b7878c369a2fec9b0735fb06d358364256cc8"
+    },
+    {
+      "pair_index": 20,
+      "label": "D",
+      "sha256": "1c79f9f200c216564bd051be2fe7cfec50fb4fac01953105608d943afa3f4a6a"
+    },
+    {
+      "pair_index": 20,
+      "label": "E",
+      "sha256": "5318ae31f393270c8840ad8716d235db1e04f2404e025587c37c8ab473de30f8"
+    }
+  ],
+  "audio_sha256_match_count": 100,
+  "study_input_hashes_unchanged": true,
+  "interpretation": "No observed preference among the five methods on 19 ranked cues; no equivalence or absolute quality claim.",
+  "inference": "Descriptive only: one rater, repeated track pairs, all pairwise outcomes tied; no informative non-tied comparisons."
+}

@@ -84,6 +84,8 @@ def generate_candidates(
     source_grid_metadata: BeatGridMetadata | None = None,
     target_grid_metadata: BeatGridMetadata | None = None,
     config: CandidateGenerationConfig | None = None,
+    source_cutpoint_range_samples: tuple[int, int] | None = None,
+    target_cutpoint_range_samples: tuple[int, int] | None = None,
 ) -> CandidateGenerationResult:
     """Return accepted candidates and auditable hard-filter outcomes.
 
@@ -107,8 +109,16 @@ def generate_candidates(
             source_grid_metadata=source_grid_metadata,
             target_grid_metadata=target_grid_metadata,
             config=config,
+            source_cutpoint_range_samples=source_cutpoint_range_samples,
+            target_cutpoint_range_samples=target_cutpoint_range_samples,
         )
     config = CandidateGenerationConfig() if config is None else config
+    source_cutpoint_range_samples = _validate_cutpoint_sample_range(
+        source_cutpoint_range_samples, "source_cutpoint_range_samples"
+    )
+    target_cutpoint_range_samples = _validate_cutpoint_sample_range(
+        target_cutpoint_range_samples, "target_cutpoint_range_samples"
+    )
     rejections = []
     source_grid_metadata = source_grid_metadata or unknown_grid_metadata()
     target_grid_metadata = target_grid_metadata or unknown_grid_metadata()
@@ -170,6 +180,10 @@ def generate_candidates(
         target_grid,
         config.transition_lengths_bars,
     )
+    source_boundary_count_before_range = len(source_boundaries)
+    target_boundary_count_before_range = len(target_boundaries)
+    source_boundaries = _boundaries_in_sample_range(source_boundaries, source_cutpoint_range_samples)
+    target_boundaries = _boundaries_in_sample_range(target_boundaries, target_cutpoint_range_samples)
     if config.source_boundary_count is not None:
         source_boundaries = source_boundaries[-config.source_boundary_count :]
     if config.target_boundary_count is not None:
@@ -178,14 +192,18 @@ def generate_candidates(
     if not source_boundaries:
         rejections.append(
             CandidateRejection(
-                "insufficient_source_bars",
+                "no_source_downbeat_in_selected_range" if source_boundary_count_before_range else "insufficient_source_bars",
+                "The source selection contains no eligible downbeat. Expand the selected range or analyze more of the track."
+                if source_boundary_count_before_range else
                 "The source track has no downbeat with enough complete bars before and after it.",
             )
         )
     if not target_boundaries:
         rejections.append(
             CandidateRejection(
-                "insufficient_target_preroll",
+                "no_target_downbeat_in_selected_range" if target_boundary_count_before_range else "insufficient_target_preroll",
+                "The target selection contains no eligible downbeat. Expand the selected range or analyze more of the track."
+                if target_boundary_count_before_range else
                 "The target track has no downbeat with enough complete bars before and after it.",
             )
         )
@@ -263,6 +281,24 @@ def _grid_provenance_rejection(role, metadata):
         f"The {role} grid source {metadata.grid_source!r} is fallback or unknown; "
         "set approximate_grid_policy='allow' to opt in explicitly.",
     )
+
+
+def _validate_cutpoint_sample_range(value, name):
+    if value is None:
+        return None
+    if not isinstance(value, (tuple, list)) or len(value) != 2:
+        raise ValueError(f"{name} must be a (start_sample, end_sample) pair or None")
+    start, end = (int(sample) for sample in value)
+    if start < 0 or end <= start:
+        raise ValueError(f"{name} must have non-negative increasing sample bounds")
+    return start, end
+
+
+def _boundaries_in_sample_range(boundaries, sample_range):
+    if sample_range is None:
+        return boundaries
+    start, end = sample_range
+    return [boundary for boundary in boundaries if start <= boundary.sample <= end]
 
 
 def _parse_grid(

@@ -15,7 +15,6 @@ import json
 from pathlib import Path
 import random
 
-import librosa
 import numpy as np
 import torch
 
@@ -310,7 +309,7 @@ def export_four_model_listening_study(
             "contracts": {
                 "fixed_models": "Dataset-v1 / Feature Protocol 1 / four bars",
                 "variable_model": "Dataset-v2 / Feature Protocol 2 / four bars; features recomputed on same v1 validation cues with v2 training-only normalization",
-                "rendering": "same aligned 44.1-kHz mix/stem bridge, fixed model renderers retain their training semantics; variable renderer evaluated at its declared training sample rate and resampled to 44.1 kHz",
+                "rendering": "same aligned 44.1-kHz mix/stem bridge; all model renderers and the Equal Power baseline are evaluated directly at 44.1 kHz with FIR kernels scaled to preserve the training filter time constants (variable contract kernel 127 at 11.025 kHz rendered as kernel 511 at 44.1 kHz), so every candidate is full-band",
                 "shared_stimuli": "same source-target pair, cues, context, and joint peak gain for all labels",
             },
             "interpretation_limit": "Exploratory shared-stimulus listening test only; variable model is out-of-domain on Dataset-v1 tracks and model inputs/renderers follow incompatible training contracts. Do not pool as a protocol-matched benchmark.",
@@ -433,34 +432,28 @@ def _vocal_artifact(track, feature_cache_root):
 
 
 def _render_variable(model, contract, audio, features):
-    sample_rate = int(contract["sample_rate"])
+    # Render directly at the study's 44.1 kHz like every other candidate.
+    # Kernel 511 mirrors the fixed-model renderers here (contract kernel 127 at
+    # 11,025 Hz keeps its time constant when scaled 4x). The previous path
+    # round-tripped all stems through 11,025 Hz, band-limiting the bridge to
+    # below 5.5 kHz (measured muffle in 20/20 examples on 2026-11-05).
     renderer = DifferentiableVocalAwareRenderer(
-        sample_rate=sample_rate,
+        sample_rate=DEFAULT_SAMPLE_RATE,
         lowpass_cutoff_hz=float(contract["lowpass_cutoff_hz"]),
-        lowpass_kernel_size=int(contract["lowpass_kernel_size"]),
+        lowpass_kernel_size=511,
     )
-    resampled = [
-        librosa.resample(value, orig_sr=DEFAULT_SAMPLE_RATE, target_sr=sample_rate,
-                         axis=-1, res_type="soxr_hq").astype(np.float32, copy=False)
-        for value in audio
-    ]
     feature_a, feature_b, global_features = features
-    linear = torch.linspace(0.0, 1.0, 32)
-    zero = torch.zeros(32)
     output = model(
         torch.from_numpy(feature_a), torch.from_numpy(feature_b),
         torch.from_numpy(global_features), transition_length_bars=4,
         length_condition=torch.tensor([0.5], dtype=torch.float32),
     )
     mixed = renderer(
-        *(torch.from_numpy(value) for value in resampled),
+        *(torch.from_numpy(value) for value in audio),
         output.mix_position, output.low_end_position, output.vocal_position,
         output.vocal_duck_a, output.vocal_duck_b,
     ).audio.numpy()
-    return librosa.resample(
-        mixed, orig_sr=sample_rate, target_sr=DEFAULT_SAMPLE_RATE,
-        axis=-1, res_type="soxr_hq",
-    ).astype(np.float32, copy=False)
+    return np.asarray(mixed, dtype=np.float32)
 
 
 def _fit_transition_length(audio, samples):

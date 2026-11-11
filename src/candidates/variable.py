@@ -11,9 +11,11 @@ from src.analysis.models import BeatGridMetadata, unknown_grid_metadata
 
 from .generation import (
     _Grid,
+    _boundaries_in_sample_range,
     _following_window_beats,
     _parse_grid,
     _to_cutpoint,
+    _validate_cutpoint_sample_range,
     _window_beats,
 )
 from .models import (
@@ -80,9 +82,17 @@ def generate_variable_candidates_from_grids(
     source_grid_metadata: BeatGridMetadata | None = None,
     target_grid_metadata: BeatGridMetadata | None = None,
     config: VariableCandidateGenerationConfig | None = None,
+    source_cutpoint_range_samples: tuple[int, int] | None = None,
+    target_cutpoint_range_samples: tuple[int, int] | None = None,
 ) -> CandidateGenerationResult:
     """Generate candidates with independent eligibility per requested length."""
     config = VariableCandidateGenerationConfig() if config is None else config
+    source_cutpoint_range_samples = _validate_cutpoint_sample_range(
+        source_cutpoint_range_samples, "source_cutpoint_range_samples"
+    )
+    target_cutpoint_range_samples = _validate_cutpoint_sample_range(
+        target_cutpoint_range_samples, "target_cutpoint_range_samples"
+    )
     rejections: list[CandidateRejection] = []
     source_grid_metadata = source_grid_metadata or unknown_grid_metadata()
     target_grid_metadata = target_grid_metadata or unknown_grid_metadata()
@@ -163,11 +173,19 @@ def generate_variable_candidates_from_grids(
         target_boundaries = _eligible_four_four_boundaries(
             target_grid, all_target_boundaries, length_bars
         )
+        source_four_four_count = len(source_boundaries)
+        target_four_four_count = len(target_boundaries)
+        source_boundaries = _boundaries_in_sample_range(
+            source_boundaries, source_cutpoint_range_samples
+        )
+        target_boundaries = _boundaries_in_sample_range(
+            target_boundaries, target_cutpoint_range_samples
+        )
 
         if (
             all_source_boundaries
             and all_target_boundaries
-            and (not source_boundaries or not target_boundaries)
+            and (not source_four_four_count or not target_four_four_count)
         ):
             meter_blocked_all_complete_windows = True
 
@@ -184,11 +202,27 @@ def generate_variable_candidates_from_grids(
                     transition_length_bars=length_bars,
                 )
             )
+        elif source_four_four_count and not source_boundaries:
+            rejections.append(
+                CandidateRejection(
+                    "no_source_downbeat_in_selected_range",
+                    "The source selection contains no eligible downbeat. Expand the selected range.",
+                    transition_length_bars=length_bars,
+                )
+            )
         if not all_target_boundaries:
             rejections.append(
                 CandidateRejection(
                     "insufficient_target_preroll",
                     f"The target track has no complete {length_bars}-bar windows before and after a boundary.",
+                    transition_length_bars=length_bars,
+                )
+            )
+        elif target_four_four_count and not target_boundaries:
+            rejections.append(
+                CandidateRejection(
+                    "no_target_downbeat_in_selected_range",
+                    "The target selection contains no eligible downbeat. Expand the selected range.",
                     transition_length_bars=length_bars,
                 )
             )

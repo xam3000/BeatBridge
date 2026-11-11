@@ -1,0 +1,74 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="160mm" height="168.00mm" viewBox="0 0 1000 1050" role="img" aria-labelledby="figure-title figure-description">
+  <title id="figure-title">Distinct roles of BeatBridge metrics</title>
+  <desc id="figure-description">Song and cue scores, rendered-audio metrics, training losses and human ratings are separate quantities.</desc>
+  <metadata>BeatBridge; metric definitions audited 2026-10-29; code defaults, not run-specific weights; see METRICS_README.md.</metadata>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 Z" fill="#48535E" />
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1000" height="1050" fill="#FFFFFF" />
+  <g id="connections" fill="none" stroke="#48535E" stroke-width="2" stroke-linejoin="round">
+    <path d="M 440,90 L 560,90" marker-end="url(#arrow)" />
+    <path d="M 440,290 L 560,290" marker-end="url(#arrow)" />
+    <path d="M 440,490 L 560,490" marker-end="url(#arrow)" />
+    <path d="M 440,690 L 560,690" marker-end="url(#arrow)" />
+    <path d="M 440,890 L 560,890" marker-end="url(#arrow)" />
+  </g>
+  <g id="nodes">
+    <g id="input_0" data-category="data">
+      <rect x="40" y="30" width="400" height="120" rx="18" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="240.0" y="84.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Whole songs A and B</text>
+      <text x="240.0" y="111.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Before cue generation</text>
+    </g>
+    <g id="metric_0" data-category="analysis">
+      <rect x="560" y="30" width="400" height="120" rx="5" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" />
+      <text x="760.0" y="84.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Song compatibility</text>
+      <text x="760.0" y="111.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Score [0,1] · higher is better</text>
+    </g>
+    <g id="input_1" data-category="data">
+      <rect x="40" y="230" width="400" height="120" rx="18" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="240.0" y="284.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Candidate cue windows</text>
+      <text x="240.0" y="311.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Before rendering</text>
+    </g>
+    <g id="metric_1" data-category="analysis">
+      <rect x="560" y="230" width="400" height="120" rx="5" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" />
+      <text x="760.0" y="284.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Feature cue ranking</text>
+      <text x="760.0" y="311.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Score [0,1] · higher is better</text>
+    </g>
+    <g id="input_2" data-category="data">
+      <rect x="40" y="430" width="400" height="120" rx="18" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="240.0" y="484.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Rendered transition audio</text>
+      <text x="240.0" y="511.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">After rendering</text>
+    </g>
+    <g id="metric_2" data-category="render">
+      <rect x="560" y="430" width="400" height="120" rx="5" fill="#EEE8F7" stroke="#6F5591" stroke-width="1.5" />
+      <text x="760.0" y="484.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Render-audio metric</text>
+      <text x="760.0" y="511.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Score [0,1] · higher is better</text>
+    </g>
+    <g id="input_3" data-category="data">
+      <rect x="40" y="630" width="400" height="120" rx="18" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="240.0" y="684.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Audio + controls + features</text>
+      <text x="240.0" y="711.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">During controller training</text>
+    </g>
+    <g id="metric_3" data-category="control">
+      <rect x="560" y="630" width="400" height="120" rx="5" fill="#FFF0D7" stroke="#9C641B" stroke-width="1.5" />
+      <text x="760.0" y="684.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Fixed proxy objective</text>
+      <text x="760.0" y="711.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Loss · lower is better</text>
+    </g>
+    <g id="input_4" data-category="data">
+      <rect x="40" y="830" width="400" height="120" rx="18" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="240.0" y="884.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Blinded listening variants</text>
+      <text x="240.0" y="911.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Separate human study</text>
+    </g>
+    <g id="metric_4" data-category="evaluation">
+      <rect x="560" y="830" width="400" height="120" rx="5" fill="#E6F2E4" stroke="#4F7643" stroke-width="1.5" />
+      <text x="760.0" y="884.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Ratings and preferences</text>
+      <text x="760.0" y="911.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Criterion summaries; wins / ties</text>
+    </g>
+  </g>
+  <g id="edge-labels">
+    <text x="500" y="1030" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="400" text-anchor="middle">A high technical score or a low training loss is not a human quality probability.</text>
+  </g>
+</svg>

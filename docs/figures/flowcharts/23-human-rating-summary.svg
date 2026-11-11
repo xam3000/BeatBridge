@@ -1,0 +1,52 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="160mm" height="145.60mm" viewBox="0 0 1000 910" role="img" aria-labelledby="figure-title figure-description">
+  <title id="figure-title">Human listening-rating summaries</title>
+  <desc id="figure-description">Completed blind ratings are remapped to methods, then preference rates and criterion summaries are reported separately.</desc>
+  <metadata>BeatBridge; metric definitions audited 2026-10-29; code defaults, not run-specific weights; see METRICS_README.md.</metadata>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 Z" fill="#48535E" />
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1000" height="910" fill="#FFFFFF" />
+  <g id="connections" fill="none" stroke="#48535E" stroke-width="2" stroke-linejoin="round">
+    <path d="M 500,130 L 500,215" marker-end="url(#arrow)" />
+    <path d="M 500,315 L 500,365 L 250,365 L 250,420" marker-end="url(#arrow)" />
+    <path d="M 500,315 L 500,365 L 750,365 L 750,420" marker-end="url(#arrow)" />
+    <path d="M 250,600 L 250,660 L 500,660 L 500,725" marker-end="url(#arrow)" />
+    <path d="M 750,600 L 750,660 L 500,660 L 500,725" marker-end="url(#arrow)" />
+  </g>
+  <g id="nodes">
+    <g id="blind" data-category="data">
+      <rect x="250" y="30" width="500" height="100" rx="18" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="500.0" y="74.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Completed blind ratings</text>
+      <text x="500.0" y="101.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Preference A/B/tie + criterion scores 1–5</text>
+    </g>
+    <g id="map" data-category="analysis">
+      <rect x="250" y="215" width="500" height="100" rx="5" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" />
+      <text x="500.0" y="259.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Apply hidden answer key</text>
+      <text x="500.0" y="286.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Map public A/B labels to method identities</text>
+    </g>
+    <g id="preferences" data-category="evaluation">
+      <rect x="40" y="420" width="420" height="180" rx="5" fill="#E6F2E4" stroke="#4F7643" stroke-width="1.5" />
+      <text x="250.0" y="477.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Preference summary</text>
+      <text x="250.0" y="504.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Count wins and ties separately</text>
+      <text x="250.0" y="531.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Win rate = method wins / non-ties</text>
+      <text x="250.0" y="558.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">All ties → no decisive win rate</text>
+    </g>
+    <g id="criteria" data-category="evaluation">
+      <rect x="540" y="420" width="420" height="180" rx="5" fill="#E6F2E4" stroke="#4F7643" stroke-width="1.5" />
+      <text x="750.0" y="477.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Criterion summaries</text>
+      <text x="750.0" y="504.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Per-method mean, minimum and maximum</text>
+      <text x="750.0" y="531.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Paired difference = candidate - reference</text>
+      <text x="750.0" y="558.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Overall pools the criterion scores</text>
+    </g>
+    <g id="limits" data-category="neutral">
+      <rect x="120" y="725" width="760" height="120" rx="18" fill="#F1F3F5" stroke="#697783" stroke-width="1.5" />
+      <text x="500.0" y="765.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Report study scope and limits</text>
+      <text x="500.0" y="792.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Repeated cues are not independent track tests</text>
+      <text x="500.0" y="819.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Descriptive summaries do not establish population-level superiority</text>
+    </g>
+  </g>
+  <g id="edge-labels" />
+</svg>

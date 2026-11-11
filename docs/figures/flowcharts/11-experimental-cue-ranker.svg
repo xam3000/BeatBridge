@@ -1,0 +1,67 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="160mm" height="142.40mm" viewBox="0 0 1000 890" role="img" aria-labelledby="figure-title figure-description">
+  <title id="figure-title">Experimental learned cue-ranker pipeline</title>
+  <desc id="figure-description">Implemented extension with synthetic verification only. No real-data ranker training or independent musical quality result is established.</desc>
+  <metadata>BeatBridge; evidence baseline 2026-10-27; artwork 2026-10-28; see README.md.</metadata>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 Z" fill="#48535E" />
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1000" height="890" fill="#FFFFFF" />
+  <g id="connections" fill="none" stroke="#48535E" stroke-width="2" stroke-linejoin="round">
+    <path d="M 240,220 L 240,310" marker-end="url(#arrow)" />
+    <path d="M 240,420 L 240,510" marker-end="url(#arrow)" />
+    <path d="M 240,635 L 240,730" marker-end="url(#arrow)" />
+    <path d="M 440,787.5 L 560,787.5" marker-end="url(#arrow)" />
+    <path d="M 760,730 L 760,635" marker-end="url(#arrow)" />
+    <path d="M 760,510 L 760,420" marker-end="url(#arrow)" />
+    <path d="M 760,310 L 760,220" marker-end="url(#arrow)" stroke-dasharray="8 5" />
+  </g>
+  <g id="nodes">
+    <g id="index" data-category="data">
+      <rect x="40" y="110" width="400" height="110" rx="5" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="240.0" y="159.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Verified pair index</text>
+      <text x="240.0" y="186.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Train and validation only</text>
+    </g>
+    <g id="universe" data-category="data">
+      <rect x="40" y="310" width="400" height="110" rx="5" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="240.0" y="359.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Candidate-v2 universe</text>
+      <text x="240.0" y="386.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">All accepted cue candidates</text>
+    </g>
+    <g id="teacher" data-category="control">
+      <rect x="40" y="510" width="400" height="125" rx="5" fill="#FFF0D7" stroke="#9C641B" stroke-width="1.5" />
+      <text x="240.0" y="553.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Frozen teacher release</text>
+      <text x="240.0" y="580.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Variable TCN + renderer</text>
+      <text x="240.0" y="607.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">+ Objective v5</text>
+    </g>
+    <g id="labels" data-category="data">
+      <rect x="40" y="730" width="400" height="115" rx="5" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="240.0" y="781.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Teacher labels</text>
+      <text x="240.0" y="808.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Utility, guard rejections and provenance</text>
+    </g>
+    <g id="dataset" data-category="data">
+      <rect x="560" y="730" width="400" height="115" rx="5" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="760.0" y="781.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Format-3 grouped dataset</text>
+      <text x="760.0" y="808.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Train-only normalisation</text>
+    </g>
+    <g id="training" data-category="control">
+      <rect x="560" y="510" width="400" height="125" rx="5" fill="#FFF0D7" stroke="#9C641B" stroke-width="1.5" />
+      <text x="760.0" y="566.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Train temporal cue ranker</text>
+      <text x="760.0" y="593.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Grouped listwise ranking loss</text>
+    </g>
+    <g id="checkpoint" data-category="control">
+      <rect x="560" y="310" width="400" height="110" rx="18" fill="#FFF0D7" stroke="#9C641B" stroke-width="1.5" />
+      <text x="760.0" y="359.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Verified ranker checkpoint</text>
+      <text x="760.0" y="386.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Bound to dataset and teacher</text>
+    </g>
+    <g id="inference" data-category="analysis">
+      <rect x="560" y="110" width="400" height="110" rx="5" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" stroke-dasharray="8 5" />
+      <text x="760.0" y="159.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Optional cue ranking</text>
+      <text x="760.0" y="186.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Select candidate IDs for rendering</text>
+    </g>
+  </g>
+  <g id="edge-labels">
+    <text x="500" y="35" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Experimental extension · synthetic verification only</text>
+  </g>
+</svg>

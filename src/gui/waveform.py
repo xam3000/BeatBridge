@@ -58,6 +58,8 @@ class _WaveformTask(QRunnable):
 class WaveformWidget(QWidget):
     cue_changed = Signal(float)
     duration_loaded = Signal(float)
+    range_changed = Signal(float, float)
+    range_cleared = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -72,6 +74,10 @@ class WaveformWidget(QWidget):
         self._position_ms = 0
         self._duration_ms = 0
         self._cue_seconds: float | None = None
+        self._range_seconds: tuple[float, float] | None = None
+        self._range_drag_origin: float | None = None
+        self._range_dragging = False
+        self._audio_path: str | None = None
         self._accent_color = "#37cde6"
         self._beat_seconds: list[float] = []
         self._cue_selectable = False
@@ -94,6 +100,7 @@ class WaveformWidget(QWidget):
         )
 
     def set_audio_path(self, path, *, transition_start=None, transition_end=None):
+        self._audio_path = str(path.resolve()) if path is not None else None
         self._token += 1
         self._minimums = []
         self._maximums = []
@@ -107,6 +114,9 @@ class WaveformWidget(QWidget):
         self._position_ms = 0
         self._duration_ms = 0
         self._cue_seconds = None
+        self._range_seconds = None
+        self._range_drag_origin = None
+        self._range_dragging = False
         self._beat_seconds = []
         self._error = ""
         self._loading = path is not None and path.is_file()
@@ -122,6 +132,8 @@ class WaveformWidget(QWidget):
     def set_cue_selection_enabled(self, enabled: bool):
         self._cue_selectable = bool(enabled)
         self.setCursor(Qt.CursorShape.CrossCursor if enabled else Qt.CursorShape.ArrowCursor)
+        if enabled:
+            self.setToolTip("Klick: Cuepoint setzen · Ziehen: Suchbereich markieren · Mausrad: Zoom · Shift+Mausrad oder mittlere Maustaste: verschieben · Doppelklick: Gesamtansicht")
 
     def set_accent_color(self, color: str):
         self._accent_color = str(color)
@@ -130,6 +142,33 @@ class WaveformWidget(QWidget):
     def set_cue_seconds(self, seconds: float | None):
         self._cue_seconds = None if seconds is None else max(0.0, float(seconds))
         self.update()
+
+    @property
+    def audio_path(self):
+        return self._audio_path
+
+    @property
+    def selection_range_seconds(self):
+        return self._range_seconds
+
+    def set_selection_range(self, start_seconds: float, end_seconds: float):
+        duration = self._duration_ms / 1000.0 if self._duration_ms > 0 else float("inf")
+        start = min(duration, max(0.0, float(start_seconds)))
+        end = min(duration, max(0.0, float(end_seconds)))
+        if end < start:
+            start, end = end, start
+        if end <= start:
+            self.clear_selection_range()
+            return
+        self._range_seconds = (start, end)
+        self.update()
+
+    def clear_selection_range(self, *, notify=True):
+        had_range = self._range_seconds is not None
+        self._range_seconds = None
+        self.update()
+        if had_range and notify:
+            self.range_cleared.emit()
 
     def set_beat_times(self, seconds):
         self._beat_seconds = [float(value) for value in seconds if float(value) >= 0.0]
@@ -144,6 +183,10 @@ class WaveformWidget(QWidget):
         self._duration_ms = 0
         self._position_ms = 0
         self._cue_seconds = None
+        self._range_seconds = None
+        self._range_drag_origin = None
+        self._range_dragging = False
+        self._audio_path = None
         self._beat_seconds = []
         self._cue_selectable = False
         self._transition_start = None
@@ -192,6 +235,18 @@ class WaveformWidget(QWidget):
             plot_left = rect.left() + 10
             plot_width = max(1, rect.width() - 20)
             amplitude = max(1.0, rect.height() * 0.42)
+            if self._range_seconds is not None and self._duration_ms > 0:
+                range_start = (self._range_seconds[0] / (self._duration_ms / 1000.0) - self._view_start) / self._view_span
+                range_end = (self._range_seconds[1] / (self._duration_ms / 1000.0) - self._view_start) / self._view_span
+                if range_end > 0.0 and range_start < 1.0:
+                    x1 = plot_left + int(plot_width * max(0.0, range_start))
+                    x2 = plot_left + int(plot_width * min(1.0, range_end))
+                    highlight = QColor(self._accent_color)
+                    highlight.setAlpha(34)
+                    painter.fillRect(x1, rect.top() + 1, max(1, x2 - x1), rect.height() - 2, highlight)
+                    painter.setPen(QPen(QColor(self._accent_color), 2))
+                    painter.drawLine(x1, rect.top() + 1, x1, rect.bottom() - 1)
+                    painter.drawLine(x2, rect.top() + 1, x2, rect.bottom() - 1)
             last_index = max(1, len(self._minimums) - 1)
             first_bin = max(0, int(self._view_start * last_index))
             last_bin = min(last_index, int((self._view_start + self._view_span) * last_index) + 1)
@@ -281,12 +336,8 @@ class WaveformWidget(QWidget):
             event.accept()
             return
         if self._cue_selectable and event.button() == Qt.MouseButton.LeftButton and self._duration_ms > 0:
-            margin = 11
-            fraction = (event.position().x() - margin) / max(1, self.width() - margin * 2)
-            position = self._view_start + min(1.0, max(0.0, fraction)) * self._view_span
-            seconds = min(1.0, max(0.0, position)) * self._duration_ms / 1000.0
-            self.set_cue_seconds(seconds)
-            self.cue_changed.emit(seconds)
+            self._range_drag_origin = self._seconds_at_x(event.position().x())
+            self._range_dragging = False
             event.accept()
             return
         super().mousePressEvent(event)
@@ -298,12 +349,35 @@ class WaveformWidget(QWidget):
             self._set_view(self._view_start - delta / max(1, self.width() - 20) * self._view_span, self._view_span)
             event.accept()
             return
+        if self._range_drag_origin is not None:
+            current_seconds = self._seconds_at_x(event.position().x())
+            if abs(current_seconds - self._range_drag_origin) > 0.04:
+                self._range_dragging = True
+            if self._range_dragging:
+                self.set_selection_range(self._range_drag_origin, current_seconds)
+            event.accept()
+            return
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
         if self._pan_x is not None:
             self._pan_x = None
             self.setCursor(Qt.CursorShape.CrossCursor if self._cue_selectable else Qt.CursorShape.ArrowCursor)
+            event.accept()
+            return
+        if self._range_drag_origin is not None:
+            origin = self._range_drag_origin
+            current_seconds = self._seconds_at_x(event.position().x())
+            if self._range_dragging:
+                self.set_selection_range(origin, current_seconds)
+                if self._range_seconds is not None:
+                    self.range_changed.emit(*self._range_seconds)
+            else:
+                self.clear_selection_range()
+                self.set_cue_seconds(current_seconds)
+                self.cue_changed.emit(current_seconds)
+            self._range_drag_origin = None
+            self._range_dragging = False
             event.accept()
             return
         super().mouseReleaseEvent(event)
@@ -336,3 +410,9 @@ class WaveformWidget(QWidget):
         self._view_start = start
         self._view_span = span
         self.update()
+
+    def _seconds_at_x(self, x):
+        margin = 11.0
+        fraction = (float(x) - margin) / max(1.0, self.width() - margin * 2.0)
+        position = self._view_start + min(1.0, max(0.0, fraction)) * self._view_span
+        return min(1.0, max(0.0, position)) * self._duration_ms / 1000.0

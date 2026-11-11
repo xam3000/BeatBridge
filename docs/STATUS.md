@@ -1,3 +1,176 @@
+# Renderfix-Hörtest ausgewertet am 2026-11-06: 19 Fünffach-Gleichstände
+
+Der Nutzer hat den neuesten korrigierten 20er-Satz
+`output/four_models_shared_20pairs_validation_20261105_renderfix/` abgeschlossen
+und die Bewertungen exportiert. 19 Beispiele enthalten jeweils fünfmal
+Platz 1; Beispiel 11 bleibt auf ausdrücklichen Nutzerwunsch wegen des
+Tempoproblems ohne Ranking und wird ausgeschlossen. Alle vier gelernten
+Modelle stehen gegen Equal Power bei **0 Siegen / 19 Gleichständen /
+0 Niederlagen**. Kein beobachteter Präferenzvorteil, kein Gleichwertigkeits-
+oder absoluter Qualitätsnachweis. Ein Rater, fünf gerichtete Songpaare,
+fünf Audiohashes und unterschiedliche Modellverträge begrenzen die Aussage.
+Alle 100 WAV-SHAs stimmen mit dem Manifest überein; Originaldaten unverändert.
+Offen sind die gemeinsame störende Note in Beispiel 8 und der lokale
+Tempoeindruck in Beispiel 11. Details und Reproduktion:
+[`LISTENING_STUDY_ANALYSE_20261106.md`](./LISTENING_STUDY_ANALYSE_20261106.md),
+Evidenz P5 im Ledger und Testprotokoll in [`Bemerkungen.md`](./Bemerkungen.md).
+Die folgenden älteren „unbewertet“-Angaben zum renderfix-Satz beschreiben den
+historischen Stand vor diesem Export. Kein Training, keine Thesisänderung,
+kein Commit.
+
+# Finaler Thesis-Audit und belegte Korrekturen am 2026-11-06
+
+Der vollständige Thesis-Stand wurde gegen die unveränderlichen Dataset-, Run-,
+Batch-, Sweep- und Studienartefakte geprüft: 51 Datei-Hashes ohne Abweichung,
+0 Dataset-Zeilenfehler, 0 undefinierte Referenzen, 0 doppelte Labels, 0 fehlende
+oder ungenutzte Citation-Keys. Vier Bibliography-DOIs zeigten auf fremde
+Publikationen und wurden gegen Crossref/DataCite korrigiert; fehlende DOIs und
+Seitenangaben wurden ergänzt. Im Ergebniskapitel wurde der am 2026-11-05
+ausgemusterte 20er-Satz durch den renderfix-Neurender ersetzt, die
+Exposure-Zählung präzisiert, eine abgeleitete Aggregatzeile aus der
+Dataset-Tabelle entfernt und die Sweep-Checkpoint-Aussage an die leeren
+Manifest-Einträge angepasst. Diskussion und Einleitung benennen nun explizit,
+dass der matched-unlearned-Baseline-Teil von SQ1 für festen TCN und Variable
+fehlt und dass der kompatible Variable-MLP-Baseline-Lauf fehlt; ein TODO hält
+die RQ-Formulierung offen. Keine neuen Experimente, keine Audio-/Testdaten und
+keine Antwortschlüssel wurden geöffnet. Kein LaTeX-Build möglich (kein
+TeX-Werkzeug, keine WSL-Distribution, kein Docker); die statischen Prüfungen
+sind kein Compile-Nachweis. Verbleibende Blocker: leere Abstracts und
+Konklusion, unbestätigter Titel/Datum/Studiengang, unbelegte
+Forschungsverpflichtungen, fehlende globale Held-out-Population,
+Rechte-/Consent-/Reproduktionsangaben und der leere Anhang. Details:
+[`masterarbeit/THESIS_ADVERSARIAL_AUDIT_20261106.md`](./masterarbeit/THESIS_ADVERSARIAL_AUDIT_20261106.md).
+Kein Commit.
+
+# Alter 20er-Hörtest ausgemustert; renderfix-Neurender mit neuer Sortierung amtlich am 2026-11-05
+
+Nach bestandenem Abhörtest des Prüfbeispiels renderte der gefixte Generator
+alle 20 Beispiele neu in
+`output/four_models_shared_20pairs_validation_20261105_renderfix/` (Seed
+20261105): identische Cues/Reihenfolge, aber neu sortierte Buchstaben
+(variable Label in 19/20 Beispielen geändert), 100 WAVs. Messtest: alle
+variablen Brücken jetzt volles Band (Rolloff84 9,1–12,6 kHz, HF-Anteil
+>5,5 kHz 0,36–0,44), auf Augenhöhe der übrigen Kandidaten;
+`localStorage`-Schlüssel zeitbasiert, der neue Player startet leer.
+Entscheidung des Nutzers: Der alte Satz
+(`output/four_models_shared_20pairs_validation_20260930/`) wird wegen des
+Renderproblems **nicht genutzt**, einschließlich seiner drei im Browser
+erfolgten Bewertungen (Beispiele 1–3); ein `DEPRECATED.md` im Ordner und der
+P4-Hinweis im Ledger sichern das. Der neue Satz ist unbewertet;
+Antwortschlüssel erst nach vollständiger Bewertung öffnen. Details:
+[`Bemerkungen.md`](./Bemerkungen.md).
+
+# Artefakt-Ursache gefunden: variable Modellkandidaten bei 11,025 kHz gerendert am 2026-11-05
+
+Die im letzten Hörtest als schlecht klingend aufgefallenen Kandidaten der
+Beispiele 1–3 (C/D/A) waren jeweils das variable Modell. Messungen an allen
+20 Beispielen zeigen: Jede Variable-Brücke hat praktisch keine HF-Energie
+über 5,5 kHz (Rolloff84 ~3,4–3,8 kHz) und teils größere Kantensprünge, weil
+`_render_variable` bei 11.025 Hz rendert und dann auf 44,1 kHz resampelt,
+während alle übrigen Kandidaten direkt bei 44,1 kHz rendern. Das ist ein
+Export-Artefakt des Studiengenerators, kein Modellqualitätsbefund; das
+variable Modell ist im 20er-Satz systematisch benachteiligt. Die Bewertungen
+der Beispiele 1–3 erfolgten vor der Antwortschlüssel-Öffnung und bleiben
+verwertbar. Der Generator-Fix ist eingebaut (Variable-Brücke rendert direkt
+bei 44,1 kHz mit Kernel 511 wie die übrigen Kandidaten); das Prüfbeispiel in
+`output/four_models_variable_renderfix_check_20261105/` bestätigt ihn
+messtechnisch (Rolloff84 3,4→10,0 kHz, HF-Anteil >5,5 kHz 0,0002→0,36,
+Kantensprünge wie die anderen Kandidaten, A/B/D/E-Payloads bitgleich). Die
+Abhörprüfung durch den Nutzer, ein Export der Browser-Bewertungen und die
+Entscheidung über einen Neurender aller 20 Beispiele stehen aus. Details:
+[`Bemerkungen.md`](./Bemerkungen.md).
+
+# Platzwahl mit Gleichständen im letzten Hörtest am 2026-11-05
+
+Der [20-Beispiele-Player](../output/four_models_shared_20pairs_validation_20260930/index.html)
+hat unter jedem Kandidaten eine eigene Platzwahl von 1 bis 5. Gleiche Plätze
+und freie Plätze sind erlaubt. Bereits im Browser gespeicherte Reihenfolgen
+werden übernommen; der Download bewahrt Gleichstände im additiven Feld
+`ranks`. Der gemeinsame Seitengenerator ist ebenfalls aktualisiert.
+Vier gezielte Tests sowie die Syntax-/Manifestprüfung des vorhandenen Players
+bestanden. Eine manuelle Sichtprüfung im Browser steht aus. Audio,
+Studienmanifeste und vorhandene Bewertungsdateien wurden nicht verändert.
+Details und Exportvertrag: [`Bemerkungen.md`](./Bemerkungen.md).
+
+# Metrikmechanismen als zwölf SVG-Erklärbilder am 2026-10-29
+
+Die [Metrikserie 12–23](./figures/flowcharts/METRICS_README.md) ergänzt die
+elf Pipelinebilder um Eingaben, Formeln, Gewichtung und Interpretation der
+Song-/Cue-Scores, Render-Audio-Metrik, Objective-v4/v5-Terme,
+experimentellen Ranker-Metriken und Hörbewertung. Der Vektorplot für die
+Energiezielkurve ist ausdrücklich ein synthetisches Lehrbeispiel. Alle
+Gewichte sind als Code-Defaults gekennzeichnet, nicht als universelle
+Konfiguration vorhandener Runs. Zwölf QtSvg-Render-/Layoutprüfungen,
+32 Quellenverweise und synthetische Gegenrechnungen gegen Produktionshelfer
+bestanden. Bestehende Pipeline-SVGs und aktuelle GUI-/Kandidatenänderungen
+blieben unverändert. Keine Audio-/Trainings-/Qualitätsfreigabe.
+Details: [`Bemerkungen.md`](./Bemerkungen.md).
+
+# Cuepoint-Suche auf markierten Waveform-Bereichen am 2026-10-28
+
+Die native GUI erlaubt jetzt, in beiden Waveforms per Ziehen einen Suchbereich
+zu markieren; ein einfacher Klick setzt weiterhin einen manuellen Cuepoint.
+Der neue Cue-Point-Analyzer erzeugt innerhalb der markierten Abschnitte
+bar-ausgerichtete Kandidaten und bewertet sie mit dem vorhandenen
+Feature-Baseline-Ranker. Das beste Paar wird als A-/B-Cuepoint in den
+aktiven Sequenzübergang übernommen und kann direkt gerendert werden. Die
+Bereiche bleiben pro Übergang erhalten. Fehlende Analysen werden beim Suchen
+über den bestehenden Analyse-/Cachepfad erstellt. Der gelernte Cue-Ranker ist
+weiterhin nicht für automatische Auswahl freigegeben, da nur synthetische
+Verifikation dokumentiert ist. Nach einem Absturzbericht wird das Ranking auf
+höchstens 400 über den Suchbereich verteilte Kandidaten begrenzt und das
+Ergebnis explizit im GUI-Thread verarbeitet. Ursache und Laufzeitkorrektur
+sind noch nicht praktisch bestätigt: Es wurde kein Testlauf ausgeführt;
+manueller GUI-Abnahmeklicktest und Prüfung mit realen Tracks stehen aus. Details:
+[`Bemerkungen.md`](./Bemerkungen.md).
+
+Beim Rendern wurde ein fertiges WAV-/JSON-Paar gefunden, obwohl die GUI
+anscheinend noch „Render läuft“ zeigte. Der Render-Abschlusscallback ist nun
+explizit an den GUI-Thread gebunden; die erneute GUI-Prüfung steht aus.
+
+# Elf Thesis-Flowcharts als SVG erstellt am 2026-10-28
+
+[`figures/flowcharts/README.md`](./figures/flowcharts/README.md) enthält eine
+reduzierte Gesamtpipeline und zehn eigene Komponentendiagramme mit englischen
+Beschriftungen, Caption-Vorschlägen und Quellen. Die farbigen SVGs enthalten
+editierbaren Vektortext und benötigen keine externen Bildassets. Ein lokaler
+Generator reproduziert die Serie. Alle elf Dateien wurden mit QtSvg gerendert
+und als Kontaktbogen visuell geprüft; der feste TCN und die Rendererzuordnung
+wurden zusätzlich einzeln gesichtet. Struktur-/Layout-/Glyphenprüfungen und
+46 Quellenlinks bestanden. Der Cue-Ranker ist weiterhin explizit als nur
+synthetisch verifiziert gekennzeichnet. Es wurden weder Audio-/Trainingsläufe
+noch eine Thesisintegration ausgeführt. Details: [`Bemerkungen.md`](./Bemerkungen.md).
+
+# Grafische Gesamtpipeline rekonstruiert am 2026-10-27
+
+[`PIPELINE_UEBERSICHT.md`](./PIPELINE_UEBERSICHT.md) visualisiert die
+vorhandenen Analyse-, Auswahl-, Feature-/Waveform-, Controllertrainings-,
+Inferenz- und Evaluationspfade mit Quellen. Die Übersicht trennt reale
+Controllerläufe, direkte Objective-Hör-Gates und den nur synthetisch geprüften
+Cue-Ranker. Aktueller Codeabgleich: Der GUI-Modelladapter unterstützt die drei
+festen Protokoll-1-Familien, nicht die Variable-TCN. Deren Trainingsrenderer
+ist stem-basiert und kein Drei-Band-EQ-Renderer wie beim festen TCN.
+Zwei Datasetmanifeste, vier September-Runmanifeste und der weiterhin
+unbewertete 20-Cue-Hörsatz wurden direkt auf Metadatenebene gelesen; Audio,
+Test-NPZ, Antwortschlüssel und Gewichte blieben ungeöffnet. Keine neue
+Trainings- oder Qualitätsfreigabe. Prüftiefe: [`Bemerkungen.md`](./Bemerkungen.md).
+
+# Alle Fließtext-Kapitel stilistisch in den Nutzer-Schreibstil überführt am 2026-11-04
+
+Nach dem Related-Work-Kapitel (2026-10-26) wurden auf Wunsch des Nutzers auch
+`overleaf/chapters/01_introduction.tex`, `03_mainPart.tex`,
+`04_implementation.tex`, `05_results.tex` und `06_discussion.tex` vom
+ChatGPT-Klang in den Schreibstil des Nutzers überführt (Referenz: dessen
+Bachelorarbeit). Inhalt, Claims, Zahlen, Zitationen, Labels, Referenzen,
+Gleichungen, Tabellen, Listings, TODO-Kommentare und die auskommentierten
+Abschnitte in Kapitel 5 sind maschinell geprüft unverändert; die Struktur der
+Kapitel und Abschnitte ist identisch. Abstrakte, Fazit und Anhang enthalten
+weiterhin nur TODO-Stubs. Ein lokaler LaTeX-Build ist auf diesem Rechner
+weiterhin nicht möglich; Gesamtbuild und Sichtprüfung stehen aus. Bekannter
+vorbestehender Zustand: Kapitel 6 referenziert zwei Labels, die nur in
+auskommentierten Abschnitten von Kapitel 5 existieren. Testdetails:
+[`Bemerkungen.md`](./Bemerkungen.md).
+
 # Related-Work-Kapitel stilistisch in den Nutzer-Schreibstil überführt am 2026-10-26
 
 `overleaf/chapters/02_relatedWork.tex` wurde auf Wunsch des Nutzers vom

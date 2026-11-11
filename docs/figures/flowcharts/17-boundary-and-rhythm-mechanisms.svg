@@ -1,0 +1,62 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="160mm" height="128.00mm" viewBox="0 0 1000 800" role="img" aria-labelledby="figure-title figure-description">
+  <title id="figure-title">Boundary and rhythm score mechanisms</title>
+  <desc id="figure-description">Two separate components of the rendered-audio score: local discontinuity checks and beat-lag onset correlation.</desc>
+  <metadata>BeatBridge; metric definitions audited 2026-10-29; code defaults, not run-specific weights; see METRICS_README.md.</metadata>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 Z" fill="#48535E" />
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1000" height="800" fill="#FFFFFF" />
+  <g id="connections" fill="none" stroke="#48535E" stroke-width="2" stroke-linejoin="round">
+    <path d="M 240,130 L 240,235" marker-end="url(#arrow)" />
+    <path d="M 240,455 L 240,565" marker-end="url(#arrow)" />
+    <path d="M 760,130 L 760,235" marker-end="url(#arrow)" />
+    <path d="M 760,455 L 760,565" marker-end="url(#arrow)" />
+  </g>
+  <g id="nodes">
+    <g id="boundary" data-category="data">
+      <rect x="40" y="30" width="400" height="100" rx="18" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="240.0" y="74.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Actual render boundary b</text>
+      <text x="240.0" y="101.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Start/end of bridge, or hard cut</text>
+    </g>
+    <g id="context" data-category="data">
+      <rect x="560" y="30" width="400" height="100" rx="18" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="760.0" y="74.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Local rendered context</text>
+      <text x="760.0" y="101.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Expected BPM and sample rate</text>
+    </g>
+    <g id="jumps" data-category="render">
+      <rect x="40" y="235" width="400" height="220" rx="5" fill="#EEE8F7" stroke="#6F5591" stroke-width="1.5" />
+      <text x="240.0" y="298.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Measure RMS and sample jump</text>
+      <text x="240.0" y="325.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">R = exp(-|RMS_left_dB - RMS_right_dB|</text>
+      <text x="240.0" y="352.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">/ 12)</text>
+      <text x="240.0" y="379.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">J = boundary jump / local p99(|Δsample|)</text>
+      <text x="240.0" y="406.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">C = exp(-max(0, J - 1))</text>
+    </g>
+    <g id="corr" data-category="render">
+      <rect x="560" y="235" width="400" height="220" rx="5" fill="#EEE8F7" stroke="#6F5591" stroke-width="1.5" />
+      <text x="760.0" y="271.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Measure beat-lag correlation</text>
+      <text x="760.0" y="298.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Compute onset envelope and subtract its</text>
+      <text x="760.0" y="325.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">mean</text>
+      <text x="760.0" y="352.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">lag = max(1, round(60 * sr / (BPM *</text>
+      <text x="760.0" y="379.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">512)))</text>
+      <text x="760.0" y="406.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">rho = cosine(envelope[:-lag],</text>
+      <text x="760.0" y="433.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">envelope[lag:])</text>
+    </g>
+    <g id="bs" data-category="evaluation">
+      <rect x="40" y="565" width="400" height="120" rx="18" fill="#E6F2E4" stroke="#4F7643" stroke-width="1.5" />
+      <text x="240.0" y="605.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Boundary score</text>
+      <text x="240.0" y="632.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">sqrt(R * C)</text>
+      <text x="240.0" y="659.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Then average across boundaries</text>
+    </g>
+    <g id="rs" data-category="evaluation">
+      <rect x="560" y="565" width="400" height="120" rx="18" fill="#E6F2E4" stroke="#4F7643" stroke-width="1.5" />
+      <text x="760.0" y="619.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Rhythm score</text>
+      <text x="760.0" y="646.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">clip((rho + 1) / 2, 0, 1)</text>
+    </g>
+  </g>
+  <g id="edge-labels">
+    <text x="500" y="760" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="400" text-anchor="middle">Silent / insufficient onset evidence returns a neutral rhythm score of 0.5.</text>
+  </g>
+</svg>

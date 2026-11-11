@@ -1,0 +1,69 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="160mm" height="171.20mm" viewBox="0 0 1000 1070" role="img" aria-labelledby="figure-title figure-description">
+  <title id="figure-title">Technical and perceptual transition evaluation</title>
+  <desc id="figure-description">Technical audio metrics and blinded listening ratings are distinct branches. Listening variants are decoded only after all required ratings are complete.</desc>
+  <metadata>BeatBridge; evidence baseline 2026-10-27; artwork 2026-10-28; see README.md.</metadata>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 Z" fill="#48535E" />
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1000" height="1070" fill="#FFFFFF" />
+  <g id="connections" fill="none" stroke="#48535E" stroke-width="2" stroke-linejoin="round">
+    <path d="M 500,115 L 500,165 L 240,165 L 240,220" marker-end="url(#arrow)" />
+    <path d="M 500,115 L 500,165 L 760,165 L 760,220" marker-end="url(#arrow)" />
+    <path d="M 240,350 L 240,450" marker-end="url(#arrow)" />
+    <path d="M 760,350 L 760,450" marker-end="url(#arrow)" />
+    <path d="M 760,560 L 760,640" marker-end="url(#arrow)" />
+    <path d="M 760,800 L 760,860" marker-end="url(#arrow)" />
+    <path d="M 960,720 L 985,720 L 985,505 L 960,505" marker-end="url(#arrow)" stroke-dasharray="8 5" />
+    <path d="M 760,940 L 760,980" marker-end="url(#arrow)" />
+  </g>
+  <g id="nodes">
+    <g id="variants" data-category="neutral">
+      <rect x="280" y="25" width="440" height="90" rx="18" fill="#F1F3F5" stroke="#697783" stroke-width="1.5" />
+      <text x="500.0" y="77.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Rendered transition variants</text>
+    </g>
+    <g id="metric" data-category="evaluation">
+      <rect x="40" y="220" width="400" height="130" rx="5" fill="#E6F2E4" stroke="#4F7643" stroke-width="1.5" />
+      <text x="240.0" y="265.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Technical render metric</text>
+      <text x="240.0" y="292.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Energy, boundaries, harmony and</text>
+      <text x="240.0" y="319.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">rhythm</text>
+    </g>
+    <g id="report" data-category="evaluation">
+      <rect x="40" y="450" width="400" height="110" rx="18" fill="#E6F2E4" stroke="#4F7643" stroke-width="1.5" />
+      <text x="240.0" y="499.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Scores and diagnostics</text>
+      <text x="240.0" y="526.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Technical baseline only</text>
+    </g>
+    <g id="blind" data-category="evaluation">
+      <rect x="560" y="220" width="400" height="130" rx="5" fill="#E6F2E4" stroke="#4F7643" stroke-width="1.5" />
+      <text x="760.0" y="265.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Export blinded listening set</text>
+      <text x="760.0" y="292.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Matched context and shared peak gain;</text>
+      <text x="760.0" y="319.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">separate answer key</text>
+    </g>
+    <g id="ratings" data-category="evaluation">
+      <rect x="560" y="450" width="400" height="110" rx="5" fill="#E6F2E4" stroke="#4F7643" stroke-width="1.5" />
+      <text x="760.0" y="499.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Collect human ratings</text>
+      <text x="760.0" y="526.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Preferences and criteria</text>
+    </g>
+    <g id="complete" data-category="evaluation">
+      <polygon points="760.0,640 960,720.0 760.0,800 560,720.0" fill="#E6F2E4" stroke="#4F7643" stroke-width="1.5" />
+      <text x="760.0" y="714.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">All required ratings</text>
+      <text x="760.0" y="741.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">complete?</text>
+    </g>
+    <g id="decode" data-category="evaluation">
+      <rect x="560" y="860" width="400" height="80" rx="5" fill="#E6F2E4" stroke="#4F7643" stroke-width="1.5" />
+      <text x="760.0" y="907.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Unblind methods</text>
+    </g>
+    <g id="results" data-category="evaluation">
+      <rect x="560" y="980" width="400" height="70" rx="18" fill="#E6F2E4" stroke="#4F7643" stroke-width="1.5" />
+      <text x="760.0" y="1022.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Analyse listening results</text>
+    </g>
+  </g>
+  <g id="edge-labels">
+    <rect x="774.0" y="816" width="42.0" height="26" fill="#FFFFFF" />
+    <text x="795" y="835" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="400" text-anchor="middle">yes</text>
+    <rect x="958.0" y="591" width="34.0" height="26" fill="#FFFFFF" />
+    <text x="975" y="610" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="400" text-anchor="middle">no</text>
+  </g>
+</svg>

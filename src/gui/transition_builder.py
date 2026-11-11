@@ -318,6 +318,91 @@ class _TrackAnalysisTask(QRunnable):
             self.signals.finished.emit(str(self.path), None, f"{type(error).__name__}: {error}")
 
 
+class _CueAnalysisTask(QRunnable):
+    """Generate and feature-rank transition candidates inside both selections."""
+
+    def __init__(self, source: TrackItem, target: TrackItem, source_range, target_range,
+                 transition_bars: int, analysis_cache: Path):
+        super().__init__()
+        self.source = source
+        self.target = target
+        self.source_range = source_range
+        self.target_range = target_range
+        self.transition_bars = int(transition_bars)
+        self.analysis_cache = Path(analysis_cache)
+        self.signals = _RenderSignals()
+
+    def run(self):
+        try:
+            import librosa
+            import numpy as np
+            from src.analysis.models import unpack_analysis_result
+            from src.analysis.pre_analysis import PreAnalysis
+            from src.candidates import CandidateGenerationConfig, TrackReference, generate_candidates
+            from src.ranking import rank_candidates
+
+            analyzer = PreAnalysis(str(self.analysis_cache) + os.sep)
+            source_result = analyzer(str(self.source.path))
+            target_result = analyzer(str(self.target.path))
+            source_bpm, source_frames, source_metadata = unpack_analysis_result(source_result)
+            target_bpm, target_frames, target_metadata = unpack_analysis_result(target_result)
+            source_rate = int(librosa.get_samplerate(str(self.source.path)))
+            target_rate = int(librosa.get_samplerate(str(self.target.path)))
+
+            def to_target_grid(frames, sample_rate):
+                return tuple(
+                    (int(round(int(frame[0]) * TARGET_SAMPLE_RATE / sample_rate)), int(frame[1]), int(frame[2]))
+                    for frame in frames
+                )
+
+            source_range_samples = tuple(round(value * TARGET_SAMPLE_RATE) for value in self.source_range)
+            target_range_samples = tuple(round(value * TARGET_SAMPLE_RATE) for value in self.target_range)
+            generated = generate_candidates(
+                TrackReference(str(self.source.path), _sha256_file(self.source.path)),
+                float(source_bpm), to_target_grid(source_frames, source_rate),
+                TrackReference(str(self.target.path), _sha256_file(self.target.path)),
+                float(target_bpm), to_target_grid(target_frames, target_rate),
+                source_grid_metadata=source_metadata,
+                target_grid_metadata=target_metadata,
+                config=CandidateGenerationConfig(
+                    transition_lengths_bars=(self.transition_bars,),
+                    approximate_grid_policy="allow",
+                ),
+                source_cutpoint_range_samples=source_range_samples,
+                target_cutpoint_range_samples=target_range_samples,
+            )
+            if not generated.candidates:
+                reasons = "; ".join(dict.fromkeys(item.message for item in generated.rejections))
+                raise ValueError(reasons or "In den ausgewählten Bereichen wurden keine Cuepoint-Kandidaten gefunden.")
+            candidates_to_rank = generated.candidates
+            max_ranked_candidates = 400
+            if len(candidates_to_rank) > max_ranked_candidates:
+                # Keep candidates spread across the deterministic generation
+                # order so a whole-track selection cannot exhaust memory.
+                indices = np.linspace(
+                    0, len(candidates_to_rank) - 1, max_ranked_candidates, dtype=np.int64
+                )
+                candidates_to_rank = tuple(candidates_to_rank[int(index)] for index in indices)
+            ranked = rank_candidates(candidates_to_rank, target_sample_rate=TARGET_SAMPLE_RATE)
+            if not ranked.scores:
+                details = "; ".join(item.message for item in ranked.failures[:3])
+                raise ValueError("Kandidaten konnten nicht bewertet werden" + (f": {details}" if details else "."))
+            best = ranked.scores[0]
+            candidate = next(item for item in candidates_to_rank if item.candidate_id == best.candidate_id)
+            self.signals.finished.emit({
+                "source_seconds": candidate.source_cutpoint.sample / TARGET_SAMPLE_RATE,
+                "target_seconds": candidate.target_cutpoint.sample / TARGET_SAMPLE_RATE,
+                "score": best.total_score,
+                "candidate_count": len(generated.candidates),
+                "ranked_count": len(ranked.scores),
+                "ranker": ranked.ranker,
+                "source_analysis": (float(source_bpm), tuple(source_frames), source_rate, source_metadata),
+                "target_analysis": (float(target_bpm), tuple(target_frames), target_rate, target_metadata),
+            }, "")
+        except Exception as error:
+            self.signals.finished.emit(None, f"{type(error).__name__}: {error}")
+
+
 class _RenderSignals(QObject):
     finished = Signal(object, str)
 
@@ -470,6 +555,7 @@ class TransitionBuilderWindow(QMainWindow):
         self.sequence_tracks: list[str] = []
         self._active_edge_index: int | None = None
         self._edge_cues: dict[int, tuple[float, float, bool, bool]] = {}
+        self._edge_ranges: dict[int, tuple[float, float, float, float]] = {}
         self._edge_settings: dict[int, tuple[int, str, str | None]] = {}
         self._edge_results: dict[int, dict] = {}
 
@@ -566,7 +652,7 @@ class TransitionBuilderWindow(QMainWindow):
         header = QHBoxLayout()
         header.addWidget(QLabel("ARRANGEMENT"))
         header.addStretch(1)
-        header.addWidget(QLabel("Cuepoints werden beim Rendern am Downbeat ausgerichtet."))
+        header.addWidget(QLabel("Klick setzt einen Cuepoint · Ziehen markiert den Suchbereich"))
         workspace.addLayout(header)
 
         sequence_panel = SequenceDropPanel()
@@ -629,6 +715,10 @@ class TransitionBuilderWindow(QMainWindow):
         self.target_wave.set_accent_color("#ff5f88")
         self.source_wave.cue_changed.connect(lambda seconds: self._set_cue("source", seconds))
         self.target_wave.cue_changed.connect(lambda seconds: self._set_cue("target", seconds))
+        self.source_wave.range_changed.connect(lambda start, end: self._set_selected_range("source", start, end))
+        self.target_wave.range_changed.connect(lambda start, end: self._set_selected_range("target", start, end))
+        self.source_wave.range_cleared.connect(self._clear_selected_ranges)
+        self.target_wave.range_cleared.connect(self._clear_selected_ranges)
         self.source_wave.duration_loaded.connect(lambda seconds: self._set_cue_limit("source", seconds))
         self.target_wave.duration_loaded.connect(lambda seconds: self._set_cue_limit("target", seconds))
         wave_split.addWidget(source_group)
@@ -673,6 +763,10 @@ class TransitionBuilderWindow(QMainWindow):
         self.length_combo.addItem("2 Takte", 2)
         self.length_combo.addItem("4 Takte", 4)
         controls_layout.addWidget(self.length_combo)
+        self.find_cues_button = QPushButton("Beste Cuepoints in Bereichen suchen")
+        self.find_cues_button.setToolTip("Ziehe in beiden Wellenformen einen Bereich auf. Der Cue-Point-Analyzer bewertet darin passende Downbeats.")
+        self.find_cues_button.clicked.connect(self._analyze_cue_ranges)
+        controls_layout.addWidget(self.find_cues_button)
         controls_layout.addWidget(QLabel("BASELINE-RENDERER"))
         self.renderer_combo = QComboBox()
         for label, value in (("Equal Power", "equal_power"), ("Linearer Fade", "fade"), ("Hard Cut", "simple")):
@@ -801,6 +895,10 @@ class TransitionBuilderWindow(QMainWindow):
                 str(self.renderer_combo.currentData()),
                 self.model_combo.currentData(),
             )
+            source_range = self.source_wave.selection_range_seconds
+            target_range = self.target_wave.selection_range_seconds
+            if source_range is not None and target_range is not None:
+                self._edge_ranges[self._active_edge_index] = (*source_range, *target_range)
         if index < 0 or index + 1 >= len(self.sequence_tracks):
             self._active_edge_index = None
             self.pair_title.setText("Noch kein Übergang gewählt")
@@ -847,6 +945,13 @@ class TransitionBuilderWindow(QMainWindow):
         self._target_cue_set = cues[3] if cues else False
         self.source_wave.set_cue_seconds(cues[0] if cues and cues[2] else None)
         self.target_wave.set_cue_seconds(cues[1] if cues and cues[3] else None)
+        ranges = self._edge_ranges.get(index)
+        if ranges:
+            self.source_wave.set_selection_range(ranges[0], ranges[1])
+            self.target_wave.set_selection_range(ranges[2], ranges[3])
+        else:
+            self.source_wave.clear_selection_range(notify=False)
+            self.target_wave.clear_selection_range(notify=False)
         saved_result = self._edge_results.get(index)
         if saved_result:
             self._show_transition_result(saved_result)
@@ -1112,7 +1217,8 @@ class TransitionBuilderWindow(QMainWindow):
                 summary.setText("Track noch nicht ausgewählt")
                 cue_input.setMaximum(86_400.0)
                 continue
-            waveform.set_audio_path(track.path)
+            if waveform.audio_path != str(track.path.resolve()):
+                waveform.set_audio_path(track.path)
             waveform.set_cue_selection_enabled(True)
             waveform.set_beat_times(track.downbeat_seconds)
             waveform.set_cue_seconds(cue_input.value() if cue_input.value() > 0 else None)
@@ -1140,6 +1246,89 @@ class TransitionBuilderWindow(QMainWindow):
         widget.blockSignals(False)
         (self.source_wave if role == "source" else self.target_wave).set_cue_seconds(seconds)
         self._mark_cue_set(role)
+
+    def _set_selected_range(self, role, start, end):
+        if self._active_edge_index is None:
+            return
+        source_range = self.source_wave.selection_range_seconds
+        target_range = self.target_wave.selection_range_seconds
+        if role == "source":
+            source_range = (start, end)
+        else:
+            target_range = (start, end)
+        if source_range is not None and target_range is not None:
+            self._edge_ranges[self._active_edge_index] = (*source_range, *target_range)
+            self.status_label.setText(
+                f"Bereiche gewählt: A {source_range[0]:.1f}–{source_range[1]:.1f} s · "
+                f"B {target_range[0]:.1f}–{target_range[1]:.1f} s. Jetzt Cuepoints suchen."
+            )
+
+    def _clear_selected_ranges(self):
+        if self._active_edge_index is not None:
+            self._edge_ranges.pop(self._active_edge_index, None)
+
+    def _analyze_cue_ranges(self):
+        if self._active_edge_index is None:
+            self.status_label.setText("Wähle zuerst einen Paarübergang in der Sequenz.")
+            return
+        source_range = self.source_wave.selection_range_seconds
+        target_range = self.target_wave.selection_range_seconds
+        if source_range is None or target_range is None:
+            self.status_label.setText("Ziehe zuerst in beiden Wellenformen einen Bereich auf.")
+            return
+        source_path, target_path = self.source_combo.currentData(), self.target_combo.currentData()
+        if not source_path or not target_path or source_path == target_path:
+            self.status_label.setText("Für die Cuepoint-Suche müssen zwei unterschiedliche Songs ausgewählt sein.")
+            return
+        edge_index = self._active_edge_index
+        task = _CueAnalysisTask(
+            self.tracks[source_path], self.tracks[target_path], source_range, target_range,
+            int(self.length_combo.currentData()), self.analysis_cache,
+        )
+        task.signals.finished.connect(
+            lambda result, error: self._on_cue_analysis_finished(result, error, edge_index, source_path, target_path),
+            Qt.ConnectionType.QueuedConnection,
+        )
+        self.find_cues_button.setEnabled(False)
+        self.status_label.setText("Cue-Point-Analyzer prüft Downbeats und bewertet Kandidaten in den markierten Bereichen …")
+        self._pool.start(task)
+
+    def _on_cue_analysis_finished(self, result, error, edge_index, source_path, target_path):
+        self.find_cues_button.setEnabled(True)
+        if error:
+            self.status_label.setText(f"Cuepoint-Suche fehlgeschlagen: {error}")
+            return
+        for path, role in ((source_path, "source_analysis"), (target_path, "target_analysis")):
+            track = self.tracks.get(path)
+            if track is None:
+                continue
+            bpm, beat_frames, sample_rate, metadata = result[role]
+            track.bpm = bpm
+            track.beat_frames = beat_frames
+            track.sample_rate = sample_rate
+            track.downbeat_seconds = tuple(
+                int(frame[0]) / sample_rate
+                for frame in beat_frames
+                if isinstance(frame, (tuple, list)) and len(frame) >= 3 and int(frame[1]) == 1
+            )
+            track.grid_source = metadata.grid_source
+            track.fallback_used = metadata.fallback_used
+            track.status = "Analysiert"
+        if (
+            self._active_edge_index != edge_index
+            or self.source_combo.currentData() != source_path
+            or self.target_combo.currentData() != target_path
+        ):
+            self.status_label.setText("Cuepoints gefunden, aber der aktive Übergang wurde inzwischen gewechselt.")
+            return
+        self._set_cue("source", result["source_seconds"])
+        self._set_cue("target", result["target_seconds"])
+        self._refresh_tracks()
+        self.status_label.setText(
+            f"Cue-Point-Analyzer: beste von {result['ranked_count']}/{result['candidate_count']} "
+            f"Kandidaten · A {result['source_seconds']:.2f} s · B {result['target_seconds']:.2f} s · "
+            f"Feature-Score {result['score']:.3f}. Cuepoints sind für den Rendern-Button gesetzt."
+        )
 
     def _set_cue_limit(self, role, duration):
         box = self.source_cue if role == "source" else self.target_cue
@@ -1245,7 +1434,8 @@ class TransitionBuilderWindow(QMainWindow):
         )
         render_edge_index = self._active_edge_index
         task.signals.finished.connect(
-            lambda result, error: self._on_render_finished(result, error, render_edge_index)
+            lambda result, error: self._on_render_finished(result, error, render_edge_index),
+            Qt.ConnectionType.QueuedConnection,
         )
         self._render_busy = True
         self.render_button.setEnabled(False)

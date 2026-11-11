@@ -1,0 +1,184 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:ns2="http://creativecommons.org/ns#" xmlns:ns4="http://www.w3.org/1999/xlink" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" version="1.1" width="160mm" height="155.20mm" viewBox="0 0 1000 970" role="img" aria-labelledby="figure-title figure-description">
+  <title id="figure-title">Training objective: energy and boundary losses</title>
+  <desc id="figure-description">An illustrative target in frame RMS decibels and the two corresponding normalised mean-squared-error losses. Not measured experiment data.</desc>
+  <metadata>BeatBridge; metric definitions audited 2026-10-29; code defaults, not run-specific weights; see METRICS_README.md.</metadata>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 Z" fill="#48535E" />
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1000" height="970" fill="#FFFFFF" />
+  <g id="connections" fill="none" stroke="#48535E" stroke-width="2" stroke-linejoin="round">
+    <path d="M 500,595 L 500,635 L 260,635 L 260,690" marker-end="url(#arrow)" />
+    <path d="M 500,595 L 500,635 L 740,635 L 740,690" marker-end="url(#arrow)" />
+  </g>
+  <g id="nodes">
+    <g id="energy-plot" transform="translate(45 58.27777777777777) scale(1.404320987654321)">
+      <metadata>
+        <rdf:RDF>
+          <ns2:Work>
+            <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+            <dc:format>image/svg+xml</dc:format>
+            <dc:creator>
+              <ns2:Agent>
+                <dc:title>Matplotlib v3.11.1, https://matplotlib.org/</dc:title>
+              </ns2:Agent>
+            </dc:creator>
+          </ns2:Work>
+        </rdf:RDF>
+      </metadata>
+      <defs>
+        <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+      </defs>
+      <g id="figure_1">
+        <g id="patch_1">
+          <path d="M 0 223.2  L 648 223.2  L 648 0  L 0 0  z " style="fill: #ffffff" />
+        </g>
+        <g id="axes_1">
+          <g id="patch_2">
+            <path d="M 61.497148 173.545703  L 626.7 173.545703  L 626.7 46.966  L 61.497148 46.966  z " style="fill: #ffffff" />
+          </g>
+          <g id="matplotlib.axis_1">
+            <g id="xtick_1">
+              <g id="line2d_1">
+                <defs>
+                  <path id="md307f28d10" d="M 0 0  L 0 3.5  " style="stroke: #000000; stroke-width: 0.8" />
+                </defs>
+                <g>
+                  <use ns4:href="#md307f28d10" x="61.497148" y="173.545703" style="stroke: #000000; stroke-width: 0.8" />
+                </g>
+              </g>
+              <g id="text_1">
+                <text style="font-size: 15px; font-family: 'Arial'; text-anchor: middle" x="61.497148" y="191.466113" transform="rotate(-0 61.497148 191.466113)">0.0</text>
+              </g>
+            </g>
+            <g id="xtick_2">
+              <g id="line2d_2">
+                <g>
+                  <use ns4:href="#md307f28d10" x="344.098574" y="173.545703" style="stroke: #000000; stroke-width: 0.8" />
+                </g>
+              </g>
+              <g id="text_2">
+                <text style="font-size: 15px; font-family: 'Arial'; text-anchor: middle" x="344.098574" y="191.466113" transform="rotate(-0 344.098574 191.466113)">0.5</text>
+              </g>
+            </g>
+            <g id="xtick_3">
+              <g id="line2d_3">
+                <g>
+                  <use ns4:href="#md307f28d10" x="626.7" y="173.545703" style="stroke: #000000; stroke-width: 0.8" />
+                </g>
+              </g>
+              <g id="text_3">
+                <text style="font-size: 15px; font-family: 'Arial'; text-anchor: middle" x="626.7" y="191.466113" transform="rotate(-0 626.7 191.466113)">1.0</text>
+              </g>
+            </g>
+            <g id="text_4">
+              <text style="font-size: 15px; font-family: 'Arial'; text-anchor: middle" x="344.098574" y="209.543262" transform="rotate(-0 344.098574 209.543262)">Normalised transition position</text>
+            </g>
+          </g>
+          <g id="matplotlib.axis_2">
+            <g id="ytick_1">
+              <g id="line2d_4">
+                <path d="M 61.497148 155.462888  L 626.7 155.462888  " clip-path="url(#p6b51bd9e24)" style="fill: none; stroke: #dfe4e8; stroke-width: 0.6; stroke-linecap: square" />
+              </g>
+              <g id="line2d_5">
+                <defs>
+                  <path id="m2c0a196133" d="M 0 0  L -3.5 0  " style="stroke: #000000; stroke-width: 0.8" />
+                </defs>
+                <g>
+                  <use ns4:href="#m2c0a196133" x="61.497148" y="155.462888" style="stroke: #000000; stroke-width: 0.8" />
+                </g>
+              </g>
+              <g id="text_5">
+                <text style="font-size: 15px; font-family: 'Arial'; text-anchor: end" x="54.497148" y="160.923093" transform="rotate(-0 54.497148 160.923093)">−12</text>
+              </g>
+            </g>
+            <g id="ytick_2">
+              <g id="line2d_6">
+                <path d="M 61.497148 101.214444  L 626.7 101.214444  " clip-path="url(#p6b51bd9e24)" style="fill: none; stroke: #dfe4e8; stroke-width: 0.6; stroke-linecap: square" />
+              </g>
+              <g id="line2d_7">
+                <g>
+                  <use ns4:href="#m2c0a196133" x="61.497148" y="101.214444" style="stroke: #000000; stroke-width: 0.8" />
+                </g>
+              </g>
+              <g id="text_6">
+                <text style="font-size: 15px; font-family: 'Arial'; text-anchor: end" x="54.497148" y="106.674649" transform="rotate(-0 54.497148 106.674649)">−6</text>
+              </g>
+            </g>
+            <g id="ytick_3">
+              <g id="line2d_8">
+                <path d="M 61.497148 46.966  L 626.7 46.966  " clip-path="url(#p6b51bd9e24)" style="fill: none; stroke: #dfe4e8; stroke-width: 0.6; stroke-linecap: square" />
+              </g>
+              <g id="line2d_9">
+                <g>
+                  <use ns4:href="#m2c0a196133" x="61.497148" y="46.966" style="stroke: #000000; stroke-width: 0.8" />
+                </g>
+              </g>
+              <g id="text_7">
+                <text style="font-size: 15px; font-family: 'Arial'; text-anchor: end" x="54.497148" y="52.426205" transform="rotate(-0 54.497148 52.426205)">0</text>
+              </g>
+            </g>
+            <g id="text_8">
+              <text style="font-size: 15px; font-family: 'Arial'; text-anchor: middle" x="21.896367" y="110.255852" transform="rotate(-90 21.896367 110.255852)">RMS (dBFS)</text>
+            </g>
+          </g>
+          <g id="line2d_10">
+            <path d="M 61.497148 101.214444  L 79.729498 104.714344  L 97.961849 108.214243  L 116.194199 111.714143  L 134.426549 115.214043  L 152.658899 118.713942  L 170.891249 122.213842  L 189.123599 125.713742  L 207.355949 129.213641  L 225.588299 132.713541  L 243.820649 136.21344  L 262.052999 139.71334  L 280.285349 143.21324  L 298.517699 146.713139  L 316.750049 150.213039  L 334.982399 153.712939  L 353.214749 152.837964  L 371.447099 147.588114  L 389.679449 142.338265  L 407.911799 137.088415  L 426.144149 131.838566  L 444.376499 126.588716  L 462.60885 121.338867  L 480.8412 116.089018  L 499.07355 110.839168  L 517.3059 105.589319  L 535.53825 100.339469  L 553.7706 95.08962  L 572.00295 89.83977  L 590.2353 84.589921  L 608.46765 79.340072  L 626.7 74.090222  " clip-path="url(#p6b51bd9e24)" style="fill: none; stroke-dasharray: 7.4,3.2; stroke-dashoffset: 0; stroke: #286998; stroke-width: 2" />
+          </g>
+          <g id="line2d_11">
+            <path d="M 61.497148 101.214444  L 79.729498 103.250817  L 97.961849 105.302208  L 116.194199 107.383481  L 134.426549 109.509192  L 152.658899 111.693442  L 170.891249 113.949732  L 189.123599 116.290823  L 207.355949 118.728606  L 225.588299 121.27398  L 243.820649 123.936739  L 262.052999 126.725474  L 280.285349 129.647481  L 298.517699 132.708692  L 316.750049 135.913607  L 334.982399 139.265254  L 353.214749 138.390279  L 371.447099 133.288683  L 389.679449 128.333817  L 407.911799 123.522657  L 426.144149 118.850699  L 444.376499 114.312015  L 462.60885 109.899306  L 480.8412 105.603983  L 499.07355 101.41625  L 517.3059 97.325209  L 535.53825 93.318969  L 553.7706 89.384769  L 572.00295 85.509108  L 590.2353 81.677886  L 608.46765 77.876545  L 626.7 74.090222  " clip-path="url(#p6b51bd9e24)" style="fill: none; stroke: #6f5591; stroke-width: 2; stroke-linecap: square" />
+          </g>
+          <g id="patch_3">
+            <path d="M 61.497148 173.545703  L 61.497148 46.966  " style="fill: none; stroke: #000000; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square" />
+          </g>
+          <g id="patch_4">
+            <path d="M 61.497148 173.545703  L 626.7 173.545703  " style="fill: none; stroke: #000000; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square" />
+          </g>
+          <g id="legend_1">
+            <g id="line2d_12">
+              <path d="M 168.635137 31.93543  L 181.635137 31.93543  L 194.635137 31.93543  " style="fill: none; stroke-dasharray: 7.4,3.2; stroke-dashoffset: 0; stroke: #286998; stroke-width: 2" />
+            </g>
+            <g id="text_9">
+              <text style="font-size: 13px; font-family: 'Arial'; text-anchor: start" x="205.035137" y="36.48543" transform="rotate(-0 205.035137 36.48543)">Target frame RMS</text>
+            </g>
+            <g id="line2d_13">
+              <path d="M 336.501699 31.93543  L 349.501699 31.93543  L 362.501699 31.93543  " style="fill: none; stroke: #6f5591; stroke-width: 2; stroke-linecap: square" />
+            </g>
+            <g id="text_10">
+              <text style="font-size: 13px; font-family: 'Arial'; text-anchor: start" x="372.901699" y="36.48543" transform="rotate(-0 372.901699 36.48543)">Illustrative rendered RMS</text>
+            </g>
+          </g>
+        </g>
+      </g>
+      <defs>
+        <clipPath id="p6b51bd9e24">
+          <rect x="61.497148" y="46.966" width="565.202852" height="126.579703" />
+        </clipPath>
+      </defs>
+    </g>
+    <g id="target" data-category="data">
+      <rect x="70" y="485" width="860" height="110" rx="5" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="500.0" y="520.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Construct frame-level energy target</text>
+      <text x="500.0" y="547.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Start = first source-frame RMS; end = last target-frame RMS</text>
+      <text x="500.0" y="574.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">V-shaped valley = min(start, end) - 6 dB</text>
+    </g>
+    <g id="energy" data-category="evaluation">
+      <rect x="40" y="690" width="440" height="160" rx="5" fill="#E6F2E4" stroke="#4F7643" stroke-width="1.5" />
+      <text x="260.0" y="764.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Energy-shape loss · weight 1.0</text>
+      <text x="260.0" y="791.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">mean(((rendered_dB - target_dB) / 12)^2)</text>
+    </g>
+    <g id="boundary" data-category="evaluation">
+      <rect x="520" y="690" width="440" height="160" rx="5" fill="#E6F2E4" stroke="#4F7643" stroke-width="1.5" />
+      <text x="740.0" y="737.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Boundary loss · weight 0.5</text>
+      <text x="740.0" y="764.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Squared endpoint RMS differences:</text>
+      <text x="740.0" y="791.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">start vs source start; end vs target end</text>
+      <text x="740.0" y="818.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Normalise by 6 dB, then average</text>
+    </g>
+  </g>
+  <g id="edge-labels">
+    <text x="500" y="425" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" text-anchor="middle">Illustrative levels only · no experiment measurements</text>
+    <text x="500" y="920" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="400" text-anchor="middle">Lower is better · endpoint RMS matching is not the render-metric click detector.</text>
+  </g>
+</svg>

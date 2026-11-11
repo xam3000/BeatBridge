@@ -1,0 +1,69 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="160mm" height="164.80mm" viewBox="0 0 1000 1030" role="img" aria-labelledby="figure-title figure-description">
+  <title id="figure-title">Beat and bar-grid analysis</title>
+  <desc id="figure-description">Separate beat and bar-position detectors are merged; failed detection remains explicit as a fallback.</desc>
+  <metadata>BeatBridge; evidence baseline 2026-10-27; artwork 2026-10-28; see README.md.</metadata>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 Z" fill="#48535E" />
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1000" height="1030" fill="#FFFFFF" />
+  <g id="connections" fill="none" stroke="#48535E" stroke-width="2" stroke-linejoin="round">
+    <path d="M 500,120 L 500,150 L 240,150 L 240,200" marker-end="url(#arrow)" />
+    <path d="M 500,120 L 500,150 L 760,150 L 760,200" marker-end="url(#arrow)" />
+    <path d="M 240,300 L 240,340 L 500,340 L 500,380" marker-end="url(#arrow)" />
+    <path d="M 760,300 L 760,340 L 500,340 L 500,380" marker-end="url(#arrow)" />
+    <path d="M 500,480 L 500,530" marker-end="url(#arrow)" />
+    <path d="M 300,610 L 240,610 L 240,760" marker-end="url(#arrow)" />
+    <path d="M 700,610 L 760,610 L 760,760" marker-end="url(#arrow)" />
+    <path d="M 240,860 L 240,900 L 500,900 L 500,930" marker-end="url(#arrow)" />
+    <path d="M 760,860 L 760,900 L 500,900 L 500,930" marker-end="url(#arrow)" />
+  </g>
+  <g id="nodes">
+    <g id="audio" data-category="neutral">
+      <rect x="350" y="30" width="300" height="90" rx="18" fill="#F1F3F5" stroke="#697783" stroke-width="1.5" />
+      <text x="500.0" y="82.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Audio track</text>
+    </g>
+    <g id="librosa" data-category="analysis">
+      <rect x="40" y="200" width="400" height="100" rx="5" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" />
+      <text x="240.0" y="244.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">librosa</text>
+      <text x="240.0" y="271.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Tempo and beat positions</text>
+    </g>
+    <g id="auftakt" data-category="analysis">
+      <rect x="560" y="200" width="400" height="100" rx="5" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" />
+      <text x="760.0" y="244.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">aufTAKT</text>
+      <text x="760.0" y="271.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Bar positions and meter</text>
+    </g>
+    <g id="merge" data-category="analysis">
+      <rect x="300" y="380" width="400" height="100" rx="5" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" />
+      <text x="500.0" y="424.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Merge detections</text>
+      <text x="500.0" y="451.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Versioned matching algorithm</text>
+    </g>
+    <g id="valid" data-category="analysis">
+      <polygon points="500.0,530 700,610.0 500.0,690 300,610.0" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" />
+      <text x="500.0" y="604.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Merge criteria</text>
+      <text x="500.0" y="631.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">satisfied?</text>
+    </g>
+    <g id="detected" data-category="data">
+      <rect x="40" y="760" width="400" height="100" rx="5" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="240.0" y="804.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Detected grid</text>
+      <text x="240.0" y="831.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Matched beat/bar metadata</text>
+    </g>
+    <g id="fallback" data-category="reject">
+      <rect x="560" y="760" width="400" height="100" rx="5" fill="#FBEAE6" stroke="#A65A4B" stroke-width="1.5" />
+      <text x="760.0" y="804.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Explicit fallback</text>
+      <text x="760.0" y="831.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Approximate or unknown grid</text>
+    </g>
+    <g id="cache" data-category="data">
+      <rect x="300" y="930" width="400" height="80" rx="18" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="500.0" y="977.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Analysis cache + provenance</text>
+    </g>
+  </g>
+  <g id="edge-labels">
+    <rect x="229.0" y="563" width="42.0" height="26" fill="#FFFFFF" />
+    <text x="250" y="582" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="400" text-anchor="middle">yes</text>
+    <rect x="733.0" y="563" width="34.0" height="26" fill="#FFFFFF" />
+    <text x="750" y="582" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="400" text-anchor="middle">no</text>
+  </g>
+</svg>

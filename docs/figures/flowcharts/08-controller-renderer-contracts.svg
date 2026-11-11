@@ -1,0 +1,87 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="160mm" height="135.20mm" viewBox="0 0 1000 845" role="img" aria-labelledby="figure-title figure-description">
+  <title id="figure-title">Controller, renderer and objective contracts</title>
+  <desc id="figure-description">The four trained controller families use different rendering and objective contracts. The variable TCN uses a stem-aware renderer, not the fixed TCN's three-band renderer.</desc>
+  <metadata>BeatBridge; evidence baseline 2026-10-27; artwork 2026-10-28; see README.md.</metadata>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 Z" fill="#48535E" />
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1000" height="845" fill="#FFFFFF" />
+  <g id="connections" fill="none" stroke="#48535E" stroke-width="2" stroke-linejoin="round">
+    <path d="M 310,135 L 365,135" marker-end="url(#arrow)" />
+    <path d="M 675,135 L 740,135" marker-end="url(#arrow)" />
+    <path d="M 310,325 L 365,325" marker-end="url(#arrow)" />
+    <path d="M 675,325 L 740,325" marker-end="url(#arrow)" />
+    <path d="M 310,515 L 365,515" marker-end="url(#arrow)" />
+    <path d="M 675,515 L 740,515" marker-end="url(#arrow)" />
+    <path d="M 310,705 L 365,705" marker-end="url(#arrow)" />
+    <path d="M 675,705 L 740,705" marker-end="url(#arrow)" />
+  </g>
+  <g id="nodes">
+    <g id="model_0" data-category="control">
+      <rect x="20" y="70" width="290" height="130" rx="5" fill="#FFF0D7" stroke="#9C641B" stroke-width="1.5" />
+      <text x="165.0" y="129.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Time-shared MLP</text>
+      <text x="165.0" y="156.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Four bars</text>
+    </g>
+    <g id="renderer_0" data-category="render">
+      <rect x="365" y="70" width="310" height="130" rx="5" fill="#EEE8F7" stroke="#6F5591" stroke-width="1.5" />
+      <text x="520.0" y="129.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Two-band renderer</text>
+      <text x="520.0" y="156.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Mix + low-end handover</text>
+    </g>
+    <g id="objective_0" data-category="evaluation">
+      <rect x="740" y="70" width="245" height="130" rx="5" fill="#E6F2E4" stroke="#4F7643" stroke-width="1.5" />
+      <text x="862.5" y="142.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Objective v4</text>
+    </g>
+    <g id="model_1" data-category="control">
+      <rect x="20" y="260" width="290" height="130" rx="5" fill="#FFF0D7" stroke="#9C641B" stroke-width="1.5" />
+      <text x="165.0" y="319.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Vocal-aware MLP</text>
+      <text x="165.0" y="346.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Four bars</text>
+    </g>
+    <g id="renderer_1" data-category="render">
+      <rect x="365" y="260" width="310" height="130" rx="5" fill="#EEE8F7" stroke="#6F5591" stroke-width="1.5" />
+      <text x="520.0" y="319.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Stem-aware renderer</text>
+      <text x="520.0" y="346.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Accompaniment + vocals</text>
+    </g>
+    <g id="objective_1" data-category="evaluation">
+      <rect x="740" y="260" width="245" height="130" rx="5" fill="#E6F2E4" stroke="#4F7643" stroke-width="1.5" />
+      <text x="862.5" y="332.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Objective v5</text>
+    </g>
+    <g id="model_2" data-category="control">
+      <rect x="20" y="450" width="290" height="130" rx="5" fill="#FFF0D7" stroke="#9C641B" stroke-width="1.5" />
+      <text x="165.0" y="509.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Fixed TCN/BiLSTM</text>
+      <text x="165.0" y="536.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Four bars</text>
+    </g>
+    <g id="renderer_2" data-category="render">
+      <rect x="365" y="450" width="310" height="130" rx="5" fill="#EEE8F7" stroke="#6F5591" stroke-width="1.5" />
+      <text x="520.0" y="509.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Three-band renderer</text>
+      <text x="520.0" y="536.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Low / mid / high + ducking</text>
+    </g>
+    <g id="objective_2" data-category="evaluation">
+      <rect x="740" y="450" width="245" height="130" rx="5" fill="#E6F2E4" stroke="#4F7643" stroke-width="1.5" />
+      <text x="862.5" y="522.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Objective v4</text>
+    </g>
+    <g id="model_3" data-category="control">
+      <rect x="20" y="640" width="290" height="130" rx="5" fill="#FFF0D7" stroke="#9C641B" stroke-width="1.5" />
+      <text x="165.0" y="699.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Variable TCN/BiLSTM</text>
+      <text x="165.0" y="726.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">2 / 4 / 6 / 8 bars</text>
+    </g>
+    <g id="renderer_3" data-category="render">
+      <rect x="365" y="640" width="310" height="130" rx="5" fill="#EEE8F7" stroke="#6F5591" stroke-width="1.5" />
+      <text x="520.0" y="699.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Stem-aware renderer</text>
+      <text x="520.0" y="726.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Accompaniment + vocals</text>
+    </g>
+    <g id="objective_3" data-category="evaluation">
+      <rect x="740" y="640" width="245" height="130" rx="5" fill="#E6F2E4" stroke="#4F7643" stroke-width="1.5" />
+      <text x="862.5" y="699.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Objective v5</text>
+      <text x="862.5" y="726.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Time-normalised</text>
+    </g>
+  </g>
+  <g id="edge-labels">
+    <text x="165" y="30" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" text-anchor="middle">Controller</text>
+    <text x="520" y="30" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" text-anchor="middle">Training renderer</text>
+    <text x="870" y="30" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" text-anchor="middle">Proxy objective</text>
+    <text x="500" y="820" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="400" text-anchor="middle">The generic fixed-TCN training path uses mid-band ducking as a vocal proxy.</text>
+  </g>
+</svg>

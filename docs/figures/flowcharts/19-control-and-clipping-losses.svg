@@ -1,0 +1,60 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="160mm" height="156.80mm" viewBox="0 0 1000 980" role="img" aria-labelledby="figure-title figure-description">
+  <title id="figure-title">Training objective: control and clipping terms</title>
+  <desc id="figure-description">Training objective: control and clipping terms</desc>
+  <metadata>BeatBridge; metric definitions audited 2026-10-29; code defaults, not run-specific weights; see METRICS_README.md.</metadata>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 Z" fill="#48535E" />
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1000" height="980" fill="#FFFFFF" />
+  <g id="connections" fill="none" stroke="#48535E" stroke-width="2" stroke-linejoin="round">
+    <path d="M 120,75 L 50,75 L 50,240 L 120,240" marker-end="url(#arrow)" />
+    <path d="M 880,240 L 950,240 L 950,870 L 880,870" marker-end="url(#arrow)" />
+    <path d="M 120,75 L 50,75 L 50,390 L 120,390" marker-end="url(#arrow)" />
+    <path d="M 880,390 L 950,390 L 950,870 L 880,870" marker-end="url(#arrow)" />
+    <path d="M 120,75 L 50,75 L 50,540 L 120,540" marker-end="url(#arrow)" />
+    <path d="M 880,540 L 950,540 L 950,870 L 880,870" marker-end="url(#arrow)" />
+    <path d="M 120,75 L 50,75 L 50,690 L 120,690" marker-end="url(#arrow)" />
+    <path d="M 880,690 L 950,690 L 950,870 L 880,870" marker-end="url(#arrow)" />
+  </g>
+  <g id="nodes">
+    <g id="inputs" data-category="data">
+      <rect x="120" y="30" width="760" height="90" rx="18" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="500.0" y="82.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Mix position m, low-end position l, rendered samples y</text>
+    </g>
+    <g id="component_0" data-category="control">
+      <rect x="120" y="180" width="760" height="120" rx="5" fill="#FFF0D7" stroke="#9C641B" stroke-width="1.5" />
+      <text x="500.0" y="220.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Uniform-step regularisation · weight 0.02</text>
+      <text x="500.0" y="247.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">u = 1 / (T - 1)</text>
+      <text x="500.0" y="274.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">mean(((Δm - u) / u)^2 + ((Δl - u) / u)^2)</text>
+    </g>
+    <g id="component_1" data-category="control">
+      <rect x="120" y="330" width="760" height="120" rx="5" fill="#FFF0D7" stroke="#9C641B" stroke-width="1.5" />
+      <text x="500.0" y="370.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Control curvature · weight 0.05</text>
+      <text x="500.0" y="397.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Penalise changes between successive control increments</text>
+      <text x="500.0" y="424.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">mean((Δ²m / u)^2 + (Δ²l / u)^2)</text>
+    </g>
+    <g id="component_2" data-category="control">
+      <rect x="120" y="480" width="760" height="120" rx="5" fill="#FFF0D7" stroke="#9C641B" stroke-width="1.5" />
+      <text x="500.0" y="520.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Monotonicity · weight 0.10</text>
+      <text x="500.0" y="547.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Penalise backward handovers</text>
+      <text x="500.0" y="574.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">mean(relu(-Δm)^2 + relu(-Δl)^2)</text>
+    </g>
+    <g id="component_3" data-category="render">
+      <rect x="120" y="630" width="760" height="120" rx="5" fill="#EEE8F7" stroke="#6F5591" stroke-width="1.5" />
+      <text x="500.0" y="670.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Clipping · weight 2.0</text>
+      <text x="500.0" y="697.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Penalise samples exceeding full scale</text>
+      <text x="500.0" y="724.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">mean(relu(|y| - 1)^2)</text>
+    </g>
+    <g id="output" data-category="evaluation">
+      <rect x="120" y="820" width="760" height="100" rx="18" fill="#E6F2E4" stroke="#4F7643" stroke-width="1.5" />
+      <text x="500.0" y="864.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Add weighted penalties to the training objective</text>
+      <text x="500.0" y="891.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Lower is better · these losses are not normalised quality scores</text>
+    </g>
+  </g>
+  <g id="edge-labels">
+    <text x="500" y="960" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="400" text-anchor="middle">Code defaults shown; each run's saved configuration is authoritative.</text>
+  </g>
+</svg>

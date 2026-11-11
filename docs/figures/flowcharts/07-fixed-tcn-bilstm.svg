@@ -1,0 +1,72 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="160mm" height="168.00mm" viewBox="0 0 1000 1050" role="img" aria-labelledby="figure-title figure-description">
+  <title id="figure-title">Fixed four-bar TCN/BiLSTM architecture</title>
+  <desc id="figure-description">Shared temporal encoders, pair fusion, projected global context, a bidirectional LSTM and a constrained ten-channel control head.</desc>
+  <metadata>BeatBridge; evidence baseline 2026-10-27; artwork 2026-10-28; see README.md.</metadata>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 Z" fill="#48535E" />
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1000" height="1050" fill="#FFFFFF" />
+  <g id="connections" fill="none" stroke="#48535E" stroke-width="2" stroke-linejoin="round">
+    <path d="M 230,120 L 230,205" marker-end="url(#arrow)" />
+    <path d="M 770,120 L 770,205" marker-end="url(#arrow)" />
+    <path d="M 230,305 L 230,350 L 500,350 L 500,390" marker-end="url(#arrow)" />
+    <path d="M 770,305 L 770,350 L 500,350 L 500,390" marker-end="url(#arrow)" />
+    <path d="M 500,515 L 500,555 L 600,555 L 600,590" marker-end="url(#arrow)" />
+    <path d="M 315,655 L 360,655 L 360,640 L 400,640" marker-end="url(#arrow)" />
+    <path d="M 600,690 L 600,770" marker-end="url(#arrow)" />
+    <path d="M 600,870 L 600,940" marker-end="url(#arrow)" />
+  </g>
+  <g id="nodes">
+    <g id="a" data-category="data">
+      <rect x="30" y="30" width="400" height="90" rx="18" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="230.0" y="69.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Features A</text>
+      <text x="230.0" y="96.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">32 × 54</text>
+    </g>
+    <g id="b" data-category="data">
+      <rect x="570" y="30" width="400" height="90" rx="18" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="770.0" y="69.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Features B</text>
+      <text x="770.0" y="96.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">32 × 54</text>
+    </g>
+    <g id="encoder_a" data-category="control">
+      <rect x="30" y="205" width="400" height="100" rx="5" fill="#FFF0D7" stroke="#9C641B" stroke-width="1.5" />
+      <text x="230.0" y="249.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Shared TCN encoder</text>
+      <text x="230.0" y="276.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Same weights for A and B</text>
+    </g>
+    <g id="encoder_b" data-category="control">
+      <rect x="570" y="205" width="400" height="100" rx="5" fill="#FFF0D7" stroke="#9C641B" stroke-width="1.5" />
+      <text x="770.0" y="249.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Shared TCN encoder</text>
+      <text x="770.0" y="276.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Same weights for A and B</text>
+    </g>
+    <g id="fusion" data-category="control">
+      <rect x="300" y="390" width="400" height="125" rx="5" fill="#FFF0D7" stroke="#9C641B" stroke-width="1.5" />
+      <text x="500.0" y="433.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Pair fusion</text>
+      <text x="500.0" y="460.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Concat(A, B, A - B, A * B)</text>
+      <text x="500.0" y="487.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Linear: 512 → 256</text>
+    </g>
+    <g id="global" data-category="data">
+      <rect x="30" y="590" width="285" height="130" rx="5" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="172.5" y="635.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Global features</text>
+      <text x="172.5" y="662.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">16 values → 256</text>
+      <text x="172.5" y="689.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Linear projection</text>
+    </g>
+    <g id="add" data-category="control">
+      <rect x="400" y="590" width="400" height="100" rx="5" fill="#FFF0D7" stroke="#9C641B" stroke-width="1.5" />
+      <text x="600.0" y="634.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Add global context</text>
+      <text x="600.0" y="661.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Broadcast over time</text>
+    </g>
+    <g id="lstm" data-category="control">
+      <rect x="400" y="770" width="400" height="100" rx="5" fill="#FFF0D7" stroke="#9C641B" stroke-width="1.5" />
+      <text x="600.0" y="814.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Two-layer BiLSTM</text>
+      <text x="600.0" y="841.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">128 hidden units per direction</text>
+    </g>
+    <g id="head" data-category="control">
+      <rect x="400" y="940" width="400" height="90" rx="5" fill="#FFF0D7" stroke="#9C641B" stroke-width="1.5" />
+      <text x="600.0" y="979.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Constrained control head</text>
+      <text x="600.0" y="1006.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">32 × 10 temporal controls</text>
+    </g>
+  </g>
+  <g id="edge-labels" />
+</svg>

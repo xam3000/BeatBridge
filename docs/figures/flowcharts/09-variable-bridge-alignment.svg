@@ -1,0 +1,68 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="160mm" height="169.60mm" viewBox="0 0 1000 1060" role="img" aria-labelledby="figure-title figure-description">
+  <title id="figure-title">Local-grid alignment and bridge construction</title>
+  <desc id="figure-description">The source postroll sets the local bridge duration. Target preroll and target vocal stem receive the same pitch-preserving stretch before rendering.</desc>
+  <metadata>BeatBridge; evidence baseline 2026-10-27; artwork 2026-10-28; see README.md.</metadata>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 Z" fill="#48535E" />
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1000" height="1060" fill="#FFFFFF" />
+  <g id="connections" fill="none" stroke="#48535E" stroke-width="2" stroke-linejoin="round">
+    <path d="M 240,130 L 240,220" marker-end="url(#arrow)" />
+    <path d="M 760,130 L 760,220" marker-end="url(#arrow)" />
+    <path d="M 760,350 L 760,430" marker-end="url(#arrow)" />
+    <path d="M 440,285 L 500,285 L 500,485 L 560,485" marker-end="url(#arrow)" />
+    <path d="M 240,350 L 240,590 L 500,590 L 500,640" marker-end="url(#arrow)" />
+    <path d="M 760,540 L 760,590 L 500,590 L 500,640" marker-end="url(#arrow)" />
+    <path d="M 500,750 L 500,820" marker-end="url(#arrow)" />
+    <path d="M 500,910 L 500,970" marker-end="url(#arrow)" />
+  </g>
+  <g id="nodes">
+    <g id="source" data-category="data">
+      <rect x="40" y="30" width="400" height="100" rx="18" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="240.0" y="74.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Source A + cue A</text>
+      <text x="240.0" y="101.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Detected local grid</text>
+    </g>
+    <g id="target" data-category="data">
+      <rect x="560" y="30" width="400" height="100" rx="18" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="760.0" y="74.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Target B + cue B</text>
+      <text x="760.0" y="101.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Detected local grid</text>
+    </g>
+    <g id="postroll" data-category="data">
+      <rect x="40" y="220" width="400" height="130" rx="5" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="240.0" y="265.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Extract A postroll</text>
+      <text x="240.0" y="292.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">After cue A; mix + vocal</text>
+      <text x="240.0" y="319.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Local duration authority</text>
+    </g>
+    <g id="preroll" data-category="data">
+      <rect x="560" y="220" width="400" height="130" rx="5" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="760.0" y="265.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Extract B preroll</text>
+      <text x="760.0" y="292.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Before cue B</text>
+      <text x="760.0" y="319.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Mix and vocal stem</text>
+    </g>
+    <g id="stretch" data-category="analysis">
+      <rect x="560" y="430" width="400" height="110" rx="5" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" />
+      <text x="760.0" y="479.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Stretch target to source duration</text>
+      <text x="760.0" y="506.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Rubber Band; pitch preserved</text>
+    </g>
+    <g id="aligned" data-category="data">
+      <rect x="260" y="640" width="480" height="110" rx="18" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="500.0" y="689.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Aligned waveform windows</text>
+      <text x="500.0" y="716.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Same sample count for mixes and stems</text>
+    </g>
+    <g id="render" data-category="render">
+      <rect x="260" y="820" width="480" height="90" rx="5" fill="#EEE8F7" stroke="#6F5591" stroke-width="1.5" />
+      <text x="500.0" y="872.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Apply mixing controls</text>
+    </g>
+    <g id="output" data-category="neutral">
+      <rect x="190" y="970" width="620" height="70" rx="18" fill="#F1F3F5" stroke="#697783" stroke-width="1.5" />
+      <text x="500.0" y="1012.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">A context → rendered bridge → B context</text>
+    </g>
+  </g>
+  <g id="edge-labels">
+    <rect x="431.0" y="376" width="138.0" height="26" fill="#FFFFFF" />
+    <text x="500" y="395" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="400" text-anchor="middle">source duration</text>
+  </g>
+</svg>

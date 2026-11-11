@@ -1,0 +1,79 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="160mm" height="185.60mm" viewBox="0 0 1000 1160" role="img" aria-labelledby="figure-title figure-description">
+  <title id="figure-title">BeatBridge overall pipeline</title>
+  <desc id="figure-description">Transition generation with separate controller training and evaluation workflows.</desc>
+  <metadata>BeatBridge; evidence baseline 2026-10-27; artwork 2026-10-28; see README.md.</metadata>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 Z" fill="#48535E" />
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1000" height="1160" fill="#FFFFFF" />
+  <g id="connections" fill="none" stroke="#48535E" stroke-width="2" stroke-linejoin="round">
+    <path d="M 305,130 L 305,190" marker-end="url(#arrow)" />
+    <path d="M 305,290 L 305,350" marker-end="url(#arrow)" />
+    <path d="M 305,450 L 305,510" marker-end="url(#arrow)" />
+    <path d="M 305,610 L 305,710" marker-end="url(#arrow)" />
+    <path d="M 305,810 L 305,870" marker-end="url(#arrow)" />
+    <path d="M 305,970 L 305,1030" marker-end="url(#arrow)" />
+    <path d="M 570,560 L 675,560" marker-end="url(#arrow)" />
+    <path d="M 817.5,610 L 817.5,710" marker-end="url(#arrow)" />
+    <path d="M 817.5,810 L 817.5,910" marker-end="url(#arrow)" />
+    <path d="M 675,960 L 620,960 L 620,760 L 570,760" marker-end="url(#arrow)" />
+  </g>
+  <g id="nodes">
+    <g id="input" data-category="neutral">
+      <rect x="40" y="30" width="530" height="100" rx="5" fill="#F1F3F5" stroke="#697783" stroke-width="1.5" />
+      <text x="305.0" y="74.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Import audio</text>
+      <text x="305.0" y="101.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Original recordings</text>
+    </g>
+    <g id="analysis" data-category="analysis">
+      <rect x="40" y="190" width="530" height="100" rx="5" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" />
+      <text x="305.0" y="234.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Analyse tracks</text>
+      <text x="305.0" y="261.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Tempo, beats and bar-grid provenance</text>
+    </g>
+    <g id="selection" data-category="analysis">
+      <rect x="40" y="350" width="530" height="100" rx="5" fill="#E6F1FA" stroke="#286998" stroke-width="1.5" />
+      <text x="305.0" y="394.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Select songs and cue points</text>
+      <text x="305.0" y="421.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Automatic ranking or manual GUI selection</text>
+    </g>
+    <g id="prepare" data-category="data">
+      <rect x="40" y="510" width="530" height="100" rx="5" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="305.0" y="554.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Prepare transition inputs</text>
+      <text x="305.0" y="581.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Feature windows and aligned audio</text>
+    </g>
+    <g id="render" data-category="render">
+      <rect x="40" y="710" width="530" height="100" rx="5" fill="#EEE8F7" stroke="#6F5591" stroke-width="1.5" />
+      <text x="305.0" y="754.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Render transition</text>
+      <text x="305.0" y="781.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Baseline or learned controls</text>
+    </g>
+    <g id="export" data-category="neutral">
+      <rect x="40" y="870" width="530" height="100" rx="5" fill="#F1F3F5" stroke="#697783" stroke-width="1.5" />
+      <text x="305.0" y="914.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Preview and export</text>
+      <text x="305.0" y="941.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Transition WAV and provenance</text>
+    </g>
+    <g id="evaluate" data-category="evaluation">
+      <rect x="40" y="1030" width="530" height="100" rx="5" fill="#E6F2E4" stroke="#4F7643" stroke-width="1.5" />
+      <text x="305.0" y="1074.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Evaluate variants</text>
+      <text x="305.0" y="1101.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Technical metrics and separate listening studies</text>
+    </g>
+    <g id="dataset" data-category="data">
+      <rect x="675" y="510" width="285" height="100" rx="5" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="817.5" y="554.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Build datasets</text>
+      <text x="817.5" y="581.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Track splits and caches</text>
+    </g>
+    <g id="train" data-category="control">
+      <rect x="675" y="710" width="285" height="100" rx="5" fill="#FFF0D7" stroke="#9C641B" stroke-width="1.5" />
+      <text x="817.5" y="754.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Train controller</text>
+      <text x="817.5" y="781.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Renderer + fixed objective</text>
+    </g>
+    <g id="checkpoint" data-category="control">
+      <rect x="675" y="910" width="285" height="100" rx="18" fill="#FFF0D7" stroke="#9C641B" stroke-width="1.5" />
+      <text x="817.5" y="954.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Best checkpoint</text>
+      <text x="817.5" y="981.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">For learned inference</text>
+    </g>
+  </g>
+  <g id="edge-labels">
+    <text x="815" y="470" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" text-anchor="middle">Separate training workflow</text>
+  </g>
+</svg>

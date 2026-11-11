@@ -1,0 +1,70 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="160mm" height="187.20mm" viewBox="0 0 1000 1170" role="img" aria-labelledby="figure-title figure-description">
+  <title id="figure-title">Experimental cue-ranker evaluation metrics</title>
+  <desc id="figure-description">Synthetic demonstration of top-1 and top-k agreement, teacher-ordinal NDCG and score correlation. No measured ranker quality result.</desc>
+  <metadata>BeatBridge; metric definitions audited 2026-10-29; code defaults, not run-specific weights; see METRICS_README.md.</metadata>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="10" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 Z" fill="#48535E" />
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1000" height="1170" fill="#FFFFFF" />
+  <g id="connections" fill="none" stroke="#48535E" stroke-width="2" stroke-linejoin="round">
+    <path d="M 250,220 L 250,260 L 500,260 L 500,290" marker-end="url(#arrow)" />
+    <path d="M 750,220 L 750,260 L 500,260 L 500,290" marker-end="url(#arrow)" />
+    <path d="M 500,390 L 500,435 L 250,435 L 250,480" marker-end="url(#arrow)" />
+    <path d="M 500,390 L 500,435 L 750,435 L 750,480" marker-end="url(#arrow)" />
+    <path d="M 250,340 L 20,340 L 20,825 L 40,825" marker-end="url(#arrow)" />
+    <path d="M 750,340 L 980,340 L 980,825 L 960,825" marker-end="url(#arrow)" />
+  </g>
+  <g id="nodes">
+    <g id="teacher" data-category="data">
+      <rect x="40" y="90" width="420" height="130" rx="18" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="250.0" y="135.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Teacher order</text>
+      <text x="250.0" y="162.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">A → B → C → D</text>
+      <text x="250.0" y="189.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Ordinal gains: 4, 3, 2, 1</text>
+    </g>
+    <g id="ranker" data-category="control">
+      <rect x="540" y="90" width="420" height="130" rx="18" fill="#FFF0D7" stroke="#9C641B" stroke-width="1.5" />
+      <text x="750.0" y="135.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Illustrative ranker order</text>
+      <text x="750.0" y="162.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">B → A → D → C</text>
+      <text x="750.0" y="189.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">k = 2; synthetic ordering only</text>
+    </g>
+    <g id="compare" data-category="data">
+      <rect x="250" y="290" width="500" height="100" rx="5" fill="#E1F1EF" stroke="#28756F" stroke-width="1.5" />
+      <text x="500.0" y="334.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Frozen candidate group</text>
+      <text x="500.0" y="361.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Compare the same candidate IDs</text>
+    </g>
+    <g id="top1" data-category="evaluation">
+      <rect x="40" y="480" width="420" height="130" rx="5" fill="#E6F2E4" stroke="#4F7643" stroke-width="1.5" />
+      <text x="250.0" y="512.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Top-1 agreement</text>
+      <text x="250.0" y="539.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Does the selected candidate equal the</text>
+      <text x="250.0" y="566.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">teacher's first choice?</text>
+      <text x="250.0" y="593.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Here: 0</text>
+    </g>
+    <g id="topk" data-category="evaluation">
+      <rect x="540" y="480" width="420" height="130" rx="5" fill="#E6F2E4" stroke="#4F7643" stroke-width="1.5" />
+      <text x="750.0" y="525.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Top-k agreement</text>
+      <text x="750.0" y="552.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">|ranker top-k ∩ teacher top-k| / k</text>
+      <text x="750.0" y="579.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Here: 1.0 despite a different first choice</text>
+    </g>
+    <g id="ndcg" data-category="evaluation">
+      <rect x="40" y="740" width="420" height="170" rx="5" fill="#E6F2E4" stroke="#4F7643" stroke-width="1.5" />
+      <text x="250.0" y="792.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">NDCG at k</text>
+      <text x="250.0" y="819.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">DCG = sum(gain_i / log2(i + 1))</text>
+      <text x="250.0" y="846.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">NDCG = DCG / ideal_DCG</text>
+      <text x="250.0" y="873.0" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Here: NDCG@2 = 0.937 (rounded)</text>
+    </g>
+    <g id="corr" data-category="evaluation">
+      <rect x="540" y="740" width="420" height="170" rx="5" fill="#E6F2E4" stroke="#4F7643" stroke-width="1.5" />
+      <text x="750.0" y="805.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Score correlation and utility</text>
+      <text x="750.0" y="832.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Pearson(ranker score, teacher utility)</text>
+      <text x="750.0" y="859.5" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="400" text-anchor="middle">Also report selected top-1 teacher utility</text>
+    </g>
+  </g>
+  <g id="edge-labels">
+    <text x="500" y="30" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Experimental ranker · agreement with a frozen teacher</text>
+    <text x="500" y="1010" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="400" text-anchor="middle">Report global and per-length summaries; agreement is not listening quality.</text>
+    <text x="500" y="1080" fill="#1B2630" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="400" text-anchor="middle">No real-data cue-ranker quality result is established by this illustration.</text>
+  </g>
+</svg>

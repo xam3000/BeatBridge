@@ -11,6 +11,10 @@ Chronik aus Beobachtungen, Entscheidungen und gelernten Lektionen.
 | Datei | Rolle | Pflege |
 |---|---|---|
 | [`STATUS.md`](./STATUS.md) | Einstieg, verifizierter Stand und priorisierte nächste Schritte | Bei Meilensteinen und relevanten Standänderungen aktualisieren |
+| [`LISTENING_STUDY_ANALYSE_20261106.md`](./LISTENING_STUDY_ANALYSE_20261106.md) | Auswertung des korrigierten 20er-Modellhörtests: 19 Fünffach-Gleichstände, ein bestätigter Ausschluss; JSON-Ergebnisse und Reproduktionsskript verlinkt | Datierten Befund erhalten; Folgeauswertungen separat dokumentieren |
+| [`PIPELINE_UEBERSICHT.md`](./PIPELINE_UEBERSICHT.md) | Grafische Gesamtpipeline, Controller-/Rendererzuordnung, Evidenzgrenzen und Quellen (Stand 27.10.2026) | Bei belegten Änderungen an Datenfluss oder Ausführungsstand aktualisieren |
+| [`figures/flowcharts/README.md`](./figures/flowcharts/README.md) | Elf farbige Thesis-SVGs: Gesamtpipeline und Komponenten, englische Captions, Quellen und Generator (28.10.2026) | Bei belegten Pipelineänderungen oder gewünschter Layoutänderung aktualisieren |
+| [`figures/flowcharts/METRICS_README.md`](./figures/flowcharts/METRICS_README.md) | Zwölf zusätzliche Metrik-SVGs (12–23): Berechnung, Defaultgewichte, Interpretation, Captions und Quellen (29.10.2026) | Bei belegten Metrikänderungen aktualisieren; Run-Konfigurationen bleiben maßgeblich |
 | [`Projekt-Gesamtuebersicht.md`](./Projekt-Gesamtuebersicht.md) | Maßgeblicher Forschungsrahmen, Scope und Zeitplanung | Nur bei bewussten Projektentscheidungen ändern |
 | [`GUI_SPECIFICATION.md`](./GUI_SPECIFICATION.md) | Implementierbares Zielbild für Paar-Editor, Datenvisualisierung, Vergleich und gestufte GUI-Umsetzung | Bei bewussten UX-/GUI-Entscheidungen aktualisieren; keine Pipelineverträge duplizieren |
 | [`CLI.md`](./CLI.md) | Installation, Kommandozeilen-Aufrufe, Renderer und Fehlerbehebung | Bei Änderungen an CLI-Argumenten oder Laufzeitvoraussetzungen aktualisieren |
