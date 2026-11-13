@@ -1,4 +1,12 @@
-# Results evidence ledger (2026-10-14; listening update 2026-11-06)
+# Results evidence ledger (2026-10-14; thesis update 2026-11-11)
+
+Update 2026-11-11: P5 is now incorporated in the thesis, including its exclusion,
+all-tie result, lack of absolute criterion scores and actual listening exposure.
+The author's revision scope removes GUI coverage, a current large user study,
+correction-effort/dance-usefulness tasks, extra variable-batch diagnosis and
+additional reproduction/participant-data tasks. This changes no historical
+artefact, licence evidence or supervisor decision. See
+`docs/masterarbeit/THESIS_REVISION_20261111.md` for implemented changes and gaps.
 
 Update 2026-11-06: the official renderfix listening set is now analyzed in P5.
 P4's dated statement that its replacement was unrated describes 2026-11-05.
@@ -38,7 +46,10 @@ test NPZ was loaded for this ledger.
 | P5 | Renderfix shared-stimulus model listening study: one rater, 19 ranked four-bar cues, 19 five-way ties; each learned model versus Equal Power: 0 wins, 19 ties, 0 losses | `output/four_models_shared_20pairs_validation_20261105_renderfix/{manifest,ratings,answer_key}.json`; ratings exported `2026-11-06T10:00:13.657Z`, ratings SHA-256 `c32b48d50fb19590201b5cf3943fc1f558f051fd4a58d223528502b09c0091a0`; `docs/LISTENING_STUDY_ANALYSE_20261106.{md,json}`; reproduction: `scripts/analyze_listening_export_20261106.py` | 20 heard examples, but example 11 has no ranks and is excluded on explicit rater confirmation because of perceived tempo mismatch. 95 explicit valid ranks; all 19 ranked rows give every candidate place 1. No absolute criterion scores. Five directed track pairs, five distinct audio hashes; correlated cues; v1 validation selection, incompatible training/renderer contracts, variable model out of its own validation domain, residual unblinding. All 100 WAV SHA-256 checks matched. No observed preference advantage, no equivalence or absolute quality claim. The 190 derived pairwise ties are not independent observations. |
 | C1 | Learned cue ranker has synthetic training/evaluation only | `output/training_runs/cue_ranker_synthetic_train_validation_smoke_all_lengths_20260825/history.json`, `docs/CUE_RANKER_MODEL_PROTOCOL.md`, `docs/STATUS.md` | Teacher agreement on synthetic data is no real-data cue-selection or perceptual result. |
 
-Outstanding evidence: frozen independent held-out controller evaluation; completed
-ratings for the remaining legacy sets in P4; real-data learned-ranker training and comparison on identical
-candidate groups; one- and three-bar experiments; manual correction effort and
-dance usefulness; participant recruitment and prespecified statistical analysis.
+Remaining evidence gaps: protocol-matched unlearned references and ablations;
+a controlled representation comparison; an independent held-out controller
+evaluation; real-data learned-ranker training and comparison on identical
+candidate groups; one- and three-bar results and matched length comparisons.
+Remaining legacy sets in P4 still provide no completed ratings; they are not
+made additional thesis-completion requirements here. A possible later broad
+user study is future work only under the author's 2026-11-11 scope decision.

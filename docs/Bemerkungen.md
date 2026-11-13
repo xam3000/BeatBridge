@@ -1,5 +1,111 @@
 # Beobachtungen, Entscheidungen und Gelerntes
 
+## 2026-11-11 — Thesis nach Autorenauftrag überarbeitet und geprüft
+
+- **Fragestellung und Reasoning:** Lässt sich der aktuelle Thesis-Stand nach
+  `docs/masterarbeit/AUFTRAG_THESIS_UEBERARBEITUNG_20261111.md` vollständig
+  redaktionell und evidenzgebunden überarbeiten, ohne Ergebnisse,
+  Formalentscheidungen, Rechte oder Studienbedingungen zu erfinden? Besonders
+  kritisch waren veraltete Angaben zur noch offenen Modellhörbewertung,
+  unpassende Baseline-Versprechen und mehrfach vorhandene abgewählte Aufgaben.
+- **Eingaben/Setup:** Pflichtunterlagen, Multi-Session-Disziplin, alle aktiven
+  LaTeX-Kapitel und Formalia, historischer Audit vom 6. November,
+  `RESULTS_EVIDENCE_LEDGER.md`, `LISTENING_STUDY_ANALYSE_20261106.{md,json}`,
+  lokale Manifeste sowie vorhandene aufTAKT-Provenienz. Der Overleaf-
+  Arbeitsbaum war zu Beginn sauber; im Hauptrepo waren der abweichende
+  Overleaf-Gitlink und die unversionierte Auftragsdatei vorhanden. Vorher-
+  Quellen samt SHA-Liste wurden unter `output/thesis_revision_20261111/`
+  gesichert. Alle Python-Aufrufe nutzten `.venv\Scripts\python.exe`.
+- **Umsetzung:** Abstracts, Fazit und Anhang ausgearbeitet; GUI-Inhalte und
+  leeren Nutzerstudienabschnitt entfernt; Formalia unverändert bestätigt;
+  abgewählte Diagnose-/Reproduktions-/Teilnehmerdaten-TODOs entfernt;
+  Forschungsfragen und Beiträge an vorhandene Evidenz angepasst; korrigierten
+  Hörtest und tatsächliche Exposition in alle betroffenen Kapitel übernommen.
+  Der mögliche spätere große Nutzertest steht nur in Kapitel 7/Future Work.
+  Alle restlichen Forschungs- und Nachweislücken stehen als klare Grenzen im
+  Fließtext. Vollständige Entscheidungen und Restlücken:
+  `docs/masterarbeit/THESIS_REVISION_20261111.md`.
+- **Prüflauf 1 — statischer Evidenz-/LaTeX-Audit nach Hauptüberarbeitung:**
+  `.venv\Scripts\python.exe -X utf8 -B docs/masterarbeit/audit_thesis.py --report docs/masterarbeit/audit_20261111_revision.json`.
+  Umfang: vier Datasets und deren Train-/Validation-Zuordnung, vier
+  September-Runs samt eingeschränktem CPU-Checkpoint-Metadatenlesen,
+  historische Ergebnisdateien, Batches, Sweep und LaTeX-Struktur. Ergebnis:
+  Exit 0, 51 Datei-Hashes ohne Abweichung, keine Dataset-Zuordnungsfehler,
+  undefinierten Referenzen, doppelten Labels, fehlenden oder ungenutzten
+  Literaturkeys, fehlenden Inputs/Grafiken oder Environmentfehler. 26 Keys,
+  26 Bibliographieeinträge, null TODOs. Keine Testtensoren, Audios oder
+  Antwortschlüsselinhalte geöffnet. Das bestehende Auditskript liest das alte
+  öffentliche 20er-Manifest nur für unveränderte Cue-/Split-Expositionsdaten;
+  dessen alte Bewertungen werden nicht als Ergebnis verwendet.
+- **Prüflauf 2 — erster tatsächlicher Gesamtbuild:**
+  `compile_latex_document({path: "D:\\Documents\\00Uni\\00master\\BeatBridge\\overleaf", mainFile: "CGThesis.tex"})`.
+  Der integrierte Desktop-Compiler meldete `kind=success`: das aktuelle
+  Gesamtprojekt kompiliert. Kein Terminal-TeX erforderlich. Der Toolaufruf
+  liefert kein exportiertes PDF und keinen detaillierten Box-/Seitenreport;
+  keine visuelle Kontrolle aus Build-Erfolg abgeleitet.
+- **Prüflauf 3 — erste Whitespace-/Diffkontrolle:**
+  `git -C overleaf diff --check` meldete eine neue Leerzeile am Ende von
+  `chapters/05_results.tex` (Zeile 152). `git diff --check` im Hauptrepo war
+  unauffällig. Die Leerzeile wurde entfernt. Die zusätzlichen Git-Hinweise
+  zu LF→CRLF stammen aus der vorhandenen Zeilenendekonfiguration und sind
+  keine Inhaltsfehler. Schlussfolgerung: korrigieren und Abschlusscheck
+  getrennt mit eigenem Exit-Code wiederholen.
+- **Unabhängiger lesender Kreuzreview:** Gemäß Abschnitt 7 der
+  Multi-Session-Disziplin ein anderer Modelltyp mit frischem Kontext;
+  Planreview und anschließend vollständiger Quellenreview. Keine Tests oder
+  Änderungen durch den Reviewer. Zwei Befunde: verbliebener falscher Satz
+  „learned vocal-aware models have no completed perceptual evaluation“ und
+  statisch zu breite Trainingstabelle. Satz auf abgeschlossenen explorativen
+  Gleichstandsbefund mit fehlenden Vocal-Kriterienscores korrigiert; Tabelle
+  auf `tabularx` mit `textwidth` und umbrochenen Überschriften umgestellt.
+  Der abschließende lesende Review bestätigte beide Korrekturen und fand
+  keine weiteren konkreten Fehler; PDF-Sichtprüfung blieb ausdrücklich offen.
+- **Prüflauf 4 — Revisionsinvarianten und aktuelle Hörtestmetadaten:**
+  `.venv\Scripts\python.exe -X utf8 -B docs/masterarbeit/verify_thesis_revision_20261111.py`.
+  Ergebnis: Exit 0, alle 18 Invarianten bestanden. Aktive Formalia vor/nach
+  identisch; `cg.cls` und Bibliographie bytegleich; alle Gleichungs-, Align-
+  und Listingblöcke der bestehenden Fließtextkapitel identisch;
+  Zitationsmengen unverändert; keine GUI-/TODO-Reste einschließlich
+  Kommentaren; entfernter leerer Nutzerstudienabschnitt ohne Restreferenz;
+  keine bekannte veraltete „noch keine Modellhörbewertung“-Aussage;
+  sämtliche vollständigen Repository-/Runpfade des Anhangs vorhanden.
+  Tatsächliche aktuelle Ratings erneut gelesen: 20 Zeilen, 19 vollständige
+  Fünffach-Gleichstände, 95 explizite Plätze, nur Beispiel 11 vollständig
+  ungerankt. Eingangsdatei-Hashes gegen die Analyse vom 6. November identisch;
+  100 damals geprüfte WAV-Hashes im Analyseprotokoll enthalten. Die WAVs
+  wurden dabei nicht erneut gelesen. Bericht:
+  `docs/masterarbeit/revision_invariants_20261111.json`. Dieser datierte
+  Vorher-/Nachher-Check benötigt den lokalen Vorher-Snapshot; er ist kein
+  allgemeiner Fresh-Checkout-Reproduktionstest.
+- **Prüflauf 5 — finaler Gesamtbuild nach Reviewkorrekturen:** Derselbe
+  integrierte Compileraufruf wie in Prüflauf 2. Wieder `kind=success`.
+  Beide Toolantworten dauerhaft in
+  `docs/masterarbeit/build_20261111_revision.json`. Kein exportiertes PDF
+  und keine visuelle Seitenkontrolle; kein Nachweis über Overfull-Boxen
+  jenseits der korrigierten statischen Tabellenbreite.
+- **Prüflauf 6 — finaler statischer Audit:**
+  `.venv\Scripts\python.exe -X utf8 -B docs/masterarbeit/audit_thesis.py --report docs/masterarbeit/audit_20261111_revision_final.json`.
+  Exit 0; erneut 51/51 Hashes, null Dataset-Zuordnungs-/Referenz-/Zitations-/
+  Environmentfehler, null TODOs. Diese zweite Fassung bindet den endgültigen
+  Quellenstand nach beiden Reviewkorrekturen. Die erste Fassung bleibt als
+  historischer Prüfstand erhalten.
+- **Prüflauf 7 — Abschluss-Diffkontrollen:**
+  `git -C overleaf diff --check` und `git diff --check` jeweils separat
+  ausgeführt: beide Exit 0, keine Whitespacefehler; lediglich die bestehenden
+  LF→CRLF-Konfigurationshinweise. Umfang der Änderungen sind Thesis-Quellen
+  und zugehörige Dokumentation/Prüfberichte.
+- **Schlussfolgerung/nächster Schritt:** Der Autorenauftrag ist soweit durch
+  vorhandene Belege möglich umgesetzt; der Gesamtbuild ist erfolgreich.
+  Null TODOs bedeutet keine vollständige experimentelle Abdeckung. Es fehlen
+  weiterhin passende Baselines/Ablationen, Repräsentationsvergleich, reale
+  Cue-Ranker-Evaluation, Ein-/Dreitaktbefunde, globale unabhängige
+  Testpopulation und vollständige Korpus-/aufTAKT-Nachweise; eine formale
+  Betreuungsentscheidung zur übrigen Aufgabenstellung ist nicht belegt.
+  Visuelle PDF-Kontrolle bleibt offen. Große Nutzerstudie, Zusatzdiagnose,
+  Fresh-Environment-Reproduktion und neue Teilnehmerdatenerhebung sind
+  ausdrücklich keine aktuellen Abschlusskriterien. Keine neuen Audio-/Hör-
+  oder Trainingsläufe, keine Originaldaten-/GUI-Codeänderung, kein Commit.
+
 ## 2026-11-04 — Alle verbleibenden Thesis-Kapitel in den Schreibstil des Nutzers überführt
 
 - **Fragestellung/Reasoning:** Gleiche Aufgabe wie am 2026-10-26, jetzt für die

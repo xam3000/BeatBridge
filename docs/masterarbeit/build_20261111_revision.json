@@ -1,0 +1,28 @@
+{
+  "date": "2026-11-11",
+  "scope": "Two full-project compilation requests using the desktop editor compiler; no PDF export or visual page inspection.",
+  "initial": {
+    "status": "fulfilled",
+    "value": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"path\":\"D:\\\\Documents\\\\00Uni\\\\00master\\\\BeatBridge\\\\overleaf\",\"mainDocument\":\"D:\\\\Documents\\\\00Uni\\\\00master\\\\BeatBridge\\\\overleaf/CGThesis.tex\",\"kind\":\"success\",\"message\":\"The current source compiled successfully with the desktop editor's compiler.\"}"
+        }
+      ],
+      "isError": false
+    }
+  },
+  "final": {
+    "status": "fulfilled",
+    "value": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"path\":\"D:\\\\Documents\\\\00Uni\\\\00master\\\\BeatBridge\\\\overleaf\",\"mainDocument\":\"D:\\\\Documents\\\\00Uni\\\\00master\\\\BeatBridge\\\\overleaf/CGThesis.tex\",\"kind\":\"success\",\"message\":\"The current source compiled successfully with the desktop editor's compiler.\"}"
+        }
+      ],
+      "isError": false
+    }
+  }
+}

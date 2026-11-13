@@ -1,0 +1,24 @@
+{
+  "checks": {
+    "formal_active_source_unchanged:meta.tex": true,
+    "formal_active_source_unchanged:CGThesis.tex": true,
+    "unchanged:cg.cls": true,
+    "unchanged:bibliography.bib": true,
+    "math_and_listings_unchanged:02_relatedWork": true,
+    "math_and_listings_unchanged:03_mainPart": true,
+    "math_and_listings_unchanged:04_implementation": true,
+    "math_and_listings_unchanged:05_results": true,
+    "math_and_listings_unchanged:06_discussion": true,
+    "citation_sets_unchanged": true,
+    "no_gui_or_todo_including_comments": true,
+    "removed_empty_user_results": true,
+    "no_stale_missing_model_listening_claim": true,
+    "appendix_repository_paths_exist": true,
+    "appendix_run_roots_exist": true,
+    "19_explicit_five_way_ties_one_exclusion_11": true,
+    "study_input_hashes_match_analysis": true,
+    "study_records_100_previously_verified_audio_hashes": true
+  },
+  "all_passed": true,
+  "scope": "Source invariants and existing study metadata; no audio or test tensor reads; no answer-key content read; no new experiments or layout certification."
+}

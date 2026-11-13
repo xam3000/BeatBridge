@@ -2,6 +2,22 @@
 
 _Quelle: frühere Ausarbeitung (ChatGPT-Diskussion), ins Projekt übernommen am 2026-07-17. Dies ist der maßgebliche Kontext für Ziel, Scope und Zeitplanung der Masterarbeit._
 
+> **Thesis-Scope vom 2026-11-11 (Autorenauftrag):** Für die Überarbeitung unter
+> `overleaf/` sind die bestehenden Formalia bestätigt. GUI-Inhalte werden aus
+> der Thesis entfernt; GUI-Software bleibt bestehen. Eine große Nutzerstudie
+> sowie aktuelle Messungen zu Korrekturaufwand und Tanznutzen sind keine
+> Abschlussaufgaben; eine mögliche spätere Studie steht allein in Future Work.
+> Zusätzliche Variable-Grid-/Rendererdiagnose, Fresh-Environment-Reproduktion
+> und Teilnehmerdatenerhebung sind ebenfalls abgewählt. Dies dokumentiert die
+> Entscheidung des Autors, keinen nachgewiesenen Lizenzinhalt und keinen
+> Betreuungsbeschluss zur übrigen Aufgabenstellung. Verbleibende wissenschaftliche
+> Evidenzlücken bleiben ausdrücklich benannt. Der korrigierte Modellhörtest
+> ergibt 19 Fünffach-Gleichstände bei einem ungerankten Ausschluss, keinen
+> beobachteten Präferenzvorteil und keinen Äquivalenznachweis. Auftrag und
+> Umsetzung: [`masterarbeit/THESIS_REVISION_20261111.md`](./masterarbeit/THESIS_REVISION_20261111.md).
+> Entgegenstehende Anforderungen im historischen Exposé unten werden für
+> diesen Thesis-Auftrag durch diese Präzisierung ersetzt.
+
 > **Scope-Präzisierung vom 2026-07-29:** Wissenschaftlicher Kern ist das
 > selbstüberwachte Lernen zeitabhängiger Mixing-Kurven ohne
 > Ground-Truth-Kontrollkurven. Ein differenzierbarer Renderer wendet die

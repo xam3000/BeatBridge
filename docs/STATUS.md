@@ -1,3 +1,32 @@
+# Thesis gemäß Autorenauftrag überarbeitet am 2026-11-11
+
+Die Arbeit unter `overleaf/` enthält jetzt beide Zusammenfassungen, ein
+evidenzgebundenes Fazit und einen ausgefüllten Protokoll-/Artefakt-/Hörtestanhang.
+GUI-Inhalte und abgewählte Studien-, Diagnose- und Reproduktionsaufträge sind
+aus der Thesis entfernt; die bestätigten aktiven Formalia bleiben unverändert.
+Forschungsfragen und Beiträge sind an die vorhandenen Vergleiche angepasst,
+ohne eine formale Betreuungsentscheidung zu behaupten. Der korrigierte
+Modellhörtest ist durchgehend eingearbeitet: 19 Fünffach-Gleichstände,
+Beispiel 11 ohne Ranking ausgeschlossen, kein beobachteter Präferenzgewinn
+und kein Gleichwertigkeitsnachweis. Die tatsächliche Hörexposition vom
+6. November ist berücksichtigt. Alle verbleibenden Evidenzlücken stehen im
+Fließtext statt in veralteten TODO-Aufträgen.
+
+Der integrierte LaTeX-Compiler hat den Gesamtbuild erfolgreich ausgeführt.
+Statischer Audit: 51 Datei-Hashes ohne Abweichung, keine Referenz-,
+Zitations-, Dataset-Zuordnungs- oder Environmentfehler, null TODOs.
+18 Revisionsinvarianten bestanden; unabhängiger Quellenreview mit zwei
+umgesetzten Korrekturen. Eine visuelle PDF-Kontrolle bleibt ausstehend.
+Offen bleiben insbesondere passende Baselines/Ablationen,
+Repräsentationsvergleich, reale Cue-Ranker-Evaluation, Ein-/Dreitaktfälle,
+globale unabhängige Testpopulation, Korpus-/aufTAKT-Nachweise und die formale
+Abdeckung der verbleibenden Aufgabenstellungsanteile. Keine neuen
+Experimente, keine Software-/Originaldatenänderung, kein Commit.
+Auftrag, Entscheidungen und vollständige Restlücken:
+[`masterarbeit/THESIS_REVISION_20261111.md`](./masterarbeit/THESIS_REVISION_20261111.md).
+Testläufe: [`Bemerkungen.md`](./Bemerkungen.md).
+Die folgenden älteren Thesis-Audits beschreiben ihren damaligen Stand.
+
 # Renderfix-Hörtest ausgewertet am 2026-11-06: 19 Fünffach-Gleichstände
 
 Der Nutzer hat den neuesten korrigierten 20er-Satz
