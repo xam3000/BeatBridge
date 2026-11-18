@@ -1,5 +1,35 @@
 # Beobachtungen, Entscheidungen und Gelerntes
 
+## 2026-11-18 — Fertige PowerPoints zur Versionierung übernommen
+
+- **Fragestellung und Reasoning:** Die beiden fertigen Vorträge waren wegen
+  der Git-Regel `output/` bisher nicht im gepushten Commit. Auf Nutzerauftrag
+  sollen sie außerhalb dieses Ordners versioniert und gepusht werden.
+- **Eingaben/Setup:** Sauberer Branch `main`, Startcommit `aa4b24f`; die zwei
+  vorhandenen PPTX-Dateien aus `presentations/output/`. Keine neue Generierung.
+- **Umsetzung:** Erste Fassung nach `presentations/` verschoben. Die Stilrevision
+  ließ sich mit `Move-Item` nicht verschieben: Windows meldete, dass ein anderer
+  Prozess die Datei verwendet. Deshalb mit `Copy-Item` nach `presentations/`
+  übernommen; die gesperrte Quelle bleibt vorerst im ignorierten Output-Ordner.
+  Dokumentationslinks und die drei betroffenen Builder-Pfade angepasst.
+- **Prüflauf 1 — Dateiinhalt vor/nach Übernahme:** PowerShell `Get-FileHash
+  -Algorithm SHA256` vor und nach `Move-Item` beziehungsweise `Copy-Item`.
+  Beide Vergleiche bestanden. Erste Fassung:
+  `c5f89464194edd7f75db1822f4ffdae7fd29d24faf65d52f34cc84dc17371d4b`;
+  vorhandene Stilrevision:
+  `d34c24abecbfd325d61977e73a6ab31b2603c87206d82bb1861019c64165c673`.
+  Der aktuelle Hash der Stilrevision unterscheidet sich vom historischen
+  Erstellungsnachweis; übernommen wurde die vorgefundene lokale Datei unverändert.
+  Keine neue Inhalts-, Layout- oder PowerPoint-Laufzeitprüfung.
+- **Prüflauf 2 — Patchkontrolle:** `git diff --check` nach den Pfadanpassungen:
+  bestanden, keine Whitespace-Fehler. Git meldet nur die vorhandene automatische
+  LF-/CRLF-Konvertierung. `git status --short --branch` zeigt die sechs
+  angepassten Textdateien und beide neuen PPTX-Dateien; Hinweis auf fehlenden
+  Zugriff auf `.pytest_cache/`, ohne Auswirkung auf diese Dateien.
+- **Schlussfolgerung/nächster Schritt:** Beide Dateien gezielt mit den
+  Pfadanpassungen committen und nach `origin/main` pushen. Die gesperrte
+  Output-Kopie kann nach Freigabe durch den anderen Prozess entfernt werden.
+
 ## 2026-11-11 — Thesis nach Autorenauftrag überarbeitet und geprüft
 
 - **Fragestellung und Reasoning:** Lässt sich der aktuelle Thesis-Stand nach
@@ -7694,3 +7724,226 @@ Caches werden nicht migriert oder überschrieben.
   Bericht in `docs/LISTENING_STUDY_ANALYSE_20261106.md`, Evidenz P5 im Ledger
   und neuer STATUS-Einstieg. Keine Audio-/Ratingänderung, kein Training,
   keine Thesisänderung, kein Commit.
+
+## 2026-11-16 – Abschlussvortrag in der bereitgestellten ICG-PowerPoint-Vorlage
+
+- **Fragestellung und Reasoning:** Ein ungefähr 20-minütiger deutscher Vortrag
+  soll zusammen mit der fertigen Overleaf-Thesis ohne Repositorykenntnis
+  verständlich sein. Publikum: primär Computergrafik-Forschende mit
+  ML-Kenntnissen. Geprüft wurden deshalb Vorlagentreue, Verständlichkeit des
+  Controller–Renderer-Lernprinzips, Deckung der Aussagen durch die aktuelle
+  Thesis, Lesbarkeit und Nutzbarkeit der fertigen PowerPoint. Keine neue
+  empirische Aussage sollte allein durch die Präsentation entstehen.
+- **Eingaben/Setup:** Original `icg_slide_template.pptx` (fünf Vorlagenfolien,
+  9144000 × 5143500 EMU = 960 × 540 px, Lato Light), aktuelle Kapitel unter
+  `overleaf/`, insbesondere Abstract, Methodik, Ergebnisse, Diskussion und
+  Fazit. Vorgefundene Nutzeränderung am Overleaf-Unterrepository und neue
+  Originalvorlage erhalten. Lokale Dateiautorierung mit gebündeltem Node
+  v24.22.1 und `@oai/artifact-tool`; alle Pythonprüfungen über
+  `.venv/Scripts/python.exe`. Plan und Quellenregeln in
+  `presentations/PLAN.md`, Folien/Notizen in `presentations/content.mjs`.
+- **Werkzeuglesefehler und Routing:** Das `.skill`-Archiv wurde zunächst als
+  Klartext gelesen; die anschließende ZIP-Ausgabe scheiterte einmal an
+  Windows-cp1252. Mit `.venv/Scripts/python.exe -X utf8` war die vollständige
+  Lektüre erfolgreich. Zwei versuchsweise gelesene API-Referenzpfade
+  (`collections.spec.md`, `text-style.md`) existierten nicht; die vorhandenen
+  Referenzen zu Presentation und Rich Text wurden stattdessen gelesen.
+  `artifactSession.status()` meldete „Artifact Session transaction is invalid“;
+  daher lokale PPTX-Dateiautorierung. Keine dieser Sonden war ein Audio- oder
+  ML-Test. Der verpflichtende Operationsmarker wurde einmal erfolgreich vor
+  der ersten Autorierung ausgeführt.
+- **Testlauf 1 – Vorlage importieren und rendern:**
+  Befehl: gebündelter `node.exe presentations/.build/inspect-template.mjs`.
+  Erster Aufruf scheiterte wegen eines Windows-Laufwerkpfads als ESM-Import
+  (`ERR_UNSUPPORTED_ESM_URL_SCHEME`); Umstellung auf eine `file:`-URL.
+  Zweiter Aufruf: **PASS**, fünf Vorlagenfolien und ihre Layouts gerendert,
+  Platzhalter, Schriften, Abmessungen und Master inventarisiert. Alle fünf
+  Bilder visuell gesichtet. Nichtfatale Warnung der schon in der Vorlage
+  eingebetteten Schrift: EOT „Lato Light“ vs. SFNT „Lato / Light“.
+  Schlussfolgerung: Vorlage durch Import/Kopien erhalten, keine Neugestaltung.
+- **Testläufe 2–6 – Build und Finalisierung:** Jeweils gebündelter
+  `node.exe presentations/build.mjs`; je Lauf alle 21 Folien gerendert.
+  - Lauf 2: Finalisierung blockiert, weil die deklarierten nativen
+    Tabellenfolien noch nicht jeweils als Layoutpolicy angegeben waren.
+    Ursache direkt aus dem Validator bestimmt; dieselben Foliennummern in
+    `--require-native-table-slide` ergänzt.
+  - Lauf 3: Native Chart-Prüfung verwirft leere Kategorien im fein
+    abgetasteten Equal-Power-Liniendiagramm. Das Diagramm wurde in einen
+    nativen XY-Plot mit vollständigen numerischen x-Werten umgestellt;
+    33 Stützstellen je cos-/sin-Gainkurve, keine fehlenden Datenpunkte.
+  - Lauf 4: Paket-/Layout-/Chartprüfungen bestanden; Reimport-Unterprozess
+    blockiert wegen fehlender `RUNTIME_NODE_MODULES`-Umgebungsvariable.
+    Gebündelten Modulpfad explizit gesetzt.
+  - Lauf 5: Alle inhaltlichen Strukturprüfungen und der Reimport bestanden;
+    Veröffentlichung scheitert am vom Workspace verweigerten Hardlink
+    (`EPERM`). Keine finale Datei veröffentlicht. Diagnose anhand der
+    konkreten `fs.link(stage, finalPath)`-Fehlerstelle.
+  - Lauf 6: **PASS** nach engem Windows-Kompatibilitätspfad: ausschließlich
+    für diese neue Zieldatei bei Hardlink-EPERM exklusive Dateikopie des
+    bereits validierten Stagings, kein Überschreiben, sämtliche finalen
+    Hashprüfungen unverändert aktiv. Kein Skill-/Validatorfile verändert.
+    Der Workaround und seine spätere Entfernung sind in
+    `presentations/README.md` dokumentiert.
+- **Ergebnis der Finalisierung:** 21 Folien, drei native Charts (Folien
+  2/8/9), sechs native Tabellen (10/11/12/14/19/20). Paketintegrität und
+  Layout jeweils null Findings, Layout null Warnungen; Referenzschrift
+  Lato Light an 336 Textverwendungen bestätigt. Charttitel und native
+  numerische Chartdaten bestanden, 21-seitiger Artifact-Tool-Reimport
+  bestanden. Die Tabellenarithmetik meldet keine Fehler, führt mangels
+  additiver Gesamtsummen jedoch keine Summenverifikation aus; Zahlen wurden
+  gegen die Thesis geprüft. PowerPoint-native Literalcharts, kein Anspruch
+  auf Google-Slides-/Excel-Workbook-Portabilität. Privater vollständiger
+  Beleg: `presentations/.build/validation.json`.
+- **Testlauf 7 – finale Datei erneut importieren und rendern:**
+  Befehl: gebündelter `node.exe presentations/.build/verify-final.mjs`.
+  **PASS:** finale SHA stimmt mit dem Receipt überein; 21 Folien, davon 18
+  sichtbar und drei ausgeblendet; alle vollständigen Sprechernotizen
+  erhalten; drei Charts, sechs Tabellen; keine offenen Namens-/Datumsfelder.
+  Zeitbudget 1180 Sekunden = 19:40 Minuten, 2034 Wörter Hauptvortragsnotizen.
+  Alle 21 finalen Folien erneut gerendert. 20 Renderbilder sind byteidentisch
+  mit dem letzten Autorenstand; Folie 10 hat einen Renderbyte-Unterschied,
+  wurde einzeln gesichtet und zeigt keinen inhaltlichen oder Layoutfehler.
+  Belege: `.build/final-audit.json`, `.build/final/`, `.build/final-inspect.ndjson`.
+- **Visuelle Prüfung und Reparaturen:** Alle 21 Folien einzeln in 1440 × 810
+  Pixeln gesichtet und gegen die Originalvorlage verglichen. Ein zu enger
+  Beschreibungstext auf der Proxy-Folie wurde gekürzt; die Direkt-/Lern-
+  Überschriften wurden verkürzt; die Hörtestgrenzen stehen nun direkt auf
+  der Ergebnisfolie. Die geänderten Folien 2/7/9/10/14/15 wurden nach dem
+  finalen Reimport nochmals einzeln gesichtet. Keine abgeschnittenen Texte,
+  störenden Überlagerungen oder offenen Vorlagefelder beobachtet.
+- **Unabhängiger Quellenreview:** Der durch den Repositoryskill geforderte
+  Review erfolgte in frischem Agentenkontext für Plan und finale
+  `content.mjs`, durch direkten Abgleich mit aktuellen Thesis-Kapiteln.
+  Keine materielle sachliche Blockade. Eingearbeitet: frühe Erklärung
+  gemeinsamer Netzgewichte gegenüber direkter Kurvenoptimierung,
+  Equal-Power-Definition, Singular „variabler Controller“ sowie
+  11.025-/44.100-Hz-Grenze in den Reservenotizen. Kein neuer Test durch den
+  Review-Agenten, ausschließlich Lese-/Suchzugriffe.
+- **Testlauf 8 – Abschlussintegrität und Dokumentationsdiff:**
+  `git diff --check -- .gitignore docs/STATUS.md` sowie eine
+  `.venv/Scripts/python.exe -X utf8`-Prüfung von finalem SHA, Original-
+  Vorlagen-SHA gegen den Referenzhash und `ZipFile.testzip()`.
+  **PASS**, Exit 0, keine Whitespacefehler; 290599 Bytes finale PPTX,
+  Vorlage unverändert, ZIP fehlerfrei.
+- **Schlussfolgerung und nächster Schritt:** Fertiges Ergebnis:
+  `presentations/output/BeatBridge_Mastervortrag_20min.pptx`, SHA-256
+  `c5f89464194edd7f75db1822f4ffdae7fd29d24faf65d52f34cc84dc17371d4b`.
+  Rund 20 Minuten einschließlich kurzer Pausen, ohne erforderliche externe
+  Audiodatei oder Live-Demo. Der Proxy-Befund wird strikt vom korrigierten
+  Ein-Rater-Modellhörtest getrennt: je Modell gegen Equal Power 0/19/0,
+  kein beobachteter Präferenzgewinn, kein Äquivalenznachweis. Die nächste
+  praktische Prüfung ist ein gesprochener Probevortrag in PowerPoint;
+  native PowerPoint-Laufzeit und tatsächliche Sprechdauer wurden hier
+  **nicht** geprüft. Keine pytest-/Audio-/Trainingsläufe, keine Änderung
+  von Thesis, Originalaudio, vorhandenen Studienartefakten oder Vorlage,
+  kein Commit. STATUS und reproduzierbare Präsentationsquellen ergänzt.
+
+## 2026-11-17 – Vortragsstil nach drei eigenen Präsentationen überarbeitet
+
+- **Fragestellung und Reasoning:** Nutzerauftrag: den vorhandenen BeatBridge-
+  Vortrag den drei ergänzten eigenen Vorträgen annähern. Zu prüfen waren
+  persönliche Gestaltung, Stichpunktstil, Hierarchie und Diagrammplatzierung
+  bei unveränderter wissenschaftlicher Evidenz und ungefähr 20 Minuten Dauer.
+- **Eingaben/Setup:** `presentations/older_presentations/seminar_master.pptx`
+  (28 Folien), `seminar_bachlor.pptx` (16) und `Move_to_the_Music.pptx` (23),
+  erste fertige BeatBridge-PowerPoint vom 16.11. und bestehende Notizen.
+  Originale vor Bearbeitung per SHA-256 inventarisiert. Gleiche 960 × 540 px
+  und ICG/Lato-Light-Grundgestaltung. Gebündelter Node v24.22.3 und Artifact
+  Tool, Runtime/Skillbundle 26.1116.12020; Pythonprüfungen ausschließlich über
+  `.venv/Scripts/python.exe`. Quellen/Plan in `STYLE_REVISION_20261117.md`.
+- **Werkzeugsonde:** Eine erste inline formulierte XML-/Fontinventur
+  scheiterte vor Python-Ausführung an PowerShell-Quoting (`ParserError`).
+  Keine Artefaktänderung. Als lokale `.py`-Datei mit UTF-8-Ausgabe ausgeführt.
+- **Referenzprüfung:**
+  `.venv/Scripts/python.exe -X utf8 presentations/.build/style-20261117/inventory.py`
+  und gebündelter
+  `node.exe presentations/.build/style-20261117/inspect-references.mjs`:
+  **PASS**, alle 67 Folien gerendert, drei Inhalts-/Layoutinventare und drei
+  Kontaktbögen. Kontaktbögen vollständig gesichtet; neun relevante Einzelfolien
+  zusätzlich in voller Größe für Thementitel, Schrift, native schwarze Listen,
+  Unterpunkte, rote Gliederung und Abbildungsplatzierung betrachtet. Die
+  nichtfatalen eingebetteten Lato-Namenswarnungen kommen aus den Originalen.
+  Schlussfolgerung: Layout stärker an den Seminardecks orientieren, Motivation
+  und schrittweise Erklärung zusätzlich am Tanzvortrag; keine fremden
+  fachlichen Abbildungen aus den Referenzen in BeatBridge übernehmen.
+- **Buildlauf 1:** gebündelter `node.exe presentations/build-style.mjs`.
+  Nach zwei Folien Fehler: `titleTextStyle` hat nur einen Getter. Direkt aus
+  API-Fehler und Referenz lokalisiert; vorhandene Style-Eigenschaften einzeln
+  gesetzt. Kein Problem mit den Quelldateien.
+- **Buildlauf 2:** gleicher Befehl. **PASS**, erste Stilfassung mit 22 Folien,
+  sechs nativen Tabellen und drei nativen Charts; Paket/Layout ohne Findings,
+  native Charts/Schriften/Reimport bestanden. Ein expliziter
+  `verify-final.mjs`-Reimport mit erneutem Rendern bestätigte 19 sichtbare und
+  drei versteckte Folien, vollständige Notizen und 1200 Sekunden Zeitbudget.
+  Dieser Zwischenstand wurde später in das private Buildverzeichnis verschoben.
+- **Gezielte Listendiagnose und zwei Entwurfsrenderläufe:**
+  `node.exe presentations/.build/style-20261117/probe-bullets.mjs` verglich drei
+  Arten der Style-Zuweisung. Alle drei Probe-PNGs erzeugt; nur die Variante
+  mit vorab gesetztem Textstil zeigte in dieser isolierten Probe sichtbaren
+  Inhalt. Das isolierte neue Deck verfügte nicht über die eingebettete
+  Lato-Schrift der eigentlichen Vorlage. Deshalb keine allgemeine Aussage
+  über PowerPoint aus dieser Sonde abgeleitet. Zwei anschließende
+  `node.exe presentations/build-style.mjs --draft`-Läufe renderten jeweils
+  alle 22 Folien erfolgreich: explizite Runstyles und durchgehend 16 pt
+  Listenschrift wie in den Referenzen. Betroffene Listen/Ergebnisfolien
+  gesichtet; OOXML-Einzüge separat kontrolliert. Keine Simulation von Bullets
+  mit Leerzeichen oder separaten Punkt-Textfeldern.
+- **Zwei weitere Finalisierungsversuche:** nach Stylefix beziehungsweise
+  anschließender Notizkorrektur bestanden die Paket-/Layout-/Chart-/Import-
+  Prüfungen, aber das Schreiben des schon vorhandenen privaten Receipts
+  scheiterte mit `EEXIST`. Der erste Wiederholungsversuch war bereits gestartet,
+  bevor der Fehler ausgewertet war; danach kein weiterer Versuch mit demselben
+  Receipt. Die eigenen Zwischenstände wurden einzeln ins private Buildverzeichnis
+  verschoben. Neuer Receiptpfad `validation-final.json`; keine Nutzerdatei
+  überschrieben. Gelernt: Bei Revisionen brauchen sowohl finale PPTX als auch
+  exklusiv geschriebener Receipt einen neuen Pfad.
+- **Finaler Buildlauf:** `node.exe presentations/build-style.mjs` mit neuer
+  Zieldatei `output/BeatBridge_Mastervortrag_20min_20261117.pptx` und neuem
+  Receipt: **PASS**, 22 Folien, Paket/Layout jeweils null Findings, Layout null
+  Warnungen, Lato Light an 322 Textverwendungen bestätigt, sechs native
+  Tabellen und drei native Charts, erfolgreiche erneute Artifact-Tool-Einlesung.
+  Bereits dokumentierter enger EPERM-Hardlink-Fallback bleibt für diese
+  autorisierte neue Zieldatei aktiv; exklusive Kopie und Hashprüfung erhalten.
+- **Finaler Reimport/Notizencheck:**
+  `node.exe presentations/.build/style-20261117/verify-final.mjs`: **PASS**.
+  22 Folien, davon 19 sichtbar und drei ausgeblendet; sechs Tabellen, drei
+  Charts, sämtliche erwarteten Notizen vorhanden; 1200 Sekunden und 2064
+  Wörter Hauptvortragsnotizen. Finale SHA entspricht dem Receipt. Alle 22
+  Folien erneut gerendert; vier Bilder (3/9/10/11) unterscheiden sich im
+  Renderbytevergleich vom Autorenstand, wurden zusätzlich gesichtet.
+  Anschließend alle finalen Folien einzeln in 1440 × 810 px kontrolliert.
+  Wiederholte Bildpfade lieferten teils widersprüchlich wirkende Vorschauen;
+  zusätzliche Kopien unter frischen Prüfnamen für die abschließende Sichtung
+  verwendet. Keine belastbare Ursache für dieses Anzeigeverhalten behauptet.
+- **Zahl-/Quellenerhalt:**
+  `.venv/Scripts/python.exe -X utf8 presentations/.build/style-20261117/verify-evidence.py`.
+  Erster Durchlauf bestätigte Tabellen/Originalhashes, fand wegen eines zu engen
+  Chartpfadfilters aber null Charts; dieser Teil war daher keine Chartprüfung.
+  Nach einer ersten Filterkorrektur schlug die neue Pflichtassertion für drei
+  befüllte Chartparts fehl. Diagnose der tatsächlichen ZIP-Pfade ergab
+  `ppt/slides/charts/` statt des angenommenen `ppt/charts/`. Korrigierter
+  Durchlauf **PASS**: sechs Tabelleninhalte und alle drei numerischen Chart-
+  Datensätze exakt wie in der ersten Fassung, 108 native Bullet-Absätze mit
+  korrekten Einzügen, fehlerfreies ZIP, drei Referenzhashes und Hash der
+  ersten BeatBridge-Fassung unverändert. Native Literalcharts wie zuvor;
+  keine neue Aussage zu Google-Slides- oder Workbook-Portabilität.
+- **Unabhängiger Stil-/Inhaltsreview:** Frischer Agentenkontext gemäß
+  Repositoryskill, reine Lese-/Bildsichtung von Plan, Referenzen, neuer
+  `style-content.mjs`/`build-style.mjs` und zentralen Ergebnisfolien. Keine
+  sachliche Blockade. 0/19/0, fehlender Äquivalenznachweis und abweichende
+  Modellverträge sichtbar erhalten. Review-Hinweis eingearbeitet: alte
+  räumliche Notizverweise „Kurven rechts“/„linke/rechte Seite“ an neue
+  Diagrammposition und Listenstruktur angepasst. Keine Tests durch den Reviewer.
+- **Dokumentationscheck:** `git diff --check -- .gitignore docs/STATUS.md docs/Bemerkungen.md`
+  bestand ohne Whitespacefehler; lediglich vorhandener LF/CRLF-Hinweis für
+  Bemerkungen. README, Stilrevision und STATUS mit dem neuen Ergebnis ergänzt.
+- **Schlussfolgerung und nächster Schritt:** Persönlicher Referenzstil
+  umgesetzt: einfache Thementitel, schwarze native Listen mit Unterpunkten,
+  rote Gliederung und größere Kurvendiagramme, weniger rote Zwischenüberschriften
+  und erklärende Fußtexte. Kritische Ergebnisgrenzen bleiben sichtbar.
+  Finale PPTX: 286166 Bytes, SHA-256
+  `d9945f1dd90d819616933ad2debd822cad1d451dae47d319f0458ee93b2395a9`.
+  Erste Fassung und Referenzen erhalten. Kein neuer Audio-/ML-Test,
+  keine Thesis- oder Originaldatenänderung, kein Commit. Eine native
+  PowerPoint-Laufzeitprüfung und ein tatsächlich gesprochener Probevortrag
+  sind weiterhin nicht durchgeführt; 20 Minuten sind ein geplantes Budget.
