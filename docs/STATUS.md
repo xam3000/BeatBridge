@@ -1,3 +1,48 @@
+# Vortragsstil an drei eigene Präsentationen angepasst am 2026-11-17
+
+Aktuelle Fassung:
+[`BeatBridge_Mastervortrag_20min_20261117.pptx`](../presentations/output/BeatBridge_Mastervortrag_20min_20261117.pptx).
+Die drei eigenen Referenzen unter `presentations/older_presentations/` wurden
+vollständig gerendert und für Gliederung, Schrift, schwarze native Listen,
+Thementitel und größere Diagramme ausgewertet. Die Stilrevision hat
+18 Vortragsfolien einschließlich Titel und Gliederung, eine Abschlussfolie
+und drei ausgeblendete Reserven. Geplante Dauer 20:00 Minuten,
+2064 Wörter Hauptvortragsnotizen. Räumliche Verweise in den Notizen angepasst.
+
+Alle sechs nativen Tabellen und die numerischen Daten aller drei Charts
+stimmen mit der Fassung vom 16.11. überein; diese und alle drei Referenzdateien
+sind hashgeprüft unverändert. 108 native Bullet-Absätze. Finales Paket,
+Layout, Schriftwahl und Reimport bestanden; alle finalen Folien gerendert
+und einzeln gesichtet. Inhalts-/Stilreview ohne sachliche Blockade.
+SHA-256: `d9945f1dd90d819616933ad2debd822cad1d451dae47d319f0458ee93b2395a9`.
+Quellen und Revision: [`presentations/README.md`](../presentations/README.md)
+und [`STYLE_REVISION_20261117.md`](../presentations/STYLE_REVISION_20261117.md).
+Prüfungen und Iterationsfehler: [`Bemerkungen.md`](./Bemerkungen.md).
+Keine neuen Audio-/ML-Experimente, keine Thesisänderung, kein Commit.
+Native PowerPoint-Laufzeit und gesprochener Probevortrag bleiben ungeprüft.
+
+# Abschlusspräsentation in ICG-Vorlage erstellt am 2026-11-16
+
+[`presentations/output/BeatBridge_Mastervortrag_20min.pptx`](../presentations/output/BeatBridge_Mastervortrag_20min.pptx)
+enthält 17 deutsche Vortragsfolien, eine Abschlussfolie und drei ausgeblendete
+Reservefolien. Grundlage ist die aktuelle Thesis unter `overleaf/`; Zielgruppe
+sind Forschende der Computergrafik mit ML-Kenntnissen. Zeitbudget: 19:40 Minuten
+plus kurze Pausen, mit vollständigen Sprechernotizen und Kapitelverweisen.
+Die originale `icg_slide_template.pptx` wurde importiert und kopiert;
+Seitenformat, Lato Light, Logos, Layouts und Fußzeilen sind erhalten.
+Der Vortrag trennt Proxy-Optimierung, historischen Direkt-Control-Befund
+und korrigierten Modellhörtest (0/19/0 je Modell gegen Equal Power).
+
+Unabhängiger Inhaltsreview ohne sachliche Blockade; alle 21 Folien gerendert
+und einzeln visuell geprüft. Paket-, Layout-, Referenzschrift-, Tabellen-,
+Diagramm- und Reimportprüfungen bestanden. Finale SHA-256:
+`c5f89464194edd7f75db1822f4ffdae7fd29d24faf65d52f34cc84dc17371d4b`.
+Eine native PowerPoint-Prüfung und ein gesprochener Probevortrag sind nicht
+ausgeführt. Bearbeitbare Inhalte, Bauanleitung und Umfang:
+[`presentations/README.md`](../presentations/README.md).
+Werkzeugfehler, Iterationen und Prüftiefe stehen in [`Bemerkungen.md`](./Bemerkungen.md).
+Keine Thesis-, Audio-, Trainings- oder Originalvorlagenänderung, kein Commit.
+
 # Thesis gemäß Autorenauftrag überarbeitet am 2026-11-11
 
 Die Arbeit unter `overleaf/` enthält jetzt beide Zusammenfassungen, ein

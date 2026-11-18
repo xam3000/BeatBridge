@@ -5,3 +5,4 @@ __pycache__/
 tmp/
 musik/
 .ipynb_checkpoints/
+presentations/.build/
