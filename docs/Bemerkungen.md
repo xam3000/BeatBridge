@@ -1,5 +1,35 @@
 # Beobachtungen, Entscheidungen und Gelerntes
 
+## 2026-11-18 — Fertige PowerPoints zur Versionierung übernommen
+
+- **Fragestellung und Reasoning:** Die beiden fertigen Vorträge waren wegen
+  der Git-Regel `output/` bisher nicht im gepushten Commit. Auf Nutzerauftrag
+  sollen sie außerhalb dieses Ordners versioniert und gepusht werden.
+- **Eingaben/Setup:** Sauberer Branch `main`, Startcommit `aa4b24f`; die zwei
+  vorhandenen PPTX-Dateien aus `presentations/output/`. Keine neue Generierung.
+- **Umsetzung:** Erste Fassung nach `presentations/` verschoben. Die Stilrevision
+  ließ sich mit `Move-Item` nicht verschieben: Windows meldete, dass ein anderer
+  Prozess die Datei verwendet. Deshalb mit `Copy-Item` nach `presentations/`
+  übernommen; die gesperrte Quelle bleibt vorerst im ignorierten Output-Ordner.
+  Dokumentationslinks und die drei betroffenen Builder-Pfade angepasst.
+- **Prüflauf 1 — Dateiinhalt vor/nach Übernahme:** PowerShell `Get-FileHash
+  -Algorithm SHA256` vor und nach `Move-Item` beziehungsweise `Copy-Item`.
+  Beide Vergleiche bestanden. Erste Fassung:
+  `c5f89464194edd7f75db1822f4ffdae7fd29d24faf65d52f34cc84dc17371d4b`;
+  vorhandene Stilrevision:
+  `d34c24abecbfd325d61977e73a6ab31b2603c87206d82bb1861019c64165c673`.
+  Der aktuelle Hash der Stilrevision unterscheidet sich vom historischen
+  Erstellungsnachweis; übernommen wurde die vorgefundene lokale Datei unverändert.
+  Keine neue Inhalts-, Layout- oder PowerPoint-Laufzeitprüfung.
+- **Prüflauf 2 — Patchkontrolle:** `git diff --check` nach den Pfadanpassungen:
+  bestanden, keine Whitespace-Fehler. Git meldet nur die vorhandene automatische
+  LF-/CRLF-Konvertierung. `git status --short --branch` zeigt die sechs
+  angepassten Textdateien und beide neuen PPTX-Dateien; Hinweis auf fehlenden
+  Zugriff auf `.pytest_cache/`, ohne Auswirkung auf diese Dateien.
+- **Schlussfolgerung/nächster Schritt:** Beide Dateien gezielt mit den
+  Pfadanpassungen committen und nach `origin/main` pushen. Die gesperrte
+  Output-Kopie kann nach Freigabe durch den anderen Prozess entfernt werden.
+
 ## 2026-11-11 — Thesis nach Autorenauftrag überarbeitet und geprüft
 
 - **Fragestellung und Reasoning:** Lässt sich der aktuelle Thesis-Stand nach

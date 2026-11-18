@@ -44,7 +44,7 @@ im Projektlog dokumentieren; STATUS/README aktualisieren. Kein Commit.
 
 ## Erreichter Stand
 
-Finale Datei: `output/BeatBridge_Mastervortrag_20min_20261117.pptx`.
+Finale Datei (seit 18.11.2026 verschoben): `BeatBridge_Mastervortrag_20min_20261117.pptx`.
 22 Gesamtfolien, davon 19 sichtbar, 1200 Sekunden geplante Vortragszeit und
 2064 Wörter Hauptvortragsnotizen. Sechs Tabellen und drei numerische Chart-
 Datensätze unverändert gegenüber der ersten Fassung; drei Originalreferenzen

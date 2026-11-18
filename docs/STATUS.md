@@ -1,7 +1,11 @@
 # Vortragsstil an drei eigene Präsentationen angepasst am 2026-11-17
 
 Aktuelle Fassung:
-[`BeatBridge_Mastervortrag_20min_20261117.pptx`](../presentations/output/BeatBridge_Mastervortrag_20min_20261117.pptx).
+[`BeatBridge_Mastervortrag_20min_20261117.pptx`](../presentations/BeatBridge_Mastervortrag_20min_20261117.pptx).
+Beide fertigen PowerPoints werden seit dem 18.11.2026 direkt unter
+`presentations/` versioniert. Die beim Verschieben gesperrte lokale Kopie der
+Stilrevision bleibt vorerst zusätzlich im ignorierten `presentations/output/`.
+Dateiübernahme und aktuelle Hashwerte: [`Bemerkungen.md`](./Bemerkungen.md).
 Die drei eigenen Referenzen unter `presentations/older_presentations/` wurden
 vollständig gerendert und für Gliederung, Schrift, schwarze native Listen,
 Thementitel und größere Diagramme ausgewertet. Die Stilrevision hat
@@ -23,7 +27,7 @@ Native PowerPoint-Laufzeit und gesprochener Probevortrag bleiben ungeprüft.
 
 # Abschlusspräsentation in ICG-Vorlage erstellt am 2026-11-16
 
-[`presentations/output/BeatBridge_Mastervortrag_20min.pptx`](../presentations/output/BeatBridge_Mastervortrag_20min.pptx)
+[`presentations/BeatBridge_Mastervortrag_20min.pptx`](../presentations/BeatBridge_Mastervortrag_20min.pptx)
 enthält 17 deutsche Vortragsfolien, eine Abschlussfolie und drei ausgeblendete
 Reservefolien. Grundlage ist die aktuelle Thesis unter `overleaf/`; Zielgruppe
 sind Forschende der Computergrafik mit ML-Kenntnissen. Zeitbudget: 19:40 Minuten

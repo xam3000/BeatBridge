@@ -10,7 +10,7 @@ const root=process.cwd(),build=path.join(root,'presentations/.build/style-202611
 const skill='C:/Users/max_h/.codex/plugins/cache/openai-primary-runtime/presentations/26.1116.12020/skills/presentations';
 process.env.RUNTIME_NODE_MODULES='C:/Program Files/WindowsApps/OpenAI.CodexPrimaryRuntime.v26-1116-1220-0_26.1116.1220.0_x64__3k8sg7r9htsxt/dependencies/node/node_modules';
 const {makeNativeBulletParagraphs,finalizePresentation}=await import(pathToFileURL(path.join(skill,'container_tools/artifact_tool_utils.mjs')).href);
-const source=path.join(root,'presentations/output/BeatBridge_Mastervortrag_20min.pptx');
+const source=path.join(root,'presentations/BeatBridge_Mastervortrag_20min.pptx');
 const reference=path.join(root,'presentations/older_presentations/seminar_master.pptx');
 const p=await PresentationFile.importPptx(await FileBlob.load(source));
 const font='Lato Light',ink='#000000',bg='#F2F2F2';
@@ -120,7 +120,7 @@ for(let i=0;i<slides.length;i++){
 await fs.writeFile(path.join(build,'content-inspect.ndjson'),(await p.inspect({select:'$.slides[*]',include:['index','title','layout','elements.text','notes.text']})).ndjson);
 if(process.argv.includes('--draft')){console.log('Draft render complete');process.exit(0);}
 const candidate=path.join(build,'candidate.pptx');await (await PresentationFile.exportPptx(p)).save(candidate);
-const final=path.join(root,'presentations/output/BeatBridge_Mastervortrag_20min_20261117.pptx');
+const final=path.join(root,'presentations/BeatBridge_Mastervortrag_20min_20261117.pptx');
 // Exclusive-copy fallback for the verified workspace hard-link EPERM only.
 const nativeLink=fs.link;
 fs.link=async(a,b)=>{try{return await nativeLink(a,b);}catch(e){if(e.code!=='EPERM'||b!==final||path.dirname(a)!==path.dirname(final)||!a.endsWith('.validated'))throw e;return fs.copyFile(a,b,fsConstants.COPYFILE_EXCL);}};

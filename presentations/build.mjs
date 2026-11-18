@@ -11,7 +11,7 @@ const skill='C:/Users/max_h/.codex/plugins/cache/openai-primary-runtime/presenta
 const template=path.join(root,'icg_slide_template.pptx');
 const font='Lato Light', red='#BE173B', ink='#171717', gray='#555555', bg='#F2F2F2', blue='#277B8E';
 await fs.mkdir(path.join(build,'slides'),{recursive:true});
-await fs.mkdir('presentations/output',{recursive:true});
+await fs.mkdir('presentations',{recursive:true});
 const p=await PresentationFile.importPptx(await FileBlob.load(template));
 // Shared template furniture: only the presenter's name and automatic numbering.
 for(const l of p.layouts.items) for(const s of l.shapes.items){
@@ -122,7 +122,7 @@ for(let i=0;i<slides.length;i++){
 }
 const candidate=path.join(build,'candidate.pptx');await (await PresentationFile.exportPptx(p)).save(candidate);
 const {finalizePresentation}=await import(pathToFileURL(path.join(skill,'container_tools/artifact_tool_utils.mjs')).href);
-const final=path.join(root,'presentations/output/BeatBridge_Mastervortrag_20min.pptx');
+const final=path.join(root,'presentations/BeatBridge_Mastervortrag_20min.pptx');
 // This workspace denies hard links. Retain the finalizer's no-overwrite semantics
 // with an exclusive copy of the already validated stage; all final hash checks run.
 const nativeLink=fs.link;

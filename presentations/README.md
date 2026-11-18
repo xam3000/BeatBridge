@@ -1,12 +1,14 @@
 # BeatBridge – Mastervortrag
 
-Die aktuelle PowerPoint steht in `output/BeatBridge_Mastervortrag_20min_20261117.pptx`.
+Die aktuelle PowerPoint steht in `BeatBridge_Mastervortrag_20min_20261117.pptx`.
 Sie folgt den drei eigenen Vorträgen unter `older_presentations/`: einfache
 Thementitel, schwarze native Stichpunkte und Unterpunkte, eine rote
 Gliederungsfolie und größere Diagramme. 18 Vortragsfolien einschließlich Titel
 und Gliederung, eine Abschlussfolie und drei ausgeblendete Reservefolien.
 Das geplante Zeitbudget beträgt 20:00 Minuten. Die erste Fassung vom 16.11.
-bleibt in `output/BeatBridge_Mastervortrag_20min.pptx` erhalten.
+bleibt in `BeatBridge_Mastervortrag_20min.pptx` erhalten.
+Beide Dateien liegen seit dem 18.11.2026 direkt in `presentations/`, damit
+sie versioniert werden; `output/` ist durch die Git-Regeln ausgeschlossen.
 Die deutschen Sprechernotizen enthalten Erläuterungen, den Zeitplan und
 Kapitelverweise zur Thesis. Eine Live-Demo oder externe Audiodatei ist nicht nötig.
 
