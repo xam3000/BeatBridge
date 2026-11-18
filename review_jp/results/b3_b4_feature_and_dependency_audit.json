@@ -1,0 +1,2750 @@
+{
+  "top3_20260731": {
+    "windows_in_audit": 108,
+    "sequence_channels": [
+      {
+        "index": 0,
+        "name": "transition_position",
+        "group": "timing",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.5,
+        "std": 0.28853414550967793,
+        "min": 0.015625,
+        "max": 0.984375,
+        "zero_fraction": 0.0,
+        "unique_values": 32,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 1,
+        "name": "beat_phase_sin",
+        "group": "timing",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": 0.0,
+        "std": 1.0,
+        "min": -1.0,
+        "max": 1.0,
+        "zero_fraction": 0.0,
+        "unique_values": 2,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 2,
+        "name": "beat_phase_cos",
+        "group": "timing",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": -6.123233601181349e-17,
+        "std": 1.2246467864107189e-16,
+        "min": -1.8369701465288538e-16,
+        "max": 6.123234262925839e-17,
+        "zero_fraction": 0.0,
+        "unique_values": 1,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 3,
+        "name": "bar_phase_sin",
+        "group": "timing",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": 0.0,
+        "std": 0.7071067610097617,
+        "min": -0.9238795042037964,
+        "max": 0.9238795042037964,
+        "zero_fraction": 0.0,
+        "unique_values": 4,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 4,
+        "name": "bar_phase_cos",
+        "group": "timing",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": 0.0,
+        "std": 0.7071067610097617,
+        "min": -0.9238795042037964,
+        "max": 0.9238795042037964,
+        "zero_fraction": 0.0,
+        "unique_values": 4,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 5,
+        "name": "phrase_phase_sin",
+        "group": "timing",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "zero_fraction": 1.0,
+        "unique_values": 1,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 6,
+        "name": "phrase_phase_cos",
+        "group": "timing",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "zero_fraction": 1.0,
+        "unique_values": 1,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 7,
+        "name": "distance_to_phrase_boundary",
+        "group": "timing",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "zero_fraction": 1.0,
+        "unique_values": 1,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 8,
+        "name": "phrase_confidence",
+        "group": "timing",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "zero_fraction": 1.0,
+        "unique_values": 1,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 9,
+        "name": "rms_dbfs",
+        "group": "energy",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": 0.506510716917142,
+        "std": 0.1409626444046903,
+        "min": -0.5878266096115112,
+        "max": 0.8422073721885681,
+        "zero_fraction": 0.0,
+        "unique_values": 1336,
+        "between_std": 0.09942827317707748,
+        "step_std": 0.13594172341557764,
+        "step_std_over_range": 0.06797086170778882,
+        "verdict": "variiert"
+      },
+      {
+        "index": 10,
+        "name": "rms_db_relative",
+        "group": "energy",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": -0.11584887524710481,
+        "std": 0.17249157290384767,
+        "min": -1.0,
+        "max": 0.3448117673397064,
+        "zero_fraction": 0.0,
+        "unique_values": 1324,
+        "between_std": 0.12093972496289118,
+        "step_std": 0.16649373055680133,
+        "step_std_over_range": 0.08324686527840067,
+        "verdict": "variiert"
+      },
+      {
+        "index": 11,
+        "name": "loudness_slope",
+        "group": "energy",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": -0.006596162716096775,
+        "std": 0.14793973800345855,
+        "min": -0.6913529634475708,
+        "max": 0.874934732913971,
+        "zero_fraction": 0.0,
+        "unique_values": 1335,
+        "between_std": 0.015302359104137107,
+        "step_std": 0.13774514780998665,
+        "step_std_over_range": 0.06887257390499332,
+        "verdict": "variiert"
+      },
+      {
+        "index": 12,
+        "name": "low_energy_ratio",
+        "group": "energy",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.2945989191727957,
+        "std": 0.25549696440748987,
+        "min": 9.04812935687005e-08,
+        "max": 0.9862585067749023,
+        "zero_fraction": 0.0,
+        "unique_values": 1304,
+        "between_std": 0.1318573121946445,
+        "step_std": 0.25055442836896225,
+        "step_std_over_range": 0.25055442836896225,
+        "verdict": "variiert"
+      },
+      {
+        "index": 13,
+        "name": "mid_energy_ratio",
+        "group": "energy",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.523245807519507,
+        "std": 0.23058885813664834,
+        "min": 0.0024314613547176123,
+        "max": 0.9979809522628784,
+        "zero_fraction": 0.0,
+        "unique_values": 1335,
+        "between_std": 0.13564145057571944,
+        "step_std": 0.22282772523079558,
+        "step_std_over_range": 0.22282772523079558,
+        "verdict": "variiert"
+      },
+      {
+        "index": 14,
+        "name": "high_energy_ratio",
+        "group": "energy",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.18215527229712716,
+        "std": 0.1575742706408199,
+        "min": 5.606709692074219e-06,
+        "max": 0.7868967056274414,
+        "zero_fraction": 0.0,
+        "unique_values": 1324,
+        "between_std": 0.10825001660376302,
+        "step_std": 0.1523211394811519,
+        "step_std_over_range": 0.1523211394811519,
+        "verdict": "variiert"
+      },
+      {
+        "index": 15,
+        "name": "local_energy_percentile",
+        "group": "energy",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.31151894465399355,
+        "std": 0.23501992119647638,
+        "min": 0.0,
+        "max": 0.9929659962654114,
+        "zero_fraction": 0.0005787037037037037,
+        "unique_values": 1289,
+        "between_std": 0.15699618921206018,
+        "step_std": 0.2240278186619781,
+        "step_std_over_range": 0.2240278186619781,
+        "verdict": "variiert"
+      },
+      {
+        "index": 16,
+        "name": "crest_factor",
+        "group": "energy",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.14547105081685544,
+        "std": 0.05541601484621333,
+        "min": 0.038136955350637436,
+        "max": 1.0,
+        "zero_fraction": 0.0,
+        "unique_values": 1326,
+        "between_std": 0.028093611318039294,
+        "step_std": 0.0486881860340794,
+        "step_std_over_range": 0.0486881860340794,
+        "verdict": "variiert"
+      },
+      {
+        "index": 17,
+        "name": "silence_probability",
+        "group": "energy",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 5.0825588577599435e-05,
+        "std": 0.002987489877717789,
+        "min": 0.0,
+        "max": 0.17565323412418365,
+        "zero_fraction": 0.9997106481481481,
+        "unique_values": 2,
+        "between_std": 0.00052574397629051,
+        "step_std": 0.0005257439762905095,
+        "step_std_over_range": 0.0005257439762905095,
+        "verdict": "praktisch tot (<1 % des Wertebereichs)"
+      },
+      {
+        "index": 18,
+        "name": "spectral_centroid",
+        "group": "spectral_rhythm",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.09487638099650482,
+        "std": 0.06092936707268634,
+        "min": 0.005483321845531464,
+        "max": 0.36606937646865845,
+        "zero_fraction": 0.0,
+        "unique_values": 1332,
+        "between_std": 0.04063297162804072,
+        "step_std": 0.05947360043302757,
+        "step_std_over_range": 0.05947360043302757,
+        "verdict": "variiert"
+      },
+      {
+        "index": 19,
+        "name": "spectral_bandwidth",
+        "group": "spectral_rhythm",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.1180305009795659,
+        "std": 0.053814557180105436,
+        "min": 0.00602249801158905,
+        "max": 0.2722089886665344,
+        "zero_fraction": 0.0,
+        "unique_values": 1334,
+        "between_std": 0.039130556584585016,
+        "step_std": 0.05169577374657042,
+        "step_std_over_range": 0.05169577374657042,
+        "verdict": "variiert"
+      },
+      {
+        "index": 20,
+        "name": "spectral_rolloff",
+        "group": "spectral_rhythm",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.19807100920519993,
+        "std": 0.13926278469125628,
+        "min": 0.002527573611587286,
+        "max": 0.6470423936843872,
+        "zero_fraction": 0.0,
+        "unique_values": 1186,
+        "between_std": 0.09231846774693794,
+        "step_std": 0.13684588949544793,
+        "step_std_over_range": 0.13684588949544793,
+        "verdict": "variiert"
+      },
+      {
+        "index": 21,
+        "name": "spectral_flatness",
+        "group": "spectral_rhythm",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.017213069295312685,
+        "std": 0.027904735241262385,
+        "min": 1.0681078492780216e-06,
+        "max": 0.21901416778564453,
+        "zero_fraction": 0.0,
+        "unique_values": 1243,
+        "between_std": 0.022640111849693393,
+        "step_std": 0.027415115534774978,
+        "step_std_over_range": 0.027415115534774978,
+        "verdict": "schwach (<3 % des Wertebereichs)"
+      },
+      {
+        "index": 22,
+        "name": "spectral_flux",
+        "group": "spectral_rhythm",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.35915475047443546,
+        "std": 0.14661269902979832,
+        "min": 0.12212307006120682,
+        "max": 1.0,
+        "zero_fraction": 0.0,
+        "unique_values": 1325,
+        "between_std": 0.06045723876832917,
+        "step_std": 0.13770354198166546,
+        "step_std_over_range": 0.13770354198166546,
+        "verdict": "variiert"
+      },
+      {
+        "index": 23,
+        "name": "onset_strength",
+        "group": "spectral_rhythm",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.550718954221035,
+        "std": 0.12788662868082412,
+        "min": 0.22466926276683807,
+        "max": 1.0,
+        "zero_fraction": 0.0,
+        "unique_values": 1325,
+        "between_std": 0.05199613916992501,
+        "step_std": 0.1215238404234468,
+        "step_std_over_range": 0.1215238404234468,
+        "verdict": "variiert"
+      },
+      {
+        "index": 24,
+        "name": "kick_prominence",
+        "group": "spectral_rhythm",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.0130145104268423,
+        "std": 0.012418519386597934,
+        "min": 4.778815565487093e-09,
+        "max": 0.07826469093561172,
+        "zero_fraction": 0.0,
+        "unique_values": 1240,
+        "between_std": 0.005545002971826873,
+        "step_std": 0.012094102563208297,
+        "step_std_over_range": 0.012094102563208297,
+        "verdict": "schwach (<3 % des Wertebereichs)"
+      },
+      {
+        "index": 25,
+        "name": "beat_pulse_confidence",
+        "group": "spectral_rhythm",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 1.0,
+        "std": 0.0,
+        "min": 1.0,
+        "max": 1.0,
+        "zero_fraction": 0.0,
+        "unique_values": 1,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 26,
+        "name": "chroma_00",
+        "group": "harmonic",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.07871676596847398,
+        "std": 0.07873904251534102,
+        "min": 0.0010457499884068966,
+        "max": 0.6345236897468567,
+        "zero_fraction": 0.0,
+        "unique_values": 1324,
+        "between_std": 0.044649077589367654,
+        "step_std": 0.0751878904156544,
+        "step_std_over_range": 0.0751878904156544,
+        "verdict": "variiert"
+      },
+      {
+        "index": 27,
+        "name": "chroma_01",
+        "group": "harmonic",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.07300148174801036,
+        "std": 0.06391316320178791,
+        "min": 0.0012652124278247356,
+        "max": 0.6510472297668457,
+        "zero_fraction": 0.0,
+        "unique_values": 1329,
+        "between_std": 0.02542993222516837,
+        "step_std": 0.06060901766895563,
+        "step_std_over_range": 0.06060901766895563,
+        "verdict": "variiert"
+      },
+      {
+        "index": 28,
+        "name": "chroma_02",
+        "group": "harmonic",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.08267637950501483,
+        "std": 0.06279282718431389,
+        "min": 0.0016721290303394198,
+        "max": 0.5414710640907288,
+        "zero_fraction": 0.0,
+        "unique_values": 1326,
+        "between_std": 0.016810288818518572,
+        "step_std": 0.05955598635363854,
+        "step_std_over_range": 0.05955598635363854,
+        "verdict": "variiert"
+      },
+      {
+        "index": 29,
+        "name": "chroma_03",
+        "group": "harmonic",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.05572995629049897,
+        "std": 0.04833483544098487,
+        "min": 0.0010037316242232919,
+        "max": 0.5160583257675171,
+        "zero_fraction": 0.0,
+        "unique_values": 1327,
+        "between_std": 0.019319826236009016,
+        "step_std": 0.04556717887199734,
+        "step_std_over_range": 0.04556717887199734,
+        "verdict": "variiert"
+      },
+      {
+        "index": 30,
+        "name": "chroma_04",
+        "group": "harmonic",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.10259598402262782,
+        "std": 0.08982774158345558,
+        "min": 0.002749186474829912,
+        "max": 0.5500048398971558,
+        "zero_fraction": 0.0,
+        "unique_values": 1331,
+        "between_std": 0.04530904309684845,
+        "step_std": 0.08740036829460096,
+        "step_std_over_range": 0.08740036829460096,
+        "verdict": "variiert"
+      },
+      {
+        "index": 31,
+        "name": "chroma_05",
+        "group": "harmonic",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.07343877991048363,
+        "std": 0.07132185725224598,
+        "min": 0.0014117243699729443,
+        "max": 0.6792864203453064,
+        "zero_fraction": 0.0,
+        "unique_values": 1325,
+        "between_std": 0.029862398805088623,
+        "step_std": 0.06581184049161845,
+        "step_std_over_range": 0.06581184049161845,
+        "verdict": "variiert"
+      },
+      {
+        "index": 32,
+        "name": "chroma_06",
+        "group": "harmonic",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.09362218566147257,
+        "std": 0.08429478849524656,
+        "min": 0.0028477702289819717,
+        "max": 0.5491872429847717,
+        "zero_fraction": 0.0,
+        "unique_values": 1332,
+        "between_std": 0.0381608453541131,
+        "step_std": 0.08277741142744137,
+        "step_std_over_range": 0.08277741142744137,
+        "verdict": "variiert"
+      },
+      {
+        "index": 33,
+        "name": "chroma_07",
+        "group": "harmonic",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.08503956355909598,
+        "std": 0.0729096808679886,
+        "min": 0.004210393875837326,
+        "max": 0.7448601722717285,
+        "zero_fraction": 0.0,
+        "unique_values": 1331,
+        "between_std": 0.029587383461869274,
+        "step_std": 0.06913958993376915,
+        "step_std_over_range": 0.06913958993376915,
+        "verdict": "variiert"
+      },
+      {
+        "index": 34,
+        "name": "chroma_08",
+        "group": "harmonic",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.0694665490315216,
+        "std": 0.06342081819095098,
+        "min": 0.002240401692688465,
+        "max": 0.5503512620925903,
+        "zero_fraction": 0.0,
+        "unique_values": 1330,
+        "between_std": 0.025137930448030713,
+        "step_std": 0.05957508429142995,
+        "step_std_over_range": 0.05957508429142995,
+        "verdict": "variiert"
+      },
+      {
+        "index": 35,
+        "name": "chroma_09",
+        "group": "harmonic",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.1073245640997845,
+        "std": 0.11146890670610721,
+        "min": 0.0015973227564245462,
+        "max": 0.7007341980934143,
+        "zero_fraction": 0.0,
+        "unique_values": 1330,
+        "between_std": 0.06137587012388754,
+        "step_std": 0.10717993231854181,
+        "step_std_over_range": 0.10717993231854181,
+        "verdict": "variiert"
+      },
+      {
+        "index": 36,
+        "name": "chroma_10",
+        "group": "harmonic",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.07049680916787582,
+        "std": 0.05312552100025025,
+        "min": 0.002011912176385522,
+        "max": 0.4195205867290497,
+        "zero_fraction": 0.0,
+        "unique_values": 1332,
+        "between_std": 0.022840386479892612,
+        "step_std": 0.05153752673554159,
+        "step_std_over_range": 0.05153752673554159,
+        "verdict": "variiert"
+      },
+      {
+        "index": 37,
+        "name": "chroma_11",
+        "group": "harmonic",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.10789098097396803,
+        "std": 0.10275742419658795,
+        "min": 0.0021769837476313114,
+        "max": 0.8113409876823425,
+        "zero_fraction": 0.0,
+        "unique_values": 1333,
+        "between_std": 0.04748634625037812,
+        "step_std": 0.09490788623422113,
+        "step_std_over_range": 0.09490788623422113,
+        "verdict": "variiert"
+      },
+      {
+        "index": 38,
+        "name": "tonnetz_0",
+        "group": "harmonic",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": 0.114078499021673,
+        "std": 0.19969347788532513,
+        "min": -0.6011132001876831,
+        "max": 0.8216349482536316,
+        "zero_fraction": 0.0,
+        "unique_values": 1335,
+        "between_std": 0.12761430376498425,
+        "step_std": 0.19410585581923293,
+        "step_std_over_range": 0.09705292790961646,
+        "verdict": "variiert"
+      },
+      {
+        "index": 39,
+        "name": "tonnetz_1",
+        "group": "harmonic",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": -0.04376128842198602,
+        "std": 0.21120009028929532,
+        "min": -0.7601462602615356,
+        "max": 0.7064597606658936,
+        "zero_fraction": 0.0,
+        "unique_values": 1333,
+        "between_std": 0.08376495910564288,
+        "step_std": 0.20623697906164123,
+        "step_std_over_range": 0.10311848953082062,
+        "verdict": "variiert"
+      },
+      {
+        "index": 40,
+        "name": "tonnetz_2",
+        "group": "harmonic",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": -0.005104325480818649,
+        "std": 0.2069176112962813,
+        "min": -0.7065171003341675,
+        "max": 0.8202028870582581,
+        "zero_fraction": 0.0,
+        "unique_values": 1335,
+        "between_std": 0.09966793097818638,
+        "step_std": 0.19937862953811292,
+        "step_std_over_range": 0.09968931476905646,
+        "verdict": "variiert"
+      },
+      {
+        "index": 41,
+        "name": "tonnetz_3",
+        "group": "harmonic",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": 0.003983924760676574,
+        "std": 0.16805928859441796,
+        "min": -0.6164335608482361,
+        "max": 0.6572363972663879,
+        "zero_fraction": 0.0,
+        "unique_values": 1334,
+        "between_std": 0.07608286040231092,
+        "step_std": 0.164185953447046,
+        "step_std_over_range": 0.082092976723523,
+        "verdict": "variiert"
+      },
+      {
+        "index": 42,
+        "name": "tonnetz_4",
+        "group": "harmonic",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": -0.001012752094705202,
+        "std": 0.08109742570331509,
+        "min": -0.29271823167800903,
+        "max": 0.3328855037689209,
+        "zero_fraction": 0.0,
+        "unique_values": 1335,
+        "between_std": 0.03249500397549218,
+        "step_std": 0.07780672785445014,
+        "step_std_over_range": 0.03890336392722507,
+        "verdict": "variiert"
+      },
+      {
+        "index": 43,
+        "name": "tonnetz_5",
+        "group": "harmonic",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": 0.0015451042385704317,
+        "std": 0.08880425803090222,
+        "min": -0.23114554584026337,
+        "max": 0.3428088128566742,
+        "zero_fraction": 0.0,
+        "unique_values": 1332,
+        "between_std": 0.033746772566782504,
+        "step_std": 0.0871829807503606,
+        "step_std_over_range": 0.0435914903751803,
+        "verdict": "variiert"
+      },
+      {
+        "index": 44,
+        "name": "harmonic_ratio",
+        "group": "harmonic",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.4691135596173505,
+        "std": 0.06485476320514699,
+        "min": 0.16434316337108612,
+        "max": 0.6363083720207214,
+        "zero_fraction": 0.0,
+        "unique_values": 1330,
+        "between_std": 0.03825501747038278,
+        "step_std": 0.06346149350656127,
+        "step_std_over_range": 0.06346149350656127,
+        "verdict": "variiert"
+      },
+      {
+        "index": 45,
+        "name": "vocal_activity",
+        "group": "vocal",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.5704763088102632,
+        "std": 0.45120235997273983,
+        "min": 9.85327019975557e-09,
+        "max": 0.996598482131958,
+        "zero_fraction": 0.0,
+        "unique_values": 1019,
+        "between_std": 0.3755934860238791,
+        "step_std": 0.4498867058782908,
+        "step_std_over_range": 0.4498867058782908,
+        "verdict": "variiert"
+      },
+      {
+        "index": 46,
+        "name": "vocal_prominence",
+        "group": "vocal",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.4651620415299004,
+        "std": 0.38264974505919064,
+        "min": 0.0,
+        "max": 1.0,
+        "zero_fraction": 0.36400462962962965,
+        "unique_values": 914,
+        "between_std": 0.29946660304437994,
+        "step_std": 0.38037771868831516,
+        "step_std_over_range": 0.38037771868831516,
+        "verdict": "variiert"
+      },
+      {
+        "index": 47,
+        "name": "vocal_onset_probability",
+        "group": "vocal",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.04734668945076375,
+        "std": 0.16712546381622345,
+        "min": 0.0,
+        "max": 1.0,
+        "zero_fraction": 0.5089699074074074,
+        "unique_values": 484,
+        "between_std": 0.04220283665587154,
+        "step_std": 0.1458080687516002,
+        "step_std_over_range": 0.1458080687516002,
+        "verdict": "variiert"
+      },
+      {
+        "index": 48,
+        "name": "vocal_offset_probability",
+        "group": "vocal",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.048874918393574655,
+        "std": 0.1643045196802338,
+        "min": 0.0,
+        "max": 1.0,
+        "zero_fraction": 0.4910300925925926,
+        "unique_values": 533,
+        "between_std": 0.04738808919904091,
+        "step_std": 0.14901882923172616,
+        "step_std_over_range": 0.14901882923172616,
+        "verdict": "variiert"
+      },
+      {
+        "index": 49,
+        "name": "vocal_phrase_progress",
+        "group": "vocal",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.37543481149731195,
+        "std": 0.3743369699621903,
+        "min": 0.0,
+        "max": 0.9978991746902466,
+        "zero_fraction": 0.39091435185185186,
+        "unique_values": 630,
+        "between_std": 0.3065482967183834,
+        "step_std": 0.3725636724847166,
+        "step_std_over_range": 0.3725636724847166,
+        "verdict": "variiert"
+      },
+      {
+        "index": 50,
+        "name": "vocal_confidence",
+        "group": "vocal",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.8913699732759226,
+        "std": 0.19915191960353126,
+        "min": 0.002961620455607772,
+        "max": 1.0,
+        "zero_fraction": 0.0,
+        "unique_values": 1030,
+        "between_std": 0.10153125843820422,
+        "step_std": 0.18979675281835273,
+        "step_std_over_range": 0.18979675281835273,
+        "verdict": "variiert"
+      },
+      {
+        "index": 51,
+        "name": "audio_valid",
+        "group": "validity",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 1.0,
+        "std": 0.0,
+        "min": 1.0,
+        "max": 1.0,
+        "zero_fraction": 0.0,
+        "unique_values": 1,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 52,
+        "name": "phrase_valid",
+        "group": "validity",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "zero_fraction": 1.0,
+        "unique_values": 1,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 53,
+        "name": "vocal_valid",
+        "group": "validity",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 1.0,
+        "std": 0.0,
+        "min": 1.0,
+        "max": 1.0,
+        "zero_fraction": 0.0,
+        "unique_values": 1,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      }
+    ],
+    "global_channels": [
+      {
+        "index": 0,
+        "name": "bpm_a",
+        "group": "tempo",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": -0.00659395433548424,
+        "std": 0.026129936532347513,
+        "min": -0.07400930672883987,
+        "max": 0.013453535735607147,
+        "zero_fraction": 0.0,
+        "unique_values": 4,
+        "between_std": 0.026129936532347513,
+        "step_std": 0.026129936532347513,
+        "step_std_over_range": 0.013064968266173756,
+        "verdict": "schwach (<3 % des Wertebereichs)"
+      },
+      {
+        "index": 1,
+        "name": "bpm_b",
+        "group": "tempo",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": 0.0056641122533215415,
+        "std": 0.016448140178961495,
+        "min": -0.0309405829757452,
+        "max": 0.013453535735607147,
+        "zero_fraction": 0.0,
+        "unique_values": 3,
+        "between_std": 0.016448140178961495,
+        "step_std": 0.016448140178961495,
+        "step_std_over_range": 0.008224070089480747,
+        "verdict": "praktisch tot (<1 % des Wertebereichs)"
+      },
+      {
+        "index": 2,
+        "name": "tempo_ratio_b_over_a",
+        "group": "tempo",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": 0.04903226759698656,
+        "std": 0.0796232677375313,
+        "min": -0.028109068050980568,
+        "max": 0.17757648229599,
+        "zero_fraction": 0.6111111111111112,
+        "unique_values": 5,
+        "between_std": 0.0796232677375313,
+        "step_std": 0.0796232677375313,
+        "step_std_over_range": 0.03981163386876565,
+        "verdict": "variiert"
+      },
+      {
+        "index": 3,
+        "name": "tempo_change_abs",
+        "group": "tempo",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.03667665117730697,
+        "std": 0.05463944400576441,
+        "min": 0.0,
+        "max": 0.125,
+        "zero_fraction": 0.6111111111111112,
+        "unique_values": 5,
+        "between_std": 0.05463944400576441,
+        "step_std": 0.05463944400576441,
+        "step_std_over_range": 0.05463944400576441,
+        "verdict": "variiert"
+      },
+      {
+        "index": 4,
+        "name": "tempo_adjustment_required",
+        "group": "tempo",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.3888888888888889,
+        "std": 0.4874980215217845,
+        "min": 0.0,
+        "max": 1.0,
+        "zero_fraction": 0.6111111111111112,
+        "unique_values": 2,
+        "between_std": 0.4874980215217845,
+        "step_std": 0.4874980215217845,
+        "step_std_over_range": 0.4874980215217845,
+        "verdict": "variiert"
+      },
+      {
+        "index": 5,
+        "name": "key_tonic_a_sin",
+        "group": "key",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": -0.17229347538065024,
+        "std": 0.6476025219473651,
+        "min": -1.0,
+        "max": 0.8660253882408142,
+        "zero_fraction": 0.12962962962962962,
+        "unique_values": 6,
+        "between_std": 0.6476025219473651,
+        "step_std": 0.6476025219473651,
+        "step_std_over_range": 0.32380126097368256,
+        "verdict": "variiert"
+      },
+      {
+        "index": 6,
+        "name": "key_tonic_a_cos",
+        "group": "key",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": -0.08647913071844317,
+        "std": 0.7371887691690985,
+        "min": -1.0,
+        "max": 1.0,
+        "zero_fraction": 0.0,
+        "unique_values": 7,
+        "between_std": 0.7371887691690985,
+        "step_std": 0.7371887691690985,
+        "step_std_over_range": 0.36859438458454924,
+        "verdict": "variiert"
+      },
+      {
+        "index": 7,
+        "name": "key_tonic_b_sin",
+        "group": "key",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": 0.10348994422841955,
+        "std": 0.7126067211258631,
+        "min": -1.0,
+        "max": 1.0,
+        "zero_fraction": 0.037037037037037035,
+        "unique_values": 7,
+        "between_std": 0.7126067211258631,
+        "step_std": 0.7126067211258631,
+        "step_std_over_range": 0.35630336056293155,
+        "verdict": "variiert"
+      },
+      {
+        "index": 8,
+        "name": "key_tonic_b_cos",
+        "group": "key",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": -0.0013295721124719805,
+        "std": 0.6938873862128951,
+        "min": -1.0,
+        "max": 1.0,
+        "zero_fraction": 0.0,
+        "unique_values": 7,
+        "between_std": 0.6938873862128951,
+        "step_std": 0.6938873862128951,
+        "step_std_over_range": 0.34694369310644757,
+        "verdict": "variiert"
+      },
+      {
+        "index": 9,
+        "name": "key_mode_a",
+        "group": "key",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": -0.4444444444444444,
+        "std": 0.8958064164776165,
+        "min": -1.0,
+        "max": 1.0,
+        "zero_fraction": 0.0,
+        "unique_values": 2,
+        "between_std": 0.8958064164776165,
+        "step_std": 0.8958064164776165,
+        "step_std_over_range": 0.44790320823880825,
+        "verdict": "variiert"
+      },
+      {
+        "index": 10,
+        "name": "key_mode_b",
+        "group": "key",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": -0.3333333333333333,
+        "std": 0.9428090415820635,
+        "min": -1.0,
+        "max": 1.0,
+        "zero_fraction": 0.0,
+        "unique_values": 2,
+        "between_std": 0.9428090415820635,
+        "step_std": 0.9428090415820635,
+        "step_std_over_range": 0.47140452079103173,
+        "verdict": "variiert"
+      },
+      {
+        "index": 11,
+        "name": "key_confidence_a",
+        "group": "key",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.17087057943421383,
+        "std": 0.11733179883204778,
+        "min": 0.014816246926784515,
+        "max": 0.4417654573917389,
+        "zero_fraction": 0.0,
+        "unique_values": 27,
+        "between_std": 0.11733179883204778,
+        "step_std": 0.11733179883204778,
+        "step_std_over_range": 0.11733179883204778,
+        "verdict": "variiert"
+      },
+      {
+        "index": 12,
+        "name": "key_confidence_b",
+        "group": "key",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.08340213928355904,
+        "std": 0.06530034924662054,
+        "min": 2.0747893358930014e-05,
+        "max": 0.2527822256088257,
+        "zero_fraction": 0.0,
+        "unique_values": 35,
+        "between_std": 0.06530034924662054,
+        "step_std": 0.06530034924662054,
+        "step_std_over_range": 0.06530034924662054,
+        "verdict": "variiert"
+      },
+      {
+        "index": 13,
+        "name": "harmonic_compatibility",
+        "group": "pair",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.844352478230441,
+        "std": 0.0913288171940635,
+        "min": 0.6161720156669617,
+        "max": 0.9703202247619629,
+        "zero_fraction": 0.0,
+        "unique_values": 54,
+        "between_std": 0.0913288171940635,
+        "step_std": 0.0913288171940635,
+        "step_std_over_range": 0.0913288171940635,
+        "verdict": "variiert"
+      },
+      {
+        "index": 14,
+        "name": "context_coverage_a",
+        "group": "validity",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 1.0,
+        "std": 0.0,
+        "min": 1.0,
+        "max": 1.0,
+        "zero_fraction": 0.0,
+        "unique_values": 1,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 15,
+        "name": "context_coverage_b",
+        "group": "validity",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 1.0,
+        "std": 0.0,
+        "min": 1.0,
+        "max": 1.0,
+        "zero_fraction": 0.0,
+        "unique_values": 1,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      }
+    ],
+    "dependency": {
+      "train": {
+        "examples": 45,
+        "unique_tracks": 11,
+        "unique_directed_pairs": 15,
+        "unique_undirected_pairs": 11,
+        "undirected_pairs_present_in_both_directions": 4,
+        "examples_per_track_median": 9.0,
+        "examples_per_track_max": 15,
+        "examples_per_track_min": 3,
+        "cues_per_directed_pair_median": 3.0,
+        "cues_per_directed_pair_max": 3,
+        "unique_source_cues": 22,
+        "unique_target_cues": 25,
+        "max_reuse_of_one_source_cue": 6,
+        "max_reuse_of_one_target_cue": 6,
+        "candidate_rank_max": 13
+      },
+      "validation": {
+        "examples": 9,
+        "unique_tracks": 2,
+        "unique_directed_pairs": 2,
+        "unique_undirected_pairs": 2,
+        "undirected_pairs_present_in_both_directions": 0,
+        "examples_per_track_median": 9.0,
+        "examples_per_track_max": 15,
+        "examples_per_track_min": 3,
+        "cues_per_directed_pair_median": 4.5,
+        "cues_per_directed_pair_max": 6,
+        "unique_source_cues": 5,
+        "unique_target_cues": 2,
+        "max_reuse_of_one_source_cue": 2,
+        "max_reuse_of_one_target_cue": 5,
+        "candidate_rank_max": 10
+      },
+      "tracks_in_train_and_validation": 0
+    }
+  },
+  "top10_20260805": {
+    "windows_in_audit": 840,
+    "sequence_channels": [
+      {
+        "index": 0,
+        "name": "transition_position",
+        "group": "timing",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.5,
+        "std": 0.28853414550967793,
+        "min": 0.015625,
+        "max": 0.984375,
+        "zero_fraction": 0.0,
+        "unique_values": 32,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 1,
+        "name": "beat_phase_sin",
+        "group": "timing",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": 0.0,
+        "std": 1.0,
+        "min": -1.0,
+        "max": 1.0,
+        "zero_fraction": 0.0,
+        "unique_values": 2,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 2,
+        "name": "beat_phase_cos",
+        "group": "timing",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": -6.123233601181349e-17,
+        "std": 1.2246467864107189e-16,
+        "min": -1.8369701465288538e-16,
+        "max": 6.123234262925839e-17,
+        "zero_fraction": 0.0,
+        "unique_values": 1,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 3,
+        "name": "bar_phase_sin",
+        "group": "timing",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": 0.0,
+        "std": 0.7071067610097617,
+        "min": -0.9238795042037964,
+        "max": 0.9238795042037964,
+        "zero_fraction": 0.0,
+        "unique_values": 4,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 4,
+        "name": "bar_phase_cos",
+        "group": "timing",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": 0.0,
+        "std": 0.7071067610097617,
+        "min": -0.9238795042037964,
+        "max": 0.9238795042037964,
+        "zero_fraction": 0.0,
+        "unique_values": 4,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 5,
+        "name": "phrase_phase_sin",
+        "group": "timing",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "zero_fraction": 1.0,
+        "unique_values": 1,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 6,
+        "name": "phrase_phase_cos",
+        "group": "timing",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "zero_fraction": 1.0,
+        "unique_values": 1,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 7,
+        "name": "distance_to_phrase_boundary",
+        "group": "timing",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "zero_fraction": 1.0,
+        "unique_values": 1,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 8,
+        "name": "phrase_confidence",
+        "group": "timing",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "zero_fraction": 1.0,
+        "unique_values": 1,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 9,
+        "name": "rms_dbfs",
+        "group": "energy",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": 0.5380621922506266,
+        "std": 0.16418781358381063,
+        "min": -1.0,
+        "max": 0.9231857061386108,
+        "zero_fraction": 0.0,
+        "unique_values": 5213,
+        "between_std": 0.12263110458860732,
+        "step_std": 0.15886736038123328,
+        "step_std_over_range": 0.07943368019061664,
+        "verdict": "variiert"
+      },
+      {
+        "index": 10,
+        "name": "rms_db_relative",
+        "group": "energy",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": -0.14434335468143725,
+        "std": 0.1850172079974046,
+        "min": -1.0,
+        "max": 0.37934640049934387,
+        "zero_fraction": 0.0,
+        "unique_values": 5193,
+        "between_std": 0.1315298055228498,
+        "step_std": 0.17896260764439992,
+        "step_std_over_range": 0.08948130382219996,
+        "verdict": "variiert"
+      },
+      {
+        "index": 11,
+        "name": "loudness_slope",
+        "group": "energy",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": -0.006466651339186076,
+        "std": 0.15349695812952527,
+        "min": -1.0,
+        "max": 1.0,
+        "zero_fraction": 7.440476190476191e-05,
+        "unique_values": 5204,
+        "between_std": 0.016133523267251055,
+        "step_std": 0.1476562442255426,
+        "step_std_over_range": 0.0738281221127713,
+        "verdict": "variiert"
+      },
+      {
+        "index": 12,
+        "name": "low_energy_ratio",
+        "group": "energy",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.27212852571985463,
+        "std": 0.25745492892552496,
+        "min": 1.0020420404543984e-06,
+        "max": 0.9999992847442627,
+        "zero_fraction": 0.0,
+        "unique_values": 5152,
+        "between_std": 0.15006736294015566,
+        "step_std": 0.25196250223438843,
+        "step_std_over_range": 0.25196250223438843,
+        "verdict": "variiert"
+      },
+      {
+        "index": 13,
+        "name": "mid_energy_ratio",
+        "group": "energy",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.5977754405295301,
+        "std": 0.2336443796258516,
+        "min": 5.719598448195029e-07,
+        "max": 0.9968018531799316,
+        "zero_fraction": 0.0,
+        "unique_values": 5231,
+        "between_std": 0.13818190528281457,
+        "step_std": 0.22903485064816287,
+        "step_std_over_range": 0.22903485064816287,
+        "verdict": "variiert"
+      },
+      {
+        "index": 14,
+        "name": "high_energy_ratio",
+        "group": "energy",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.130096032822889,
+        "std": 0.11823218881102861,
+        "min": 1.1382152109717936e-07,
+        "max": 0.9257994890213013,
+        "zero_fraction": 0.0,
+        "unique_values": 5196,
+        "between_std": 0.07975999760755452,
+        "step_std": 0.11716736769421053,
+        "step_std_over_range": 0.11716736769421053,
+        "verdict": "variiert"
+      },
+      {
+        "index": 15,
+        "name": "local_energy_percentile",
+        "group": "energy",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.27221645231056973,
+        "std": 0.2142672083196746,
+        "min": 0.0,
+        "max": 1.0,
+        "zero_fraction": 0.003050595238095238,
+        "unique_values": 5173,
+        "between_std": 0.12356704298015336,
+        "step_std": 0.205724587653853,
+        "step_std_over_range": 0.205724587653853,
+        "verdict": "variiert"
+      },
+      {
+        "index": 16,
+        "name": "crest_factor",
+        "group": "energy",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.13636031370621085,
+        "std": 0.051332915542630135,
+        "min": 0.015991128981113434,
+        "max": 1.0,
+        "zero_fraction": 0.0,
+        "unique_values": 5135,
+        "between_std": 0.02961298730062345,
+        "step_std": 0.048656376626389,
+        "step_std_over_range": 0.048656376626389,
+        "verdict": "variiert"
+      },
+      {
+        "index": 17,
+        "name": "silence_probability",
+        "group": "energy",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.0004365505075145934,
+        "std": 0.018879634935274087,
+        "min": 0.0,
+        "max": 1.0,
+        "zero_fraction": 0.9990699404761905,
+        "unique_values": 9,
+        "between_std": 0.003321056346337678,
+        "step_std": 0.00513689941410241,
+        "step_std_over_range": 0.00513689941410241,
+        "verdict": "praktisch tot (<1 % des Wertebereichs)"
+      },
+      {
+        "index": 18,
+        "name": "spectral_centroid",
+        "group": "spectral_rhythm",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.08026805368156471,
+        "std": 0.04998413756990699,
+        "min": 0.0019950284622609615,
+        "max": 0.45618563890457153,
+        "zero_fraction": 0.0,
+        "unique_values": 5163,
+        "between_std": 0.034867760356708716,
+        "step_std": 0.049567323577411726,
+        "step_std_over_range": 0.049567323577411726,
+        "verdict": "variiert"
+      },
+      {
+        "index": 19,
+        "name": "spectral_bandwidth",
+        "group": "spectral_rhythm",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.10591792937824601,
+        "std": 0.050128838614701444,
+        "min": 0.0002369830763200298,
+        "max": 0.27650150656700134,
+        "zero_fraction": 0.0,
+        "unique_values": 5191,
+        "between_std": 0.0398915138378924,
+        "step_std": 0.05001489220854488,
+        "step_std_over_range": 0.05001489220854488,
+        "verdict": "variiert"
+      },
+      {
+        "index": 20,
+        "name": "spectral_rolloff",
+        "group": "spectral_rhythm",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.15806448915664945,
+        "std": 0.11518954263472181,
+        "min": 0.001764112850651145,
+        "max": 0.674072265625,
+        "zero_fraction": 0.0,
+        "unique_values": 3317,
+        "between_std": 0.08256226244117239,
+        "step_std": 0.11470443695192627,
+        "step_std_over_range": 0.11470443695192627,
+        "verdict": "variiert"
+      },
+      {
+        "index": 21,
+        "name": "spectral_flatness",
+        "group": "spectral_rhythm",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.03625367286803458,
+        "std": 0.04496729322243488,
+        "min": 5.234594624425881e-08,
+        "max": 0.41536664962768555,
+        "zero_fraction": 0.0,
+        "unique_values": 4856,
+        "between_std": 0.03690955572059098,
+        "step_std": 0.04477038898810397,
+        "step_std_over_range": 0.04477038898810397,
+        "verdict": "variiert"
+      },
+      {
+        "index": 22,
+        "name": "spectral_flux",
+        "group": "spectral_rhythm",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.36618107808947875,
+        "std": 0.15408358003141584,
+        "min": 0.0,
+        "max": 1.0,
+        "zero_fraction": 7.440476190476191e-05,
+        "unique_values": 5164,
+        "between_std": 0.08510749842391688,
+        "step_std": 0.1527416447410367,
+        "step_std_over_range": 0.1527416447410367,
+        "verdict": "variiert"
+      },
+      {
+        "index": 23,
+        "name": "onset_strength",
+        "group": "spectral_rhythm",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.5594405207040143,
+        "std": 0.12480624331956944,
+        "min": 0.0,
+        "max": 1.0,
+        "zero_fraction": 7.440476190476191e-05,
+        "unique_values": 5163,
+        "between_std": 0.058028086455852425,
+        "step_std": 0.12305704924178548,
+        "step_std_over_range": 0.12305704924178548,
+        "verdict": "variiert"
+      },
+      {
+        "index": 24,
+        "name": "kick_prominence",
+        "group": "spectral_rhythm",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.012421399336966758,
+        "std": 0.012318184703370266,
+        "min": 0.0,
+        "max": 0.13074001669883728,
+        "zero_fraction": 7.440476190476191e-05,
+        "unique_values": 4478,
+        "between_std": 0.006910105173418309,
+        "step_std": 0.012011478772005774,
+        "step_std_over_range": 0.012011478772005774,
+        "verdict": "schwach (<3 % des Wertebereichs)"
+      },
+      {
+        "index": 25,
+        "name": "beat_pulse_confidence",
+        "group": "spectral_rhythm",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 1.0,
+        "std": 0.0,
+        "min": 1.0,
+        "max": 1.0,
+        "zero_fraction": 0.0,
+        "unique_values": 1,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 26,
+        "name": "chroma_00",
+        "group": "harmonic",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.08280580736883976,
+        "std": 0.09356966687835941,
+        "min": 3.232700328226201e-05,
+        "max": 0.9156398773193359,
+        "zero_fraction": 0.0,
+        "unique_values": 5170,
+        "between_std": 0.05086249274301641,
+        "step_std": 0.0923372901627007,
+        "step_std_over_range": 0.0923372901627007,
+        "verdict": "variiert"
+      },
+      {
+        "index": 27,
+        "name": "chroma_01",
+        "group": "harmonic",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.07371489817356675,
+        "std": 0.06925276026952898,
+        "min": 1.870715209406626e-06,
+        "max": 0.7742423415184021,
+        "zero_fraction": 0.0,
+        "unique_values": 5155,
+        "between_std": 0.034850337918853225,
+        "step_std": 0.06854413011164077,
+        "step_std_over_range": 0.06854413011164077,
+        "verdict": "variiert"
+      },
+      {
+        "index": 28,
+        "name": "chroma_02",
+        "group": "harmonic",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.08831168643368478,
+        "std": 0.08729166267428368,
+        "min": 2.4320715965586714e-06,
+        "max": 0.830704927444458,
+        "zero_fraction": 0.0,
+        "unique_values": 5168,
+        "between_std": 0.04091973769474708,
+        "step_std": 0.08561717548041131,
+        "step_std_over_range": 0.08561717548041131,
+        "verdict": "variiert"
+      },
+      {
+        "index": 29,
+        "name": "chroma_03",
+        "group": "harmonic",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.06159824531814081,
+        "std": 0.06209392296672885,
+        "min": 6.848562605910047e-08,
+        "max": 0.8398555517196655,
+        "zero_fraction": 0.0,
+        "unique_values": 5131,
+        "between_std": 0.03177598790840988,
+        "step_std": 0.06084062046088099,
+        "step_std_over_range": 0.06084062046088099,
+        "verdict": "variiert"
+      },
+      {
+        "index": 30,
+        "name": "chroma_04",
+        "group": "harmonic",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.08690808902968557,
+        "std": 0.09105676471275863,
+        "min": 9.380226401844993e-06,
+        "max": 0.8858280181884766,
+        "zero_fraction": 0.0,
+        "unique_values": 5149,
+        "between_std": 0.0519259723929668,
+        "step_std": 0.09055415903329166,
+        "step_std_over_range": 0.09055415903329166,
+        "verdict": "variiert"
+      },
+      {
+        "index": 31,
+        "name": "chroma_05",
+        "group": "harmonic",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.07810656921041587,
+        "std": 0.07946444642038523,
+        "min": 6.299847882473841e-05,
+        "max": 0.8410420417785645,
+        "zero_fraction": 0.0,
+        "unique_values": 5167,
+        "between_std": 0.040989723907541145,
+        "step_std": 0.07861148024036668,
+        "step_std_over_range": 0.07861148024036668,
+        "verdict": "variiert"
+      },
+      {
+        "index": 32,
+        "name": "chroma_06",
+        "group": "harmonic",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.09071726114749427,
+        "std": 0.08882244676717257,
+        "min": 0.00047968258149921894,
+        "max": 0.8224620223045349,
+        "zero_fraction": 0.0,
+        "unique_values": 5164,
+        "between_std": 0.0475515693605403,
+        "step_std": 0.08776351371680319,
+        "step_std_over_range": 0.08776351371680319,
+        "verdict": "variiert"
+      },
+      {
+        "index": 33,
+        "name": "chroma_07",
+        "group": "harmonic",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.08527489619026969,
+        "std": 0.08401267185672424,
+        "min": 0.0005694812280125916,
+        "max": 0.6735383868217468,
+        "zero_fraction": 0.0,
+        "unique_values": 5168,
+        "between_std": 0.04499283944829955,
+        "step_std": 0.08323362698268558,
+        "step_std_over_range": 0.08323362698268558,
+        "verdict": "variiert"
+      },
+      {
+        "index": 34,
+        "name": "chroma_08",
+        "group": "harmonic",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.08355226120306508,
+        "std": 0.08888390150585476,
+        "min": 0.0012404771987348795,
+        "max": 0.9055755734443665,
+        "zero_fraction": 0.0,
+        "unique_values": 5178,
+        "between_std": 0.045198653880979635,
+        "step_std": 0.08823298220026454,
+        "step_std_over_range": 0.08823298220026454,
+        "verdict": "variiert"
+      },
+      {
+        "index": 35,
+        "name": "chroma_09",
+        "group": "harmonic",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.09763851471162914,
+        "std": 0.10024648674297544,
+        "min": 0.0006791314808651805,
+        "max": 0.797072172164917,
+        "zero_fraction": 0.0,
+        "unique_values": 5159,
+        "between_std": 0.05799530179492886,
+        "step_std": 0.09955766865075054,
+        "step_std_over_range": 0.09955766865075054,
+        "verdict": "variiert"
+      },
+      {
+        "index": 36,
+        "name": "chroma_10",
+        "group": "harmonic",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.07301233995846931,
+        "std": 0.07201201955746638,
+        "min": 3.371527054696344e-05,
+        "max": 0.7273662090301514,
+        "zero_fraction": 0.0,
+        "unique_values": 5161,
+        "between_std": 0.0328535068512121,
+        "step_std": 0.0711931677702404,
+        "step_std_over_range": 0.0711931677702404,
+        "verdict": "variiert"
+      },
+      {
+        "index": 37,
+        "name": "chroma_11",
+        "group": "harmonic",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.09835943128580582,
+        "std": 0.114125033565276,
+        "min": 2.736608439590782e-05,
+        "max": 0.9707781076431274,
+        "zero_fraction": 0.0,
+        "unique_values": 5186,
+        "between_std": 0.07227932582852194,
+        "step_std": 0.11338000599261823,
+        "step_std_over_range": 0.11338000599261823,
+        "verdict": "variiert"
+      },
+      {
+        "index": 38,
+        "name": "tonnetz_0",
+        "group": "harmonic",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": 0.0681025544306711,
+        "std": 0.2219487430149927,
+        "min": -0.8450714945793152,
+        "max": 0.8534038662910461,
+        "zero_fraction": 0.0,
+        "unique_values": 5229,
+        "between_std": 0.13750514547007592,
+        "step_std": 0.2214317160697511,
+        "step_std_over_range": 0.11071585803487555,
+        "verdict": "variiert"
+      },
+      {
+        "index": 39,
+        "name": "tonnetz_1",
+        "group": "harmonic",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": -0.02000785688122266,
+        "std": 0.2523830200757389,
+        "min": -0.8590968251228333,
+        "max": 0.9250025749206543,
+        "zero_fraction": 0.0,
+        "unique_values": 5231,
+        "between_std": 0.14662554087882673,
+        "step_std": 0.25176474567599233,
+        "step_std_over_range": 0.12588237283799616,
+        "verdict": "variiert"
+      },
+      {
+        "index": 40,
+        "name": "tonnetz_2",
+        "group": "harmonic",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": -0.004227409439350064,
+        "std": 0.21761198839141146,
+        "min": -0.8257431387901306,
+        "max": 0.9654132723808289,
+        "zero_fraction": 0.0,
+        "unique_values": 5225,
+        "between_std": 0.1278524701215067,
+        "step_std": 0.21688716587385765,
+        "step_std_over_range": 0.10844358293692882,
+        "verdict": "variiert"
+      },
+      {
+        "index": 41,
+        "name": "tonnetz_3",
+        "group": "harmonic",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": 0.0012248703993050876,
+        "std": 0.22023178693699194,
+        "min": -0.8243480920791626,
+        "max": 0.9566035866737366,
+        "zero_fraction": 0.0,
+        "unique_values": 5223,
+        "between_std": 0.12335251806762626,
+        "step_std": 0.21902007488109648,
+        "step_std_over_range": 0.10951003744054824,
+        "verdict": "variiert"
+      },
+      {
+        "index": 42,
+        "name": "tonnetz_4",
+        "group": "harmonic",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": -0.01273911453828081,
+        "std": 0.09472416597070454,
+        "min": -0.41881063580513,
+        "max": 0.3716232180595398,
+        "zero_fraction": 0.0,
+        "unique_values": 5204,
+        "between_std": 0.046799745453803734,
+        "step_std": 0.09431501790396793,
+        "step_std_over_range": 0.047157508951983965,
+        "verdict": "variiert"
+      },
+      {
+        "index": 43,
+        "name": "tonnetz_5",
+        "group": "harmonic",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": -0.00043012877443483635,
+        "std": 0.09419402990206067,
+        "min": -0.23517566919326782,
+        "max": 0.4583863615989685,
+        "zero_fraction": 0.0,
+        "unique_values": 5201,
+        "between_std": 0.04310367746297545,
+        "step_std": 0.09384073058060258,
+        "step_std_over_range": 0.04692036529030129,
+        "verdict": "variiert"
+      },
+      {
+        "index": 44,
+        "name": "harmonic_ratio",
+        "group": "harmonic",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.470910647231739,
+        "std": 0.057981552550271626,
+        "min": 0.026238111779093742,
+        "max": 0.6573293805122375,
+        "zero_fraction": 0.0,
+        "unique_values": 5176,
+        "between_std": 0.03350975276092327,
+        "step_std": 0.0575429040504587,
+        "step_std_over_range": 0.0575429040504587,
+        "verdict": "variiert"
+      },
+      {
+        "index": 45,
+        "name": "vocal_activity",
+        "group": "vocal",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.6195157686274154,
+        "std": 0.42054403010486674,
+        "min": 2.1327832833151206e-09,
+        "max": 0.9971683025360107,
+        "zero_fraction": 0.0,
+        "unique_values": 4432,
+        "between_std": 0.30143283880582655,
+        "step_std": 0.4201177463147079,
+        "step_std_over_range": 0.4201177463147079,
+        "verdict": "variiert"
+      },
+      {
+        "index": 46,
+        "name": "vocal_prominence",
+        "group": "vocal",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.5158294306413848,
+        "std": 0.3671448597091728,
+        "min": 0.0,
+        "max": 1.0,
+        "zero_fraction": 0.2318452380952381,
+        "unique_values": 3937,
+        "between_std": 0.2564357761433994,
+        "step_std": 0.3666585967635006,
+        "step_std_over_range": 0.3666585967635006,
+        "verdict": "variiert"
+      },
+      {
+        "index": 47,
+        "name": "vocal_onset_probability",
+        "group": "vocal",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.06287608960784573,
+        "std": 0.1885242154299841,
+        "min": 0.0,
+        "max": 1.0,
+        "zero_fraction": 0.5217261904761905,
+        "unique_values": 2079,
+        "between_std": 0.05008904264851201,
+        "step_std": 0.1840584450654878,
+        "step_std_over_range": 0.1840584450654878,
+        "verdict": "variiert"
+      },
+      {
+        "index": 48,
+        "name": "vocal_offset_probability",
+        "group": "vocal",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.06810244813640093,
+        "std": 0.17953354778141134,
+        "min": -0.0,
+        "max": 1.0,
+        "zero_fraction": 0.4783482142857143,
+        "unique_values": 2274,
+        "between_std": 0.0548426765616573,
+        "step_std": 0.17625492254102498,
+        "step_std_over_range": 0.17625492254102498,
+        "verdict": "variiert"
+      },
+      {
+        "index": 49,
+        "name": "vocal_phrase_progress",
+        "group": "vocal",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.3787828182648896,
+        "std": 0.37208948715025314,
+        "min": 0.0,
+        "max": 0.9983552694320679,
+        "zero_fraction": 0.3298735119047619,
+        "unique_values": 2262,
+        "between_std": 0.25989306530913125,
+        "step_std": 0.3712208201069668,
+        "step_std_over_range": 0.3712208201069668,
+        "verdict": "variiert"
+      },
+      {
+        "index": 50,
+        "name": "vocal_confidence",
+        "group": "vocal",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.8400462717577826,
+        "std": 0.24266738915860783,
+        "min": 0.00013914861483499408,
+        "max": 1.0,
+        "zero_fraction": 0.0,
+        "unique_values": 4525,
+        "between_std": 0.11894470893177635,
+        "step_std": 0.24164392781005423,
+        "step_std_over_range": 0.24164392781005423,
+        "verdict": "variiert"
+      },
+      {
+        "index": 51,
+        "name": "audio_valid",
+        "group": "validity",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 1.0,
+        "std": 0.0,
+        "min": 1.0,
+        "max": 1.0,
+        "zero_fraction": 0.0,
+        "unique_values": 1,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 52,
+        "name": "phrase_valid",
+        "group": "validity",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "zero_fraction": 1.0,
+        "unique_values": 1,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 53,
+        "name": "vocal_valid",
+        "group": "validity",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 1.0,
+        "std": 0.0,
+        "min": 1.0,
+        "max": 1.0,
+        "zero_fraction": 0.0,
+        "unique_values": 1,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      }
+    ],
+    "global_channels": [
+      {
+        "index": 0,
+        "name": "bpm_a",
+        "group": "tempo",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": -0.018067206921322004,
+        "std": 0.030723098841386284,
+        "min": -0.07400930672883987,
+        "max": 0.013453535735607147,
+        "zero_fraction": 0.0,
+        "unique_values": 3,
+        "between_std": 0.030723098841386284,
+        "step_std": 0.030723098841386284,
+        "step_std_over_range": 0.015361549420693142,
+        "verdict": "schwach (<3 % des Wertebereichs)"
+      },
+      {
+        "index": 1,
+        "name": "bpm_b",
+        "group": "tempo",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": -0.018067206921322004,
+        "std": 0.030723098841386284,
+        "min": -0.07400930672883987,
+        "max": 0.013453535735607147,
+        "zero_fraction": 0.0,
+        "unique_values": 3,
+        "between_std": 0.030723098841386284,
+        "step_std": 0.030723098841386284,
+        "step_std_over_range": 0.015361549420693142,
+        "verdict": "schwach (<3 % des Wertebereichs)"
+      },
+      {
+        "index": 2,
+        "name": "tempo_ratio_b_over_a",
+        "group": "tempo",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "zero_fraction": 1.0,
+        "unique_values": 1,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 3,
+        "name": "tempo_change_abs",
+        "group": "tempo",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "zero_fraction": 1.0,
+        "unique_values": 1,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 4,
+        "name": "tempo_adjustment_required",
+        "group": "tempo",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "zero_fraction": 1.0,
+        "unique_values": 1,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 5,
+        "name": "key_tonic_a_sin",
+        "group": "key",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": -0.17191850358531588,
+        "std": 0.6669698512901097,
+        "min": -1.0,
+        "max": 1.0,
+        "zero_fraction": 0.0761904761904762,
+        "unique_values": 7,
+        "between_std": 0.6669698512901097,
+        "step_std": 0.6669698512901097,
+        "step_std_over_range": 0.33348492564505483,
+        "verdict": "variiert"
+      },
+      {
+        "index": 6,
+        "name": "key_tonic_a_cos",
+        "group": "key",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": -0.07610500369753158,
+        "std": 0.7209738253864095,
+        "min": -1.0,
+        "max": 1.0,
+        "zero_fraction": 0.0,
+        "unique_values": 7,
+        "between_std": 0.7209738253864095,
+        "step_std": 0.7209738253864095,
+        "step_std_over_range": 0.36048691269320476,
+        "verdict": "variiert"
+      },
+      {
+        "index": 7,
+        "name": "key_tonic_b_sin",
+        "group": "key",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": 0.01893310504300254,
+        "std": 0.6762984727515773,
+        "min": -1.0,
+        "max": 1.0,
+        "zero_fraction": 0.014285714285714285,
+        "unique_values": 7,
+        "between_std": 0.6762984727515773,
+        "step_std": 0.6762984727515773,
+        "step_std_over_range": 0.33814923637578864,
+        "verdict": "variiert"
+      },
+      {
+        "index": 8,
+        "name": "key_tonic_b_cos",
+        "group": "key",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": 0.049059802577609106,
+        "std": 0.7347482748044941,
+        "min": -1.0,
+        "max": 1.0,
+        "zero_fraction": 0.0,
+        "unique_values": 7,
+        "between_std": 0.7347482748044941,
+        "step_std": 0.7347482748044941,
+        "step_std_over_range": 0.36737413740224706,
+        "verdict": "variiert"
+      },
+      {
+        "index": 9,
+        "name": "key_mode_a",
+        "group": "key",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": -0.1523809523809524,
+        "std": 0.9883218328821203,
+        "min": -1.0,
+        "max": 1.0,
+        "zero_fraction": 0.0,
+        "unique_values": 2,
+        "between_std": 0.9883218328821203,
+        "step_std": 0.9883218328821203,
+        "step_std_over_range": 0.49416091644106014,
+        "verdict": "variiert"
+      },
+      {
+        "index": 10,
+        "name": "key_mode_b",
+        "group": "key",
+        "declared_range": [
+          -1.0,
+          1.0
+        ],
+        "mean": -0.2857142857142857,
+        "std": 0.9583148474999098,
+        "min": -1.0,
+        "max": 1.0,
+        "zero_fraction": 0.0,
+        "unique_values": 2,
+        "between_std": 0.9583148474999098,
+        "step_std": 0.9583148474999098,
+        "step_std_over_range": 0.4791574237499549,
+        "verdict": "variiert"
+      },
+      {
+        "index": 11,
+        "name": "key_confidence_a",
+        "group": "key",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.14528826836086367,
+        "std": 0.11566794462081849,
+        "min": 0.00040747702587395906,
+        "max": 0.6557825207710266,
+        "zero_fraction": 0.0,
+        "unique_values": 150,
+        "between_std": 0.11566794462081849,
+        "step_std": 0.11566794462081849,
+        "step_std_over_range": 0.11566794462081849,
+        "verdict": "variiert"
+      },
+      {
+        "index": 12,
+        "name": "key_confidence_b",
+        "group": "key",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.1087647115055006,
+        "std": 0.0775921427778362,
+        "min": 0.001933641149662435,
+        "max": 0.3216613829135895,
+        "zero_fraction": 0.0,
+        "unique_values": 142,
+        "between_std": 0.0775921427778362,
+        "step_std": 0.0775921427778362,
+        "step_std_over_range": 0.0775921427778362,
+        "verdict": "variiert"
+      },
+      {
+        "index": 13,
+        "name": "harmonic_compatibility",
+        "group": "pair",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 0.7927809666664828,
+        "std": 0.14544665067583365,
+        "min": 0.2316373735666275,
+        "max": 0.9870659112930298,
+        "zero_fraction": 0.0,
+        "unique_values": 420,
+        "between_std": 0.14544665067583365,
+        "step_std": 0.14544665067583365,
+        "step_std_over_range": 0.14544665067583365,
+        "verdict": "variiert"
+      },
+      {
+        "index": 14,
+        "name": "context_coverage_a",
+        "group": "validity",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 1.0,
+        "std": 0.0,
+        "min": 1.0,
+        "max": 1.0,
+        "zero_fraction": 0.0,
+        "unique_values": 1,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      },
+      {
+        "index": 15,
+        "name": "context_coverage_b",
+        "group": "validity",
+        "declared_range": [
+          0.0,
+          1.0
+        ],
+        "mean": 1.0,
+        "std": 0.0,
+        "min": 1.0,
+        "max": 1.0,
+        "zero_fraction": 0.0,
+        "unique_values": 1,
+        "between_std": 0.0,
+        "step_std": 0.0,
+        "step_std_over_range": 0.0,
+        "verdict": "tot (für alle Beispiele identisch)"
+      }
+    ],
+    "dependency": {
+      "train": {
+        "examples": 370,
+        "unique_tracks": 43,
+        "unique_directed_pairs": 37,
+        "unique_undirected_pairs": 30,
+        "undirected_pairs_present_in_both_directions": 7,
+        "examples_per_track_median": 10.0,
+        "examples_per_track_max": 60,
+        "examples_per_track_min": 10,
+        "cues_per_directed_pair_median": 10.0,
+        "cues_per_directed_pair_max": 10,
+        "unique_source_cues": 131,
+        "unique_target_cues": 128,
+        "max_reuse_of_one_source_cue": 10,
+        "max_reuse_of_one_target_cue": 19,
+        "candidate_rank_max": 50
+      },
+      "validation": {
+        "examples": 50,
+        "unique_tracks": 5,
+        "unique_directed_pairs": 5,
+        "unique_undirected_pairs": 3,
+        "undirected_pairs_present_in_both_directions": 2,
+        "examples_per_track_median": 20.0,
+        "examples_per_track_max": 30,
+        "examples_per_track_min": 10,
+        "cues_per_directed_pair_median": 10.0,
+        "cues_per_directed_pair_max": 10,
+        "unique_source_cues": 19,
+        "unique_target_cues": 14,
+        "max_reuse_of_one_source_cue": 4,
+        "max_reuse_of_one_target_cue": 8,
+        "candidate_rank_max": 17
+      },
+      "tracks_in_train_and_validation": 0
+    }
+  }
+}

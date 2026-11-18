@@ -1,0 +1,51 @@
+
+================ vocal_v2_top3 (vocal_mlp_v2, feature_protocol_v1_top3_4bar_track_split_20260731) ================
+Abgleich history.json: {
+ "history_epoch0_validation_loss": 0.2678146958351135,
+ "recomputed_equal_power_validation_loss": 0.2678147123919593,
+ "history_best_epoch": 16,
+ "history_best_validation_loss": 0.25933681262864006,
+ "recomputed_model_validation_loss": 0.25933680435021716,
+ "history_epoch0_train_loss": 0.24379157688882616,
+ "history_best_train_loss": 0.22589440643787384,
+ "epochs_run": 22
+}
+B1 pro Control-Kanal:
+  mix_position       std/Range mean 5.10% max 8.83% | |Δ Referenz| mean 0.0799 max 0.2521
+  low_end_position   std/Range mean 3.35% max 5.30% | |Δ Referenz| mean 0.0304 max 0.2085
+  vocal_position     std/Range mean 5.65% max 8.42% | |Δ Referenz| mean 0.0636 max 0.2191
+  vocal_duck_a       std/Range mean 12.20% max 25.03% | |Δ Referenz| mean 0.0982 max 0.6491
+  vocal_duck_b       std/Range mean 0.24% max 0.40% | |Δ Referenz| mean 0.0043 max 0.0097
+B2 validation, gewichtete Beiträge:
+  equal_power  loss=0.26781 | energy_shape=0.1206, transient_artifact=0.0744, vocal_audibility=0.0709, vocal_mid_phrase_gain_change=0.0002, vocal_stem_overlap=0.0017
+  model        loss=0.25934 | control_curvature=0.0009, control_smoothness=0.0038, energy_shape=0.1257, transient_artifact=0.0745, vocal_audibility=0.0530, vocal_mid_phrase_gain_change=0.0002, vocal_stem_overlap=0.0013
+  mean_curve   loss=0.26136 | control_curvature=0.0001, control_smoothness=0.0016, energy_shape=0.1233, transient_artifact=0.0746, vocal_audibility=0.0601, vocal_mid_phrase_gain_change=0.0002, vocal_stem_overlap=0.0014
+  shared_opt   loss=0.25010 | control_curvature=0.0002, control_smoothness=0.0061, energy_shape=0.1146, transient_artifact=0.0748, vocal_audibility=0.0514, vocal_mid_phrase_gain_change=0.0002, vocal_stem_overlap=0.0028
+  direct_opt   loss=0.23385 | control_curvature=0.0005, control_smoothness=0.0057, energy_shape=0.0995, transient_artifact=0.0747, vocal_audibility=0.0519, vocal_mid_phrase_gain_change=0.0003, vocal_stem_overlap=0.0012
+  swapped      loss=0.26164 | 
+Lücke: {
+ "equal_power": 0.2678147123919593,
+ "model": 0.25933680435021716,
+ "mean_curve": 0.2613604615132014,
+ "shared_opt": 0.2500990678866704,
+ "direct_opt": 0.23385296430852678,
+ "swapped": 0.26164124388661647,
+ "model_gain_abs": 0.008477908041742144,
+ "model_gain_rel_pct": 3.165587120297682,
+ "direct_gain_rel_pct": 12.681061387593944,
+ "model_share_of_direct_headroom_pct": 24.963108556470036,
+ "shared_opt_share_of_direct_headroom_pct": 52.16352368484553,
+ "mean_curve_share_of_model_gain_pct": 76.1302298512735,
+ "energy_shape_valley_only_floor_mean": 0.12171903914875454
+}
+Vertauschung: {
+ "matched_loss": 0.25933680435021716,
+ "swapped_loss_all_i_ne_j": 0.26164124388661647,
+ "swapped_loss_other_track_pair": 0.26441050113903153,
+ "swapped_loss_same_track_pair": 0.25887198663420147,
+ "fraction_of_examples_where_own_curve_is_best": 0.1111111111111111,
+ "mean_rank_of_own_curve_1_is_best": 4.111111111111111,
+ "gain_vs_equal_power_matched": 0.008477908041742144,
+ "gain_vs_equal_power_swapped": 0.006173468505342838,
+ "share_of_gain_kept_with_wrong_inputs_pct": 72.81829992666728
+}

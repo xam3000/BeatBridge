@@ -1,0 +1,137 @@
+{
+  "n": 9,
+  "two_band_max_abs_error_max": 2.384185791015625e-07,
+  "two_band_error_rms_db_worst": -140.6332315187019,
+  "full_band_init_level_db_mean": -9.857698504922574,
+  "full_band_init_error_rms_db_mean": -2.994607299516872,
+  "tcn_init_eq_value": 0.5,
+  "tcn_init_vocal_ducking": 0.5,
+  "rows": [
+    {
+      "example_id": "example-337166015f635d6b",
+      "two_band_max_abs_error": 1.1920928955078125e-07,
+      "two_band_error_rms_db_re_reference": -141.67390689630884,
+      "full_band_init_level_db_re_equal_power": -8.264598484784765,
+      "full_band_init_error_rms_db_re_reference": -3.737687305306661,
+      "tcn_init_eq_value": 0.5,
+      "tcn_init_vocal_ducking": 0.5,
+      "tcn_init_gain_a_first_mid_last": [
+        1.0,
+        0.5161290168762207,
+        0.0
+      ]
+    },
+    {
+      "example_id": "example-a150adae4d8d8c15",
+      "two_band_max_abs_error": 1.4901161193847656e-07,
+      "two_band_error_rms_db_re_reference": -141.61638184898723,
+      "full_band_init_level_db_re_equal_power": -8.621414812535702,
+      "full_band_init_error_rms_db_re_reference": -3.5318622027590694,
+      "tcn_init_eq_value": 0.5,
+      "tcn_init_vocal_ducking": 0.5,
+      "tcn_init_gain_a_first_mid_last": [
+        1.0,
+        0.5161290168762207,
+        0.0
+      ]
+    },
+    {
+      "example_id": "example-a164b93c5deba488",
+      "two_band_max_abs_error": 1.7881393432617188e-07,
+      "two_band_error_rms_db_re_reference": -141.49395946142695,
+      "full_band_init_level_db_re_equal_power": -8.8349379758134,
+      "full_band_init_error_rms_db_re_reference": -3.3977635959534744,
+      "tcn_init_eq_value": 0.5,
+      "tcn_init_vocal_ducking": 0.5,
+      "tcn_init_gain_a_first_mid_last": [
+        1.0,
+        0.5161290168762207,
+        0.0
+      ]
+    },
+    {
+      "example_id": "example-c80edae1dcd2c973",
+      "two_band_max_abs_error": 2.384185791015625e-07,
+      "two_band_error_rms_db_re_reference": -141.50090970599348,
+      "full_band_init_level_db_re_equal_power": -9.897404627724853,
+      "full_band_init_error_rms_db_re_reference": -2.9205034605293974,
+      "tcn_init_eq_value": 0.5,
+      "tcn_init_vocal_ducking": 0.5,
+      "tcn_init_gain_a_first_mid_last": [
+        1.0,
+        0.5161290168762207,
+        0.0
+      ]
+    },
+    {
+      "example_id": "example-dc0196cad0f81df6",
+      "two_band_max_abs_error": 1.4901161193847656e-07,
+      "two_band_error_rms_db_re_reference": -140.66543307560397,
+      "full_band_init_level_db_re_equal_power": -11.100574739540248,
+      "full_band_init_error_rms_db_re_reference": -2.53143701497833,
+      "tcn_init_eq_value": 0.5,
+      "tcn_init_vocal_ducking": 0.5,
+      "tcn_init_gain_a_first_mid_last": [
+        1.0,
+        0.5161290168762207,
+        0.0
+      ]
+    },
+    {
+      "example_id": "example-0a068557f3f94c18",
+      "two_band_max_abs_error": 1.4901161193847656e-07,
+      "two_band_error_rms_db_re_reference": -140.6332315187019,
+      "full_band_init_level_db_re_equal_power": -10.367736380624294,
+      "full_band_init_error_rms_db_re_reference": -2.74463382854266,
+      "tcn_init_eq_value": 0.5,
+      "tcn_init_vocal_ducking": 0.5,
+      "tcn_init_gain_a_first_mid_last": [
+        1.0,
+        0.5161290168762207,
+        0.0
+      ]
+    },
+    {
+      "example_id": "example-7d9fe9433b127ad0",
+      "two_band_max_abs_error": 1.7881393432617188e-07,
+      "two_band_error_rms_db_re_reference": -141.4578528274567,
+      "full_band_init_level_db_re_equal_power": -10.392692729893627,
+      "full_band_init_error_rms_db_re_reference": -2.746411609746156,
+      "tcn_init_eq_value": 0.5,
+      "tcn_init_vocal_ducking": 0.5,
+      "tcn_init_gain_a_first_mid_last": [
+        1.0,
+        0.5161290168762207,
+        0.0
+      ]
+    },
+    {
+      "example_id": "example-6f38dcab4b0a52e1",
+      "two_band_max_abs_error": 1.7881393432617188e-07,
+      "two_band_error_rms_db_re_reference": -141.25024734240617,
+      "full_band_init_level_db_re_equal_power": -10.207439466544814,
+      "full_band_init_error_rms_db_re_reference": -2.795472663468592,
+      "tcn_init_eq_value": 0.5,
+      "tcn_init_vocal_ducking": 0.5,
+      "tcn_init_gain_a_first_mid_last": [
+        1.0,
+        0.5161290168762207,
+        0.0
+      ]
+    },
+    {
+      "example_id": "example-ffcbf7df93a918c5",
+      "two_band_max_abs_error": 1.7881393432617188e-07,
+      "two_band_error_rms_db_re_reference": -141.23408799721406,
+      "full_band_init_level_db_re_equal_power": -11.032487326841467,
+      "full_band_init_error_rms_db_re_reference": -2.545694014367505,
+      "tcn_init_eq_value": 0.5,
+      "tcn_init_vocal_ducking": 0.5,
+      "tcn_init_gain_a_first_mid_last": [
+        1.0,
+        0.5161290168762207,
+        0.0
+      ]
+    }
+  ]
+}

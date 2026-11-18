@@ -1,0 +1,46 @@
+
+================ tcn_fresh_init (tcn_v1, feature_protocol_v1_top3_4bar_track_split_20260731) ================
+B1 pro Control-Kanal:
+  gain_A             std/Range mean 0.00% max 0.00% | |Δ Referenz| mean 0.0000 max 0.0000
+  gain_B             std/Range mean 0.00% max 0.00% | |Δ Referenz| mean 0.0000 max 0.0000
+  eq_low_A           std/Range mean 0.00% max 0.00% | |Δ Referenz| mean 0.0000 max 0.0000
+  eq_low_B           std/Range mean 0.00% max 0.00% | |Δ Referenz| mean 0.0000 max 0.0000
+  eq_mid_A           std/Range mean 0.00% max 0.00% | |Δ Referenz| mean 0.0000 max 0.0000
+  eq_mid_B           std/Range mean 0.00% max 0.00% | |Δ Referenz| mean 0.0000 max 0.0000
+  eq_high_A          std/Range mean 0.00% max 0.00% | |Δ Referenz| mean 0.0000 max 0.0000
+  eq_high_B          std/Range mean 0.00% max 0.00% | |Δ Referenz| mean 0.0000 max 0.0000
+  low_end_ownership  std/Range mean 0.00% max 0.00% | |Δ Referenz| mean 0.0000 max 0.0000
+  vocal_ducking      std/Range mean 0.00% max 0.00% | |Δ Referenz| mean 0.0000 max 0.0000
+B2 validation, gewichtete Beiträge:
+  equal_power  loss=1.96287 | boundary=1.2717, energy_shape=0.5066, transient_artifact=0.0744, vocal_boundary=0.1048, vocal_overlap=0.0054
+  model        loss=1.96287 | boundary=1.2717, energy_shape=0.5066, transient_artifact=0.0744, vocal_boundary=0.1048, vocal_overlap=0.0054
+  mean_curve   loss=1.96287 | boundary=1.2717, energy_shape=0.5066, transient_artifact=0.0744, vocal_boundary=0.1048, vocal_overlap=0.0054
+  shared_opt   loss=0.24286 | boundary=0.0070, control_curvature=0.0005, control_smoothness=0.0035, energy_shape=0.0498, transient_artifact=0.0741, vocal_boundary=0.1058, vocal_overlap=0.0021
+  direct_opt   loss=0.24113 | boundary=0.0320, control_curvature=0.0014, control_smoothness=0.0051, energy_shape=0.0342, transient_artifact=0.0742, vocal_boundary=0.0928, vocal_overlap=0.0013
+  swapped      loss=1.96287 | 
+Lücke: {
+ "equal_power": 1.9628742800818548,
+ "model": 1.9628742800818548,
+ "mean_curve": 1.9628742403454251,
+ "shared_opt": 0.24285628563827938,
+ "direct_opt": 0.24112767477830252,
+ "swapped": 1.9628742800818548,
+ "model_gain_abs": 0.0,
+ "model_gain_rel_pct": 0.0,
+ "direct_gain_rel_pct": 87.71558233631514,
+ "model_share_of_direct_headroom_pct": 0.0,
+ "shared_opt_share_of_direct_headroom_pct": 99.89960132027255,
+ "mean_curve_share_of_model_gain_pct": null,
+ "energy_shape_valley_only_floor_mean": 0.12171903914875454
+}
+Vertauschung: {
+ "matched_loss": 1.9628742800818548,
+ "swapped_loss_all_i_ne_j": 1.9628742800818548,
+ "swapped_loss_other_track_pair": 1.9005859891573589,
+ "swapped_loss_same_track_pair": 2.025162571006351,
+ "fraction_of_examples_where_own_curve_is_best": 0.1111111111111111,
+ "mean_rank_of_own_curve_1_is_best": 1.0,
+ "gain_vs_equal_power_matched": 0.0,
+ "gain_vs_equal_power_swapped": 0.0,
+ "share_of_gain_kept_with_wrong_inputs_pct": null
+}
