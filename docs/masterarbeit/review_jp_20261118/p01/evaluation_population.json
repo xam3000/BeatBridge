@@ -1,0 +1,222 @@
+{
+  "format_version": 1,
+  "protocol": "P01-v1",
+  "status": "awaiting_user_commit",
+  "eligible_groups": [
+    {
+      "recording_group_id": "recording-787271677c8192af9130",
+      "sha256": "666176a04ff5e1984550e7243ee07e5458ce3a53fa0fc1e8524550ea212858e7"
+    },
+    {
+      "recording_group_id": "recording-e48a59da1fc9b589b316",
+      "sha256": "68070d9df2df262b31ca6294fc486a95a0f02c8e33d4fff6c8a69077a937816a"
+    },
+    {
+      "recording_group_id": "recording-07878718072b960fa44b",
+      "sha256": "4a4e8e213cf4ac3dcabba3328fa78637baa4dfb9138c70091070159c0839c413"
+    },
+    {
+      "recording_group_id": "recording-2c6419b5c1add204c223",
+      "sha256": "fc37ab414eb1d161a5255b5c69fd19713cb99f73a271d804a5277cef70cb8e8a"
+    },
+    {
+      "recording_group_id": "recording-6cb7e88dd49f947a9f28",
+      "sha256": "a1b4f2a4b0952b49a4edab66ed4589243f7f93b76f3dda0f55e248e381a1292d"
+    },
+    {
+      "recording_group_id": "recording-4678bd64a23f1ff57e87",
+      "sha256": "7776438b07cea8bda61a6cbc447177702f728601300f8fd5b4473099b9a63f90"
+    },
+    {
+      "recording_group_id": "recording-6f17105546a4c6699cf2",
+      "sha256": "7f3412d294a6bc89fe409e6ec03d6d7c9b24fece8d6e53a76a9184bd223e31a5"
+    },
+    {
+      "recording_group_id": "recording-96eea9dc0a98f681a632",
+      "sha256": "db1bec76ade2b49d4cab5716dd6e235c5069af6b9906a01effb75ce18b5b5489"
+    },
+    {
+      "recording_group_id": "recording-9e562506c1aaa421a7b4",
+      "sha256": "bb2e5c8c5a821ad0e940cbd6dc43419e679f55700c775dd1c6c088869e4788e6"
+    },
+    {
+      "recording_group_id": "recording-f7f4bacd12d8f77b6307",
+      "sha256": "84e39d8df66339b76db613ccd4e332049f70e64ec6c672916226874a3f7458de"
+    },
+    {
+      "recording_group_id": "recording-fc35acd8e4227cd20925",
+      "sha256": "6b89e4dbd008008c14033453e1780140458994213ef3bc0ed9a019091c71f37d"
+    },
+    {
+      "recording_group_id": "recording-59a00f4b19b1633eb189",
+      "sha256": "a7a214bd01c87049ecd4976421b9c9434e3306839622ad55204e5c63f6cf5f7e"
+    },
+    {
+      "recording_group_id": "recording-09601b8f1e93c3877511",
+      "sha256": "eb84d280a203f12adc95a3bbbcbf3a22857f99c2901fe88b30e728b536da3f69"
+    },
+    {
+      "recording_group_id": "recording-cddd8686636172c6f570",
+      "sha256": "adb8454d08b55e68b812c7ab5274dedbf4faeedb4702210f033a941ae8e7e301"
+    },
+    {
+      "recording_group_id": "recording-59de5999531227cf1c6c",
+      "sha256": "0b7227019c73265df9105ff8432a89dc57f3390bc3fb7c20c922b063ab607854"
+    },
+    {
+      "recording_group_id": "recording-03c8c6034b8ae2ed43a6",
+      "sha256": "b702c71d9ca9c0fdc15018ceb79c77e900e8a7f24ce9576d8e575496d11418e0"
+    },
+    {
+      "recording_group_id": "recording-ea0415b9073c41738a24",
+      "sha256": "c3269127b2e0419c871b24bf99a2f468fdac412400f41a44763a330afa7246a3"
+    },
+    {
+      "recording_group_id": "recording-4f8724acbe0f685871ed",
+      "sha256": "9d214008e494c0e7be430340b1aaa8823d036d8160df0592cee92653e2a18a5e"
+    },
+    {
+      "recording_group_id": "recording-a0524b581f99638bc047",
+      "sha256": "a3d46091182e043a28cb4effe1801fc2d71f2d990af035b3183758a6d24cb7e8"
+    },
+    {
+      "recording_group_id": "recording-f4f166d2c95423950acf",
+      "sha256": "83752c9ea43daa74e14ab4e50f1188f8756367f5497e20934a1990c2f4c43f7e"
+    },
+    {
+      "recording_group_id": "recording-264dece93ad651235fb4",
+      "sha256": "373fd6ad7e5e3160e30b895cb681de0216e33f634e8b72bc7bbf956aaed6b8f4"
+    },
+    {
+      "recording_group_id": "recording-c5330b1f5c3cab6c9da0",
+      "sha256": "17fb1aeef49e7755b5cc4b4b612e5be912330d970e203a96b36fc3c74cc42d46"
+    }
+  ],
+  "pairs": [
+    {
+      "pair_id": "P01",
+      "source": {
+        "recording_group_id": "recording-787271677c8192af9130",
+        "sha256": "666176a04ff5e1984550e7243ee07e5458ce3a53fa0fc1e8524550ea212858e7"
+      },
+      "target": {
+        "recording_group_id": "recording-e48a59da1fc9b589b316",
+        "sha256": "68070d9df2df262b31ca6294fc486a95a0f02c8e33d4fff6c8a69077a937816a"
+      }
+    },
+    {
+      "pair_id": "P02",
+      "source": {
+        "recording_group_id": "recording-07878718072b960fa44b",
+        "sha256": "4a4e8e213cf4ac3dcabba3328fa78637baa4dfb9138c70091070159c0839c413"
+      },
+      "target": {
+        "recording_group_id": "recording-2c6419b5c1add204c223",
+        "sha256": "fc37ab414eb1d161a5255b5c69fd19713cb99f73a271d804a5277cef70cb8e8a"
+      }
+    },
+    {
+      "pair_id": "P03",
+      "source": {
+        "recording_group_id": "recording-6cb7e88dd49f947a9f28",
+        "sha256": "a1b4f2a4b0952b49a4edab66ed4589243f7f93b76f3dda0f55e248e381a1292d"
+      },
+      "target": {
+        "recording_group_id": "recording-4678bd64a23f1ff57e87",
+        "sha256": "7776438b07cea8bda61a6cbc447177702f728601300f8fd5b4473099b9a63f90"
+      }
+    },
+    {
+      "pair_id": "P04",
+      "source": {
+        "recording_group_id": "recording-6f17105546a4c6699cf2",
+        "sha256": "7f3412d294a6bc89fe409e6ec03d6d7c9b24fece8d6e53a76a9184bd223e31a5"
+      },
+      "target": {
+        "recording_group_id": "recording-96eea9dc0a98f681a632",
+        "sha256": "db1bec76ade2b49d4cab5716dd6e235c5069af6b9906a01effb75ce18b5b5489"
+      }
+    },
+    {
+      "pair_id": "P05",
+      "source": {
+        "recording_group_id": "recording-9e562506c1aaa421a7b4",
+        "sha256": "bb2e5c8c5a821ad0e940cbd6dc43419e679f55700c775dd1c6c088869e4788e6"
+      },
+      "target": {
+        "recording_group_id": "recording-f7f4bacd12d8f77b6307",
+        "sha256": "84e39d8df66339b76db613ccd4e332049f70e64ec6c672916226874a3f7458de"
+      }
+    },
+    {
+      "pair_id": "P06",
+      "source": {
+        "recording_group_id": "recording-fc35acd8e4227cd20925",
+        "sha256": "6b89e4dbd008008c14033453e1780140458994213ef3bc0ed9a019091c71f37d"
+      },
+      "target": {
+        "recording_group_id": "recording-59a00f4b19b1633eb189",
+        "sha256": "a7a214bd01c87049ecd4976421b9c9434e3306839622ad55204e5c63f6cf5f7e"
+      }
+    },
+    {
+      "pair_id": "P07",
+      "source": {
+        "recording_group_id": "recording-09601b8f1e93c3877511",
+        "sha256": "eb84d280a203f12adc95a3bbbcbf3a22857f99c2901fe88b30e728b536da3f69"
+      },
+      "target": {
+        "recording_group_id": "recording-cddd8686636172c6f570",
+        "sha256": "adb8454d08b55e68b812c7ab5274dedbf4faeedb4702210f033a941ae8e7e301"
+      }
+    },
+    {
+      "pair_id": "P08",
+      "source": {
+        "recording_group_id": "recording-59de5999531227cf1c6c",
+        "sha256": "0b7227019c73265df9105ff8432a89dc57f3390bc3fb7c20c922b063ab607854"
+      },
+      "target": {
+        "recording_group_id": "recording-03c8c6034b8ae2ed43a6",
+        "sha256": "b702c71d9ca9c0fdc15018ceb79c77e900e8a7f24ce9576d8e575496d11418e0"
+      }
+    },
+    {
+      "pair_id": "P09",
+      "source": {
+        "recording_group_id": "recording-ea0415b9073c41738a24",
+        "sha256": "c3269127b2e0419c871b24bf99a2f468fdac412400f41a44763a330afa7246a3"
+      },
+      "target": {
+        "recording_group_id": "recording-4f8724acbe0f685871ed",
+        "sha256": "9d214008e494c0e7be430340b1aaa8823d036d8160df0592cee92653e2a18a5e"
+      }
+    },
+    {
+      "pair_id": "P10",
+      "source": {
+        "recording_group_id": "recording-a0524b581f99638bc047",
+        "sha256": "a3d46091182e043a28cb4effe1801fc2d71f2d990af035b3183758a6d24cb7e8"
+      },
+      "target": {
+        "recording_group_id": "recording-f4f166d2c95423950acf",
+        "sha256": "83752c9ea43daa74e14ab4e50f1188f8756367f5497e20934a1990c2f4c43f7e"
+      }
+    },
+    {
+      "pair_id": "P11",
+      "source": {
+        "recording_group_id": "recording-264dece93ad651235fb4",
+        "sha256": "373fd6ad7e5e3160e30b895cb681de0216e33f634e8b72bc7bbf956aaed6b8f4"
+      },
+      "target": {
+        "recording_group_id": "recording-c5330b1f5c3cab6c9da0",
+        "sha256": "17fb1aeef49e7755b5cc4b4b612e5be912330d970e203a96b36fc3c74cc42d46"
+      }
+    }
+  ],
+  "possible_disjoint_pairs": 11,
+  "missing_groups_for_10": 0,
+  "missing_groups_for_12": 2,
+  "exposure_tracks_sha256": "39a70ba20c168304b727bcec22bd5339577d9bfa32735777ab2b31058a6d4b35"
+}

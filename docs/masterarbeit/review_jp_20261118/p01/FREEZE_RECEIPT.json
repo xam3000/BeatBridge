@@ -1,0 +1,96 @@
+{
+  "format_version": 1,
+  "date": "2026-11-19",
+  "authorization": "Explicit author request to create and document the P01 freeze commit.",
+  "freeze_status": "frozen_by_containing_commit",
+  "hash_basis": "Git blob bytes in the containing commit; text working trees may use CRLF. Verify with git show <freeze_commit>:<path>.",
+  "commit_reference": "First Git commit containing this receipt and the bound protocol/population bytes.",
+  "protocol": "P01-v1",
+  "population_source": "output/review_jp_20261118/p01_exposition/run04",
+  "raw_population_status_is_generation_state": "awaiting_user_commit",
+  "eligible_recording_groups": 22,
+  "disjoint_pairs": 11,
+  "checks": {
+    "test_command": ".venv\\Scripts\\python.exe -B -X utf8 -m pytest -q -p no:cacheprovider --basetemp=output/p01_freeze_pytest_20261119 tests/test_evaluation_exposure.py",
+    "pytest_passed": 9,
+    "population_group_and_sha_disjointness": "passed",
+    "deterministic_pair_order": "passed",
+    "catalog_sha256_binding": "passed",
+    "run04_snapshot_byte_identity": "passed",
+    "historical_catalog_bindings": "passed"
+  },
+  "files": {
+    "docs/EVALUATION_PROTOCOL.md": {
+      "sha256": "fc5da8f8295d3c531107c3d3069194446fc5d42fcb633f245074b497da4c1bfb",
+      "bytes": 23892
+    },
+    "src/evaluation/audit_exposure.py": {
+      "sha256": "6a0e1ac3332ea5f56b0396b07787b6b32080bfd6444ecc0dcbeb547f63e1b7f8",
+      "bytes": 15496
+    },
+    "tests/test_evaluation_exposure.py": {
+      "sha256": "04727c241cbc822c1c1549dda78ee0b37eb53e7dce67547b55217ecb6f65b06e",
+      "bytes": 2937
+    },
+    "docs/masterarbeit/review_jp_20261118/reviews/R_P01_01.md": {
+      "sha256": "899f4bea4e3c7e1adf3897dafa3756bd43686303c9456248a65c792731196cef",
+      "bytes": 10734
+    },
+    "docs/masterarbeit/review_jp_20261118/p01/.gitattributes": {
+      "sha256": "78523b649070e358bb142a2833f3d38a3a2b6fd60a83bc4f4c828a497d92329e",
+      "bytes": 32
+    },
+    "docs/masterarbeit/review_jp_20261118/p01/bestand_20261118_run01/evaluation_population.json": {
+      "sha256": "d7ee3fe1c903e3d5e8c3ffb8080b6ca690beadd60b1663bbbb7fb9b3c142a2ef",
+      "bytes": 317
+    },
+    "docs/masterarbeit/review_jp_20261118/p01/bestand_20261118_run01/exposure_sources.json": {
+      "sha256": "1a3e07cd30613cc38faeb1f003e524807e5a265956373d275da9c78d3a7bd53d",
+      "bytes": 13626
+    },
+    "docs/masterarbeit/review_jp_20261118/p01/bestand_20261118_run01/exposure_tracks.csv": {
+      "sha256": "d59b03bff3f80b093222e1f4805478f2b5f814b06a30f49f543894b880f4406f",
+      "bytes": 247019
+    },
+    "docs/masterarbeit/review_jp_20261118/p01/bestand_20261118_run03/clearance_erweiterung_20261118.csv": {
+      "sha256": "fd3844151b2f7db9377b51a176b354a46e077a8f209599ec9169f75d1bace99b",
+      "bytes": 7285
+    },
+    "docs/masterarbeit/review_jp_20261118/p01/bestand_20261118_run03/evaluation_population.json": {
+      "sha256": "093e4c02a5b7c332a2d76b4e54cd2f0a25e8d7533ec18f257f1f75d0f916edda",
+      "bytes": 8925
+    },
+    "docs/masterarbeit/review_jp_20261118/p01/bestand_20261118_run03/EXPOSITION.md": {
+      "sha256": "d8d7929bea41f9c421b4d8cf81f8604236acde71c18c9e672f1e73c39d7ac237",
+      "bytes": 10481
+    },
+    "docs/masterarbeit/review_jp_20261118/p01/bestand_20261118_run03/exposure_sources.json": {
+      "sha256": "1293b9da8ea84f1f0a7a7684d8a66b72b41758ffd9918f5d7e35b20468af8928",
+      "bytes": 13627
+    },
+    "docs/masterarbeit/review_jp_20261118/p01/bestand_20261118_run03/exposure_tracks.csv": {
+      "sha256": "68ab985e2e2734cf1b16bd5044ac935cad4c2e8206c5d670ec4c16fbcb384356",
+      "bytes": 257022
+    },
+    "docs/masterarbeit/review_jp_20261118/p01/clearance_erweiterung_20261118.csv": {
+      "sha256": "1c174841ad81e8bc4cb230f5f388cb2082c8c9c6b523e9f7cb20d1b3f11d9cae",
+      "bytes": 8218
+    },
+    "docs/masterarbeit/review_jp_20261118/p01/evaluation_population.json": {
+      "sha256": "38d899136001fc9c44eee9260ed98550c656b0db7c0330c3ad7a5e5ba494abca",
+      "bytes": 8063
+    },
+    "docs/masterarbeit/review_jp_20261118/p01/EXPOSITION.md": {
+      "sha256": "2552c902eb66c76bc00020beba02c9ca94297d7bdeeea65c8eb1cd3a02a4d97d",
+      "bytes": 12282
+    },
+    "docs/masterarbeit/review_jp_20261118/p01/exposure_sources.json": {
+      "sha256": "ff8f3673a6ddab832af5f8ee696b408ea5c6ffb34d36122dc82242f1948b707c",
+      "bytes": 13627
+    },
+    "docs/masterarbeit/review_jp_20261118/p01/exposure_tracks.csv": {
+      "sha256": "39a70ba20c168304b727bcec22bd5339577d9bfa32735777ab2b31058a6d4b35",
+      "bytes": 257952
+    }
+  }
+}

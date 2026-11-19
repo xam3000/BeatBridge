@@ -1,0 +1,11 @@
+{
+  "format_version": 1,
+  "protocol": "P01-v1",
+  "status": "insufficient_material",
+  "eligible_groups": [],
+  "pairs": [],
+  "possible_disjoint_pairs": 0,
+  "missing_groups_for_10": 20,
+  "missing_groups_for_12": 24,
+  "exposure_tracks_sha256": "d59b03bff3f80b093222e1f4805478f2b5f814b06a30f49f543894b880f4406f"
+}

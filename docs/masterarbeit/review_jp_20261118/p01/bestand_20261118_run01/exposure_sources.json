@@ -1,0 +1,287 @@
+{
+  "format_version": 1,
+  "sources": {
+    "S001": {
+      "path": "output/corpora/prive_scantraxx_extension_v2_20260923_run01/corpus_manifest.json",
+      "sha256": "46a7f677f008ce9d8296b6b1a80db0fbf6d419cddfbe0886c88b3d7ae297b3a4",
+      "role": "historical corpus"
+    },
+    "S002": {
+      "path": "output/corpora/prive_scantraxx_extension_v2_20260923_run01/recording_groups.json",
+      "sha256": "9b9d657c5785013d20b06abd252c8d4af1e06889e977a06f3b666effcb2dc0b4",
+      "role": "historical corpus"
+    },
+    "S003": {
+      "path": "output/corpora/prive_scantraxx_extension_v2_20260923_run01/split_authority.json",
+      "sha256": "1eaf5672428f030ca9807c5ddf3d1e06bf03c06b2792b8a9a21bf564a318d3ee",
+      "role": "historical corpus"
+    },
+    "S004": {
+      "path": "output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805/manifest.json",
+      "sha256": "4708a8fa983354903759a934f48d36b6450510809773dda2a12f9408821886b7",
+      "role": "dataset assignment"
+    },
+    "S005": {
+      "path": "output/datasets/feature_protocol_v1_top3_4bar_track_split_20260731/manifest.json",
+      "sha256": "cbd4638b169d73d1aa4d03abf51e7d5e3de45253c1519dce5e9b6a0de07260e8",
+      "role": "dataset assignment"
+    },
+    "S006": {
+      "path": "output/datasets/prive_scantraxx_extension_variable_v2_fp2_roformer_2-4-6-8bar_top1x3_split20260923_run01/manifest.json",
+      "sha256": "9d11bae795c098376d46a9a02204a7cb6647f77ffb5ff39f5c80c2da94823562",
+      "role": "dataset assignment"
+    },
+    "S007": {
+      "path": "output/datasets/prive_scantraxx_extension_variable_v2_fp2_roformer_2-4-6-8bar_top1x3_split20260923_run02_local_four_four/manifest.json",
+      "sha256": "bf82442d82713bdb21b7f7429f7aee1845eda3c44abcd6d5f4fdca688a78a422",
+      "role": "dataset assignment"
+    },
+    "S008": {
+      "path": "output/datasets/prive_scantraxx_extension_variable_v2_fp2_roformer_smoke_20260924_run01/manifest.json",
+      "sha256": "f687d786c11bd64433a7092d05fe507b9584aaf857916a55f04d1d85b1a3ca32",
+      "role": "dataset assignment"
+    },
+    "S009": {
+      "path": "output/datasets/smoke_feature_protocol_v1_ghost_rebirth_20260731/manifest.json",
+      "sha256": "1abe0602e892a1486d7b9e3b08e13e4300a640a452649ebc1701ad1465f68684",
+      "role": "dataset assignment"
+    },
+    "S010": {
+      "path": "output/datasets/variable_v2_strict_20260820_selected_roformer_run01/manifest.json",
+      "sha256": "b86d0c46329c653a6984d9a3eed59b1f763165bee308b9c67925cf8727bed5cd",
+      "role": "dataset assignment"
+    },
+    "S011": {
+      "path": "output/training_runs/prive_scantraxx_all_models_dataset_v1_tcn_bilstm_transition_control_v1_20260926_run01/manifest.json",
+      "sha256": "4361e20d276fd9298909c6e0327e3d1e90ed9ff6ff7d73440a9d26bb33704490",
+      "role": "September training contract",
+      "dataset_source": "S004"
+    },
+    "S012": {
+      "path": "output/training_runs/prive_scantraxx_all_models_dataset_v1_time_shared_mlp_v1_20260926_run01/manifest.json",
+      "sha256": "022c2e476594b0cd2b458b0d01b1840106226399bcad27a6de5135bf2ce55788",
+      "role": "September training contract",
+      "dataset_source": "S004"
+    },
+    "S013": {
+      "path": "output/training_runs/prive_scantraxx_all_models_dataset_v1_vocal_time_shared_mlp_v2_20260926_run01/manifest.json",
+      "sha256": "9a15c5536910b27beb13377ba1cb887feae0af94f44e3d88264ca198ccd0d621",
+      "role": "September training contract",
+      "dataset_source": "S004"
+    },
+    "S014": {
+      "path": "output/training_runs/prive_scantraxx_all_models_dataset_v2_variable_tcn_bilstm_20260926_run01/manifest.json",
+      "sha256": "e7ae40fe07ca6199e4de09fb2bac710f9993d8bf8c6ab6c5b3b5e8a4b3626658",
+      "role": "September training contract",
+      "dataset_source": "S007"
+    },
+    "S015": {
+      "path": "output/batch_variable_v2_strict_20260820_run01/manifest.json",
+      "sha256": "8aa43624dec9dfa4c532a72101521a872515ee799540a3a14a6cb9403ab57d8b",
+      "role": "batch / producer"
+    },
+    "S016": {
+      "path": "output/batch_variable_v2_strict_20260820_selected_top3_run01/manifest.json",
+      "sha256": "601ea014478015277fe16a918427dd32ff1092660b4ecf6e679871db53ebdc62",
+      "role": "batch / producer"
+    },
+    "S017": {
+      "path": "output/batches/all_music_recursive_bpm145_165_top1_20260805/manifest.json",
+      "sha256": "baf0855f9003c2ddbc4f60fdfe9bfac21bc3fb9697a6290b36f0d2677fa488ff",
+      "role": "batch / producer"
+    },
+    "S018": {
+      "path": "output/batches/all_music_recursive_bpm145_165_top3_20260805/manifest.json",
+      "sha256": "afbc2c295d1a75136022b2ee10701379abe0ce120b600542244838b6854a15ea",
+      "role": "batch / producer"
+    },
+    "S019": {
+      "path": "output/batches/all_songs_top3_targets_top3_transitions_20260722/manifest.json",
+      "sha256": "26ede83a6cc3e6ba791475330c006286b25060fa2e99ae57368e2f0b7810a015",
+      "role": "batch / producer"
+    },
+    "S020": {
+      "path": "output/batches/prive/_top1000/_baseline/_20260921_fixed/manifest.json",
+      "sha256": "306bc402ee1faa8491184f6a1f166f5e80bd8de91091dc1235eadca091ad1e69",
+      "role": "batch / producer"
+    },
+    "S021": {
+      "path": "output/batches/prive_top1000_variable_top3_20260922/manifest.json",
+      "sha256": "e9c4a1466f6dba7000de2f04a6c2476bd019ae30e28a56679cc38c35f77be989",
+      "role": "batch / producer"
+    },
+    "S022": {
+      "path": "output/producers/prive_scantraxx_extension_variable_v2_smoke_20260924_run02/manifest.json",
+      "sha256": "a072a4a7048c3d17ff3d90b3f73d6090d5d61d13aea0ae716720ba6da8708bae",
+      "role": "batch / producer"
+    },
+    "S023": {
+      "path": "output/producers/prive_scantraxx_extension_variable_v2_smoke_20260924_run04/manifest.json",
+      "sha256": "38fe98fb9a4c319e6ba76bd9b452ce5c53071a031cfac6656f3270055b852ee8",
+      "role": "batch / producer"
+    },
+    "S024": {
+      "path": "output/producers/prive_scantraxx_extension_variable_v2_smoke_20260924_run05/manifest.json",
+      "sha256": "0346b1b1b3fcf5b1fa2db7b77402c511cc21e714cee30e5e29019984c94fd287",
+      "role": "batch / producer"
+    },
+    "S025": {
+      "path": "output/producers/prive_scantraxx_extension_variable_v2_top1x3_20260923_run02/manifest.json",
+      "sha256": "acc130e2d6a79f14d6df0e386c279a149e9a300467875c71b22518195229d846",
+      "role": "batch / producer"
+    },
+    "S026": {
+      "path": "output/producers/prive_scantraxx_extension_variable_v2_top1x3_20260923_run03/manifest.json",
+      "sha256": "c15ba7b57036d3716fed3dbe0cdac23ae72b79569812e51a87c52a04f94d3121",
+      "role": "batch / producer"
+    },
+    "S027": {
+      "path": "output/producers/prive_scantraxx_extension_variable_v2_top1x3_20260923_run04_recovered_from_run03/manifest.json",
+      "sha256": "65562dd6e302b8820fccbf94b1ca623773cf24a8d19499a228308a486d82f801",
+      "role": "batch / producer"
+    },
+    "S028": {
+      "path": "output/producers/prive_scantraxx_extension_variable_v2_top1x3_20260923_run05_recovered_from_run03_plus_validation_smoke/manifest.json",
+      "sha256": "172c3ba41c9a7b807452e443865e63d43d67bcbd2d792be6ca841ed69b2d8a36",
+      "role": "batch / producer"
+    },
+    "S029": {
+      "path": "output/producers/prive_scantraxx_extension_variable_v2_top1x3_20260923_run06_local_four_four/manifest.json",
+      "sha256": "26c5a98ee98bba43dc9e733da4e7b6180fb2e63fc19bb80882dd19da28a224e3",
+      "role": "batch / producer"
+    },
+    "S030": {
+      "path": "output/control_comparisons/batch_20260722_top4_4bar_v1/manifest.json",
+      "sha256": "4393eedd152198ae5ed914cb0284b33a68719c868441099b7e35088ebbaa18d1",
+      "role": "study / control comparison"
+    },
+    "S031": {
+      "path": "output/control_comparisons/batch_20260722_top4_4bar_v2_monotone/manifest.json",
+      "sha256": "e96ac6359dcac1e0c57db5a0815bf1f7efa8a4888725f45f15a08e5ed16e3697",
+      "role": "study / control comparison"
+    },
+    "S032": {
+      "path": "output/control_comparisons/objective_v4_validation_calibrated_top1_per_pair_20260731/manifest.json",
+      "sha256": "b910d0dd5d1c82983d01d78b18a0b219d8512c2cd415db5a5e6c74113eb30389",
+      "role": "study / control comparison"
+    },
+    "S033": {
+      "path": "output/control_comparisons/objective_v4_validation_top1_per_pair_20260731/manifest.json",
+      "sha256": "7ad00b7689eb38d62a09f34d3c5cc522552df63c4d5709c8f11be6361622914a",
+      "role": "study / control comparison"
+    },
+    "S034": {
+      "path": "output/control_studies/blind_all_models_validation_20260904/manifest.json",
+      "sha256": "61b06d2cddd0485397180674548e2f65ac8d360c1d85853f54eff4a02885fb0e",
+      "role": "study / control comparison"
+    },
+    "S035": {
+      "path": "output/control_studies/blind_v3_top8_4bar_20260729/manifest.json",
+      "sha256": "055e903e0b5e7b04f9bd9bc7c094c26be67d32a10ace4b93ba9976026628690e",
+      "role": "study / control comparison"
+    },
+    "S036": {
+      "path": "output/control_studies/blind_v4_control_v3_rubberband_top8_4bar_20260730/manifest.json",
+      "sha256": "818cdd9405b3aacb8a77e80938e1d27c5697e6f6be60667deedcff17d2cce827",
+      "role": "study / control comparison"
+    },
+    "S037": {
+      "path": "output/control_studies/blind_v5_objective_v4_heldout_test9_4bar_20260731/manifest.json",
+      "sha256": "6e19835768b4b8860c1da0544d7c5ec2fd53e9b5231ffeb4f1902da0d1bc671c",
+      "role": "study / control comparison"
+    },
+    "S038": {
+      "path": "output/control_studies/blind_v5_objective_v4_heldout_test9_4bar_20260731_rerun/manifest.json",
+      "sha256": "da733f0db3498517f2822517c9f1ae87e3384b974f4601963bda5dfadbcff556",
+      "role": "study / control comparison"
+    },
+    "S039": {
+      "path": "output/control_studies/blind_v6_mlp_v1_best_vs_equal_power_validation9_20260804/manifest.json",
+      "sha256": "c3f9197acb6644b4c450d2e44f5d4b87271e394d2cc8ef451399ab12cf05de59",
+      "role": "study / control comparison"
+    },
+    "S040": {
+      "path": "output/control_studies/blind_v6_mlp_v1_best_vs_equal_power_validation9_20260804_rerun/manifest.json",
+      "sha256": "7db44322a2bbf7a467fc4ae74950d0dc0a7cedaa30316a2bd03d0f0ad3d24ae1",
+      "role": "study / control comparison"
+    },
+    "S041": {
+      "path": "output/control_studies/blind_v7_objective_v5_vocal_active6_20260805_rerun/manifest.json",
+      "sha256": "e2b64c34857d1ab50c2b75fa010dd198969082ca68ca2fae0b22e97ff3b069ac",
+      "role": "study / control comparison"
+    },
+    "S042": {
+      "path": "output/control_studies/blind_v8_vocal_mlp_v2_best_vs_initial_validation5_20260806/manifest.json",
+      "sha256": "c9c6228bddc59fa573d3bb02653f68c6d37da34df3ba3a1501410b7801025c6e",
+      "role": "study / control comparison"
+    },
+    "S043": {
+      "path": "output/control_studies/blind_variable_tcn_lengths_20260904/manifest.json",
+      "sha256": "ea44472dbd5899bfa24399512ce8a6dd11bfb036a9061532a6f5324da4d9b1d2",
+      "role": "study / control comparison"
+    },
+    "S044": {
+      "path": "output/control_studies/model_comparison_hub_20260904/manifest.json",
+      "sha256": "e570b4fc59c0f30f5c861f86889a2be61c9fa0b4962b1cb4b09840a34a67e0be",
+      "role": "study / control comparison"
+    },
+    "S045": {
+      "path": "output/four_models_shared_20pairs_validation_20260930/manifest.json",
+      "sha256": "ab22b840e7546e02ef10dc60894d58d807e7cab38d3b611b90a66ab3aa7274b6",
+      "role": "study / control comparison"
+    },
+    "S046": {
+      "path": "output/four_models_shared_20pairs_validation_20261105_renderfix/manifest.json",
+      "sha256": "a3c1edc7fd4e68399777f733c1364cdb84782cfbf43176824a21df48cd8e4909",
+      "role": "study / control comparison"
+    },
+    "S047": {
+      "path": "output/four_models_shared_2pairs_validation_20260927/manifest.json",
+      "sha256": "3e472eb8c1e372af34c9dd9581cf678dbd6cf5432503ed02291c300666a436aa",
+      "role": "study / control comparison"
+    },
+    "S048": {
+      "path": "output/four_models_variable_renderfix_check_20261105/manifest.json",
+      "sha256": "14c56e3aa2f8cb0f42e76fdb766fc7e068fedac0b23a2e5bfbbd241e8a3891b9",
+      "role": "study / control comparison"
+    },
+    "S049": {
+      "path": "output/gui_transitions/manual-bac837e776abead9_equal_power_403ef069.json",
+      "sha256": "520200f127150cdd3e5db23ea8ce7d349a32224256651f60c79d00219a918420",
+      "role": "manual GUI render"
+    },
+    "S050": {
+      "path": "output/gui_transitions/manual-fb85e6670d2b5146_equal_power_e61e4461.json",
+      "sha256": "a6cd8541daf421e6aa6b3de70ccd957d83037dee40dcdce42c7f326d45264c1a",
+      "role": "manual GUI render"
+    },
+    "S051": {
+      "path": "config/track_exclusions.json",
+      "sha256": "6db8ecc9160cafc93099e26d856f02e5b72c6d82d0f713d2389b5dd5d57bd26b",
+      "role": "documented exclusion"
+    },
+    "S052": {
+      "path": "docs/RESULTS_EVIDENCE_LEDGER.md",
+      "sha256": "6075f6be825a7f0b754b0a60f2b27160cf51029da23307f914ea6129f7dff6e5",
+      "role": "historical interpretation / listening exposure"
+    },
+    "S053": {
+      "path": "docs/CONTROL_STUDY_PROTOCOL.md",
+      "sha256": "ac89ed8478a051aac07e9ba18c7735c82d023ef45d7a55832eb94bd50da35b7e",
+      "role": "historical interpretation / listening exposure"
+    },
+    "S054": {
+      "path": "docs/LISTENING_STUDY_ANALYSE_20261106.md",
+      "sha256": "2f751f6e4f1d8c4f34f280d3aeeef2d26f046d887dc976a99bf4a7c0ff7f9cdb",
+      "role": "historical interpretation / listening exposure"
+    }
+  },
+  "file_count": 517,
+  "unique_audio_hashes": 516,
+  "groups_by_status": {
+    "eligible": 0,
+    "pending": 0,
+    "exposed": 503
+  },
+  "exposure_tracks_sha256": "d59b03bff3f80b093222e1f4805478f2b5f814b06a30f49f543894b880f4406f"
+}
