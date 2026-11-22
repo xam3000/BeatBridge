@@ -28,6 +28,14 @@ def extract_aligned_bridge(
     include_context_audio=False,
 ):
     """Return the aligned source-postroll and target-preroll for one candidate."""
+    pipeline = prepare_bridge_pair(candidate, analysis, sample_rate=sample_rate)
+    return extract_prepared_bridge(
+        candidate, pipeline, include_context_audio=include_context_audio,
+    )
+
+
+def prepare_bridge_pair(candidate, analysis, *, sample_rate=DEFAULT_SAMPLE_RATE):
+    """Load and tempo-align both tracks once for all selected cues of this pair."""
     transition_beats = int(candidate["transition_length_beats"])
     cutter = EqualPowerFadeCut(fade_beats=transition_beats)
     pipeline = BeatBridgePipeline(
@@ -40,7 +48,24 @@ def extract_aligned_bridge(
         bpm1=candidate["source_bpm"],
         bpm2=candidate["target_bpm"],
     )
-    source_audio, target_audio = pipeline.adjust_tempo()
+    pipeline.adjust_tempo()
+    return pipeline
+
+
+def extract_prepared_bridge(candidate, pipeline, *, include_context_audio=False):
+    """Apply the existing fade-cut geometry to one cue of the prepared pair."""
+    transition_beats = int(candidate["transition_length_beats"])
+    for role, track, bpm in (("source", pipeline.song1_name, pipeline.bpm1),
+                             ("target", pipeline.song2_name, pipeline.bpm2)):
+        declared_bpm = candidate[role + "_bpm"]
+        if str(candidate[role + "_track"]["path"]) != track or (
+                declared_bpm is not None and float(declared_bpm) != bpm):
+            raise ValueError(f"Candidate {role} track or tempo differs from the prepared pair")
+    if transition_beats != pipeline.cutter.fade_beats_before:
+        raise ValueError("Candidate window differs from the prepared fade length")
+    cutter = pipeline.cutter
+    source_audio, target_audio = pipeline.adjusted_song1, pipeline.adjusted_song2
+    sample_rate = pipeline.target_sample_rate
     source_cut = int(
         round(
             int(candidate["source_cutpoint"]["sample"])
@@ -96,6 +121,9 @@ def extract_aligned_bridge(
         "sample_rate": int(sample_rate),
     }
     if include_context_audio:
+        geometry["target_sample_scale"] = pipeline.adjusted_sample_scale2
+        geometry["source_grid_end_sample"] = int(source_end)
+        geometry["target_grid_start_sample"] = int(target_start)
         geometry["source_audio"] = source_audio
         geometry["target_audio"] = target_audio
     return source, target, geometry

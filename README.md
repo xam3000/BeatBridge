@@ -33,7 +33,7 @@ Metrik für gerenderte Varianten stehen unter [`docs/`](./docs/README.md).
 ## Projektstand
 
 Die technische Basis ist vorhanden: Beat-/Bar-Analyse, Audio-Normalisierung,
-vier Übergangs-Renderer, automatische bar-synchrone Kandidaten, Cutpoint- und
+drei Übergangsstrategien (harter Schnitt, linearer Fade, Equal Power), automatische bar-synchrone Kandidaten, Cutpoint- und
 Render-Ranking, Batch-Export sowie blinde Hörstudien. Das Vocal-v2-Training und
 mehrere Objective-/Control-Hörsätze sind abgeschlossen; der aktuelle
 Vocal-v2-Modellhörsatz ist jedoch noch unbewertet (0/5 Ratings, noch keine

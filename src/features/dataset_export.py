@@ -43,6 +43,7 @@ from src.features.vocal import (
     DEFAULT_VOCAL_BACKEND,
 )
 from src.pipeline import DEFAULT_SAMPLE_RATE
+from src.tempo.coordinates import aligned_cue_sample
 
 
 DATASET_FORMAT_VERSION = 1
@@ -274,12 +275,10 @@ def export_feature_dataset(
             vocal_model=vocal_model,
         )
         source_cue = int(candidate["source_cutpoint"]["sample"])
-        target_cue = int(
-            round(
-                int(candidate["target_cutpoint"]["sample"])
-                * float(candidate["target_bpm"])
-                / float(candidate["source_bpm"])
-            )
+        target_cue = aligned_cue_sample(
+            candidate["target_cutpoint"]["sample"],
+            original_bpm=candidate["target_bpm"],
+            aligned_bpm=candidate["source_bpm"],
         )
         prepared.append((record, source_artifact, target_artifact, source_cue, target_cue))
 

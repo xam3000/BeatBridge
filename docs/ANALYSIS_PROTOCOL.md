@@ -80,8 +80,18 @@ verschiedenen Namen dürfen denselben Eintrag verwenden.
 Ein Wechsel von Algorithmus, librosa-Version, aufTAKT-Binary oder Parametern
 erzeugt einen neuen Cacheeintrag. `analysis.json` speichert außerdem
 Audiohash/-größe, BPM, Beatwerte, vollständige Grid-Provenienz und die
-Diskrepanzdiagnostik. Es ist die einzige Autorität dieses Cacheeintrags und
-wird über eine temporäre Geschwisterdatei plus `os.replace` atomar publiziert.
+Diskrepanzdiagnostik. Ergebnisdateien werden über eine temporäre
+Geschwisterdatei plus `os.replace` atomar publiziert.
+
+Seit P03 (18.11.2026) speichert ein Analyseaufruf nur ein von aufTAKT
+erkanntes Grid. Ein frischer Fallback wird mit `fallback_used = true`
+zurückgegeben. Der nächste Analyseaufruf versucht aufTAKT erneut.
+`load_cached_analysis()` bleibt eine reine Leseoperation und zeigt auch
+historische Fallbacks mit ihrer Herkunft an. Ist am regulären Pfad schon
+ein historischer Fallback vorhanden, wird ein neu erkanntes Grid als
+`analysis.detected.json` im selben Verzeichnis geschrieben. Dieser
+Format-2-Eintrag hat beim Laden Vorrang. Das bestehende `analysis.json`
+bleibt für die historische Auswertung am ursprünglichen Pfad erhalten.
 
 Format-1-Caches unter `<track-stem>/00_pre_analysis.txt` und deren optionale
 Sidecars bleiben read-only lesbar. Ohne belastbare Provenienz werden sie als

@@ -47,6 +47,7 @@ from src.features.variable_split import (
 from src.features.vocal import DEFAULT_ROFORMER_MODEL, DEFAULT_VOCAL_BACKEND
 from src.pipeline import DEFAULT_SAMPLE_RATE
 from src.features.dataset_export import SPLIT_NAMES, SplitConfig
+from src.tempo.coordinates import aligned_cue_sample
 
 
 DATASET_FORMAT_VERSION = 2
@@ -209,12 +210,10 @@ def export_variable_feature_dataset(
         geometry = geometry_from_candidate(candidate)
         source_cue = _scale_cue(candidate["source_cutpoint"]["sample"], sample_rate)
         target_cue = _scale_cue(candidate["target_cutpoint"]["sample"], sample_rate)
-        target_cue = int(
-            round(
-                target_cue
-                * float(candidate["target_bpm"])
-                / float(candidate["source_bpm"])
-            )
+        target_cue = aligned_cue_sample(
+            target_cue,
+            original_bpm=candidate["target_bpm"],
+            aligned_bpm=candidate["source_bpm"],
         )
         prepared.append((record, geometry, source_artifact, target_artifact, source_cue, target_cue))
 

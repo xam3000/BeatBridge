@@ -1,0 +1,37 @@
+{
+  "queries": 2830,
+  "recordings": 54,
+  "groups": 53,
+  "track_recall": 0.8558834494701778,
+  "group_recall": 0.8533470094606377,
+  "recording_bootstrap_ci": [
+    0.8321505871921983,
+    0.8786400843241872
+  ],
+  "seed": 20261119,
+  "pair_count": 26,
+  "mean_rho": -0.02748124996135605,
+  "sd_rho": 0.38633132174274243,
+  "rho_range": [
+    -0.7165219837633631,
+    0.6117996945583153
+  ],
+  "t_ci": [
+    -0.18352384778712683,
+    0.1285613478644147
+  ],
+  "expected_matches": 0.18055555555555555,
+  "chance_zero": 0.834280666869701,
+  "matches": 0,
+  "batch_scores": 144,
+  "winner": "candidate-91852b13b5134942",
+  "wav_sha256": "1e48a8b045a4ee1243677a8f3628d0f9afb5f30bc62d72fa782064c36f805d45",
+  "manifest_sha256": "ac6622776392051a2181177fd3040cf3f86fb431c86016beb8bec11d8ba4d1e5",
+  "encoder_runtime": {
+    "autocast": "bfloat16",
+    "device": "cuda:0",
+    "gpu": "NVIDIA GeForce RTX 5070 Ti",
+    "head_device": "cpu",
+    "pooling_dtype": "float32"
+  }
+}

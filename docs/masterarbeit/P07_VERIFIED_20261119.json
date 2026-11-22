@@ -1,0 +1,84 @@
+{
+  "bars": {
+    "train/bright_room": 32308,
+    "train/original": 32308,
+    "train/warm_room": 32308,
+    "validation/original": 7207
+  },
+  "cache_file_bytes": 16521884455,
+  "counts": {
+    "train/bright_room": 236,
+    "train/original": 236,
+    "train/warm_room": 236,
+    "validation/original": 54
+  },
+  "exclusions": {
+    "historical_test_component": 68,
+    "no_verified_september_partial_grid": 49,
+    "september_split_conflict": 1
+  },
+  "extraction": {
+    "cuda_peak_allocated_bytes": 5200499712,
+    "cuda_peak_reserved_bytes": 9105833984,
+    "gpu": "NVIDIA GeForce RTX 5070 Ti",
+    "model_load_seconds": 4.990203100000144,
+    "process_peak_rss_bytes": 5111455744,
+    "smoke": false,
+    "software": {
+      "cuda_device": "NVIDIA GeForce RTX 5070 Ti",
+      "cuda_version": "13.0",
+      "librosa": "0.11.0",
+      "numpy": "2.4.6",
+      "scipy": "1.17.1",
+      "soundfile": "0.14.0",
+      "soxr": "1.1.0",
+      "torch": "2.13.0+cu130",
+      "transformers": "4.49.0"
+    },
+    "wall_seconds": 2239.8509345
+  },
+  "format_version": 1,
+  "freeze_commit": "2a70dc185bbcf62806d5d426783e03f347c01dd6",
+  "manifest": "output/review_jp_20261118/p07/full/manifest.json",
+  "manifest_sha256": "746bd2c1c9b3d2d4c0bad08a627ef56b8f5adff460918ce32e293e6913ec1f23",
+  "mert_frames_per_bar": [
+    98,
+    142
+  ],
+  "model": {
+    "attention": "sdpa",
+    "context_samples": 48000,
+    "core_samples": 480000,
+    "frame_step": 320,
+    "license": "CC-BY-NC-4.0",
+    "precision": "cuda_bfloat16_autocast_or_cpu_float32",
+    "receptive_field": 400,
+    "repo_id": "m-a-p/MERT-v1-95M",
+    "revision": "12af15fef9d0ac838c3f475bfbbf26d2060dd4f5",
+    "sample_rate": 24000,
+    "sha256": {
+      "README.md": "4bd95e900185d8b393785c0038aa662355a904e5a98ec692003b8011c802455d",
+      "config.json": "ea2627c4c7825cd66f3c944b6b966331604c35928174e0100cd4a82829424e32",
+      "configuration_MERT.py": "ae0ec2bab8f59c724ba9878a7c20b67210189536ea62d34a56775968e9decb03",
+      "modeling_MERT.py": "6c3ee73cef6f0c30ef494f88d96f891fa6925ffe663fa391b512f4b57abecc6c",
+      "preprocessor_config.json": "cc5a5e4a5d3b1a758a5ed984b2eaa15bb0522d811d44a9eed82bfca4baa0dc8f",
+      "pytorch_model.bin": "a2b8b747f72c06e0595aeae41ae5473f4364938c6b39b2c58be38c48e6bd3fcd"
+    },
+    "transformers": "4.49.0"
+  },
+  "p01_bindings": {
+    "docs/EVALUATION_PROTOCOL.md": "fc5da8f8295d3c531107c3d3069194446fc5d42fcb633f245074b497da4c1bfb",
+    "docs/masterarbeit/review_jp_20261118/p01/evaluation_population.json": "38d899136001fc9c44eee9260ed98550c656b0db7c0330c3ad7a5e5ba494abca",
+    "docs/masterarbeit/review_jp_20261118/p01/exposure_tracks.csv": "39a70ba20c168304b727bcec22bd5339577d9bfa32735777ab2b31058a6d4b35"
+  },
+  "recording_groups": {
+    "train": 230,
+    "validation": 53
+  },
+  "result": "passed",
+  "scaler_id": "772e846f83d5daac108667d5e08edbe8e61982e0a5966ca3aa23f5c7ab321d38",
+  "september_bpm_eligible_sha256": "7bcf4a79db6943d78bf53d60f5adbf273245f31c7378a3aaacf360df6dc95be3",
+  "september_split_sha256": "1eaf5672428f030ca9807c5ddf3d1e06bf03c06b2792b8a9a21bf564a318d3ee",
+  "training_bars": 32308,
+  "verification_seconds": 63.24729110000044
+}

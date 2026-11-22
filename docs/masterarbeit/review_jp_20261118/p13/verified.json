@@ -1,0 +1,87 @@
+{
+  "split": "D2 train",
+  "fixture": "docs\\masterarbeit\\review_jp_20261118\\p04\\dev_panel.json",
+  "original_cue": "candidate-7290af38f10e4262",
+  "tracks": [
+    {
+      "path": "musik\\Hardstyle Top 100 2025 by Q-dance\\Cosmic Frequency (Official Decibel outdoor 2025 Anthem) - Ran-D.flac",
+      "sha256": "8395fb4315dd18485955c59ab59b030d3e441dd32533e1742e79f6d0b6aba816"
+    },
+    {
+      "path": "musik\\Hardstyle Top 100 2025 by Q-dance\\Stuck In The Middle - Ran-D.flac",
+      "sha256": "e4c993f43b7431537be9b82b4661a553f1d27acd989dc0876777d0833da71962"
+    }
+  ],
+  "bpms": [
+    156.60511363636363,
+    156.60511363636363
+  ],
+  "sample_rate": 44100,
+  "renderer": "equal_power",
+  "lengths": [
+    {
+      "bars": 1,
+      "beats": 4,
+      "source_window": [
+        3701760,
+        3768832
+      ],
+      "target_window_original": [
+        8667648,
+        8734720
+      ],
+      "overlap_samples": 67072,
+      "clip_frames": 529200,
+      "wav": "rendered\\0004__candidate-3cbbf32d0401fe25__equal_power.wav",
+      "sha256": "fe4aebef1ddfa835bbe71eb0c6d5d7f408b96ba69887fae7c5915e1ef8e33e3b"
+    },
+    {
+      "bars": 2,
+      "beats": 8,
+      "source_window": [
+        3701760,
+        3834880
+      ],
+      "target_window_original": [
+        8599552,
+        8734720
+      ],
+      "overlap_samples": 133120,
+      "clip_frames": 529200,
+      "wav": "rendered\\0003__candidate-fe3867215a12f85b__equal_power.wav",
+      "sha256": "f40508fadd754e34e791f0488aa12add60a9df653abfff6c06094e79807c5487"
+    },
+    {
+      "bars": 3,
+      "beats": 12,
+      "source_window": [
+        3701760,
+        3901952
+      ],
+      "target_window_original": [
+        8531968,
+        8734720
+      ],
+      "overlap_samples": 200192,
+      "clip_frames": 529200,
+      "wav": "rendered\\0002__candidate-d44650637b3d380a__equal_power.wav",
+      "sha256": "2eb8df74ed704cee6ce0e4746aa85a7ad42944d1c57e14ed4cf9465c6d74c51b"
+    },
+    {
+      "bars": 4,
+      "beats": 16,
+      "source_window": [
+        3701760,
+        3969536
+      ],
+      "target_window_original": [
+        8466432,
+        8734720
+      ],
+      "overlap_samples": 267776,
+      "clip_frames": 529200,
+      "wav": "rendered\\0001__candidate-a8a01bebc98c1203__equal_power.wav",
+      "sha256": "7ca19cd60dcbe1395cc13de3362ead18fff121d322673ed76781b0af07c58f5d"
+    }
+  ]
+}

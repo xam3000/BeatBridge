@@ -1,3 +1,218 @@
+# 19.11.2026 – P11 nach R_P11_01 mit korrigierten Stimuli
+
+Der [unabhängige Review R_P11_02](masterarbeit/review_jp_20261118/reviews/R_P11_02.md) hat den technischen Vertrag bestätigt. F-5 ist durch Nutzercommit `16c525e` abgeschlossen. Vor der Erhebung steht die Kontrolle des beaufsichtigten Hörplatzes aus. Eigenständige WAV-Analyse könnte die Gruppe mit dem Regel-Cue anhand gemeinsamer Kontexte erkennen. Danach organisiert der Autor die geschlossenen Sitzungen.
+
+Der lokale B-Brückenverlauf wurde für alle 21 feststehenden Cues auf die vollständigen 16 A-Schläge ausgerichtet. Run02 enthält 49 erneut pegelgeprüfte WAVs. Die sieben Dateien jedes Paars haben dieselbe Größe. Die endgültigen Teilnehmerkopien wurden gegen drei neue Sitzungskennungen geprüft. Run01 ist für Hörsitzungen verworfen. Die Stichprobe von sieben unabhängigen Paaren erlaubt die im Protokoll festgelegte deskriptive Auswertung. [Korrekturbefunde](masterarbeit/review_jp_20261118/p11/korrektur_run02.md) · [Aufgaben und Freigabestand](REVIEW_JP_UMSETZUNG.md)
+
+# 19.11.2026 – P11-Material für die geschlossene Hörsitzung erstellt (historischer run01)
+
+Sieben der elf eingefrorenen Paare lieferten je sieben Clips. Auf vier Quellaufnahmen verfehlte die Rasteranalyse ihre vorab festgelegte Schwelle. Für jedes zulässige Paar wählten der P10-MERT-Kopf, `feature_baseline_v3` und die uniforme Zufallswahl drei verschiedene Cues aus demselben Pool. Die 49 Stimuli liegen lokal in drei getrennten, randomisierten Playerpaketen. Wegen der sieben unabhängigen Paare gilt für spätere Bewertungen der deskriptive Auswertungsweg. Ausstehend sind der unabhängige P11-Review und die vom Autor organisierte Erhebung. [Materialbericht](masterarbeit/review_jp_20261118/p11/materialbericht.md) · [Anleitung für die Versuchsleitung](masterarbeit/review_jp_20261118/p11/durchfuehrung.md)
+
+# 19.11.2026 – P10 nach unabhängigem Review korrigiert
+
+Die 85,59 % Recall@1 gelten für die Auswahl-Validation mit dort optimierter Epoche. Das deskriptive Aufnahme-Bootstrapintervall beträgt 83,2–87,9 %, der zusätzliche gruppengewichtete Recall 85,33 %. Der Kontrast zwischen naher echter und ferner strukturfremder Fortsetzung lässt den Beitrag zeitlicher Nähe offen. Die Qualität der Querübertragung auf ein anderes Recording bleibt eine Annahme für H1. Der korrigierte Entwicklungsbatch bindet CUDA/bf16 im Manifest und reproduziert die ursprünglichen Scores und das WAV. [Review](masterarbeit/review_jp_20261118/reviews/R_P10_01.md) · [Ausführungsstand](REVIEW_JP_UMSETZUNG.md)
+
+Für die SSL-Cues ist MERT-Stufe 2 mit Seed 20260926, Epoche 22 ausgewählt. Auf 2.830 Validationsqueries erreicht dieser Kopf 85,59 % Recall@1 und 0,9151 MRR. Die Trefferquoten betragen 91,97 % für den Same-Track-Kontrast und 93,24 % für die 844 Intro↔Drop-Fälle. Über die 26 disjunkten Entwicklungspaare wählten Regel und Studienkopf keinmal denselben Top-1-Cue, mittleres Paar-ρ −0,0275. Der neue Batch-Ranker reproduzierte beim Render alle 144 Offline-Scores seines Entwicklungspaars. Zehn widersprüchliche A/B-Paare stehen zur Autorensichtung bereit. [Bericht, Offlinetabelle und Studienentscheidung](masterarbeit/REVIEW_JP_P10_RANKING_20261119.md) · [Prüfnachweis](masterarbeit/review_jp_20261118/p10/verified.json)
+
+# 19.11.2026 – P09 abgeschlossen, P10 startbereit
+
+Beide Repräsentationen durchliefen die Stufen 0–2 auf denselben P08-Panels. Zwölf lokale Trainings erreichten je 30 Epochen. Die zwei deterministischen Referenzen zählen je einmal. Auf 2.830 Validationsqueries liegt der mittlere Recall@1 der gerichteten Türme bei 85,67 % für MERT und 68,49 % für klassische Merkmale. Der Abschlussaudit reproduzierte Auswahl, Kennzahlen und Reihenfolge, prüfte zwölf Checkpoint-Hashes und spielte elf feste Panels pro Bedingung direkt aus den Taktfenstern nach. Als Nächstes folgen der P10-Abkürzungstest und die Rankerintegration. [Tabelle und Lernverläufe](masterarbeit/REVIEW_JP_P09_METRIK_20261119.md) · [Prüfnachweis](masterarbeit/P09_VERIFIED_20261119.json)
+
+# 19.11.2026 – P08 abgeschlossen, P09 startbereit
+
+Die versiegelte Vier-Takt-Instanz enthält **12.999 Trainingspaare aus 228 Quellgruppen** und **2.830 Validationsqueries aus 53 getrennten Quellgruppen**. Jede Validationsquery hat acht feste Negative. Für 844 Queries aus 49 Gruppen liegt ein zusätzlicher Intro↔Drop-Kontrollfall vor. Der Vollaudit reproduzierte alle Panels und prüfte die Geometrie gegen native Beatindizes und einen realen Vier-Takt-Render. Beide P07-Familien bestanden den Trainingsbatch-Smoke und seinen Replay. 61 gezielte Regressionen bestanden. P09 erhält dieselben IDs, Budgets, Produktionsfassungen und die DCL-Korrektur für den Modellvergleich. [Taktschema und Übergabe](masterarbeit/REVIEW_JP_P08_PAARE_20261119.md) · [Paarbestand](../output/review_jp_20261118/p08_paare/run02/manifest.json) · [Prüfjournal](Bemerkungen.md)
+
+# 19.11.2026 – P07 abgeschlossen, P08 startbereit
+
+[Der geprüfte P07-Cache](../output/review_jp_20261118/p07/full/manifest.json)
+enthält 236 Trainingsoriginale aus 230 Recording-Gruppen, zwei
+Produktionsfassungen je Trainingsoriginal und 54 Validation-Originale
+aus 53 Gruppen. Pro Ansicht liegen MERT-Zustände und 82 klassische
+Merkmale über denselben Takten vor. Der Scaler stammt aus den 32.308
+Takten der Trainingsoriginale. P07 bindet die Splits an den P01-
+Freeze-Commit `2a70dc1`. Vollständiger Dateiaudit und 38 Regressionen
+bestanden. Für P08 sind die durchgängigen Fenster aus den gespeicherten
+Halbbeatgrenzen abzuleiten.
+[Repräsentationsvertrag und Modellprovenienz](masterarbeit/REVIEW_JP_P07_REPRAESENTATIONEN_20261119.md)
+· [Prüfnachweis](masterarbeit/P07_VERIFIED_20261119.json) · [Prüfjournal](Bemerkungen.md)
+
+# 19.11.2026 – P01 eingefroren, P07 startbereit
+
+Auf ausdrücklichen Auftrag des Autors wurde Commit
+`2a70dc185bbcf62806d5d426783e03f347c01dd6` mit der konfigurierten
+menschlichen Git-Identität erstellt: **Freeze P01 evaluation protocol and
+11 disjoint pairs**. Das Protokoll und die korrigierte run04-Population
+mit 22 Aufnahmen/elf disjunkten Paaren sind samt Expositionsnachweisen,
+P01-Review, Auditcode und Regressionen versioniert. Neun Tests und die
+Hash-/Paarprüfung bestanden. [Freeze-Nachweis](masterarbeit/review_jp_20261118/p01/FREEZE_RECEIPT.json)
+· [Ausführungsstand](REVIEW_JP_UMSETZUNG.md) · [Prüfjournal](Bemerkungen.md)
+
+Damit ist die P01-Commitvoraussetzung für P07 erfüllt. Kein Training,
+keine MERT-Installation, kein Probeanhören und kein Push ausgeführt.
+Weitere lokale Code- und Dokumentänderungen wurden nicht mitcommittet.
+Die folgenden früheren Angaben zum noch ausstehenden P01-Commit sind
+historisch. Der gesonderte P06-Commit ist weiterhin offen.
+
+# 19.11.2026 – P13 technisch abgeschlossen
+
+Baselines unterstützen ein bis vier Takte in Kandidatensuche, Batch und GUI. Die vier Entwicklungsrender liegen in `output/review_jp_20261118/p13_laengen/run03/rendered/`. Der Durchklick durch den Autor steht aus. P14 ist der nächste unabhängige Auftrag, P07 wartet auf den P01-Freeze-Commit. [Samplegenaue Prüfung](masterarbeit/review_jp_20261118/p13/verified.json) · [Testjournal](Bemerkungen.md)
+
+# 19.11.2026 – F zu P06 abgeschlossen bis auf den Nutzercommit
+
+Die [korrigierte Matrix](masterarbeit/review_jp_20261118/p06_run02/matrix.csv) fasst die historischen P06-Rohwerte über Recording-Komponenten zusammen. Beide P06-Reviews und die acht Entscheidungen stehen im [Register](REVIEW_JP_UMSETZUNG.md). P07 wartet auf den P01-Freeze-Commit.
+
+# 19.11.2026 – P01 nach Review korrigiert
+
+**19. November 2026 · Unabhängiger P06-Review abgeschlossen.** Die Hauptkontraste sind bestätigt. Der damalige Auftrag zur Intervallkorrektur ist mit run02 bearbeitet. [Review R_P06_01](masterarbeit/review_jp_20261118/reviews/R_P06_01.md)
+
+**19. November 2026 · F zu R_P01_01.** Von 25 gelieferten Gruppen sind 22 zulässig und drei wegen ungeklärter Fassung zurückgestellt. Run04 bildet elf disjunkte Paare. Die Zwölferliste aus run03 ist historisch. Der Freeze-Commit des Nutzers steht aus. [Ergebnisse](masterarbeit/review_jp_20261118/p01/EXPOSITION.md)
+
+# P01 am 18.11.2026 – zwölf disjunkte Evaluationspaare vorbereitet
+
+Die Nachlieferung in `musik/erweiterung/` schließt den zuvor dokumentierten
+Materialmangel. Von 25 geprüften neuen Recording-Gruppen bilden 24 die zwölf
+vorgesehenen Paare. Keine Aufnahme wird wiederverwendet. Gruppe 25 bleibt
+gemäß der vorab festgelegten Sortierung außerhalb der Studie. Die
+[Paarliste](masterarbeit/review_jp_20261118/p01/evaluation_population.json)
+enthält für A und B jeweils den vollständigen Datei-SHA und die Gruppen-ID.
+
+Als Nächstes folgen der unabhängige Review R zur konkreten Population und der
+Nutzercommit von Protokoll und Liste. Der Freeze-Commit für P07 steht aus.
+[Expositionsnachweis](masterarbeit/review_jp_20261118/p01/EXPOSITION.md) ·
+[Evaluationsprotokoll](EVALUATION_PROTOCOL.md)
+
+# P06 abgeschlossen am 18.11.2026 – Nutzen der eingabeabhängigen Controls
+
+Alle sieben vorab benannten Trainingsläufe sind beendet. R1 und R2 wurden jeweils mit drei Seeds trainiert, der feste TCN mit demselben Seed, Dataset, Objective und Budget wie R3 im September. Für R1–R4 liegen die gepaarten E/F/M/D-Messungen, vollständigen Vertauschungsmatrizen, Komponenten und Audioabweichungen vor. Beim Zwei-Band-MLP gewinnt die feste Train-Kurve trotz messbarem Vertauschungseffekt. Beim Vocal-MLP, beim festen TCN mit Equal-Power-Start und beim variablen September-TCN liefern die eigenen Controls den niedrigeren Proxy als die feste Kurve. Der Legacy-R3 erzeugt über alle 50 D2-Validierungscues identische Controls. Die Aussagen betreffen die historische Validation. Als Nächstes folgt der unabhängige Review R zu P06. [F3-Kapitelentwurf und Ergebnismatrix](masterarbeit/REVIEW_JP_P06_CONTROLLER_20261118.md)
+
+# P05 abgeschlossen am 18.11.2026 – geprüfter Equal-Power-Start
+
+Alle fünf Controller lieferten im CPU-Entwicklungs-Smoke exakt das native
+P04-Referenzaudio. Ein Gradientenschritt veränderte bei jedem Modell die
+Waveform. Die vier September-Best-Checkpoints reproduzierten ihre archivierten
+Controls, Proxywerte und Audiohashes. Der variable Runner misst jetzt eine
+echte E0. Für P06 sind sieben Läufe mit Seeds, Budgets und konstanten
+Lernraten benannt und als CLI-Trockenlauf geprüft.
+[Vertrag, Messwerte und P06-Konfigurationen](masterarbeit/REVIEW_JP_P05_INITIALISIERUNG_20261118.md)
+
+# P04 abgeschlossen am 18.11.2026 – gepaarter Render- und Auswertungspfad
+
+P06 kann Equal Power, feste Train-Kurve, Best-Checkpoint und direkte
+Optimierung unter jedem der vier September-Verträge auswerten. Die echten
+Entwicklungs-Smokes lieferten je vier Zeilen. Alle 55 Modell-Proxykomponenten
+stimmten mit den ursprünglichen Trainingsfunktionen überein. Der P11-Pfad
+erzeugte auf einem Entwicklungspaar sieben PCM24-Clips bei −23,03 bis
+−22,99 LUFS. Zwei Läufe lieferten byteidentische WAVs. 85 gezielte Tests
+bestanden. Als Nächstes folgt P05 zur Controllerinitialisierung.
+[Aufrufe, Messverfahren und Ergebnisverzeichnisse](masterarbeit/REVIEW_JP_P04_RENDER_20261118.md)
+
+# P01 am 18.11.2026 – Protokoll fertig, 20 neue Aufnahmen fehlen
+
+Alle 517 Originaldateien unter `musik/` sind in früheren Auswahlentscheidungen
+belegt. Der Audit verbindet 516 Datei-SHAs zu 503 technischen Recording-Gruppen.
+Damit stehen 0 neue Gruppen für die finale Evaluation zur Verfügung. Es fehlen
+20 für zehn disjunkte Paare bzw. 24 für zwölf. [Expositionsnachweis](./masterarbeit/review_jp_20261118/p01/EXPOSITION.md)
+
+Das [Evaluationsprotokoll](./EVALUATION_PROTOCOL.md) legt H1–H3, Hauptkennzahlen,
+Seeds, Budgets, Renderbedingungen, Ausschlüsse und die Auswertung über
+Trackpaare fest. Review R kann Protokoll und Audit prüfen. Nach Materialeingang
+folgen die konkrete Paarprüfung und der Nutzercommit mit vollständiger Liste.
+Der Autor kann derzeit keine weitere Musik beschaffen. Phase 2/3 wartet auf
+den Freeze. P04 (gemeinsamer Renderer) und P13 (Baseline-Übergangslängen)
+können mit vorhandenem Entwicklungsmaterial beginnen. [Paarliste und Fehlmenge](./masterarbeit/review_jp_20261118/p01/evaluation_population.json)
+
+# P03 abgeschlossen am 18.11.2026 – GUI-Inferenz und Analyse-Cache korrigiert
+
+GUI und Dataset-Exporte verwenden dieselbe Cue-Umrechnung auf das
+ausgerichtete Tempo. Die GUI prüft den gebundenen Modell- und Datasetvertrag.
+Sie verwendet für R2 Demucs-Features und RoFormer-Stems. Nach einem
+aufTAKT-Fallback versucht der nächste Analyseaufruf die Erkennung erneut.
+Beim Erfolg kann das erkannte Grid neben einem historischen Fallback stehen.
+
+105 gezielte Tests und CPU-Forwards mit fünf vorhandenen Checkpoints
+bestanden. Der Retry wurde mit simulierter aufTAKT-Prozessausgabe geprüft.
+Die [Übergabe an P04](./masterarbeit/REVIEW_JP_P03_INFERENZ_20261118.md)
+beschreibt die Auswirkungen auf alte Previews und Caches. P04 übernimmt
+die Vertragsprüfung und bindet die eigentlichen Vergleichsbedingungen
+gemäß [Umsetzungsplan](./REVIEW_JP_UMSETZUNG.md).
+
+# P02 abgeschlossen am 18.11.2026 – Kapitel-5-Evidenz zugeordnet
+
+Die [Vergleichsmatrix im Evidence Ledger](./RESULTS_EVIDENCE_LEDGER.md#p02--vergleichsmatrix-für-kapitel-5-2026-11-18)
+führt die Zahlen aus Kapitel 5 auf Dataset-, Batch-, Run-, Sweep- und
+Hörartefakte zurück. Alle vier September-Best-Checkpoints stimmen mit der
+aus den Historien nachgespielten Auswahlregel überein. R3s Legacy-E0 ist
+ein untrainierter gedämpfter Start. R4 beginnt in der Historie nach dem
+ersten Training und endet nach Patience in E40. Die 99,8996 % des Reviews
+gehören zur frisch initialisierten Full-Band-Bedingung auf D1 und einem
+anderen Nenner als die Equal-Power-Referenz.
+
+Recording-Gruppen fehlen für einzelne Hashes älterer Bestände. Die
+[P06-Übergabe](./RESULTS_EVIDENCE_LEDGER.md#an-p06-übergebene-vergleichsbedingungen)
+führt die noch fehlenden gepaarten Bedingungen für R1–R4. P06 benötigt
+P04/P05. Die Prüfung und Rechenproben stehen in [Bemerkungen](./Bemerkungen.md).
+
+# P00 abgeschlossen am 18.11.2026 – P01, P02 und P03 startbereit
+
+Der [Review-JP-Umsetzungsplan](./REVIEW_JP_UMSETZUNG.md) ist die aktuelle
+Aufgabenliste. Die Leitfrage vergleicht die Wahl der Übergangspunkte mit der
+Form der Mixing-Kurven. Dafür sind Fortsetzungsmetrik, Controllerdiagnose und
+ein gemeinsamer Hörversuch vorgesehen. Zum Softwareumfang gehören
+Abschnittsauswahl, Mashup-Export und Baselineübergänge von 1 bis 4 Takten.
+Die 6-/8-Takt-Artefakte bleiben für die historische Diagnose erhalten. Weitere
+Sweeps sind eingestellt. Der Autor nennt den **27.11.2026 als internen
+Zieltermin**, damit vor der Abgabe Zeit für Reviews bleibt.
+
+**Entscheidungen vom 18.11.** Der Autor nimmt GUI-Darstellung, manuellen
+Korrekturaufwand und Tanznutzen aus den Nachweispflichten der Thesis (E2).
+Die formale Bestätigung der Aufgabenabdeckung durch die Betreuung steht aus.
+Für E1/E4/E5 meldet der Autor ebenfalls keine datierte Betreuungsrückmeldung.
+Zu E3 bestätigt er, dass alle Musik im geschlossenen Hörversuch auch
+mindestens drei Personen vorgespielt werden darf, ohne öffentliche Verteilung
+oder Weitergabe. Beleg ist die datierte Autorenauskunft. Ein gesonderter
+Lizenzbeleg liegt hier nicht vor.
+
+**Reihenfolge.** Zuerst P01 mit Expositionsprüfung auf Recording-Ebene,
+10–12 neuen Paaren, Protokoll und anschließendem unabhängigem Review.
+Protokoll und echte Hash-/Gruppenliste brauchen vor den Experimenten der
+Phasen 2/3 den Nutzercommit. P02 (Vergleichsmatrix für Kapitel 5) und P03
+(Cue-Skalierung, Vocal-Vertrag und aufTAKT-Cache) können unabhängig beginnen.
+Die lokalen R1–R4-Historien, Checkpoints, Datasetverweise und der R4-Cache
+sind im [Prüfprotokoll](./Bemerkungen.md) belegt. Für P00 wurden nur
+Dokumentation und Bestandsnachweise bearbeitet.
+
+# Prompts für den vollständigen Review-JP-Plan erstellt am 2026-11-18
+
+Der Nutzer hat den Aktionsplan unter `review_jp/` als eigenen Plan zur
+Umsetzung bestätigt. Die vorherige Empfehlung, zunächst nur die Diagnose
+zu bearbeiten und anschließend über den Rest zu entscheiden, ist damit
+überholt. Der vollständige Plan ist die Grundlage der neuen
+[`Promptfolge`](./masterarbeit/UMSETZUNGSPROMPTS_REVIEW_JP_20261118.md):
+17 Hauptaufträge P00–P16, wiederverwendbare Review-/Korrekturaufträge und
+die optionalen Kritiker-/Beat-This-Erweiterungen. Jeder Hauptauftrag enthält
+Modell-/Reasoningempfehlung, Voraussetzungen und überprüfbare Ergebnisse.
+Offene tatsächliche Betreuungs-/Studienentscheidungen bleiben gesondert
+erkennbar und halten unabhängige Arbeit nicht auf. In dieser Sitzung wurden
+nur die Prompts erstellt; keine Implementierung oder Experimente ausgeführt.
+Die nachfolgende Einordnung dokumentiert den vorherigen Stand.
+
+# Review-JP eingeordnet am 2026-11-18
+
+Die vier Reviewdokumente unter `review_jp/` sind gegen den aktuellen Code,
+die Thesisrevision vom 11. November und ausgewählte Rohbefunde eingeordnet.
+Die synthetische Stichprobe bestätigt den TCN-Start mit EQ/Ducking 0,5 und
+linearen Hauptgains. Die 99,9-%-Angabe des Reviews betrifft einen frischen
+Full-Band-TCN auf dem kleinen August-Datensatz, keinen trainierten September-
+Checkpoint. Positions-/Phasenfeatures sind trotz fehlender Variation zwischen
+Beispielen nicht automatisch nutzlos. Mehrere methodische Grenzen stehen
+bereits in der aktuellen Thesis; neu wäre ihre quantitative Mechanismendiagnose.
+Empfehlung: zunächst feste Kurve/Modell/direkte Optimierung auf R1–R4
+kontrolliert prüfen, danach über die größere SSL-Cue-Metrik-Erweiterung
+entscheiden. Kein neuer Scope beschlossen. Einordnung:
+[`masterarbeit/REVIEW_JP_EINORDNUNG_20261118.md`](./masterarbeit/REVIEW_JP_EINORDNUNG_20261118.md).
+Keine Trainings-/Audio-/Hörläufe oder Software-/Thesisänderungen; gezielte
+synthetische und rechnerische Prüfung in [`Bemerkungen.md`](./Bemerkungen.md).
+
 # Vortragsstil an drei eigene Präsentationen angepasst am 2026-11-17
 
 Aktuelle Fassung:

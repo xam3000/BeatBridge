@@ -10,6 +10,7 @@ from .models import (
     TransitionCandidate,
 )
 from .variable import (
+    BaselineCandidateGenerationConfig,
     SUPPORTED_VARIABLE_LENGTHS,
     VARIABLE_CANDIDATE_FORMAT_VERSION,
     VARIABLE_GENERATOR_NAME,
@@ -19,6 +20,7 @@ from .variable import (
 
 __all__ = [
     "CANDIDATE_FORMAT_VERSION",
+    "BaselineCandidateGenerationConfig",
     "CandidateGenerationConfig",
     "CandidateGenerationResult",
     "CandidateRejection",

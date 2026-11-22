@@ -80,7 +80,7 @@ def test_vocal_runner_persists_v2_contract_terms_and_resume(tmp_path, monkeypatc
     assert contract["renderer"]["control_protocol_version"] == 4
     assert contract["objective"]["version"] == 5
     assert contract["waveform_cache"]["format_version"] == 2
-    assert history["epochs"][0]["phase"] == "vocal_near_equal_power_initialization"
+    assert history["epochs"][0]["phase"] == "equal_power_initialization"
     assert "vocal_audibility" in history["epochs"][1]["validation"]
     assert "vocal_stem_overlap" in history["epochs"][1]["validation"]
     assert (output / "checkpoints" / "latest.pt").is_file()

@@ -1,0 +1,168 @@
+{
+  "panels": [
+    {
+      "pair": "P01",
+      "cues": 4136,
+      "distinct_selectors": 3,
+      "ssl_equals_rule": false
+    },
+    {
+      "pair": "P02",
+      "cues": 4686,
+      "distinct_selectors": 3,
+      "ssl_equals_rule": false
+    },
+    {
+      "pair": "P03",
+      "cues": 4104,
+      "distinct_selectors": 3,
+      "ssl_equals_rule": false
+    },
+    {
+      "pair": "P06",
+      "cues": 1444,
+      "distinct_selectors": 3,
+      "ssl_equals_rule": false
+    },
+    {
+      "pair": "P07",
+      "cues": 6148,
+      "distinct_selectors": 3,
+      "ssl_equals_rule": false
+    },
+    {
+      "pair": "P09",
+      "cues": 4928,
+      "distinct_selectors": 3,
+      "ssl_equals_rule": false
+    },
+    {
+      "pair": "P10",
+      "cues": 13110,
+      "distinct_selectors": 3,
+      "ssl_equals_rule": false
+    }
+  ],
+  "exclusions": {
+    "P04": {
+      "pair": {
+        "pair_id": "P04",
+        "source": {
+          "recording_group_id": "recording-6f17105546a4c6699cf2",
+          "sha256": "7f3412d294a6bc89fe409e6ec03d6d7c9b24fece8d6e53a76a9184bd223e31a5"
+        },
+        "target": {
+          "recording_group_id": "recording-96eea9dc0a98f681a632",
+          "sha256": "db1bec76ade2b49d4cab5716dd6e235c5069af6b9906a01effb75ce18b5b5489"
+        }
+      },
+      "reasons": [
+        {
+          "code": "unverified_grid",
+          "role": "source",
+          "grid_receipt": "output/review_jp_20261118/p11_hoerversuch/run01/cache/grid_receipts/7f3412d294a6bc89fe409e6ec03d6d7c9b24fece8d6e53a76a9184bd223e31a5.json",
+          "sha256": "6859933d98ca8ce5defe79b9fe6f46f4669fa696539f4c7c3d573f175a985330",
+          "reasons": [
+            "auftakt_common_match_coverage_below_threshold",
+            "insufficient_contiguous_complete_bar_block"
+          ]
+        }
+      ],
+      "time": "2026-11-19T14:30:34.630644+00:00",
+      "affected": "all seven conditions"
+    },
+    "P05": {
+      "pair": {
+        "pair_id": "P05",
+        "source": {
+          "recording_group_id": "recording-9e562506c1aaa421a7b4",
+          "sha256": "bb2e5c8c5a821ad0e940cbd6dc43419e679f55700c775dd1c6c088869e4788e6"
+        },
+        "target": {
+          "recording_group_id": "recording-f7f4bacd12d8f77b6307",
+          "sha256": "84e39d8df66339b76db613ccd4e332049f70e64ec6c672916226874a3f7458de"
+        }
+      },
+      "reasons": [
+        {
+          "code": "unverified_grid",
+          "role": "source",
+          "grid_receipt": "output/review_jp_20261118/p11_hoerversuch/run01/cache/grid_receipts/bb2e5c8c5a821ad0e940cbd6dc43419e679f55700c775dd1c6c088869e4788e6.json",
+          "sha256": "e5b1da1dfca0ac6db2d56aa3e7caa631dcde102a815a9c0d069170652e23a2f5",
+          "reasons": [
+            "librosa_common_match_coverage_below_threshold"
+          ]
+        }
+      ],
+      "time": "2026-11-19T14:30:34.635757+00:00",
+      "affected": "all seven conditions"
+    },
+    "P08": {
+      "pair": {
+        "pair_id": "P08",
+        "source": {
+          "recording_group_id": "recording-59de5999531227cf1c6c",
+          "sha256": "0b7227019c73265df9105ff8432a89dc57f3390bc3fb7c20c922b063ab607854"
+        },
+        "target": {
+          "recording_group_id": "recording-03c8c6034b8ae2ed43a6",
+          "sha256": "b702c71d9ca9c0fdc15018ceb79c77e900e8a7f24ce9576d8e575496d11418e0"
+        }
+      },
+      "reasons": [
+        {
+          "code": "unverified_grid",
+          "role": "source",
+          "grid_receipt": "output/review_jp_20261118/p11_hoerversuch/run01/cache/grid_receipts/0b7227019c73265df9105ff8432a89dc57f3390bc3fb7c20c922b063ab607854.json",
+          "sha256": "58e669292ec790cffa5b1b4064af46823a76033f63bd9f059e42403805a8c1ec",
+          "reasons": [
+            "auftakt_common_match_coverage_below_threshold"
+          ]
+        }
+      ],
+      "time": "2026-11-19T14:35:05.010915+00:00",
+      "affected": "all seven conditions"
+    },
+    "P11": {
+      "pair": {
+        "pair_id": "P11",
+        "source": {
+          "recording_group_id": "recording-264dece93ad651235fb4",
+          "sha256": "373fd6ad7e5e3160e30b895cb681de0216e33f634e8b72bc7bbf956aaed6b8f4"
+        },
+        "target": {
+          "recording_group_id": "recording-c5330b1f5c3cab6c9da0",
+          "sha256": "17fb1aeef49e7755b5cc4b4b612e5be912330d970e203a96b36fc3c74cc42d46"
+        }
+      },
+      "reasons": [
+        {
+          "code": "unverified_grid",
+          "role": "source",
+          "grid_receipt": "output/review_jp_20261118/p11_hoerversuch/run01/cache/grid_receipts/373fd6ad7e5e3160e30b895cb681de0216e33f634e8b72bc7bbf956aaed6b8f4.json",
+          "sha256": "11d13728f6ec08261491e7ba8e6bbce3890bdc7202ff8722172ea4f6f7226a0b",
+          "reasons": [
+            "librosa_common_match_coverage_below_threshold"
+          ]
+        }
+      ],
+      "time": "2026-11-19T14:36:31.424874+00:00",
+      "affected": "all seven conditions"
+    }
+  },
+  "clips": 49,
+  "inventory_sha256": "701ebcef76fd25c36d0d8f03f09a901f94f57f39ef6f96c8083f15ef4b86ab51",
+  "study_protocol_sha256": "98fe6033a9e225b295a4265b54835b808f8ad633e426bd3e33b9af73bcc0b85a",
+  "duration_seconds": [
+    18.898662131519274,
+    19.1659410430839
+  ],
+  "session_ids": {
+    "VP01": "e398110e287ee85ec7ab56f6b61d19f1ce0e4665464ed11edd9a05bf1d29956c",
+    "VP02": "a91723cac17818aa22706a6583a15afe1fd462fc47b6b578ba8078c9cbe6bb77",
+    "VP03": "035d8514c34053f478065a00e7b9bda3f42fd59ad9ae81befab6d75d258f1bdc"
+  },
+  "max_abs_lufs_error": 0.010000000000001563,
+  "max_true_peak_dbtp": -12.28,
+  "sessions": 3
+}

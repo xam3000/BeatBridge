@@ -338,7 +338,7 @@ class _CueAnalysisTask(QRunnable):
             import numpy as np
             from src.analysis.models import unpack_analysis_result
             from src.analysis.pre_analysis import PreAnalysis
-            from src.candidates import CandidateGenerationConfig, TrackReference, generate_candidates
+            from src.candidates import BaselineCandidateGenerationConfig, TrackReference, generate_candidates
             from src.ranking import rank_candidates
 
             analyzer = PreAnalysis(str(self.analysis_cache) + os.sep)
@@ -364,7 +364,7 @@ class _CueAnalysisTask(QRunnable):
                 float(target_bpm), to_target_grid(target_frames, target_rate),
                 source_grid_metadata=source_metadata,
                 target_grid_metadata=target_metadata,
-                config=CandidateGenerationConfig(
+                config=BaselineCandidateGenerationConfig(
                     transition_lengths_bars=(self.transition_bars,),
                     approximate_grid_policy="allow",
                 ),
@@ -432,16 +432,16 @@ class _TransitionRenderTask(QRunnable):
             from src.ranking import RenderedTransitionInput, rank_rendered_transitions
 
             analysis = PreAnalysis(str(self.analysis_cache) + os.sep)
-            source_bpm = float(self.source.bpm) if self.source.bpm else float(unpack_analysis_result(analysis(str(self.source.path)))[0])
-            target_bpm = float(self.target.bpm) if self.target.bpm else float(unpack_analysis_result(analysis(str(self.target.path)))[0])
             source_cut = int(round(self.source_seconds * TARGET_SAMPLE_RATE))
             target_cut = int(round(self.target_seconds * TARGET_SAMPLE_RATE))
             transition_beats = self.transition_bars * 4
             model_provenance = None
             if self.model_run is None:
+                source_bpm = float(self.source.bpm) if self.source.bpm else float(unpack_analysis_result(analysis(str(self.source.path)))[0])
+                target_bpm = float(self.target.bpm) if self.target.bpm else float(unpack_analysis_result(analysis(str(self.target.path)))[0])
                 result = render_transition(
                     str(self.source.path), str(self.target.path), source_cut, target_cut,
-                    renderer=self.renderer, fade_beats=transition_beats,
+                    renderer=self.renderer, baseline_bars=self.transition_bars,
                     target_sample_rate=TARGET_SAMPLE_RATE, analysis=analysis,
                     source_bpm=source_bpm, target_bpm=target_bpm,
                 )
@@ -451,11 +451,13 @@ class _TransitionRenderTask(QRunnable):
                 result, model_provenance = render_model_transition(
                     self.source.path, self.target.path,
                     source_seconds=self.source_seconds, target_seconds=self.target_seconds,
-                    source_bpm=source_bpm, target_bpm=target_bpm,
+                    source_bpm=None, target_bpm=None,
                     transition_bars=self.transition_bars,
                     analysis=analysis, analysis_cache=self.analysis_cache,
                     feature_cache=FEATURE_CACHE, model_run=self.model_run,
                 )
+                source_bpm = model_provenance["source_bpm"]
+                target_bpm = model_provenance["target_bpm"]
 
             source_sha = _sha256_file(self.source.path)
             target_sha = _sha256_file(self.target.path)
@@ -760,8 +762,9 @@ class TransitionBuilderWindow(QMainWindow):
         controls_layout.addWidget(play_target)
         controls_layout.addWidget(QLabel("LÄNGE"))
         self.length_combo = QComboBox()
-        self.length_combo.addItem("2 Takte", 2)
-        self.length_combo.addItem("4 Takte", 4)
+        for bars in (1, 2, 3, 4):
+            self.length_combo.addItem("1 Takt" if bars == 1 else f"{bars} Takte", bars)
+        self.length_combo.setCurrentIndex(self.length_combo.findData(2))
         controls_layout.addWidget(self.length_combo)
         self.find_cues_button = QPushButton("Beste Cuepoints in Bereichen suchen")
         self.find_cues_button.setToolTip("Ziehe in beiden Wellenformen einen Bereich auf. Der Cue-Point-Analyzer bewertet darin passende Downbeats.")
@@ -1124,7 +1127,7 @@ class TransitionBuilderWindow(QMainWindow):
             track.status = "Nicht analysiert"
             track.error = None
         else:
-            track.status = "Analysiert · Cache geladen"
+            track.status = "Fallback · Analyse wiederholbar" if result["fallback_used"] else "Analysiert · Cache geladen"
             track.bpm = result["bpm"]
             track.sample_rate = result["sample_rate"]
             track.beat_frames = result["beat_frames"]
@@ -1313,7 +1316,7 @@ class TransitionBuilderWindow(QMainWindow):
             )
             track.grid_source = metadata.grid_source
             track.fallback_used = metadata.fallback_used
-            track.status = "Analysiert"
+            track.status = "Fallback · Analyse wiederholbar" if metadata.fallback_used else "Analysiert"
         if (
             self._active_edge_index != edge_index
             or self.source_combo.currentData() != source_path
@@ -1369,7 +1372,7 @@ class TransitionBuilderWindow(QMainWindow):
             track.error = error
             self.status_label.setText(f"Analyse fehlgeschlagen für {track.path.name}: {error}")
         else:
-            track.status = "Analysiert"
+            track.status = "Fallback · Analyse wiederholbar" if result["fallback_used"] else "Analysiert"
             track.bpm = result["bpm"]
             track.sample_rate = result["sample_rate"]
             track.beat_frames = result["beat_frames"]
@@ -1377,7 +1380,12 @@ class TransitionBuilderWindow(QMainWindow):
             track.grid_source = result["grid_source"]
             track.fallback_used = result["fallback_used"]
             cache_status = result.get("cache_status")
-            cache_label = "Analyse-Cache geladen" if cache_status in {"current", "legacy"} else "neu analysiert und gecacht"
+            if track.fallback_used:
+                cache_label = "Fallback-Grid · aufTAKT beim nächsten Analysieren erneut versuchen"
+            elif cache_status == "legacy":
+                cache_label = "historischer Analyse-Cache"
+            else:
+                cache_label = "erkanntes Beatgrid"
             self.status_label.setText(f"{track.path.name}: {track.bpm:.2f} BPM · {len(track.downbeat_seconds)} Downbeats · {cache_label}")
         self._refresh_tracks()
         self._load_pair_waveforms()

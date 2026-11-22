@@ -7,6 +7,18 @@ welche Gewichte tatsächlich ausgeführt wurden und welche Publikation in der
 Masterarbeit zitiert werden soll. Kopierbare BibTeX-Einträge stehen in
 [`REFERENCES.bib`](./REFERENCES.bib).
 
+## Aktiv in Phase 2 seit 2026-11-19 · MERT-v1-95M
+
+P07 verwendet `m-a-p/MERT-v1-95M` als eingefrorenen Encoder. Die
+offizielle Modellkarte nennt CC BY-NC 4.0. Die lokale Instanz bindet
+Revision `12af15fef9d0ac838c3f475bfbbf26d2060dd4f5` und
+Gewichtshash `a2b8b747f72c06e0595aeae41ae5473f4364938c6b39b2c58be38c48e6bd3fcd`.
+Pro Takt werden 13 Zustände à 768 Dimensionen gespeichert.
+Die Thesis verwendet bereits `li2024mert` in `overleaf/bibliography.bib`.
+[Modellkarte](https://huggingface.co/m-a-p/MERT-v1-95M/blob/12af15fef9d0ac838c3f475bfbbf26d2060dd4f5/README.md) ·
+[Extraktionsvertrag](masterarbeit/REVIEW_JP_P07_REPRAESENTATIONEN_20261119.md) ·
+[Publikation](https://arxiv.org/abs/2306.00107)
+
 ## Aktiv: BS-RoFormer für Vocal-Features
 
 BeatBridge verwendet standardmäßig BS-RoFormer über das inference-only Paket

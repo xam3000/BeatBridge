@@ -96,7 +96,7 @@ def generate_candidates(
     and target pre-roll form the bridge transition, while source pre-roll and
     target post-roll contain the two non-overlapping high-power sections.
     """
-    if int(getattr(config, "format_version", 1)) == 2:
+    if int(getattr(config, "format_version", 1)) in (2, 3):
         from .variable import generate_variable_candidates_from_grids
 
         return generate_variable_candidates_from_grids(

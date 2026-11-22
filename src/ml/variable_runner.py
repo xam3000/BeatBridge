@@ -20,6 +20,10 @@ from .variable_model import (
     VARIABLE_TIME_SHARED_MLP_MODEL_NAME,
     VARIABLE_TCN_BILSTM_MODEL_FORMAT_VERSION,
     VARIABLE_TCN_BILSTM_MODEL_NAME,
+)
+from .control_initialization import LEGACY, run_initialization
+from .variable_control_initialization import (
+    VariableTimeSharedMLPConfig,
     VariableTCNBiLSTMControlConfig,
     VariableTCNBiLSTMTransitionControl,
 )
@@ -146,7 +150,9 @@ def train_variable_temporal_control_model(
 
     config = config or VariableTemporalTrainingConfig()
     config.device = str(resolve_torch_device(config.device))
-    model_config = model_config or VariableTCNBiLSTMControlConfig()
+    model_config = model_config or VariableTCNBiLSTMControlConfig(
+        control_initialization=run_initialization(output_directory, resume, source_manifest=initialize_from_manifest),
+    )
     train_batches = tuple(train_batches)
     validation_batches = tuple(validation_batches)
     if not train_batches or not validation_batches:
@@ -178,11 +184,21 @@ def train_variable_temporal_control_model(
         raise ValueError("Initialization requires both a source manifest and checkpoint")
     if resume and initialize_from_manifest is not None:
         raise ValueError("Fine-tune initialization and resume are mutually exclusive")
+    if resume:
+        previous = json.loads((Path(output_directory) / "manifest.json").read_text(encoding="utf-8"))
+        initialization = previous["contract"].get("initialization")
     if initialize_from_manifest is not None:
         initialization_checkpoint, initialization = load_variable_checkpoint_for_initialization(
             initialize_from_manifest,
             initialize_from_checkpoint,
         )
+        source_config = initialization_checkpoint["contract"]["model"]["config"]
+        if source_config.get("control_initialization", LEGACY) != getattr(model_config, "control_initialization", LEGACY):
+            raise ValueError("Fine-tune control_initialization differs from the checkpoint contract")
+        # For the new map the logit origin is part of the meaning of the weights.
+        if (source_config.get("control_initialization", LEGACY) != LEGACY
+                and source_config["initial_vocal_duck_logit"] != model_config.initial_vocal_duck_logit):
+            raise ValueError("Fine-tune vocal duck logit origin differs from the checkpoint contract")
     contract.update({
         "runner_name": VARIABLE_TEMPORAL_TRAINING_RUNNER_NAME,
         "model": {"config": model_config.to_dict()},
@@ -251,7 +267,7 @@ def train_variable_temporal_control_model(
         start_epoch = 1
         best_loss = math.inf
         best_epoch = 0
-    stale_epochs = 0
+    stale_epochs = checkpoint.get("stale_epochs", 0) if resume else 0
     wandb_logger = WandbLogger.start(
         wandb_config,
         run_id=run_id,
@@ -260,7 +276,36 @@ def train_variable_temporal_control_model(
         output_directory=output_directory,
         resume=resume,
     )
+
+    def publish_epoch(*, improved):
+        epoch = history[-1]["epoch"]
+        if save_checkpoints:
+            checkpoint = variable_checkpoint_payload(
+                run_id=run_id, epoch=epoch, model=model, optimizer=optimizer,
+                contract=contract, history=history, runner_name=VARIABLE_TEMPORAL_TRAINING_RUNNER_NAME,
+                lr_scheduler=lr_scheduler,
+            )
+            checkpoint.update(best_epoch=best_epoch, best_validation_loss=best_loss, stale_epochs=stale_epochs)
+            _atomic_torch_save(latest_path, checkpoint)
+            if improved:
+                _atomic_torch_save(best_path, checkpoint)
+        _write_temporal_run_files(manifest_path, history_path, run_id, contract, history,
+                                  latest_path, best_path, status="running")
+
     try:
+        if not resume:
+            with torch.no_grad():
+                train_zero = _run_temporal_epoch(model, train_batches, renderer, objective, None, config, device)
+                val_zero = _run_temporal_epoch(model, validation_batches, renderer, objective, None, config, device)
+            phase = ("checkpoint_initialization" if initialization is not None else
+                     "legacy_initialization" if getattr(model_config, "control_initialization", LEGACY) == LEGACY
+                     else "equal_power_initialization")
+            history.append({"epoch": 0, "phase": phase, "train": train_zero, "validation": val_zero})
+            # E0 is observational. Keep the historical selection among trained epochs.
+            publish_epoch(improved=False)
+            wandb_logger.log_epoch(0, _flat_metrics(train_zero), _flat_metrics(val_zero),
+                                   best_validation_loss=None, stale_epochs=0, improved=False)
+            progress(f"epoch=0 {phase} train={train_zero['loss']:.6f} validation={val_zero['loss']:.6f}")
         for epoch in range(start_epoch, config.max_epochs + 1):
             apply_linear_warmup(
                 optimizer,
@@ -287,22 +332,7 @@ def train_variable_temporal_control_model(
             )
             epoch_record = {"epoch": epoch, "train": train_metrics, "validation": validation_metrics}
             history.append(epoch_record)
-            if save_checkpoints:
-                checkpoint = variable_checkpoint_payload(
-                    run_id=run_id,
-                    epoch=epoch,
-                    model=model,
-                    optimizer=optimizer,
-                    contract=contract,
-                    history=history,
-                    runner_name=VARIABLE_TEMPORAL_TRAINING_RUNNER_NAME,
-                    lr_scheduler=lr_scheduler,
-                )
-                checkpoint.update({"best_epoch": best_epoch, "best_validation_loss": best_loss})
-                _atomic_torch_save(latest_path, checkpoint)
-                if improved:
-                    _atomic_torch_save(best_path, checkpoint)
-            _write_temporal_run_files(manifest_path, history_path, run_id, contract, history, latest_path, best_path, status="running")
+            publish_epoch(improved=improved)
             wandb_logger.log_epoch(
                 epoch,
                 _flat_metrics(train_metrics),
@@ -317,7 +347,7 @@ def train_variable_temporal_control_model(
         _write_temporal_run_files(manifest_path, history_path, run_id, contract, history, latest_path, best_path, status="completed")
         wandb_logger.finish(status="completed", last_epoch=history[-1]["epoch"], best_epoch=best_epoch, best_validation_loss=best_loss, output_directory=output_directory)
     except Exception as error:
-        wandb_logger.finish(status="failed", last_epoch=len(history), best_epoch=best_epoch, best_validation_loss=best_loss, output_directory=output_directory, error=error)
+        wandb_logger.finish(status="failed", last_epoch=history[-1]["epoch"] if history else 0, best_epoch=best_epoch, best_validation_loss=best_loss, output_directory=output_directory, error=error)
         raise
     return {"output_directory": output_directory, "run_id": run_id, "history": tuple(history), "best_epoch": best_epoch, "best_validation_loss": best_loss}
 
@@ -551,6 +581,7 @@ def build_variable_training_contract(
     dataset_manifest_sha256,
     supported_lengths=SUPPORTED_VARIABLE_LENGTHS,
     model_name=VARIABLE_TIME_SHARED_MLP_MODEL_NAME,
+    model_config=None,
     model_format_version=VARIABLE_MLP_MODEL_FORMAT_VERSION,
     objective_name="objective_v5_time_normalized_variable_v1",
     waveform_cache_index_sha256=None,
@@ -595,6 +626,10 @@ def build_variable_training_contract(
     }
     if (waveform_cache_index_sha256 is None) != (waveform_cache_root_manifest_sha256 is None):
         raise ValueError("Both waveform cache SHA bindings must be supplied together")
+    if model_config is None and model_name == VARIABLE_TIME_SHARED_MLP_MODEL_NAME:
+        model_config = VariableTimeSharedMLPConfig()
+    if model_config is not None:
+        contract["model"] = {"config": model_config.to_dict()}
     if waveform_cache_index_sha256 is not None:
         for name, value in (
             ("waveform_cache_index_sha256", waveform_cache_index_sha256),
@@ -622,6 +657,9 @@ def variable_checkpoint_payload(
     """Return a new-format checkpoint payload; old checkpoints are incompatible."""
 
     _validate_contract(contract)
+    bound = contract.get("model", {}).get("config", {}).get("control_initialization", LEGACY)
+    if bound != getattr(model.config, "control_initialization", LEGACY):
+        raise ValueError("Model and checkpoint control_initialization differ")
     return {
         "format_version": VARIABLE_TRAINING_RUN_FORMAT_VERSION,
         "runner_name": str(runner_name),
@@ -726,6 +764,8 @@ def load_variable_checkpoint_for_initialization(manifest_path, checkpoint_path):
     checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
     validate_variable_checkpoint(
         checkpoint,
+        expected_contract=manifest["contract"],
+        run_id=manifest["run_id"],
         expected_runner_name=VARIABLE_TEMPORAL_TRAINING_RUNNER_NAME,
     )
     provenance = {

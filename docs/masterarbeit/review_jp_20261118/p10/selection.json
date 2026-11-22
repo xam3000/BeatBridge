@@ -1,0 +1,72 @@
+{
+  "format_version": 1,
+  "stages": [
+    {
+      "level": 1,
+      "mean_recall1": 0.6208992418840317,
+      "mean_same": 0.8479136482048572,
+      "study_seed_same": 0.8510509900066671,
+      "mean_intro_drop": 0.8793900033129591,
+      "study_seed_intro_drop": 0.8829681426271321,
+      "eligible": true
+    },
+    {
+      "level": 2,
+      "mean_recall1": 0.8567443168294444,
+      "mean_same": 0.9252496076127065,
+      "study_seed_same": 0.919724371981113,
+      "mean_intro_drop": 0.9390083270562877,
+      "study_seed_intro_drop": 0.9323971133951052,
+      "eligible": true
+    }
+  ],
+  "run": "output/review_jp_20261118/p09_metrik/run01",
+  "config_sha256": "f2029cdeae09b524ef7051f11cc077f99f9f6e7e17e699618c2edce1606363a9",
+  "p09_audit_sha256": "841dd01cab048f7d24d5b97caebe82a28cf8f78c7b08c1292977b6ad6ddd8a1d",
+  "p08_manifest_sha256": "e3de544d9a29214d1546d18f87b5f6ac9f9717c6d6ade2e8b5b4822aab4fbedd",
+  "validation_sha256": "0d0fd5565e3d852c41686fe9524c1256d00b3ab78b2b1daaf44600bf1a31d3bd",
+  "validation_table_sha256": "cf7960dfa7287cd054f9e2c47dd5c803b522e652ccc037786553fa3547d34618",
+  "status": "selected",
+  "selected": {
+    "family": "mert",
+    "level": 2,
+    "seed": 20260926,
+    "parameters": 459533,
+    "best_epoch": 22,
+    "epochs": 30,
+    "checkpoint": "mert_s2_20260926/best.pt",
+    "checkpoint_sha256": "e718311c21280d5528abdce4c30f786a79bb4761e7158ec52f8593f26f40e81a",
+    "recall1": 0.8558834494701778,
+    "mrr": 0.9150697046967459,
+    "same": 0.919724371981113,
+    "intro_drop": 0.9323971133951052,
+    "queries": 2830,
+    "recordings": 54,
+    "same_groups": 53,
+    "intro_drop_queries": 844,
+    "intro_drop_groups": 49
+  },
+  "ranking_method": "mert_continuation_v1",
+  "representation": {
+    "repo_id": "m-a-p/MERT-v1-95M",
+    "revision": "12af15fef9d0ac838c3f475bfbbf26d2060dd4f5",
+    "license": "CC-BY-NC-4.0",
+    "sha256": {
+      "README.md": "4bd95e900185d8b393785c0038aa662355a904e5a98ec692003b8011c802455d",
+      "config.json": "ea2627c4c7825cd66f3c944b6b966331604c35928174e0100cd4a82829424e32",
+      "configuration_MERT.py": "ae0ec2bab8f59c724ba9878a7c20b67210189536ea62d34a56775968e9decb03",
+      "modeling_MERT.py": "6c3ee73cef6f0c30ef494f88d96f891fa6925ffe663fa391b512f4b57abecc6c",
+      "preprocessor_config.json": "cc5a5e4a5d3b1a758a5ed984b2eaa15bb0522d811d44a9eed82bfca4baa0dc8f",
+      "pytorch_model.bin": "a2b8b747f72c06e0595aeae41ae5473f4364938c6b39b2c58be38c48e6bd3fcd"
+    },
+    "transformers": "4.49.0",
+    "sample_rate": 24000,
+    "frame_step": 320,
+    "receptive_field": 400,
+    "core_samples": 480000,
+    "context_samples": 48000,
+    "attention": "sdpa",
+    "precision": "cuda_bfloat16_autocast_or_cpu_float32"
+  },
+  "refinements": 0
+}

@@ -19,7 +19,7 @@ from common import TOP3, CACHE_V1, dump_json, load_split, load_waveforms
 from src.control import DifferentiableTwoBandRenderer
 from src.control.differentiable import DifferentiableFullBandTransitionRenderer
 from src.cutting.equal_power_fade_cut import EqualPowerFadeCut
-from src.ml.model import TCNBiLSTMTransitionControl
+from src.ml.model import TCNBiLSTMTransitionControl, TCNBiLSTMTransitionControlConfig
 
 
 def db(value: float) -> float:
@@ -36,7 +36,7 @@ def main():
     two_band = DifferentiableTwoBandRenderer(11025, 180.0, 127)
     full_band = DifferentiableFullBandTransitionRenderer(11025, 180.0, 3500.0, 127)
     torch.manual_seed(0)
-    tcn = TCNBiLSTMTransitionControl().eval()
+    tcn = TCNBiLSTMTransitionControl(TCNBiLSTMTransitionControlConfig(control_initialization="legacy")).eval()
     ramp = torch.linspace(0.0, 1.0, 32)
     rows = []
     for index, example_id in enumerate(validation["example_ids"]):

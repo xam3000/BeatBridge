@@ -1,0 +1,130 @@
+{
+  "format_version": 1,
+  "result": "passed",
+  "manifest_sha256": "e3de544d9a29214d1546d18f87b5f6ac9f9717c6d6ade2e8b5b4822aab4fbedd",
+  "files": {
+    "train.jsonl": "8f3655423faac712894445962b66f01b65cdc35ed0419215e4734821d24d25f0",
+    "train_budget.json": "d1cab5184cd284f8b7262daaaa09c3d852ad297148eec018d301b79d1576f7ca",
+    "train_excluded.jsonl": "ae5440144533c7e84e62389eb2554c90c1a355d68a51a3ecf171384b1ea81cd9",
+    "validation.jsonl": "0d0fd5565e3d852c41686fe9524c1256d00b3ab78b2b1daaf44600bf1a31d3bd",
+    "validation_budget.json": "8d45c56157b36edd0fe069833f2536de45a015dd3a077f969479b75e13dfdaab",
+    "validation_excluded.jsonl": "740c3f64ad8ab53f3341ca985d836ca93f6b786a81a44f328cd242fcde0ea7c2"
+  },
+  "views": 762,
+  "splits": {
+    "train": {
+      "queries": 12999,
+      "groups": 228,
+      "negatives": {
+        "tempo": 25998,
+        "foreign": 12999,
+        "same": 12999
+      },
+      "example": {
+        "query": "cf766e10aa8f5b0962c6fe788d8822a19b5c61788dca5a537dbe3efd9a3055f0:000017",
+        "bar_rows": [
+          13,
+          17,
+          21,
+          25
+        ],
+        "native_beats": [
+          97,
+          113,
+          129,
+          145
+        ],
+        "samples_24k": [
+          1053814,
+          1202887,
+          1348058,
+          1494343
+        ]
+      },
+      "min_complete_bars_between": 17,
+      "max_relative_bpm_difference": 0.030303030303030366
+    },
+    "validation": {
+      "queries": 2830,
+      "groups": 53,
+      "negatives": {
+        "tempo": 11320,
+        "foreign": 5660,
+        "same": 5660,
+        "intro_drop": 844
+      },
+      "example": {
+        "query": "916871d5ba0d2bea6a38fb1e25427c437a2d8094960fe297c049f00ef5763e2b:000005",
+        "bar_rows": [
+          1,
+          5,
+          9,
+          13
+        ],
+        "native_beats": [
+          6,
+          22,
+          38,
+          54
+        ],
+        "samples_24k": [
+          159939,
+          315977,
+          470343,
+          623595
+        ]
+      },
+      "min_complete_bars_between": 17,
+      "max_relative_bpm_difference": 0.030303030303030366
+    }
+  },
+  "renderer": {
+    "raw_manifest": "output/review_jp_20261118/p13_laengen/run03/manifest.json",
+    "raw_sha256": "476472e212caa476e47bd74c4174aeb9621b37e0b2af4cbbdf00f74d737ffd14",
+    "cue": "candidate-a8a01bebc98c1203",
+    "rate": 44100,
+    "source": {
+      "bar_index": 56,
+      "beat_index": 219,
+      "downbeats": [
+        3428352,
+        3495424,
+        3562496,
+        3629568,
+        3701760,
+        3768832,
+        3834880,
+        3901952,
+        3969536
+      ]
+    },
+    "target": {
+      "bar_index": 126,
+      "beat_index": 500,
+      "downbeats": [
+        8466432,
+        8531968,
+        8599552,
+        8667648,
+        8734720,
+        8801280,
+        8868352,
+        8935424,
+        9001984
+      ]
+    },
+    "overlap": 267776,
+    "effective_source": [
+      3701760,
+      3969536
+    ],
+    "effective_target": [
+      8466944,
+      8734720
+    ],
+    "preview": [
+      88200,
+      355976
+    ]
+  }
+}

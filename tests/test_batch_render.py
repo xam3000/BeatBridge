@@ -152,3 +152,43 @@ def test_batch_cli_accepts_all_variable_transition_lengths():
     )
 
     assert tuple(args.transition_bars) == (2, 4, 6, 8)
+
+
+def test_mert_batch_contract_and_filtered_selection(batch_inputs, monkeypatch):
+    from src import batch_render
+    from src.candidates import BaselineCandidateGenerationConfig
+    from src.ranking import continuation
+    from src.ranking.feature_baseline import RankingFailure
+
+    original, analysis, out = batch_inputs
+    method = continuation.METHOD
+    with pytest.raises(ValueError, match="four 4/4"):
+        render_candidate_batch(original, out, ranking_method=method)
+    first = original.candidates[0]
+    generate = batch_render.generate_transition_candidates
+
+    def capture(*args, config, **kwargs):
+        assert isinstance(config, BaselineCandidateGenerationConfig)
+        assert config.transition_lengths_bars == (4,)
+        return generate(*args, config=config, **kwargs)
+
+    monkeypatch.setattr(batch_render, "generate_transition_candidates", capture)
+    def stub(candidates, analysis, rate):
+        assert len(candidates) > 1
+        return continuation.ContinuationRanking(
+            (continuation.ContinuationScore(candidates[-1].candidate_id, 1, .75),),
+            {"fixture": "stub"},
+            tuple(RankingFailure(c.candidate_id, "incomplete_bar_window", "fixture") for c in candidates[:-1]))
+
+    monkeypatch.setattr(continuation, "rank_continuations", stub)
+    batch = batch_render.generate_and_render_batch(first.source_track.path, first.target_track.path, out,
+              analysis=analysis, ranking_method=method, top_k=3, renderers=("equal_power",))
+    result = json.loads(batch.manifest_path.read_text(encoding="utf-8"))
+    winner = batch.candidate_generation.candidates[-1].candidate_id
+    assert result["cue_ranking"]["provenance"] == {"fixture": "stub"}
+    assert result["cue_ranking"]["scores"] == [dict(candidate_id=winner, rank=1, total_score=.75)]
+    assert [r["candidate_id"] for r in result["candidate_ranking"]["scores"]] == [winner]
+    assert result["render_selection"]["candidate_ids"] == [winner]
+    assert len(result["rendered_variants"]) == 1
+    assert result["rendered_variants"][0]["selection_score"] == .75
+    assert result["cue_ranking"]["failures"] and not result["failures"]

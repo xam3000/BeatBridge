@@ -24,6 +24,7 @@ FALLBACK_BACKEND_VERSION = "beatbridge_4_4_fallback_v1"
 ANALYSIS_CACHE_FORMAT_VERSION = 2
 ANALYSIS_CACHE_NAMESPACE = "v2"
 ANALYSIS_CACHE_FILENAME = "analysis.json"
+RECOVERED_ANALYSIS_CACHE_FILENAME = "analysis.detected.json"
 ANALYSIS_ALGORITHM_VERSION = "beatbridge_pre_analysis_v2"
 BEAT_BACKEND_NAME = "librosa.beat.beat_track"
 BAR_BACKEND_NAME = "zplane_AUFTAKT_aufTAKTCl"
@@ -235,34 +236,28 @@ class PreAnalysis:
         )
         self.analysis_id = _analysis_id(self.analysis_config)
 
-    def __call__(self,song_path):
-        self.song_path = Path(song_path)
+    def __call__(self, song_path):
+        # Permit retry on the same analyser if aufTAKT was installed meanwhile.
+        if self.auftakt_executable is None:
+            executable = _resolve_auftakt_executable()
+            if executable is not None:
+                self.auftakt_executable = executable
+                self.auftakt_binary = _describe_auftakt_binary(executable)
+                self.analysis_config = _analysis_config(
+                    self.auftakt_binary, merge_algorithm=self.merge_algorithm,
+                )
+                self.analysis_id = _analysis_id(self.analysis_config)
+
+        cached = self.load_cached_analysis(song_path)
+        if cached is not None and cached.grid_metadata.fallback_used is not True:
+            return cached
+
+        # A stale or malformed cache must not affect provenance of a fresh run.
+        self.previous_analysis = None
+        self.previous_analysis_kind = None
+        self.grid_metadata = None
         self.missing_beats = {"librosa": [], "auftakt": []}
         self.merge_diagnostics = None
-        self.song_hash = _file_sha256(self.song_path)
-        self.cache_directory = (
-            self.analysis_location
-            / ANALYSIS_CACHE_NAMESPACE
-            / self.song_hash
-            / self.analysis_id
-        )
-        self.grid_metadata = None
-        self.previous_analysis = self.find_previous_analysis()
-        if self.previous_analysis and self.load_previous_analysis():
-            try:
-                self.beat_frames, self.grid_metadata = ensure_bar_metadata_with_provenance(
-                    self.beat_frames,
-                    bpm=self.bpm,
-                    existing_metadata=self.grid_metadata,
-                )
-            except ValueError:
-                # An empty legacy cache has no usable beat positions; analyse again.
-                self.previous_analysis = None
-            else:
-                self._finalize_grid_metadata()
-                return self._result()
-        # A stale or malformed cache must not affect provenance of a fresh run.
-        self.previous_analysis_kind = None
         self.load_song()
         self.find_bpm()
 
@@ -276,16 +271,16 @@ class PreAnalysis:
         )
         self._finalize_grid_metadata()
 
-        self.save_previous_analysis()
-        
+        if self.grid_metadata.is_verified_detection:
+            self.save_previous_analysis()
+
         return self._result()
 
     def load_cached_analysis(self, song_path):
         """Load a matching analysis cache without analysing a cache miss.
 
-        Returns ``None`` when no valid current or legacy cache entry exists.
-        This is used by the desktop importer to report analysis state without
-        unexpectedly starting the comparatively expensive analysis pipeline.
+        Historical fallbacks are returned with their provenance for display.
+        Calling the analyser retries aufTAKT for those entries.
         """
         self.song_path = Path(song_path)
         self.missing_beats = {"librosa": [], "auftakt": []}
@@ -331,6 +326,11 @@ class PreAnalysis:
         )
 
     def find_previous_analysis(self):
+        recovered_path = self.cache_directory / RECOVERED_ANALYSIS_CACHE_FILENAME
+        if recovered_path.is_file():
+            self.previous_analysis_kind = "current"
+            return recovered_path
+
         current_path = self.cache_directory / ANALYSIS_CACHE_FILENAME
         if current_path.is_file():
             self.previous_analysis_kind = "current"
@@ -399,6 +399,8 @@ class PreAnalysis:
             if analysis_lines[0] != self.song_hash:
                 return False
             self.bpm = float(analysis_lines[1])
+            if not np.isfinite(self.bpm) or self.bpm <= 0:
+                return False
             self.beat_frames = [
                 self._parse_saved_beat_line(line)
                 for line in analysis_lines[2:]
@@ -422,6 +424,9 @@ class PreAnalysis:
 
     def save_previous_analysis(self):
         analysis_path = self.cache_directory / ANALYSIS_CACHE_FILENAME
+        if analysis_path.is_file():
+            # Preserve the previous artifact at its original path.
+            analysis_path = self.cache_directory / RECOVERED_ANALYSIS_CACHE_FILENAME
         diagnostics = {"missing_beats": self.missing_beats}
         if self.merge_diagnostics is not None:
             diagnostics["merge"] = self.merge_diagnostics
@@ -495,8 +500,8 @@ class PreAnalysis:
                 time_seconds, count_in_bar, beats_in_bar = [part.strip() for part in line.split(",")]
                 auftakt_beats.append((float(time_seconds), int(count_in_bar), int(beats_in_bar)))
 
-            if auftakt_beats:
-                auftakt_times = np.array([beat[0] for beat in auftakt_beats], dtype=float)
+            if auftakt_beats and len(self.beat_frames):
+                auftakt_times = _strict_time_array([beat[0] for beat in auftakt_beats], "aufTAKT")
                 librosa_times = librosa.samples_to_time(np.asarray(self.beat_frames), sr=self.sr)
                 combined_beats = []
                 matched_confidences = []
@@ -558,6 +563,12 @@ class PreAnalysis:
                         confidence=float(np.mean(matched_confidences)),
                     )
         except (OSError, subprocess.SubprocessError, ValueError) as error:
+            self.merge_diagnostics = {
+                "algorithm": MERGE_ALGORITHM_VERSION,
+                "status": "error",
+                "error_type": type(error).__name__,
+                "error": str(error),
+            }
             logger.warning(
                 "aufTAKT analysis failed for %s; falling back to inferred 4/4 bar metadata: %s",
                 self.song_path,

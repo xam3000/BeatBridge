@@ -175,8 +175,9 @@ Wichtige Batch-Optionen:
 | Option | Standard | Bedeutung |
 |---|---:|---|
 | `--output-dir ORDNER` | – | Erforderlicher Zielordner für Manifest und WAV-Dateien |
-| `--renderers ...` | alle vier Baselines | Eine oder mehrere Renderer-Varianten |
-| `--transition-bars ...` | `2 4` | Variable Kandidatenlängen in Takten; v2 unterstützt ausschließlich `2`, `4`, `6` und `8`, jede Länge wird unabhängig validiert |
+| `--renderers ...` | `simple fade equal_power` | Harter Schnitt, linearer Fade und Equal Power. Alte Aufrufe dürfen `tempo_fade` als Alias für `fade` übergeben |
+| `--baseline-bars ...` | optional | Beliebige Auswahl aus 1, 2, 3 und 4 Takten mit vollständigen 4/4-Fenstern. Für jeden Fade gilt die gemeinsame Überlagerungslänge. |
+| `--transition-bars ...` | `2 4` | Die historischen Längen 2/4/6/8 nutzen Candidate v2. Enthält die Liste 1 oder 3, gilt der Baselinevertrag für 1–4 Takte. |
 | `--source-boundaries N` | alle | Optionales Limit auf die letzten N nutzbaren Source-Grenzen |
 | `--target-boundaries N` | alle | Optionales Limit auf die ersten N nutzbaren Zielgrenzen; ohne Option wird der ganze Song B durchsucht |
 | `--max-tempo-difference X` | `0.15` | Maximale symmetrische relative BPM-Differenz (`0.15` = 15 %) |
@@ -299,7 +300,7 @@ die normalisierte Liste. Ohne diese Option bleibt der historische v1-Default
   --max-bpm 165
 ```
 
-Für `--transition-bars` sind ausschließlich `2`, `4`, `6` und `8` zulässig.
+Für die neuen Baselinelängen im Multi-Batch etwa `--transition-bars 1 2 3 4` setzen. Enthält die Liste 1 oder 3, verwendet die Regelauswahl den Baselinevertrag für 1–4 Takte. Bei historischen Anfragen bleiben die bisherigen Verträge aktiv.
 Sobald 6 oder 8 angefordert wird, tragen die Paar-Manifeste den additiven
 Candidate-v2-Vertrag; eine fehlende lange Abdeckung entfernt keine gültigen
 kürzeren Kandidaten.

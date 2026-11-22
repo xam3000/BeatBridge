@@ -15,6 +15,8 @@ import librosa
 import numpy as np
 import torch
 
+from src.ml.control_initialization import read_model_config
+
 from src.analysis.pre_analysis import PreAnalysis
 from src.bridge import extract_aligned_bridge
 from src.control import (
@@ -390,11 +392,7 @@ def _load_best_model(training_run_directory):
     if int(checkpoint["epoch"]) != int(manifest["best_epoch"]):
         raise ValueError("Best checkpoint epoch differs from the training manifest")
     raw_model_config = contract["model"]["config"]
-    model_config = FeatureControlMLPConfig(
-        hidden_dimensions=tuple(raw_model_config["hidden_dimensions"]),
-        dropout=float(raw_model_config["dropout"]),
-        increment_logit_bound=float(raw_model_config["increment_logit_bound"]),
-    )
+    model_config = read_model_config(FeatureControlMLPConfig, raw_model_config)
     model = FeatureControlMLP(model_config)
     model.load_state_dict(checkpoint["model_state_dict"])
     model.eval()

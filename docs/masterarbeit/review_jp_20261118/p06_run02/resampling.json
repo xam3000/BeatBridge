@@ -1,0 +1,15 @@
+{
+  "recording_groups": "docs\\masterarbeit\\review_jp_20261118\\p01\\exposure_tracks.csv",
+  "recording_groups_sha256": "39a70ba20c168304b727bcec22bd5339577d9bfa32735777ab2b31058a6d4b35",
+  "unit": "connected recording component across both roles",
+  "order": "first included directed pair in validation preflight ID order",
+  "statistic": "sum of sampled pair contrasts / number of sampled pairs, including multiplicities",
+  "draws": 10000,
+  "seed": 20261121,
+  "percentiles": [
+    2.5,
+    97.5
+  ],
+  "donor_pool": "fixed observed cues",
+  "D2": "observed pair range only"
+}

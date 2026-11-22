@@ -39,6 +39,7 @@ from .data import (
     VocalFeatureControlDataset,
     collate_feature_control_examples,
 )
+from .control_initialization import EQUAL_POWER, run_initialization
 from .model import (
     VOCAL_FEATURE_CONTROL_MODEL_FORMAT_VERSION,
     VOCAL_FEATURE_CONTROL_MODEL_NAME,
@@ -207,7 +208,9 @@ def train_vocal_feature_control_model(
 ):
     """Train model v2 from materialized examples and persist restartable artifacts."""
     config = _resolve_training_device(config or VocalTrainingConfig())
-    model_config = model_config or VocalFeatureControlMLPConfig()
+    model_config = model_config or VocalFeatureControlMLPConfig(
+        control_initialization=run_initialization(output_directory, resume),
+    )
     objective_config = objective_config or VocalAwareTransitionObjectiveConfig()
     train_examples = tuple(train_examples)
     validation_examples = tuple(validation_examples)
@@ -362,7 +365,8 @@ def train_vocal_feature_control_model(
             )
             history.append({
                 "epoch": 0,
-                "phase": "vocal_near_equal_power_initialization",
+                "phase": ("equal_power_initialization" if model_config.control_initialization == EQUAL_POWER
+                          else "vocal_near_equal_power_initialization"),
                 "train": initial_train,
                 "validation": initial_validation,
             })

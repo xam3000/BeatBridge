@@ -1,0 +1,60 @@
+<!doctype html><html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BeatBridge · Übergänge bewerten</title>
+<style>
+body{max-width:50rem;margin:2rem auto;padding:0 1rem;background:#f6f5f1;color:#20292b;font:1rem/1.5 system-ui}
+article{padding:1rem;background:white;margin:.7rem 0;border:1px solid #ced4d1;border-radius:.5rem}
+label{display:block;margin:.4rem 0}audio{vertical-align:middle;max-width:100%}input{width:4rem}textarea{vertical-align:middle;width:min(28rem,90%)}
+button{padding:.5rem 1rem;margin:.4rem .4rem .4rem 0}strong{margin-right:1rem}
+</style>
+<h1>Übergänge bewerten</h1><p>Wie bewerten Sie die musikalische Gesamtqualität jedes Übergangs? Hören Sie die Clips eines Paars in beliebiger Reihenfolge. Wiederholungen sind möglich. 0 steht für sehr schlecht, 100 für sehr gut.</p>
+<h2 id="heading"></h2><main></main><button id="prev">Zurück</button><button id="next">Weiter</button><button id="save">Bewertungen exportieren</button><p role="status" id="status"></p>
+<script>
+const session = /*SESSION*/null;
+const key = 'BeatBridge-P11:' + session.split + ':' + session.person + ':' + session.session_id;
+const ratings = JSON.parse(localStorage.getItem(key) || '{}');
+let page = 0;
+function render() {
+  const main = document.querySelector('main');
+  main.replaceChildren();
+  document.querySelector('#heading').textContent = 'Paar ' + (page+1) + ' von ' + session.pages.length;
+  for (const id of session.pages[page]) {
+    const card = document.createElement('article');
+    card.innerHTML = '<strong></strong><audio controls preload="none"></audio><label>Bewertung 0–100 <input type="number" min="0" max="100" step="1" required></label><label>Kommentar (freiwillig) <textarea rows="1"></textarea></label>';
+    card.querySelector('strong').textContent = 'Clip ' + id.slice(-1);
+    const audio = card.querySelector('audio');
+    audio.src = id + '.wav';
+    audio.onplay = () => document.querySelectorAll('audio').forEach(other => {if(other !== audio) other.pause()});
+    const input = card.querySelector('input'), note = card.querySelector('textarea');
+    input.value = ratings[id]?.score ?? '';
+    note.value = ratings[id]?.comment ?? '';
+    card.oninput = () => {
+      ratings[id] = {score: input.validity.valid ? input.valueAsNumber : null, comment: note.value};
+      localStorage.setItem(key, JSON.stringify(ratings));
+    };
+    main.append(card);
+  }
+  document.querySelector('#prev').disabled = page === 0;
+  document.querySelector('#next').hidden = page+1 === session.pages.length;
+  document.querySelector('#save').hidden = page+1 !== session.pages.length;
+}
+function complete(ids) {
+  return ids.every(id => Number.isInteger(ratings[id]?.score) && ratings[id].score >= 0 && ratings[id].score <= 100);
+}
+document.querySelector('#prev').onclick = () => {page--; render()};
+document.querySelector('#next').onclick = () => {
+  if (!complete(session.pages[page])) return document.querySelector('input:invalid')?.reportValidity();
+  page++; render();
+};
+document.querySelector('#save').onclick = () => {
+  if (!complete(session.pages.flat())) {
+    document.querySelector('#status').textContent = 'Bitte alle Clips bewerten.'; return;
+  }
+  const blob = new Blob([JSON.stringify({format_version:1, person:session.person, split:session.split,
+    session_id:session.session_id, completed_at:new Date().toISOString(), ratings}, null, 2)], {type:'application/json'});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob); link.download = session.person + '-Bewertungen.json'; link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  document.querySelector('#status').textContent = 'Export erstellt. Bitte die Datei der Versuchsleitung übergeben.';
+};
+render();
+</script></html>

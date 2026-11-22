@@ -187,18 +187,17 @@ class WandbLogger:
         return self._run is not None
 
     def log_epoch(self, epoch: int, train_metrics: dict, validation_metrics: dict, *,
-                  best_validation_loss: float, stale_epochs: int, improved: bool):
+                  best_validation_loss: float | None, stale_epochs: int, improved: bool):
         if not self.enabled:
             return
         payload = {
             "epoch": int(epoch),
-            # Keep the sweep objective visible at every epoch so W&B's
-            # Hyperband controller can make early-termination decisions.
-            "best_validation_loss": float(best_validation_loss),
-            "best/validation_loss": float(best_validation_loss),
             "early_stopping/stale_epochs": int(stale_epochs),
             "early_stopping/improved": int(bool(improved)),
         }
+        if best_validation_loss is not None:
+            payload.update({"best_validation_loss": float(best_validation_loss),
+                            "best/validation_loss": float(best_validation_loss)})
         train_metrics = dict(train_metrics)
         learning_rate = train_metrics.pop("learning_rate", None)
         payload.update(_flatten_metrics("train", train_metrics))

@@ -276,8 +276,42 @@ def test_all_lengths_smoke_resumes_and_preserves_cache_bindings(tmp_path):
         resume=True,
         **common,
     )
-    assert [row["epoch"] for row in resumed["history"]] == [1, 2]
+    assert [row["epoch"] for row in resumed["history"]] == [0, 1, 2]
+    assert resumed["history"][0]["phase"] == "equal_power_initialization"
     manifest = __import__("json").loads((output / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["contract"]["supported_lengths"] == [2, 4, 6, 8]
     assert manifest["contract"]["waveform_cache_index_sha256"] == index_sha
     assert manifest["contract"]["waveform_cache_root_manifest_sha256"] == root_sha
+
+
+def test_variable_e0_measured_before_first_update_and_resumable(tmp_path):
+    import json
+
+    output = tmp_path / "interrupted"
+    train, validation = (_batch(2, 1),), (_batch(2, 1),)
+    config = VariableTemporalTrainingConfig(max_epochs=1, training_sample_rate=8000, lowpass_kernel_size=31, device="cpu")
+    settings = dict(config=config, supported_lengths=(2,), dataset_manifest_sha256="a" * 64)
+
+    def interrupt(message):
+        if message.startswith("epoch=0 "):
+            raise InterruptedError("stop after E0")
+
+    with pytest.raises(InterruptedError, match="stop after E0"):
+        train_variable_temporal_control_model(train, validation, output, progress=interrupt, **settings)
+    meta = json.loads((output / "manifest.json").read_text())
+    assert meta["last_epoch"] == 0 and meta["files"]["best_checkpoint"] is None
+    state = torch.load(output / meta["files"]["latest_checkpoint"]["path"], weights_only=True)
+    assert state["epoch"] == 0 and state["optimizer_state_dict"]["state"] == {}
+    model = VariableTCNBiLSTMTransitionControl().eval()
+    model.load_state_dict(state["model_state_dict"])
+    zero = state["history"][0]
+    for split, batches in (("train", train), ("validation", validation)):
+        with torch.no_grad():
+            expected = variable_vocal_self_supervised_batch_loss(
+                model, batches[0], renderer=DifferentiableVocalAwareRenderer(sample_rate=8000, lowpass_kernel_size=31),
+                objective=VariableVocalAwareTransitionObjective(),
+            ).terms
+        assert zero[split]["by_length"]["2"] == {k: float(v) for k, v in expected.items()}
+    resumed = train_variable_temporal_control_model(train, validation, output, resume=True, **settings)
+    assert [row["epoch"] for row in resumed["history"]] == [0, 1]
+    assert resumed["history"][0] == zero and resumed["best_epoch"] == 1

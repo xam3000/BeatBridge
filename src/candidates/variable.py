@@ -29,11 +29,15 @@ from .models import (
 VARIABLE_CANDIDATE_FORMAT_VERSION = 2
 VARIABLE_GENERATOR_NAME = "bar_grid_v2_length_specific"
 SUPPORTED_VARIABLE_LENGTHS = (2, 4, 6, 8)
+BASELINE_LENGTHS = (1, 2, 3, 4)
 
 
 @dataclass(frozen=True)
 class VariableCandidateGenerationConfig:
     """Hard constraints for the additive 2/4/6/8-bar candidate contract."""
+
+    supported_lengths = SUPPORTED_VARIABLE_LENGTHS
+    generator = VARIABLE_GENERATOR_NAME
 
     transition_lengths_bars: tuple[int, ...] = (2, 4)
     source_boundary_count: int | None = None
@@ -49,8 +53,8 @@ class VariableCandidateGenerationConfig:
         )
         if not lengths:
             raise ValueError("transition_lengths_bars must not be empty")
-        if any(length not in SUPPORTED_VARIABLE_LENGTHS for length in lengths):
-            allowed = ", ".join(str(length) for length in SUPPORTED_VARIABLE_LENGTHS)
+        if any(length not in self.supported_lengths for length in lengths):
+            allowed = ", ".join(str(length) for length in self.supported_lengths)
             raise ValueError(
                 f"variable transition_lengths_bars must be one of {{{allowed}}}"
             )
@@ -64,11 +68,21 @@ class VariableCandidateGenerationConfig:
             raise ValueError("max_tempo_relative_difference must be in [0, 1)")
         if self.approximate_grid_policy not in {"reject", "allow"}:
             raise ValueError("approximate_grid_policy must be 'reject' or 'allow'")
-        if int(self.format_version) != VARIABLE_CANDIDATE_FORMAT_VERSION:
+        if int(self.format_version) != type(self).format_version:
             raise ValueError(
-                f"variable candidate format_version must be {VARIABLE_CANDIDATE_FORMAT_VERSION}"
+                f"variable candidate format_version must be {type(self).format_version}"
             )
         object.__setattr__(self, "transition_lengths_bars", tuple(sorted(lengths)))
+
+
+@dataclass(frozen=True)
+class BaselineCandidateGenerationConfig(VariableCandidateGenerationConfig):
+    """Local 4/4 windows for baseline fades with the common overlap duration."""
+
+    supported_lengths = BASELINE_LENGTHS
+    generator = "baseline_bar_grid_v3"
+    transition_lengths_bars: tuple[int, ...] = BASELINE_LENGTHS
+    format_version: int = 3
 
 
 def generate_variable_candidates_from_grids(
@@ -101,7 +115,7 @@ def generate_variable_candidates_from_grids(
         return CandidateGenerationResult(
             tuple(candidates),
             tuple(rejections),
-            format_version=VARIABLE_CANDIDATE_FORMAT_VERSION,
+            format_version=config.format_version,
             source_grid=source_grid_metadata,
             target_grid=target_grid_metadata,
             approximate_grid_policy=config.approximate_grid_policy,
@@ -270,7 +284,7 @@ def generate_variable_candidates_from_grids(
                             target_track,
                             source_cutpoint,
                             target_cutpoint,
-                            length_bars,
+                            length_bars, config.generator,
                         ),
                         source_track=source_track,
                         target_track=target_track,
@@ -281,8 +295,8 @@ def generate_variable_candidates_from_grids(
                         source_bpm=source_bpm,
                         target_bpm=target_bpm,
                         tempo_relative_difference=tempo_difference,
-                        generator=VARIABLE_GENERATOR_NAME,
-                        format_version=VARIABLE_CANDIDATE_FORMAT_VERSION,
+                        generator=config.generator,
+                        format_version=config.format_version,
                         source_grid=source_grid_metadata,
                         target_grid=target_grid_metadata,
                     )
@@ -306,6 +320,20 @@ def generate_variable_candidates_from_grids(
     return result(candidates)
 
 
+def validate_baseline_cue(frames, cue, bars, sample_count, role):
+    """Apply the candidate filter to the snapped manual cue before rendering."""
+    grid = _parse_grid(frames, strict_contiguity=True)
+    boundary = next((b for b in grid.boundaries if b.sample == cue), None)
+    beats = 4 * bars
+    if (boundary is None or boundary.beat_index < beats or
+            boundary.beat_index + beats >= len(frames) or
+            frames[boundary.beat_index + beats][0] > sample_count):
+        raise ValueError(f"{role} cue needs {bars} complete bars before and after the downbeat")
+    if (_window_beats(grid, boundary.bar_index, bars) != beats or
+            _following_window_beats(grid, boundary.bar_index, bars) != beats):
+        raise ValueError(f"{role} cue needs {bars} complete contiguous 4/4 bars on both sides")
+
+
 def _eligible_boundaries(grid: _Grid, length_bars: int):
     return [
         boundary
@@ -326,9 +354,9 @@ def _eligible_four_four_boundaries(grid: _Grid, boundaries, length_bars: int):
     ]
 
 
-def _candidate_id(source_track, target_track, source_cutpoint, target_cutpoint, length_bars):
+def _candidate_id(source_track, target_track, source_cutpoint, target_cutpoint, length_bars, generator):
     payload = {
-        "generator": VARIABLE_GENERATOR_NAME,
+        "generator": generator,
         "source_sha256": source_track.sha256,
         "target_sha256": target_track.sha256,
         "source_sample": source_cutpoint.sample,

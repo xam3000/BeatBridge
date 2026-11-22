@@ -22,6 +22,8 @@ import uuid
 import numpy as np
 import torch
 
+from src.ml.control_initialization import read_model_config
+
 from src.analysis.pre_analysis import PreAnalysis
 from src.bridge import extract_aligned_vocal_bridge
 from src.control import (
@@ -426,17 +428,7 @@ def _load_best_tcn(run_directory):
     if int(checkpoint["epoch"]) != int(manifest["best_epoch"]):
         raise ValueError("TCN checkpoint epoch differs from the manifest")
     raw = contract["model"]["config"]
-    config = TCNBiLSTMTransitionControlConfig(
-        encoder_channels=tuple(raw["encoder_channels"]),
-        tcn_kernel_size=int(raw["tcn_kernel_size"]),
-        tcn_dilation=int(raw["tcn_dilation"]),
-        fusion_dimension=int(raw["fusion_dimension"]),
-        controller_hidden_size=int(raw["controller_hidden_size"]),
-        controller_layers=int(raw["controller_layers"]),
-        output_dimension=int(raw["output_dimension"]),
-        dropout=float(raw["dropout"]),
-        increment_logit_bound=float(raw["increment_logit_bound"]),
-    )
+    config = read_model_config(TCNBiLSTMTransitionControlConfig, raw)
     model = TCNBiLSTMTransitionControl(config)
     model.load_state_dict(checkpoint["model_state_dict"])
     model.eval()
@@ -510,18 +502,7 @@ def _render_loaded_model(loaded, feature_inputs, audio_inputs):
             midpass_cutoff_hz=float(renderer_contract.get("midpass_cutoff_hz", 3500.0)),
             lowpass_kernel_size=511,
         )
-        controls = [output[name] for name in (
-            "gain_A",
-            "gain_B",
-            "eq_low_A",
-            "eq_low_B",
-            "eq_mid_A",
-            "eq_mid_B",
-            "eq_high_A",
-            "eq_high_B",
-            "low_end_ownership",
-            "vocal_ducking",
-        )]
+        controls = output.renderer_arguments(source.shape[-1])
         # This model was trained with the documented mid-band vocal proxy, so
         # its inference renderer intentionally receives no separated stems.
         return renderer(source, target, *controls).audio.numpy()

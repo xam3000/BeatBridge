@@ -1,5 +1,34 @@
 # Results evidence ledger (2026-10-14; thesis update 2026-11-11)
 
+## P08 · Datenbasis für F2 am 19.11.2026
+
+| Material und Einheit | Bedingungen | Technischer Befund | Nachweis |
+|---|---|---|---|
+| P07-Originalraster, 24 kHz, alle Produktionsfassungen an die Originalgruppe gebunden. Positive Query und Antwort derselben Aufnahme, k = L = 4. | Samplingseed 20261118, höchstens 64 Queries pro Gruppe, gemeinsames Retrieval mit vier BPM-nahen, zwei weiteren fremden und zwei entfernten strukturfremden Negativen. | 12.999 Train-/2.830 Validationqueries aus 228/53 Quellgruppen. Vollständiger Replay. Für 844 Queries aus 49 Gruppen ist der separate Intro↔Drop-Kontrast verfügbar. | [Paarinstanz](../output/review_jp_20261118/p08_paare/run02/manifest.json) · [Vollaudit und Renderergrenzen](masterarbeit/P08_VERIFIED_20261119.json) |
+| Derselbe erste echte Trainingsbatch, 32 Queries, Seed 20260926, CPU. | MERT und klassische P07-Fenster, technischer linearer Kopf, maskierte In-Batch-Negative plus vier explizite Negative, DCL mit t = 0,2 und τ⁺ = 0,05. Ein AdamW-Schritt. | Für beide Familien endliche Gradienten und geänderte Gewichte, bitidentischer Zahlen-Replay. Die Retrievalgüte wird in P09/P10 geprüft. | [Smoke und Batch-IDs](masterarbeit/P08_SMOKE_20261119.json) · [Methodik und Grenzen](masterarbeit/REVIEW_JP_P08_PAARE_20261119.md) |
+
+## P13 · Baselinefenster am 19.11.2026
+
+| Material und Referenz | Bedingungen | Technischer Befund | Nachweis |
+|---|---|---|---|
+| Ein D2-Trainpaar, gleicher P04-Entwicklungscue und erkannte Downbeats, beide Tracks bei 156,605 BPM | Equal Power, 44.100 Hz Stereo, 1/2/3/4 Takte. Referenz je Länge ist das kürzere der beiden vollständigen Fenster. | 67.072 / 133.120 / 200.192 / 267.776 Samples Überlagerung. Jede WAV enthält 529.200 Frames. Die Tests prüfen den Alias und die GUI-Längensperre separat. | [Fenstergrenzen und WAV-Hashes](masterarbeit/review_jp_20261118/p13/verified.json), lokale WAVs unter `output/review_jp_20261118/p13_laengen/run03/rendered/`. |
+
+## F zu P06 · Gültige Unsicherheitsangaben vom 19.11.2026
+
+Alle 126 Punktwertzeilen und sechs Begleittabellen stimmen mit der Nachrechnung aus den Rohdaten überein. In der alten Matrix sind die Spalten delta_vs_M_boot_lo/hi historische, nicht protokollkonforme Einzelpaarintervalle. Für die Berichterstattung gilt die [Matrix run02](masterarbeit/review_jp_20261118/p06_run02/matrix.csv) mit [Resamplingvertrag](masterarbeit/review_jp_20261118/p06_run02/resampling.json). Bei vier Takten hat R4 einen S−M von 0,045078 mit deskriptivem Komponentenintervall 0,035708 bis 0,058904 (52 Paare, zwölf Komponenten, fester Spenderpool). D2 weist je Bedingung die Spannweite auf fünf Paaren in zwei Komponenten aus. Alle Modellwerte gelten auf der Validation der Checkpointwahl. Die Kapitelübernahme wartet auf den Nutzercommit.
+
+## P06 · Unabhängiger Review (19.11.2026)
+
+Die Rohprüfung bestätigt die Punktwerte aus 14 Vertauschungsmatrizen sowie die Checkpointwahl in sieben Trainingsläufen. Das bisherige R4-Intervall für vier Takte zieht einzelne Paare, obwohl die 52 Paare nur zwölf Recording-Komponenten bilden. Das Intervall bleibt als historische Rechnung gekennzeichnet. Die Komponenten-Nachrechnung und der Korrekturauftrag stehen im [Review R_P06_01](masterarbeit/review_jp_20261118/reviews/R_P06_01.md). Der Punktwert für S−M beträgt in beiden Rechnungen 0,045078.
+
+## P01 · Populationsnachweis nach Review (19.11.2026)
+
+| Stand | Beleg | Gültigkeit |
+|---|---|---|
+| run03 · 25 zulässige Gruppen, 12 Paare | [Archiv](masterarbeit/review_jp_20261118/p01/bestand_20261118_run03/evaluation_population.json) | Abgelöster Vorschlag. Paar-IDs sind laufbezogen. |
+| run04 · 503 exponierte, 22 zulässige, 3 ungeklärte Gruppen, 11 Paare | [Hashliste](masterarbeit/review_jp_20261118/p01/evaluation_population.json) · [Zuordnung und Grenzen](masterarbeit/review_jp_20261118/p01/EXPOSITION.md) | Kontrollierter Materialnachweis vor dem Nutzercommit. Kein Hörresultat. |
+
+
 Update 2026-11-11: P5 is now incorporated in the thesis, including its exclusion,
 all-tie result, lack of absolute criterion scores and actual listening exposure.
 The author's revision scope removes GUI coverage, a current large user study,
@@ -53,3 +82,218 @@ candidate groups; one- and three-bar results and matched length comparisons.
 Remaining legacy sets in P4 still provide no completed ratings; they are not
 made additional thesis-completion requirements here. A possible later broad
 user study is future work only under the author's 2026-11-11 scope decision.
+
+## P02 · Vergleichsmatrix für Kapitel 5 (2026-11-18)
+
+Die Fundstellen beziehen sich auf [`overleaf/chapters/05_results.tex`](../overleaf/chapters/05_results.tex) im Overleaf-Checkout `75a8664` (BeatBridge `b40a60a`). Die Matrix ergänzt die historischen Einträge oben. **K** = kontrollierter Vergleich mit nur einem variierten Faktor im angegebenen Kontrast. **L** = Befund innerhalb eines Laufs, Exports oder Audits. **E** = explorativer Vergleich. Ein gepaarter Hörvergleich mit K bleibt auf die dokumentierten Stimuli und die eine bewertende Person begrenzt.
+
+**Population.** E/G/H/P bezeichnet Beispiele bzw. Cue-Zeilen, Recording-Gruppen, eindeutige Originalaudio-SHAs (Tracks) und eindeutige gerichtete Trackpaare. A→B und B→A zählen als zwei gerichtete Paare. `G+n?` bedeutet G belegte Gruppen und n ungedeckte Audiohashes. Die Gruppen stammen aus `output/corpora/prive_scantraxx_extension_v2_20260923_run01/recording_groups.json` (Datei-SHA-256 `9b9d657c5785013d20b06abd252c8d4af1e06889e977a06f3b666effcb2dc0b4`). Die Zählung verbindet sie mit den SHA-Feldern der Dataset-, Batch- und Hörmetadaten. Bei Hörmanifesten mit bloßen Trackpfaden erfolgt die Auflösung über die historischen Datasetmetadaten. Die Gruppenzählung für ältere Bestände mit ungedeckten Hashes ist partiell. E/G/H/P sind keine Schätzung statistisch unabhängiger Beobachtungen. `—` bedeutet entfällt. Ein unbekannter oder nur aus dem Code rekonstruierbarer Wert wird ausdrücklich markiert.
+
+### Dataset-Exporte und technische Batches
+
+| Zeile · Art | Kap. 5 · belegte Zahlen | Dataset-ID · Split und E/G/H/P | Features · Vocal-Backend | Renderer/Config · Objective · Hz | Seed · Referenz · Checkpointregel | Primärartefakt |
+|---|---|---|---|---|---|---|
+| D1 · L | Z. 14, 18–24, 42. Format 1, 4 Takte, 45/9/9 | `f9044dc259b7296c8b28`. Train 45/7+4?/11/15, Val 9/2/2/2, Test 9/2+1?/3/3. 17 SHA-Zuweisungen vor Paarfilterung (12/2/3) | FP1 · HTDemucs | Datasetexport ohne Renderer/Objective, Featureaudio 44.100 Hz | Split 20260731 · SHA-Split, splitübergreifende Paare verworfen und Normierung aus Train · — | `output/datasets/feature_protocol_v1_top3_4bar_track_split_20260731/{manifest.json,examples.jsonl}` |
+| D2 · L | Z. 14, 18–23, 25, 33, 37, 42. Format 1, 4 Takte, 370/50/60, insgesamt 480. 111 SHA-Zuweisungen (78/16/17), 1.110 ausgewählt, 630 splitübergreifend verworfen. 43/5/7 tatsächlich vertretene Audiohashes | `52bc9d1cebfd1b82d2ea`. Train 370/37+6?/43/37, Val 50/3+2?/5/5, Test 60/3+4?/7/6 | FP1 · HTDemucs | Datasetexport ohne Renderer/Objective, Featureaudio 44.100 Hz | Split 20260805 · SHA-Split und Train-Normierung wie D1 · — | `output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805/{manifest.json,examples.jsonl}` |
+| D3 · L | Z. 14, 18–23, 26, 33, 42. Format 2, je 2/4/6/8 Takte 105/12/21, insgesamt 552 | `2a9679f687c50696692b`. Je Länge Train 105/42/42/35, Val 12/4/4/4, Test 21/7/7/7. Gleicher Track-/Paarbestand über die vier Längen | FP2 · BS-RoFormer | Datasetexport ohne Renderer/Objective, Featureaudio 44.100 Hz | Split 20260731 · gemeinsame SHA-Autorität und Train-Normierung · — | `output/datasets/variable_v2_strict_20260820_selected_roformer_run01/manifest.json` und `metadata/{2,4,6,8}bar/*.jsonl` im selben Verzeichnis |
+| D4 · L | Z. 14, 18–23, 27–28, 33, 37, 42. Format 2, 2/4/6 Takte 663/159/0, 8 Takte 660/159/0, insgesamt 3.285. Exportierte Val insgesamt 636 | `2a124caf5625b4c8f683`. Train je 2/4/6: 663/223/228/221, bei 8: 660/222/227/220. Val je Länge 159/53/54/53. Test je Länge 0/0/0/0 trotz 72 reservierter Test-SHAs in der Autorität | FP2 · BS-RoFormer | Datasetexport ohne Renderer/Objective, Featureaudio 44.100 Hz | Basis-Split 20260731, erweiterte Recording-Gruppen-Autorität 20260923 · gemeinsame SHA-Autorität und Train-Normierung · — | `output/datasets/prive_scantraxx_extension_variable_v2_fp2_roformer_2-4-6-8bar_top1x3_split20260923_run02_local_four_four/manifest.json` und `metadata/{2,4,6,8}bar/*.jsonl` im selben Verzeichnis |
+| T1 · L | Z. 35, 44, 82. 2/4 Takte, 321 Pair-Records completed, 2.746.846 Kandidaten, 122 Paare mit Kandidaten, 122 Varianten, 0 Render- und 0 Metrikfehler | Batch ohne Dataset-ID/Split. G/H/P 312/321/321 gesamt, 135/135/122 mit Render | `feature_baseline_v3`, `bar_grid_v1` · Vocal-Backend im Batchvertrag nicht ausgewiesen | Equal Power, Renderprotokoll 5, Top-1-Ziel und Top-1-Cue, max. Tempoabweichung 15 %, approximative Grids verworfen, Vorschau 5 s vor/12 s nach Source-Cut · Regel-/Render-Metrik, kein Controller-Objective · 44.100 Hz | — · technische Fertigstellung der tatsächlich gewählten Cues · — | `output/batches/prive/_top1000/_baseline/_20260921_fixed/manifest.json`, `sources[].pairs[]`, deren Paarmanifeste |
+| T2 · L | Z. 149. 963 Pair-Records completed, 303.824 Kandidaten, 5 Paare mit Kandidaten, 4 Renderfehler, 1 Render mit 1 Metrikfehler und damit 0 gültig bewertete Vorschauen | Batch ohne Dataset-ID/Split. G/H/P gesamt 312/321/963, mit Kandidaten 8/8/5, gerendert 2/2/1 | `feature_baseline_v3`, `bar_grid_v2_length_specific` · Vocal-Backend im Batchvertrag nicht ausgewiesen | Equal Power, Renderprotokoll 6, 2/4/6/8 Takte, Top-3-Ziele, Top-1-Cue, max. Tempoabweichung 15 %, strikte Grid-/Metre-Regeln, Vorschau 5 s vor/12 s nach Source-Cut · Regel-/Render-Metrik, kein Controller-Objective · 44.100 Hz | — · Paarstatus dokumentiert Verarbeitung, Fehlerfelder dokumentieren Ergebnis · — | `output/batches/prive_top1000_variable_top3_20260922/manifest.json`, verlinkte Paarmanifeste und [Paar-Audit vom 22.09.](Bemerkungen.md) |
+| C1 · L | Z. 44, 84. Synthetische Ranker-Smokes für Gruppentraining, Resume und Teacher-Agreement. All-Lengths-Snapshot mit 1 Val-Gruppe je 2/4/6/8 Takte | Synthetischer Format-3-Snapshot, Manifest-SHA `8354d912ced510b9782105e0c31c7f45fc4348a7598e7faa7f797ceb56d869f9`. Train/Val, keine realen Recordings, Tracks oder Paare | Synthetische FP2-kompatible Eingaben plus Kandidatenkontext · — | Kein Audiorenderer und keine Abtastrate · `grouped_ipw_soft_target_listwise_cross_entropy_v1` gegen eingefrorene synthetische Teacher-Utilities | 20260825 · Teacher-Agreement, technische Smoke-Referenz · geringerer Val-Loss (`min_delta=0`), E1 im All-Lengths-Lauf | `output/training_runs/cue_ranker_synthetic_train_validation_smoke_all_lengths_20260825/{manifest.json,history.json,best.pt}`, [Prüfprotokoll vom 25.08.](Bemerkungen.md) |
+
+D1–D4 liefern Export- und Protokollnachweise. T1 liefert technischen
+Durchsatz. Ein Human-Ranking mit denselben Kandidaten, ein real trainierter
+und evaluierter Cue-Ranker sowie gelernte oder gehörte Ein-/Dreitaktfälle
+fehlen (Z. 46, 82–84). T2 beschreibt die im Paar-Audit vorherrschenden
+Raster-/Metrumablehnungen und unterschiedlich lange A/B-Renderfenster.
+T1 und T2 ändern Kandidatengenerator, Längenmenge und Zahl der Ziele
+gleichzeitig. Eine Gegenüberstellung ihrer Ausbeute wäre explorativ.
+
+### Controller, Checkpoints und Sweep
+
+Die Zeilen R1–R4 übernehmen die Splitpopulation aus D2 bzw. aus dem
+D4-Cacheabgleich. Alle vier nutzen Trainingsseed 20260926 und 11.025 Hz,
+180 Hz FIR-Crossover und Kernel 127. Die Objective-Gewichte der festen
+Läufe stehen in `contract.objective.config` der jeweiligen Manifeste. R4
+nutzt das im Vertrag benannte zeitnormierte Objective und dessen
+[`VariableVocalAwareTransitionObjective`-Implementierung](../src/control/variable_differentiable.py).
+
+| Zeile · Art | Kap. 5 · Zahlen, Referenz und Auswahl | Dataset-ID · Split und E/G/H/P | Features · Vocal-Backend | Renderer/Config · Objective · Hz · Seed | Checkpointregel und Primärartefakt |
+|---|---|---|---|---|---|
+| R1 · L | Z. 42, 51, 55–61, 69. **Equal-Power-äquivalente** E0 im Zwei-Band-Pfad. `0.4210349038243294 → 0.4152083724737167` (E1), **1,3839 %** ab E0. Ende E7 | `52bc9d1cebfd1b82d2ea` · D2 Train 370/37+6?/43/37, Val 50/3+2?/5/5 | FP1 · HTDemucs-Merkmale, Mixrenderer ohne Stems | `DifferentiableTwoBandRenderer`, Control v3, zwei lineare Startpositionen, 180/127 · Objective v4, 32 Frames · 11.025 Hz · 20260926 | Geringerer Val-Loss um mehr als `min_delta=0.0001`, Patience 6, Best E1. Run `a58a9c78fd7a0d82e326` in `output/training_runs/prive_scantraxx_all_models_dataset_v1_time_shared_mlp_v1_20260926_run01/` |
+| R2 · L | Z. 42, 51, 55–60, 62, 69. **Vocal-Initialisierung E0**, nahe Equal Power mit geringem Ducking. `0.35072263032197953 → 0.324909533560276` (E34), **7,3600 %** ab E0. Numerisches Minimum E38 `0.3248401999473572` (**7,3797 %** ab E0). Ende E40 | `52bc9d1cebfd1b82d2ea` · D2 Train 370/37+6?/43/37, Val 50/3+2?/5/5 | FP1 · HTDemucs für Merkmale und Stems | `DifferentiableVocalAwareRenderer`, Control v4, getrennte Accompaniment-/Vocal-Gains und Ducking, 180/127 · Objective v5, 32 Frames · 11.025 Hz · 20260926 | Wie R1, Best E34. E38 liegt um `0.0000693336129188` unter Best und erreicht `min_delta` nicht. Run `a4dd5017c7adcc734f19` in `output/training_runs/prive_scantraxx_all_models_dataset_v1_vocal_time_shared_mlp_v2_20260926_run01/` |
+| R3 · L | Z. 42, 51, 55–60, 63, 69. **Untrainierter Full-Band-TCN E0**, lineare Hauptgains, EQ und Ducking bei 0,5. `1.9383115649223328 → 0.3207784429192543` (E18), **83,4506 %** ab E0. E1 bereits `0.3593511417508125` (E0→E1 **81,4606 %**, E1→E18 **10,7340 %**). Ende E24 | `52bc9d1cebfd1b82d2ea` · D2 Train 370/37+6?/43/37, Val 50/3+2?/5/5 | FP1 · HTDemucs-Merkmale, Full-Band-Mixrenderer ohne Stems | `differentiable_full_band_transition_v1`, Control v3/10 Ausgänge, 180 Hz/3.500 Hz, Kernel 127 · Objective v4, 32 Frames · 11.025 Hz · 20260926 | Wie R1, Best E18. History-Tag `equal_power_initialization` bezeichnet hier die tatsächlich gedämpfte Legacy-Ausgabe. Run `a8472463aa58d06d4616` in `output/training_runs/prive_scantraxx_all_models_dataset_v1_tcn_bilstm_transition_control_v1_20260926_run01/` |
+| R4 · L | Z. 42, 51, 55–60, 64, 69, 151. **Erste bereits trainierte E1**, `0.2520596868489738 → 0.2271690967781491` (E34), **9,8749 %** ab E1. Ende E40 nach Patience, Manifeststatus `completed`. 2.649 Train- und 622 Val-Beispiele, 0 Testreads, 14 von 636 Val-Beispielen abgewiesen | `2a124caf5625b4c8f683` · Train 2649/223/228/221, akzeptierte Val 622/52/53/52. Bei 2/4/6/8 Takten 156/156/156/154 angenommene Val-Cues, je Länge 52 Gruppen/53 Hashes/52 gerichtete Paare | FP2 · BS-RoFormer für Merkmale und Stems | `DifferentiableVocalAwareRenderer`, 180/127, Längenkonditionierung und gleich gewichtete Längen · `objective_v5_time_normalized_variable_tcn_bilstm_v1` · 11.025 Hz · 20260926 | Strikt niedrigerer Val-Loss (`min_delta=0`), Patience 6. Best E34 laut Checkpoint und History. Kein historischer E0-Messwert. Run `627905c3371fdd8c8ea4` in `output/training_runs/prive_scantraxx_all_models_dataset_v2_variable_tcn_bilstm_20260926_run01/`, zusätzlich `io_audit.json` und Cachebindung unten |
+| R5 · E | Z. 9, 42, 51, 69, 75. Vier historisch dokumentierte Controllerpfade, je ein Lauf und eigener Startpunkt. Die Zahlen in der Trainings-Tabelle stehen jeweils in R1–R4 | D2 und D4; siehe R1–R4 für die getrennten Populationen | FP1/HTDemucs bzw. FP2/BS-RoFormer | siehe R1–R4; voneinander abweichende Render- und Objectiveverträge · 11.025 Hz · je 20260926 | R1–R4. Die Roh-Losswerte und die unterschiedlichen relativen Startgewinne beantworten keine Rangfrage zwischen Architekturen |
+| S1a · E | Z. 71, 151. 92 Exportzeilen: 35 finished mit E150, 56 killed vor E150, 1 running ohne Metriken. Bestwerte der completed Runs: `0.26158726811408994` (E77, `vlfwfn7a`), `0.26162353217601775` (E81, `fxhhidgi`) | `52bc9d1cebfd1b82d2ea` · D2 Train/Val wie R3 für 91 Zeilen mit Metriken, 1 ohne auswertbaren Vertrag im Snapshot | FP1 · HTDemucs-Merkmale | R3-Full-Band-Vertrag, 180/3.500 Hz, Kernel 127 · Objective v4 · 11.025 Hz · 20260930 für die Zeilen mit Metriken | Numerisches Val-Minimum je History (`min_delta=0`), `files.best_checkpoint` leer. Adaptive Suche, mehrere Hyperparameter und ungleiche Budgets. `wandb_export_2026-10-02T09_20_57.391+02_00.csv`, lokale `output/training_runs/wandb_sweeps/tcn_bilstm_transition_control_v1/nqntmdi0/<run>/{manifest,history}.json` |
+| S1b · E | Z. 75. `vlfwfn7a` E77 vs. typischer Einzelrun `1w51w9t6` E71. Loss `0.3154096254706383 → 0.26158726811408994` (**17,0643 %** relativ zum typischen Run). Gewichtet: Energy `0.12141650326550008 → 0.06733980171382427` (**44,5382 %**), Vocal boundary ca. `0.103642 → 0.102229`, Transient ca. `0.074838 → 0.074582`. Die Energie-Differenz entspricht **100,47 %** der Netto-Lossdifferenz, weil u. a. Glattheits- und Krümmungsstrafen ansteigen | D2 Train/Val wie S1a | wie S1a | wie S1a | Rückblickend gewählter typischer Einzelrun, jeweiliges Val-Minimum. Lokale Histories und Objective-Gewichte wie S1a, [Sweep-Analyse](WANDB_SWEEP_ANALYSE_20261002.md#wo-entsteht-der-loss-gewinn) |
+
+Die vier Runpfade führen jeweils zu `manifest.json`, `history.json` und
+`checkpoints/{best,latest}.pt`, deren Bindung im historischen Ledger
+geprüft ist. R4s `io_audit.json` und der gebundene
+`output/ml_cache/variable_bridge_waveform_v2/prive_scantraxx_extension_run02_wandb_full_20260926/{index.json,materialization_report.json}`
+weisen dieselben 14 Validation-Ausschlüsse aus (12 Grid-Provenienzmismatches,
+2 Überschreitungen der Backend-Rundungstoleranz). Das R4-Manifest meldet
+`completed`; Runner und Laufprotokoll belegen das Patience-Ende E40 nach
+Resume mit Obergrenze 100. Diese Präzisierung gilt auch für die ältere
+Bezeichnung „Reguläres Ende“ im Umsetzungsregister.
+
+Alle Prozentwerte für R1–R4 verwenden die ungerundeten Historywerte und
+`100 × (Referenz − Vergleich) / Referenz`. Keiner der R2–R4-Werte
+quantifiziert eine Verbesserung gegenüber einem separat gerenderten und
+unter demselben Vertrag bewerteten Equal Power. S1a-Spitze gegenüber dem
+Median der 35 abgeschlossenen Runs: **17,30 %** mit dem Median als Nenner.
+Der Zweitplatzierte liegt **0,01386 %** über dem besten Run, bezogen auf
+dessen Loss. Für Z. 75 sind die gewichteten Best-Epoch-Komponenten
+maßgeblich. CSV-Spalten mit Komponenten der letzten Epoche sind dafür
+ungeeignet.
+
+### Hörstudien und Entwicklungsexporte
+
+Für die vier direkten Hörstudien steht die Präferenzreihenfolge in der
+jeweiligen Zeile. H0 bezeichnet ihre gemeinsame Fundstelle, P1–P5 behalten
+die historischen Ledger-IDs. `H-v2` ergänzt den zuvor fehlenden Control-v2-Satz.
+Die vier direkten Studien wurden mit jeweils einem Rater ausgewertet.
+Ein Vergleich ihrer Effekte über Studien hinweg ist **explorativ**
+(H0, Z. 77, 89–109, 151). Datenwahl, Control-/Objective-Vertrag und stellenweise
+Stretch-Backend ändern sich. Für die Paarzählung gelten die gerichteten
+Trackidentitäten, für die Wertung die einzelnen Cue-Zeilen.
+
+| Zeile · Art | Kap. 5 · Zahlen und Befund | Dataset-ID · Split und E/G/H/P | Features · Vocal-Backend | Renderer/Config · Objective · Hz | Seed · Referenz · Checkpointregel | Primärartefakt |
+|---|---|---|---|---|---|---|
+| H0 · E | Z. 77, 91, 151. Vier abgeschlossene Direkt-Control-Hörstudien, je ein Rater und keine inferenzstatistische Auswertung. Umfang, Präferenzen und Mittelwerte stehen bei H-v2 und P1–P3 | Vier separat berichtete Populationen, siehe H-v2 und P1–P3 | siehe H-v2 und P1–P3 | siehe H-v2 und P1–P3 | Separate Blindseeds und Referenzen je Hörsatz, keine Checkpoints | Studienmanifeste, Ratings und Analyse-JSONs in H-v2 und P1–P3 |
+| H-v2 · K | Z. 91, 101, 151. 8 Cues, 4 Takte, 3 optimiert/4 Baseline/1 Gleichstand, 1 Rater. Die Controls ändern sich bei identischem A/B-Cue und gemeinsamem Exportpfad. Historisch abgelöst | Vorsplit-Auswahl ohne Dataset-ID, 8/4+4?/8/8 | Keine FP1-/FP2-Inputs, ohne Vocal-Separation | Zwei-Band, Control v2, 32 Kontrollpunkte, FIR 180 Hz, Kernel 127/511, gemeinsames Kontextfenster mit 5 s Vor- und 8 s Nachlauf und gemeinsamer Peak-Gain. Objective v1 laut Protokoll in `dc58ee5` mit Energie, Randpegel, Smoothness, Monotonie und Clipping, ohne eigene Versionsnummer im Studienmanifest · 11.025 Optimierung, 44.100 WAV | Blindseed 20260729 · Equal Power · direkte Optimierung pro Cue, Abschluss von 60 Schritten bei LR 0,08, kein Checkpoint | `output/control_studies/blind_v3_top8_4bar_20260729/{manifest,ratings,study_results}.json`, Quellbatch `output/batches/all_songs_top3_targets_top3_transitions_20260722/manifest.json` |
+| P1 · K | Z. 91, 102, 109, 151. 8 Vier-Takt-Cues, 0/0/8 Gleichstände, 1 Rater. Die Controls variieren innerhalb des erneut gerenderten Satzes, dessen Paare schon im vorherigen Hörgate verwendet wurden | Vorsplit-Paare wie H-v2, 8/4+4?/8/8 | Keine FP1-/FP2-Inputs, ohne Vocal-Separation | Zwei-Band, Control/Objective v3 (normierte Smoothness und Curvature), Renderprotokoll 5, 32 Punkte, 180 Hz/127 und 180 Hz/511, Rubber Band wo nötig, gemeinsamer Peak-Gain und 5 s/8 s Kontext · 11.025/44.100 Hz | Blindseed 20260730 · Equal Power · 60 direkte Schritte je Cue bei LR 0,08, kein Checkpoint | `output/control_studies/blind_v4_control_v3_rubberband_top8_4bar_20260730/{manifest,ratings,study_results}.json`, Code `298c31e` |
+| P2 · K | Z. 77, 91, 103, 109, 151. 9 Viertakt-Cues, 9/0/0, 1 Rater, 3 Testhashes. Cleanliness `36/9=4.0 → 45/9=5.0`, Vocal Clarity je `43/9=4.777777…`. Die weiteren Einzelmittel ändern sich nicht | `f9044dc259b7296c8b28` · D1-Test 9/2+1?/3/3. Historisch für das Entwicklungsgate exponiert | FP1 · HTDemucs-Merkmale, Mixrenderer | Zwei-Band, Control v3, Renderprotokoll 5, 32 Punkte, 180 Hz und Kernel 127/511, 5 s Vor- und 8 s Nachlauf, gleicher Peak-Gain, Rubber Band wo nötig · Objective v4 · 11.025/44.100 Hz | Blindseed 20260731 · Equal Power bei gleicher Rendergeometrie · 80 direkte Schritte pro Cue bei LR 0,06, kein Checkpoint | `output/control_studies/blind_v5_objective_v4_heldout_test9_4bar_20260731_rerun/{manifest,ratings,study_results}.json`, `src/evaluation/{heldout_control_study,control_probe}.py` |
+| P3 · E | Z. 91, 104, 109, 151. 6 Vier-Takt-Cues, 2 v5/1 v4/3 Gleichstände, 1 Rater. Vocal Clarity `26/6=4.333333… → 30/6=5.0`, übrige Einzelmittel gleich. Beide Varianten teilen den Renderer, Objective und verfügbare Vocal-Controls ändern sich | `f9044dc259b7296c8b28` · aus D1 Train/Val nach beidseitiger Vocal-Aktivität ausgewählt, 6/6+3?/9/6 | FP1 · HTDemucs-Merkmale und Stems | Optimierung mit Zwei-Band für v4 und Stem-Renderer für v5, 32 Punkte, 180 Hz/127. Gemeinsamer Stem-Renderer im Export, 180 Hz/511, gemeinsamer Peak-Gain, 5 s Vor- und 8 s Nachlauf, Rubber Band wo nötig. v4 verwendet Mixposition für Vocal-Übergabe ohne Ducking, v5 separate Vocal-Controls bis 0,75 Ducking · 11.025/44.100 Hz | Blindseed 20260729 laut Manifest · direkt optimierte v4-Kurve als Referenz · je 80 Schritte bei LR 0,06, kein Checkpoint | `output/control_studies/blind_v7_objective_v5_vocal_active6_20260805_rerun/{manifest,ratings,study_results}.json`, `src/evaluation/vocal_objective_study.py` |
+| P5 · E | Z. 111–139, 151. Export 05.11.2026, Bewertung 06.11.2026, `2026-11-06T10:00:13.657Z`. 1 Rater, 20 Vier-Takt-Cues mit 5 Kandidaten. Beispiel 11 ohne Ranking ausgeschlossen, 19 × 5 explizite Einsen = 95 Ränge. Je R1/R2/R3/R4 gegen Equal Power **0/19/0**. Geteilte Plätze 1–5 ergeben Midrank 3. Alle 10 Methodenpaare und 190 abgeleitete Gleichstände stammen aus denselben 19 Rangzeilen. 100/100 WAV-SHAs im historischen Audit bestätigt. Note in Beispiel 8 bleibt, Tempohinweis in 11 begründet Ausschluss | `52bc9d1cebfd1b82d2ea` (D2-Val, Auswahl), `2a124caf5625b4c8f683` (D4, R4-Trainvertrag). Gesamt 20/3+2?/5/5, gerankt 19/3+2?/5/5. Gerankte Cues je Paar 4/5/3/4/3. D4-Exposition siehe P5a | R1–R3 gespeicherte FP1-Inputs aus D2 (HTDemucs-Features), R4 neu berechnete FP2 (BS-RoFormer, D4-Normierung). BS-RoFormer-Renderstems für R2/R4 | Gemeinsame ausgerichtete Cues, 5 s Vor- und 8 s Nachlauf, gemeinsamer Peak-Gain bis 0,98. Equal Power/R1 Zwei-Band, R2/R4 stem-aware, R3 Full-Band. 180 Hz, bei R3 zusätzlich 3.500 Hz, Kernel 511, direkt 44.100 Hz. Trainingsobjectives R1–R4 wie oben. Präferenz basiert auf Rängen | Blindseed 20261105, Training 20260926 · Equal Power auf denselben Stimuli · September-Best-Checkpoints R1 E1, R2 E34, R3 E18, R4 E34 | `output/four_models_shared_20pairs_validation_20261105_renderfix/{manifest,ratings,answer_key}.json`, [Analyse-JSON](LISTENING_STUDY_ANALYSE_20261106.json), [Generator](../src/evaluation/four_model_listening_study.py) |
+| P5a · L | Z. 135. Unter D4-Autorität 8/20 mit zwei Test-Hashes, 7/20 mit einem Hash aus den Trainmetadaten und 5/20 nur mit Hashes außerhalb der Autorität. Bei den 19 gerankten Cues 7/7/5. 0 gemeinsam als Validation geführte Paare aller vier Controller | P5-Population, Abgleich mit D4 `track_assignments` und den Train-Shards | wie P5 | wie P5 | wie P5 · gleiche Cues als Bezug · wie P5 | P5 `track_pair_groups` aus der Analyse und D4 `manifest.json` plus `metadata/*/train.jsonl`. Splitmetadaten allein bestimmen keine Wirkung einzelner Beispiele auf die Gewichte |
+| P4a · E | Z. 137. Alt-Export 30.09.2026, 3 Browser-Ranglisten nie exportiert (Beispiele 1–3). Variable Bridge mit 11.025-Hz-Render und Resampling auf 44.100 Hz, dadurch bandbegrenzt. Ausgemustert. 05.11.-Re-Export siehe P5 | D2-Val-Cues, dieselben 20/3+2?/5/5 wie P5 | wie P5 | Wie P5, aber Variable-Bridge 11.025 Hz/Kernel 127 vor Resampling, übrige Varianten direkt 44.100 Hz/Kernel 511. Objectives wie R1–R4 | Blindseed 20260927 aus dokumentiertem Aufruf ohne Seed-Override und Exporter-Default, im öffentlichen Manifest fehlt das Feld · Equal Power vorgesehen · September-Best-Checkpoints wie P5. Ausgeschlossen aus der Präferenzauswertung | `output/four_models_shared_20pairs_validation_20260930/{manifest.json,ratings.json,DEPRECATED.md}`, [Export-/Renderfix-Protokoll vom 05.11.](Bemerkungen.md) |
+| P4b · L | Z. 143. Initialer MLP-v1-Satz, 9 Vier-Takt-Cues, Status `unrated` | `f9044dc259b7296c8b28` · D1-Val 9/2/2/2 | FP1 · HTDemucs-Merkmale | Zwei-Band, Control v3, 180 Hz/Kernel 511, 5 s/8 s Kontext, gemeinsamer Peak-Gain · Objective v4, Proxy 11.025 Hz, WAV 44.100 Hz | Blindseed 20260804, Training 20260804 · Equal Power · deklarierter Val-Best E8 (`min_delta=0.0001`), Augustlauf `8c30eda8a89eb8ddce52` | `output/control_studies/blind_v6_mlp_v1_best_vs_equal_power_validation9_20260804_rerun/{manifest,ratings}.json` |
+| P4c · L | Z. 143. Vocal-MLP-Satz, 5 Vier-Takt-Cues, Status `unrated` | `52bc9d1cebfd1b82d2ea` · D2-Val 5/3+2?/5/5, vocalaktiv und geringe Tempoabweichung | FP1 · HTDemucs (August-Run- und Cachevertrag) | Stem-aware, Control v4, 180 Hz/Kernel 511, 5 s/8 s Kontext, gemeinsamer Peak-Gain · Objective v5, Proxy 11.025 Hz, WAV 44.100 Hz | Blindseed 20260806, Training 20260805 · ungelernte Vocal-E0 · deklarierter Val-Best E22 (`min_delta=0.0001`), Augustlauf `8b338e83999d252509ba` | `output/control_studies/blind_v8_vocal_mlp_v2_best_vs_initial_validation5_20260806/{manifest,ratings}.json` |
+| P4d · L | Z. 143. Variable-TCN-Satz, je 1 Cue für 2/4/6/8 Takte, Status `unrated` | `2a9679f687c50696692b` · D3-Val, 4/2/2/2 | FP2 · BS-RoFormer | Gemeinsamer stem-aware Renderpfad, 180 Hz/Kernel 127, nur ausgerichtetes Bridgefenster und gemeinsamer Peak-Gain · zeitnormiertes v5 als Trainingsobjective · WAV 11.025 Hz | Blindseed 20260904 laut Exporter-Default, im öffentlichen Manifest fehlt das Feld, Training 20260820 · lineare Übergabepositionen/kein Ducking · Val-Best E23 (`min_delta=0`), Augustlauf `60f8ddb581e7c07a01cd` | `output/control_studies/blind_variable_tcn_lengths_20260904/{manifest,ratings}.json`, `output/training_runs/variable_tcn_bilstm_v2_wandb_20260826/manifest.json`, `src/evaluation/nontrivial_model_examples.py` |
+| P4e · L | Z. 143. Fester Mehrmodell-Satz, 5 Vier-Takt-Cues, Status `unrated` | `52bc9d1cebfd1b82d2ea` · D2-Val 5/3+2?/5/5 | FP1 · HTDemucs-Features, BS-RoFormer-Renderstems | Zwei-Band, Full-Band und stem-aware, 180 Hz, Full-Band zusätzlich 3.500 Hz, Kernel 511 und gemeinsamer Peak-Gain · Trainingsobjectives v4/v5 · WAV 44.100 Hz | Blindseed 20260904 laut Exporter-Default, im öffentlichen Manifest fehlt das Feld · Equal Power · Val-Best (je `min_delta=0.0001`): MLP E2 `8e27d59b2ec4dec8a1cd`/Seed 20260820, Vocal-MLP E25 `4de25d83359f19c5095f`/Seed 20260820, TCN E14 `91d0eaeb4f7d41fef6c6`/Seed 20260812 | `output/control_studies/blind_all_models_validation_20260904/{manifest,ratings}.json`, Kopf `methods[].provenance` von `answer_key.json` im selben Ordner, `src/evaluation/all_models_control_study.py` und [Exportprotokoll vom 04.09.](Bemerkungen.md) |
+
+`unrated` und fehlende `study_results.json` begrenzen P4b–P4e auf Exportnachweise.
+P5 hat explizite Ränge, Hörnotizen und einen bestätigten Ausschluss. Für
+absolute Kriterienscores und eine Äquivalenzaussage fehlen Erhebung bzw.
+passendes Studiendesign. Der R2-Hörpfad in P5 wechselt die Stem-Quelle
+gegenüber R2-Training. Die gemeinsamen Cues und einheitliche Abtastrate
+reichen daher zusammen mit den unterschiedlichen Renderer-, Feature- und
+Objective-Verträgen nur für einen explorativen Präferenzbefund.
+
+### Reviewmessungen vom 13. November auf Juli-/August-Artefakten
+
+Diese Zeilen liegen außerhalb des Zahlenbestands von Kapitel 5.
+`review_jp/TESTLAEUFE.md` und die zugehörigen Skripte legen Daten, Cache und
+Läufe fest. `b2_gap_validation.equal_power` bezeichnet in diesem Skript den
+Output der frisch initialisierten Modellfamilie. Der Name des Feldes
+allein bestimmt keine Equal-Power-Audioäquivalenz.
+
+| Zeile · Art | Rohwerte und daraus gerechnete Relationen | Dataset-ID · Split und E/G/H/P | Features · Vocal-Backend | Renderer/Config · Objective · Hz | Seed · Referenz · Checkpointregel | Primärartefakt |
+|---|---|---|---|---|---|---|
+| J1 · K | E0 `0.3059589597913954`, Modell `0.29599883821275497`, feste Train-Kurve `0.30484779013527763`, direkt `0.28318051828278434`. Modell **3,2554 %** unter E0; **43,7261 %** des direkten Gewinns ab E0 | `f9044dc259b7296c8b28` · D1 Train 45/7+4?/11/15, Val 9/2/2/2 | FP1 · HTDemucs-Merkmale | Zwei-Band wie R1 · v4 · 11.025 Hz | Diagnose 20261113, Modell 20260804 · Equal-Power-äquivalente E0 · Val-Best E8 des Augustlaufs | `review_jp/results/b1_b2_mlp_v1_top3.json`, `output/training_runs/time_shared_mlp_v1_objective_v4_seed20260804_20260804/` |
+| J2 · K | E0 `0.2678147123919593`, Modell `0.25933680435021716`, fest `0.2500990678866704`, direkt `0.23385296430852678`. Modell **3,1656 %** unter E0; **24,9631 %** des direkten Gewinns. Vertauscht bleiben **72,8183 %** seines E0-Gewinns | `f9044dc259b7296c8b28` · D1 Train 45/7+4?/11/15, Val 9/2/2/2 | FP1 · HTDemucs | Stem-aware wie R2 · v5 · 11.025 Hz | Diagnose 20261113, Modell 20260805 · Vocal-E0 mit geringem Ducking · Val-Best E16 des Augustlaufs | `review_jp/results/b1_b2_vocal_v2_top3.json`, `output/training_runs/vocal_time_shared_mlp_v2_objective_v5_seed20260805_20260805/` |
+| J3 · K | E0 `0.3590401910245419`, Modell `0.3369992311298847`, fest `0.378597728908062`, direkt `0.28864736542105673`. Modell **6,1389 %** unter E0; **31,3114 %** des direkten Gewinns. Feste Kurve schlechter als E0, Anteil **−27,7834 %** | `52bc9d1cebfd1b82d2ea` · D2 Train 370/37+6?/43/37 für Modell, Train-Audio-Stichprobe für feste Kurve rekonstruiert 60/34+6?/40/32 aus Dataset-Reihenfolge und Diagnose-Seed; Val 50/3+2?/5/5 | FP1 · HTDemucs | Stem-aware wie R2 · v5 · 11.025 Hz | Diagnose 20261113, Modell 20260805 · Vocal-E0 mit geringem Ducking · Val-Best E22 des Augustlaufs | `review_jp/results/b1_b2_vocal_v2_top10.json`, `output/training_runs/vocal_time_shared_mlp_v2_extended_bpm145_165_top10_seed20260805_20260805/` |
+| J4 · K | **Frischer Full-Band-Start** `1.9628742800818548`, fest `0.24285628563827938`, direkt `0.24112767477830252`. **99,8996 %** ist der Anteil der festen Kurve am direkten Gewinn ab diesem Start. Direkte Optimierung senkt den Startloss um **87,7156 %** | `f9044dc259b7296c8b28` · D1 Train 45/7+4?/11/15, Val 9/2/2/2 | FP1 · HTDemucs-Merkmale | Full-Band/10 Controls, 180/3.500 Hz, Kernel 127 · v4 · 11.025 Hz | Diagnose/Initialisierung 20261113 · gedämpfter Legacy-Start mit linearen Gains, EQ/Ducking 0,5 · kein trainierter Checkpoint | `review_jp/results/b1_b2_tcn_fresh_init.json`, `review_jp/scripts/b1_b2_model_response_and_loss.py` |
+| J5 · E | Setzt man in J4 den **Zwei-Band-Equal-Power-Loss** aus J1 `0.3059589597913954` als Referenz ein, ergibt die Rechnung **97,3337 %**. Gegen das Cutter-Audio liegt der frische Full-Band-TCN im separaten B5-Audiovergleich im Mittel **−9,8577 dB**. Beide Kontraste wechseln den Renderer. | `f9044dc259b7296c8b28` · D1-Val 9/2/2/2 | FP1 · HTDemucs-Merkmale, keine Renderstems | J1/J4 für die Rechnung. B5: Cutter `EqualPowerFadeCut` (16 Beats) und Full-Band 180/3.500 Hz, Kernel 127; 11.025 Hz; Pegelvergleich ohne Objective | J1/J4 bzw. Seed 0 in B5 · Cutter-Audio als B5-Referenz · allein frischer TCN | J1/J4-Artefakte und `review_jp/results/b5_renderer_equivalence.json` |
+| J5a · K | B5-Äquivalenztest auf gleicher Bridge: Zwei-Band-Rampe gegen Cutter mit max. absolutem Fehler `2.384185791015625e-07`. Hier variiert die Implementierung von Equal Power. | `f9044dc259b7296c8b28` · D1-Val 9/2/2/2 | Keine Modellfeatures oder Vocal-Stems für diesen Kontrast | Cutter `EqualPowerFadeCut` (16 Beats) gegen Zwei-Band-Rampe, 180 Hz/127 · kein Objective · 11.025 Hz | — · Cutter-Audio · — | `review_jp/results/b5_renderer_equivalence.json`, `review_jp/scripts/b5_renderer_equivalence.py` |
+| J6 · K | Technische Audio-Differenzen der drei Augustmodelle gegen ihre jeweilige E0: Median Differenzsignal etwa −17 bis −19 dB, Median des jeweils größten Frame-Pegelunterschieds etwa 0,7–1,4 dB. Der Kontrast betrifft die Kurven im jeweiligen Pfad | D1-Val für J1/J2, D2-Val für J3, Populationen dort | wie J1–J3 | wie J1–J3, Audio-Differenzwerte aus den Bridgefenstern · 11.025 Hz | jeweilige Modellseeds und Best-Regeln aus J1–J3 · jeweilige E0 · keine Hörschwelle aus der Messung ableitbar | `review_jp/results/b2b_audio_difference.json`, `review_jp/scripts/b2b_audio_difference.py` |
+
+J1–J4 variieren die Controls innerhalb eines festen Render-/Objectivepfads.
+Die gemeinsame Kurve wurde nur auf Train optimiert (Adam, 300 Schritte,
+Batch bis 8, LR 0,05). Die direkte Kurve verwendet 100 Schritte pro
+Validation-Beispiel (LR 0,05). Ihr Loss ist ein endlicher Referenzwert.
+Der Anteil am direkten Gewinn ist
+`(L_ref − L_Methode) / (L_ref − L_direkt)`. J1–J4 setzen für
+`L_ref` die jeweilige E0-Ausgabe ein. J5 hält die arithmetisch
+errechnete, rendererübergreifende Zahl sichtbar getrennt. Keine dieser
+Zeilen liefert eine Kurven-, Komponenten- oder Audiodiagnose der
+September-Best-Checkpoints. Für den Reviewadapter des variablen TCN
+liegt nur ein synthetischer Selbsttest vor. [Review-Testprotokoll](../review_jp/TESTLAEUFE.md)
+
+### Kapitel-5-Abdeckung
+
+| Abschnitt und Fundstelle | Abgedeckt durch |
+|---|---|
+| 5.1 Evidence Inventory, Z. 7–9 | R5 und R1–R4 (vier getrennte Trainingspfade und ihre Verträge) |
+| 5.2 Data and Candidate Sets, Z. 14–37 | D1–D4 für Exporttabelle, Längen, SHA-Splits, 480/111/1.110/630/552/3.285 und 43/5/7. T1 für alle Batchzahlen |
+| 5.3 Verified Technical Constraints, Z. 42–46 | D1–D4, R1–R5, R4 speziell für I/O, 14 Ausschlüsse und 636→622. T1 für Render-/Metrikfehler und 122 Varianten. C1 für synthetische Prüfungen. Z. 46 benennt die fehlenden Ein-/Dreitaktfälle |
+| 5.4 Controller Training Within Each Protocol, Z. 51–71 | R1–R5 für Start-, Best-, Endpunkte und Auswahlregel. S1a für alle Sweep-Zahlen |
+| 5.5 Evidence from the Proxy Objective, Z. 75–77 | S1b für den ausgewählten Komponentenvergleich. R2/R4 für verschiedene v5-Terme. P2 für das historische Direkt-Control-Hörgate |
+| 5.6 Cue-Point Ranking Evidence, Z. 82–84 | T1 für 321 und 122, C1 für den Status der synthetischen Läufe. Kein realer Referenzvergleich belegt |
+| 5.7 Listening Results, Z. 91–109 | H0, H-v2, P1–P3 für vier Studien, Umfang, Präferenzen und Mittelwerte |
+| 5.7 Listening Results, Z. 113–143 | P5 und P5a für alle Zahlen des korrigierten Satzes, P4a für Alt-Satz, P4b–P4e für Entwicklungsexporte |
+| 5.8 Failures and Negative Results, Z. 149–151 | T2, R4 und S1a für die wiederholten Fehlermengen. H0, H-v2, P1–P3 und P5 für Hörurteile und gemeinsame Artefakte |
+
+Die Prüfung umfasst ausgeschriebene Zahlen im Fließtext, Tabellenwerte,
+Zahlen in Tabellenüberschriften, wiederholte Angaben und datierte Studienmetadaten.
+Abschnitts- und Zeilennummern, Protokollnamen, Pfadbestandteile und
+`SHA-256` identifizieren Quellen oder Konfigurationen. Die Matrix führt
+sie zusammen mit den zugehörigen Aussagen. Echte Lücken bleiben die
+partielle Recording-Zuordnung der älteren Bestände, fehlende oder nur
+indirekt belegte Runparameter der älteren Exporte, kein realer
+Ranker-Gegenvergleich, keine gelernte Ein-/Dreitakt-Auswertung, fehlende
+Sweep-Checkpoints und die ungepaarten Controller-Referenzen unten.
+
+### An P06 übergebene Vergleichsbedingungen
+
+| Septemberpfad | Historischer Ausgangspunkt | Für P06 noch zu messen |
+|---|---|---|
+| R1 · D2 / Zwei-Band / v4 | E0 ist im Zwei-Band-Vertrag Equal-Power-äquivalent. D2-Best E1 und 50 Validation-Cues sind vorhanden | Explizites Equal Power im gemeinsamen Evaluator gegen Legacy-E0 bestätigen. Train-Kurve, neue paaridentische Best-Checkpoint-Auswertung und direkte Optimierung pro Cue ergänzen. Drei vorab dokumentierte Wiederholungsseeds für MLP v1 |
+| R2 · D2 / Stems / v5 | Vocal-E0 mit geringem Ducking, Best E34. E38 liegt numerisch tiefer. P5 verwendet andere Renderstems | Echtes Equal Power mit gleichen Stem-/Accompaniment-Gains und neutralem Ducking gegen die Legacy-E0 prüfen. Dazu Train-Kurve, deklarierter Best E34, direkte Optimierung pro Cue und drei vorab dokumentierte Seeds für Vocal-MLP v2. HTDemucs an die Trainingsprovenienz binden |
+| R3 · D2 / Full-Band / v4 | E0 gedämpft, Best E18. J4/J5 messen einen anderen Dataset-/Checkpointzustand | Neutralen Full-Band-Equal-Power-Render auf denselben D2-Beispielen nachweisen. Gemeinsam mit Train-Kurve, Best E18 und direkter Optimierung auswerten. Mindestens ein Training mit echtem Equal-Power-Start bei gleicher D2-Population, Architektur, Objective, Optimierer und Budget. Legacy-Start und neue Initialisierung separat ausweisen |
+| R4 · D4 / Stems / zeitnormiertes v5 | Historisch erst E1, Best E34, akzeptierte 622 Val-Cues im gebundenen Cache | R4 zunächst mit Best E34 diagnostizieren. Je Länge dieselben zugelassenen Cues für Equal Power, Train-Kurve, Modell und direkte Optimierung nutzen, mit vergleichbarer Zeitparametrisierung und expliziter Längengewichtung. Neutralen Equal-Power-Render und gegebenenfalls rekonstruierte untrainierte Ausgabe eigens erfassen. E1 bleibt ein trainierter History-Bezug |
+
+P04/P05 liefern gemeinsame Renderer-/Auswertung und geprüfte Initialisierung.
+P06 braucht je Pfad den festgehaltenen Beispiel-/Recording-/Paarbestand,
+normalisierte und rohaudiobezogene Renderbedingungen (Abtastrate, Filter,
+Cues, Kontext, LUFS-/Peak-Regel) sowie dieselbe Objectiveversion für alle
+Bedingungen. Zu messen sind der gepaarte komponentenweise Loss, vertauschte
+Eingaben bei unverändertem Renderaudio, Kurven- und Audioabweichungen.
+Die feste Kurve wird nur auf Train angepasst. Für die direkte
+Cue-Optimierung sind Start, Schritte, Abbruch und Auswahlregel festzuhalten.
+Zwischen den Pfaden sind relative Gewinne gegen ihr jeweiliges Equal Power
+und Anteile am direkt erreichten Gewinn vergleichbar zu berichten.
+Nenner, nichtpositiver direkter Gewinn bzw. undefinierte Anteile und
+Streuung über Seeds und Paargruppen gehören in die Ergebnistabelle.
+P5 bleibt ein historischer Hörbefund. [P06-Plan](REVIEW_JP_UMSETZUNG.md)
+
+## P06 · Gepaarte Controllerdiagnose am 18.11.2026
+
+Der [Kapitelentwurf zu F3](masterarbeit/REVIEW_JP_P06_CONTROLLER_20261118.md) ordnet die Messungen der September-Best-Checkpoints und aller sieben abgeschlossenen Wiederholungen ein. Die [126 Ergebniszeilen](masterarbeit/review_jp_20261118/p06_run02/matrix.csv) nennen Profil, Länge, Modellstart, tatsächlichen Seed, Bedingung, Cue-/Paarzahl, rohen Loss, E, E−D, absolute und relative Gewinne, Paarstreuung, Vertauschungseffekt und Pegelabweichungen. Die [Einzelpaare](masterarbeit/review_jp_20261118/p06/pairs.csv) und der [Komponentenvergleich](masterarbeit/review_jp_20261118/p06/components.csv) binden jede Zahl an ihre Auswertungseinheit. Die [Evidenzdaten](masterarbeit/review_jp_20261118/p06/evidence.json) ergänzen Track-/Gruppenlisten, Dataset-SHA, Normalisierung, Renderer, Objectivegewichte, Best-Epoche, Checkpoint-SHA und Rohquellen. Die lokalen Cuetabellen, Permutationsmatrizen und Trainingsartefakte liegen unter `output/review_jp_20261118/p06_controller/run01/`.
+
+| Kontrast und Modellstart | Kontrollen und Endstand | Befund auf gepaarten Validierungscues |
+|---|---|---|
+| R1 Legacy sowie EP-v1 (drei Seeds) | D2, Zwei-Band, v4. Alle neuen Läufe Best E1, Ende E7. | Eigene Controls senken den Loss gegenüber vertauschten. F schlägt M in jedem Seed. |
+| R2 Legacy sowie EP-v1 (drei Seeds) | D2, Vocal, v5, identische gebundene Stem-Manifeste. Neu Best E34/E10/E35, Ende E40/E16/E41. | Alle drei neuen Modelle schlagen F. Seedmittel M 0,331416, Stichproben-SD 0,006727. |
+| R3 Legacy / EP-v1, gleicher Seed 20260926 | D2, Full-Band, v4, Architektur, AdamW, konstante Lernrate, Selektion und E30-Budget identisch. Neu Best E27. | Legacy-M 0,320779 mit konstanten Controls. EP-v1-M 0,240038, F 0,306628, fremde Controls 0,357669. |
+| R4 Legacy, Best E34 | D4, Vocal, zeitnormiertes v5. 52 gerichtete Val-Paare je Länge. E0 rekonstruiert, September-History ab E1. | In jeder der vier Längen liegt M unter F. M erreicht 76,88–78,56 % von E−D, wobei D den Loss nach 80 Updates bezeichnet. |
+
+Die Streuung der MLP-Läufe steht in der [Seedtabelle](masterarbeit/review_jp_20261118/p06/seeds.csv). P06 trifft eine Aussage über die Passung der Controls zum nativen Proxy auf Entwicklungsmaterial. Ein unabhängiger Hörbefund für die neuen Checkpoints steht aus.
+
+## P10 · Fortsetzung, Identitätskontrolle und Vergleich der Cue-Wahl
+
+**F zu R_P10_01.** Die 14 numerischen Zeilen aus run01 sowie die Auswahl bleiben gültig. Run02 ist der aktuelle Gerätenachweis für die Inferenz. Auf 2.830 Queries betrug der auf derselben Validation epochenoptimierte Recall 85,59 % (54 Aufnahmen, bedingtes Bootstrapintervall 83,2–87,9 %), über 53 Gruppen 85,33 %. Zeitnähe ist im Strukturkontrast mit der richtigen Fortsetzung gekoppelt. Die über 26 Paare gemittelten ρ streuen mit SD 0,386 (t-95-%-Intervall −0,184 bis +0,129). Bei uniform unabhängiger Cue-Wahl beträgt P(0 Treffer) 0,834. Die musikalische Übertragbarkeit zwischen Aufnahmen ist Gegenstand von H1. [Rohdatennachrechnung](../output/review_jp_20261118/p10_ranking/run02/review_check.json)
+
+| Kontrast vom 19.11.2026 | Einheit und Referenz | Befund |
+|---|---|---|
+| F2 · Zwei Repräsentationen × drei Stufen | P08 run02, September-Validation, 54 Originale in 53 Gruppen, 2.830 feste Neunerpanels. Eigener Kosinus je Familie und je drei P09-Seeds pro trainierter Stufe. | Stufe 0 klassisch 55,75 % Recall@1, MERT 44,53 %. Stufe 2 im Seedmittel klassisch 68,49 %, MERT 85,67 %. Alle 14 Bedingungen mit MRR, Bestepoche und Gewichts-SHA in der [Offlinematrix](masterarbeit/review_jp_20261118/p10/offline.csv). |
+| F2 · Strukturfremder Abschnitt auf derselben Aufnahme | 2.830 Same-Track-Kontraste in 53 Gruppen und 844 vorab gekennzeichnete Intro↔Drop-Kontraste in 49 Gruppen. Treffer mit ½ bei Gleichstand, Gruppen gleich gewichtet. | Beide trainierten MERT-Stufen bestehen in beiden Kontrollen im Seedmittel und mit dem vorab bestimmten Seed. Stufe 2, Seed 20260926, Epoche 22 gewinnt nach mittlerem Recall@1. [Entscheidung, SHA und Rohdatenbindung](masterarbeit/review_jp_20261118/p10/selection.json) |
+| F2 · SSL-Cues gegen Feature-Regel | 26 gerichtete disjunkte Entwicklungspaare, 144 gemeinsame Vier-Takt-Cues je Paar. Mittlere Ränge bei Bindungen, Paare gleich gewichtet. | Studienkopf und Regel wählen in 0/26 Paaren denselben Cue, mittleres ρ −0,0275. In einem 44,1-kHz-Stereobatch stimmten alle Live-Scores mit dem P07-Cache überein. [Einzelwerte und Prüfpfade](masterarbeit/REVIEW_JP_P10_RANKING_20261119.md) |
+
+Die P09-Köpfe nutzten DCL mit Temperatur 0,2 und positivem Prior 0,05 bei 30 Epochen, Batch 32. Die klassischen 82 Taktmerkmale verwenden den P07-Trainingsscaler und RoFormer-Vocalmerkmale. MERT verwendet die eingefrorene 24-kHz-Repräsentation und beide Familien dasselbe native Raster. Retrieval und Kontrollscores entstehen vor dem Render. Konfiguration, Scaler-ID, Revisions- und Dateihashes sind über [P09](masterarbeit/P09_VERIFIED_20261119.json), [P07-Vertrag](masterarbeit/REVIEW_JP_P07_REPRAESENTATIONEN_20261119.md) und den [P10-Prüfnachweis](masterarbeit/review_jp_20261118/p10/verified.json) gebunden.
+
+## P11 · Technischer Bestand für die geschlossene Hörsitzung
+
+Der [unabhängige Review von run02](masterarbeit/review_jp_20261118/reviews/R_P11_02.md) reproduzierte 42 E/D-Rohsignalhashes und prüfte 672 Ankerbereiche an den B-Schlaggrenzen direkt gegen die Originalaufnahmen. Die gemeinsame Cue-Umgebung ist bei separater WAV-Analyse erkennbar. Die Blindung setzt daher die dokumentierte beaufsichtigte Playernutzung voraus. Der größte lokale Tempoeingriff hatte Faktor 0,667. Seine Hörwirkung ist unbekannt.
+
+**Gültigkeit nach R_P11_01.** Die folgende Tabelle beschreibt run01. Seine Cue-Wahlen, Population und Rasterausschlüsse gelten für run02 weiter. Die Pegel-, Längen- und Dateiangaben bezeichnen die historischen WAVs. Run01 ist für Hörsitzungen verworfen. Die technischen Daten der korrigierten Fassung stehen im [run02-Bericht](masterarbeit/review_jp_20261118/p11/korrektur_run02.md).
+
+| Frage | Einheit | Befund am 19.11.2026 |
+|---|---|---|
+| Welche eingefrorenen Paare liefern vollständige Panels? | Elf disjunkte Paare aus 22 Recording-Gruppen | Sieben vollständige Panels. Die Rasterprüfung schloss die Paare P04, P05, P08 und P11 symmetrisch aus. [Quellbelege, Gründe und Fallzahlen](masterarbeit/review_jp_20261118/p11/materialbericht.md) |
+| Sind die Bedingungen vergleichbar exportiert und zugeordnet? | 38.556 gemeinsame Cues über sieben Paare, je drei verschiedene Selektorentscheidungen und sieben PCM24-Clips | 49 Clips von 18,90–19,17 s, maximal 0,01 LU Abstand zum Paarziel, höchster True Peak −12,28 dBTP. Die drei randomisierten Pakete wurden gegen ihre Schlüssel geprüft. [Prüfnachweis](masterarbeit/review_jp_20261118/p11/verified.json) |
+| Was lässt sich zur musikalischen Qualität sagen? | Menschliche Gesamturteile im geschlossenen Hörversuch | Die Erhebung steht aus. Unter zehn unabhängigen Paaren gilt für H1–H3 die vorab definierte deskriptive Auswertung. [Studienprotokoll](masterarbeit/review_jp_20261118/p11/studienprotokoll.md) |
+
+**P11/run02 vom 19.11.2026.** Auf denselben sieben Paaren und denselben 21 Cues wurden die 49 Studienclips mit lokal ausgerichtetem B neu gerendert. Alle Cues bestanden die Rasterprüfung. Je Paar haben alle sieben WAVs dieselbe Größe und Framezahl. Der erneute Pegelabgleich ergab maximal 0,02 LU Zielabweichung und −12,16 dBTP als höchsten Peak. Die vier ursprünglichen Ausschlüsse gelten weiter. Die Messungen liefern technischen Nachweis. Hörbewertungen stehen aus. [Fallzahlen, Pegel und Prüfsummen](masterarbeit/review_jp_20261118/p11/korrektur_run02.md)

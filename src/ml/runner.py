@@ -47,6 +47,7 @@ from .model import (
     TCNBiLSTMTransitionControlConfig,
 )
 from .training import full_band_self_supervised_batch_loss, self_supervised_batch_loss
+from .control_initialization import EQUAL_POWER, run_initialization
 from .lr_schedule import (
     apply_linear_warmup,
     current_learning_rate,
@@ -99,6 +100,10 @@ class TrainingConfig:
 
     def to_dict(self):
         return asdict(self)
+
+
+class ConstantRateTCNTrainingConfig(TrainingConfig):
+    """September TCN optimizer contract, with a constant AdamW learning rate."""
 
 
 @dataclass(frozen=True)
@@ -228,14 +233,16 @@ def run_tcn_bilstm_transition_control_training(
 
     if config is None:
         config = TCNBiLSTMTrainingConfig()
-    elif not isinstance(config, TCNBiLSTMTrainingConfig):
+    elif not isinstance(config, (TCNBiLSTMTrainingConfig, ConstantRateTCNTrainingConfig)):
         config = TCNBiLSTMTrainingConfig(**asdict(config))
 
     return run_feature_control_training(
         dataset_directory,
         output_directory,
         config=config,
-        model_config=model_config or TCNBiLSTMTransitionControlConfig(),
+        model_config=model_config or TCNBiLSTMTransitionControlConfig(
+            control_initialization=run_initialization(output_directory, resume),
+        ),
         objective_config=objective_config,
         waveform_cache_root=waveform_cache_root,
         resume=resume,
@@ -278,10 +285,12 @@ def train_feature_control_model(
     """Train from pre-materialized examples and persist restartable artifacts."""
     config = _resolve_training_device(config or TrainingConfig())
     if runner_name == TCN_BILSTM_TRAINING_RUNNER_NAME and not isinstance(
-        config, TCNBiLSTMTrainingConfig
+        config, (TCNBiLSTMTrainingConfig, ConstantRateTCNTrainingConfig)
     ):
         config = TCNBiLSTMTrainingConfig(**asdict(config))
-    model_config = model_config or FeatureControlMLPConfig()
+    model_config = model_config or FeatureControlMLPConfig(
+        control_initialization=run_initialization(output_directory, resume),
+    )
     objective_config = objective_config or DifferentiableTransitionObjectiveConfig()
     train_examples = tuple(train_examples)
     validation_examples = tuple(validation_examples)
@@ -419,9 +428,11 @@ def train_feature_control_model(
                 epoch=0,
                 loss_function=loss_function,
             )
+            phase = ("legacy_tcn_initialization" if model_name == TRANSITION_CONTROL_MODEL_NAME
+                     and model_config.control_initialization != EQUAL_POWER else "equal_power_initialization")
             history.append({
                 "epoch": 0,
-                "phase": "equal_power_initialization",
+                "phase": phase,
                 "train": initial_train,
                 "validation": initial_validation,
             })
@@ -456,7 +467,7 @@ def train_feature_control_model(
                 best_path,
             )
             progress(
-                f"epoch=0 equal_power train={initial_train['loss']:.6f} "
+                f"epoch=0 {phase} train={initial_train['loss']:.6f} "
                 f"validation={initial_validation['loss']:.6f}"
             )
             wandb_logger.log_epoch(

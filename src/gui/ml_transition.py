@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
+import math
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -76,65 +77,65 @@ def render_model_transition(
         DifferentiableTwoBandRenderer,
         DifferentiableVocalAwareRenderer,
     )
-    from src.features import FeatureNormalizationStats, build_global_pair_features, extract_or_load_track_features
-    from src.pipeline import DEFAULT_SAMPLE_RATE
+    from src.features import (
+        BEATS_PER_BAR,
+        FEATURE_PROTOCOL_VERSION,
+        build_global_pair_features,
+        extract_or_load_track_features,
+        validate_feature_array,
+        validate_global_feature_array,
+    )
+    from src.ml.inference_contract import fixed_preview_renderer_options, load_fixed_inference_contract
+    from src.tempo.coordinates import aligned_cue_sample
 
     run = _load_model_run(Path(model_run))
-    dataset_contract = run.manifest["contract"]["dataset"]
-    dataset_root = Path(dataset_contract["path"])
-    dataset_manifest_path = dataset_root / "manifest.json"
-    dataset_manifest = json.loads(dataset_manifest_path.read_text(encoding="utf-8"))
-    expected_dataset_sha = dataset_contract["manifest_sha256"]
-    actual_dataset_sha = _sha256_file(dataset_manifest_path)
-    if actual_dataset_sha != expected_dataset_sha:
-        raise ValueError("Dataset manifest SHA differs from the model training contract")
-    if int(dataset_manifest.get("sample_rate", 0)) != DEFAULT_SAMPLE_RATE:
-        raise ValueError("The selected model uses a feature sample rate this GUI adapter does not support")
-    normalizer = dataset_manifest.get("normalization", {})
-    normalization = FeatureNormalizationStats(
-        spectral_flux_log1p_p99=float(normalizer["spectral_flux_log1p_p99"]),
-        onset_strength_log1p_p99=float(normalizer["onset_strength_log1p_p99"]),
-        stats_id=str(normalizer["stats_id"]),
-    )
+    run_contract = run.manifest["contract"]
+    contract = load_fixed_inference_contract(run_contract, transition_bars=transition_bars)
+    sample_rate = contract.sample_rate
+    renderer_options = fixed_preview_renderer_options(run_contract, sample_rate=sample_rate)
+    normalization = contract.normalization
 
-    source_result = analysis(str(source_path))
-    target_result = analysis(str(target_path))
-    _, source_frames, _ = unpack_analysis_result(source_result)
-    _, target_frames, _ = unpack_analysis_result(target_result)
+    source_path = Path(source_path).resolve()
+    target_path = Path(target_path).resolve()
+    analyses = {source_path: analysis(str(source_path))}
+    if target_path != source_path:
+        analyses[target_path] = analysis(str(target_path))
+
+    def pair_analysis(path):
+        # A retryable fallback must not change the grid halfway through a render.
+        return analyses[Path(path).resolve()]
+
+    detected_source_bpm, source_frames, source_grid = unpack_analysis_result(analyses[source_path])
+    detected_target_bpm, target_frames, target_grid = unpack_analysis_result(analyses[target_path])
+    source_bpm = _inference_bpm("source", source_bpm, detected_source_bpm)
+    target_bpm = _inference_bpm("target", target_bpm, detected_target_bpm)
     source_rate = int(librosa.get_samplerate(str(source_path)))
     target_rate = int(librosa.get_samplerate(str(target_path)))
     aligned_source_seconds = _snap_to_downbeat(source_seconds, source_frames, source_rate)
     aligned_target_seconds = _snap_to_downbeat(target_seconds, target_frames, target_rate)
-    source_cut = int(round(aligned_source_seconds * DEFAULT_SAMPLE_RATE))
-    target_cut = int(round(aligned_target_seconds * DEFAULT_SAMPLE_RATE))
+    source_cut = round(aligned_source_seconds * sample_rate)
+    target_cut = round(aligned_target_seconds * sample_rate)
 
     source_sha = _sha256_file(Path(source_path))
     target_sha = _sha256_file(Path(target_path))
     candidate = {
-        "source_track": {"path": str(Path(source_path).resolve()), "sha256": source_sha},
-        "target_track": {"path": str(Path(target_path).resolve()), "sha256": target_sha},
+        "source_track": {"path": str(source_path), "sha256": source_sha},
+        "target_track": {"path": str(target_path), "sha256": target_sha},
         "source_bpm": float(source_bpm),
         "target_bpm": float(target_bpm),
         "source_cutpoint": {"sample": source_cut},
         "target_cutpoint": {"sample": target_cut},
-        "transition_length_bars": int(transition_bars),
-        "transition_length_beats": int(transition_bars) * 4,
+        "transition_length_bars": contract.transition_bars,
+        "transition_length_beats": contract.transition_bars * BEATS_PER_BAR,
     }
 
-    if run.family == "vocal_time_shared_mlp_v2":
-        from src.features.vocal import DEFAULT_ROFORMER_MODEL
-
-        vocal_backend, vocal_model = "roformer", DEFAULT_ROFORMER_MODEL
-    else:
-        vocal_backend = str(dataset_manifest.get("vocal_backend", "disabled"))
-        vocal_model = str(dataset_manifest.get("vocal_model", "htdemucs"))
     feature_kwargs = {
         "cache_root": feature_cache,
-        "analysis": analysis,
+        "analysis": pair_analysis,
         "analysis_root": analysis_cache,
-        "sample_rate": DEFAULT_SAMPLE_RATE,
-        "vocal_backend": vocal_backend,
-        "vocal_model": vocal_model,
+        "sample_rate": sample_rate,
+        "vocal_backend": contract.feature_vocals.backend,
+        "vocal_model": contract.feature_vocals.model,
     }
     source_features_artifact = extract_or_load_track_features(
         source_path, target_bpm=None, **feature_kwargs
@@ -142,8 +143,16 @@ def render_model_transition(
     target_features_artifact = extract_or_load_track_features(
         target_path, target_bpm=float(source_bpm), **feature_kwargs
     )
-    source_feature_cue = int(round(aligned_source_seconds * DEFAULT_SAMPLE_RATE))
-    target_feature_cue = int(round(aligned_target_seconds * DEFAULT_SAMPLE_RATE * float(source_bpm) / float(target_bpm)))
+    contract.validate_track_features(
+        source_features_artifact, role="source", original_bpm=source_bpm, aligned_bpm=source_bpm,
+    )
+    contract.validate_track_features(
+        target_features_artifact, role="target", original_bpm=target_bpm, aligned_bpm=source_bpm,
+    )
+    source_feature_cue = source_cut
+    target_feature_cue = aligned_cue_sample(
+        target_cut, original_bpm=target_bpm, aligned_bpm=source_bpm,
+    )
     features_a = source_features_artifact.model_window(
         source_feature_cue, role="source", normalization=normalization
     )
@@ -156,17 +165,22 @@ def render_model_transition(
         artifact_a=source_features_artifact, artifact_b=target_features_artifact,
         cue_sample_a=source_feature_cue, cue_sample_b=target_feature_cue,
     )
+    validate_feature_array(features_a, name="source model features")
+    validate_feature_array(features_b, name="target model features")
+    validate_global_feature_array(global_features, name="model global features")
 
     source_vocal = target_vocal = None
-    if run.family == "vocal_time_shared_mlp_v2":
+    waveform_vocals = contract.waveform_vocals
+    if waveform_vocals is not None:
         source_audio, target_audio, source_vocal, target_vocal, geometry = extract_aligned_vocal_bridge(
-            candidate, analysis, sample_rate=DEFAULT_SAMPLE_RATE,
-            vocal_backend=vocal_backend, vocal_model=vocal_model,
+            candidate, pair_analysis, sample_rate=sample_rate,
+            feature_cache_root=feature_cache,
+            vocal_backend=waveform_vocals.backend, vocal_model=waveform_vocals.model,
             include_context_audio=True,
         )
     else:
         source_audio, target_audio, geometry = extract_aligned_bridge(
-            candidate, analysis, sample_rate=DEFAULT_SAMPLE_RATE,
+            candidate, pair_analysis, sample_rate=sample_rate,
             include_context_audio=True,
         )
     source_tensor = torch.from_numpy(np.asarray(source_audio, dtype=np.float32))
@@ -178,23 +192,13 @@ def render_model_transition(
             torch.from_numpy(global_features),
         )
         if run.family == "time_shared_mlp_v1":
-            renderer_contract = run.manifest["contract"]["renderer"]
-            renderer = DifferentiableTwoBandRenderer(
-                sample_rate=DEFAULT_SAMPLE_RATE,
-                lowpass_cutoff_hz=float(renderer_contract["lowpass_cutoff_hz"]),
-                lowpass_kernel_size=511,
-            )
+            renderer = DifferentiableTwoBandRenderer(**renderer_options)
             rendered = renderer(
                 source_tensor, target_tensor,
                 output.mix_position, output.low_end_position,
             )
         elif run.family == "vocal_time_shared_mlp_v2":
-            renderer_contract = run.manifest["contract"]["renderer"]
-            renderer = DifferentiableVocalAwareRenderer(
-                sample_rate=DEFAULT_SAMPLE_RATE,
-                lowpass_cutoff_hz=float(renderer_contract["lowpass_cutoff_hz"]),
-                lowpass_kernel_size=511,
-            )
+            renderer = DifferentiableVocalAwareRenderer(**renderer_options)
             rendered = renderer(
                 source_tensor, target_tensor,
                 torch.from_numpy(np.asarray(source_vocal, dtype=np.float32)),
@@ -203,17 +207,8 @@ def render_model_transition(
                 output.vocal_duck_a, output.vocal_duck_b,
             )
         else:
-            renderer_contract = run.manifest["contract"]["renderer"]
-            renderer = DifferentiableFullBandTransitionRenderer(
-                sample_rate=DEFAULT_SAMPLE_RATE,
-                lowpass_cutoff_hz=float(renderer_contract["lowpass_cutoff_hz"]),
-                midpass_cutoff_hz=float(renderer_contract.get("midpass_cutoff_hz", 3500.0)),
-                lowpass_kernel_size=511,
-            )
-            controls = [output[name] for name in (
-                "gain_A", "gain_B", "eq_low_A", "eq_low_B", "eq_mid_A",
-                "eq_mid_B", "eq_high_A", "eq_high_B", "low_end_ownership", "vocal_ducking",
-            )]
+            renderer = DifferentiableFullBandTransitionRenderer(**renderer_options)
+            controls = output.renderer_arguments(source_tensor.shape[-1])
             rendered = renderer(source_tensor, target_tensor, *controls)
 
     transition_audio = rendered.audio.detach().cpu().numpy().astype(np.float32, copy=False)
@@ -221,7 +216,7 @@ def render_model_transition(
     source_cut_sample = int(geometry["source_cut_sample"])
     target_cut_sample = int(geometry["target_cut_sample"])
     expected_context_samples = int(round(
-        int(transition_bars) * 4 * 60.0 / float(source_bpm) * DEFAULT_SAMPLE_RATE
+        candidate["transition_length_beats"] * 60.0 / source_bpm * sample_rate
     ))
     context_samples = max(transition_samples, expected_context_samples)
     source_context = geometry["source_audio"]
@@ -241,17 +236,32 @@ def render_model_transition(
         "checkpoint": run.provenance["checkpoint_path"],
         "checkpoint_sha256": run.provenance["checkpoint_sha256"],
         "checkpoint_epoch": run.provenance["checkpoint_epoch"],
-        "feature_protocol_version": 1,
+        "feature_protocol_version": FEATURE_PROTOCOL_VERSION,
+        "dataset_id": contract.dataset_id,
+        "dataset_manifest_sha256": run_contract["dataset"]["manifest_sha256"],
+        "model_config": run_contract["model"]["config"],
         "normalization_stats_id": normalization.stats_id,
+        "feature_vocal_backend": contract.feature_vocals.backend,
+        "feature_vocal_model": contract.feature_vocals.model,
+        "waveform_vocal_backend": waveform_vocals.backend if waveform_vocals else None,
+        "waveform_vocal_model": waveform_vocals.model if waveform_vocals else None,
+        "training_renderer": run_contract["renderer"],
+        "preview_renderer": renderer_options,
         "analysis_cache": str(analysis_cache),
+        "source_grid": source_grid.to_dict(),
+        "target_grid": target_grid.to_dict(),
+        "source_bpm": source_bpm,
+        "target_bpm": target_bpm,
         "feature_cache_source": str(source_features_artifact.cache_directory),
         "feature_cache_target": str(target_features_artifact.cache_directory),
         "cue_source_seconds_snapped": aligned_source_seconds,
         "cue_target_seconds_snapped": aligned_target_seconds,
+        "source_feature_cue_sample": source_feature_cue,
+        "target_feature_cue_sample": target_feature_cue,
     }
     result = SimpleNamespace(
         audio=audio,
-        sample_rate=DEFAULT_SAMPLE_RATE,
+        sample_rate=sample_rate,
         renderer=run.family,
         tempo_backend=geometry["tempo_backend"],
         transition_start_sample=transition_start_sample,
@@ -260,9 +270,20 @@ def render_model_transition(
     return result, model_provenance
 
 
+def _inference_bpm(role, requested, detected):
+    detected = float(detected)
+    if not math.isfinite(detected) or detected <= 0:
+        raise ValueError(f"Invalid {role} analysis BPM: {detected}")
+    if requested is not None and not math.isclose(float(requested), detected):
+        raise ValueError(f"Incompatible {role} BPM: requested {requested}, analysis returned {detected}")
+    return detected
+
+
 def _load_model_run(run_directory: Path) -> _ModelRun:
     manifest_path = run_directory / "manifest.json"
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest_bytes = manifest_path.read_bytes()
+    manifest_sha256 = hashlib.sha256(manifest_bytes).hexdigest()
+    manifest = json.loads(manifest_bytes)
     family = manifest.get("contract", {}).get("model", {}).get("name")
     if family == "time_shared_mlp_v1":
         from src.evaluation.ml_control_study import _load_best_model
@@ -278,8 +299,9 @@ def _load_model_run(run_directory: Path) -> _ModelRun:
         model, provenance = _load_best_tcn(run_directory)
     else:
         raise ValueError(f"Nicht unterstütztes GUI-Modell: {family}")
+    if provenance["run_manifest_sha256"] != manifest_sha256:
+        raise ValueError(f"Run manifest changed while loading the checkpoint: {manifest_path}")
     model.eval()
-    provenance["run_manifest_sha256"] = _sha256_file(manifest_path)
     return _ModelRun(model, family, manifest, manifest_path, provenance)
 
 

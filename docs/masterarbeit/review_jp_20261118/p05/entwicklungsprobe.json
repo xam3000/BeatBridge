@@ -1,0 +1,103 @@
+{
+  "format_version": 1,
+  "torch": "2.13.0+cu130",
+  "p04_reference": "output\\review_jp_20261118\\p04_render\\run02",
+  "starts": [
+    {
+      "controller": "FeatureControlMLP",
+      "control_initialization": "equal_power_v1",
+      "example_id": "example-d4ee00b2a98cbc2a",
+      "split": "train",
+      "bars": 4,
+      "e0_max_abs_audio_error": 0.0,
+      "e0_proxy": 0.24162206053733826,
+      "gradient_l2": 0.002010215073823929,
+      "sgd_lr": 0.01,
+      "step1_max_abs_audio_change": 4.172325134277344e-07,
+      "seed": 20260926,
+      "profile": "R1"
+    },
+    {
+      "controller": "VocalFeatureControlMLP",
+      "control_initialization": "equal_power_v1",
+      "example_id": "example-d4ee00b2a98cbc2a",
+      "split": "train",
+      "bars": 4,
+      "e0_max_abs_audio_error": 0.0,
+      "e0_proxy": 0.24120956659317017,
+      "gradient_l2": 0.008507020771503448,
+      "sgd_lr": 0.01,
+      "step1_max_abs_audio_change": 3.0934810638427734e-05,
+      "seed": 20260926,
+      "profile": "R2"
+    },
+    {
+      "controller": "TCNBiLSTMTransitionControl",
+      "control_initialization": "equal_power_v1",
+      "example_id": "example-d4ee00b2a98cbc2a",
+      "split": "train",
+      "bars": 4,
+      "e0_max_abs_audio_error": 0.0,
+      "e0_proxy": 0.21398162841796875,
+      "gradient_l2": 0.2883346676826477,
+      "sgd_lr": 0.01,
+      "step1_max_abs_audio_change": 0.005948185920715332,
+      "seed": 20260926,
+      "profile": "R3"
+    },
+    {
+      "controller": "VariableTCNBiLSTMTransitionControl",
+      "control_initialization": "equal_power_v1",
+      "example_id": "variable-example-af9687e3a58057cf",
+      "split": "train",
+      "bars": 4,
+      "e0_max_abs_audio_error": 0.0,
+      "e0_proxy": 0.24881960451602936,
+      "gradient_l2": 0.08878839761018753,
+      "sgd_lr": 0.01,
+      "step1_max_abs_audio_change": 0.0004912614822387695,
+      "seed": 20260926,
+      "profile": "R4"
+    },
+    {
+      "controller": "VariableTimeSharedMLP",
+      "control_initialization": "equal_power_v1",
+      "example_id": "variable-example-af9687e3a58057cf",
+      "split": "train",
+      "bars": 4,
+      "e0_max_abs_audio_error": 0.0,
+      "e0_proxy": 0.24881960451602936,
+      "gradient_l2": 0.05328528955578804,
+      "sgd_lr": 0.01,
+      "step1_max_abs_audio_change": 0.00018832087516784668,
+      "seed": 20260926,
+      "profile": "R4"
+    }
+  ],
+  "legacy_replay": [
+    {
+      "profile": "R1",
+      "checkpoint_sha256": "d54aca557d4ecadbe91e43785a0a5fa288ca8d4fa331a5e56da904c2c0fc3d2d",
+      "example_id": "example-826d104398f9b3d2",
+      "raw_audio_sha256": "5a3ee9c45a91749d917ee4fdc1e31faa451eae98fe9d0033fe41fc18c828908d"
+    },
+    {
+      "profile": "R2",
+      "checkpoint_sha256": "4c3561d46e42976d259eef9d0b07094ed726c455d22c829b25e431173f48e474",
+      "example_id": "example-826d104398f9b3d2",
+      "raw_audio_sha256": "fdc46a75a9c30e05e428c24618ebe01f206bef0280116f7258f3c819db472457"
+    },
+    {
+      "profile": "R3",
+      "checkpoint_sha256": "a3a2c1e1059bfe6f26c50d7f4db49b247205c00e0b2acfd77b1e7a20307d54b2",
+      "example_id": "example-826d104398f9b3d2",
+      "raw_audio_sha256": "f8c4801c9f2f3324d01b495837b5450840bd4fb9767d423d4ba6407b1ac413e7"
+    },
+    {
+      "profile": "R4",
+      "checkpoint_sha256": "1822d86a7672912844b538284113a46d89a3e3914afa562f39e27e6d11c63b68",
+      "example_id": "variable-example-870db8a891a5e37d",
+      "raw_audio_sha256": "3004bf11d163f7cfa0299839588b5293aeb20204a753b09bda9ec8367d9992e0"
+    }
+  ]
+}

@@ -47,6 +47,25 @@ def _config(max_epochs):
     )
 
 
+def test_september_tcn_cli_keeps_constant_rate_through_the_optimizer(tmp_path, monkeypatch):
+    from src.ml import __main__ as cli, runner
+
+    (tmp_path / "manifest.json").write_text('{"dataset_id":"synthetic"}', encoding="utf-8")
+    monkeypatch.setattr(runner, "FeatureControlDataset", lambda path, split, **kw: _examples(1, len(split)))
+    output = tmp_path / "tcn"
+    monkeypatch.setattr("sys.argv", [
+        "src.ml", "train-tcn-bilstm", str(tmp_path), str(output),
+        "--constant-learning-rate", "--control-initialization", "equal_power_v1",
+        "--max-epochs", "1", "--device", "cpu", "--wandb-mode", "disabled",
+    ])
+    assert cli.main() == 0
+    checkpoint = torch.load(output / "checkpoints/latest.pt", weights_only=True)
+    assert checkpoint["lr_scheduler_state_dict"] is None
+    assert checkpoint["optimizer_state_dict"]["param_groups"][0]["lr"] == 0.001
+    assert checkpoint["history"][0]["phase"] == "equal_power_initialization"
+    assert "_equal_power_v1" in checkpoint["model_state_dict"]
+
+
 def test_training_runner_writes_baseline_history_and_restartable_checkpoints(
     tmp_path,
     monkeypatch,

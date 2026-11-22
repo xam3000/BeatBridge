@@ -1,0 +1,25 @@
+{
+  "dataset": "output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805",
+  "dataset_manifest_sha256": "4708a8fa983354903759a934f48d36b6450510809773dda2a12f9408821886b7",
+  "output_root": "output/review_jp_20261118/p06_controller/run01",
+  "common_args": [
+    "--control-initialization", "equal_power_v1", "--device", "cuda:0",
+    "--batch-size", "5", "--learning-rate", "0.001", "--weight-decay", "0.0001",
+    "--gradient-clip-norm", "1", "--patience", "6", "--min-delta", "0.0001",
+    "--training-sample-rate", "11025", "--wandb-mode", "disabled"
+  ],
+  "profiles": {
+    "R1": {"command": "train", "args": ["--max-epochs", "30"], "reference_run_id": "a58a9c78fd7a0d82e326"},
+    "R2": {"command": "train-vocal", "args": ["--max-epochs", "100", "--optimizer", "adamw", "--lr-scheduler", "none", "--vocal-model", "roformer-model-bs-roformer-sw-by-jarredou"], "reference_run_id": "a4dd5017c7adcc734f19"},
+    "R3": {"command": "train-tcn-bilstm", "args": ["--max-epochs", "30", "--constant-learning-rate"], "reference_run_id": "a8472463aa58d06d4616"}
+  },
+  "runs": [
+    {"name": "R1_equal_power_v1_seed20260926", "profile": "R1", "seed": 20260926},
+    {"name": "R1_equal_power_v1_seed20260927", "profile": "R1", "seed": 20260927},
+    {"name": "R1_equal_power_v1_seed20260928", "profile": "R1", "seed": 20260928},
+    {"name": "R2_equal_power_v1_seed20260926", "profile": "R2", "seed": 20260926},
+    {"name": "R2_equal_power_v1_seed20260927", "profile": "R2", "seed": 20260927},
+    {"name": "R2_equal_power_v1_seed20260928", "profile": "R2", "seed": 20260928},
+    {"name": "R3_equal_power_v1_seed20260926", "profile": "R3", "seed": 20260926}
+  ]
+}

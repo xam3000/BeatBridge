@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass, field
 import math
 
 import torch
@@ -13,6 +13,7 @@ from src.control import (
     bounded_monotone_unit_curve,
 )
 from src.features import FEATURE_DIMENSION, GLOBAL_FEATURE_DIMENSION, SEQUENCE_LENGTH
+from .control_initialization import EQUAL_POWER, bind_control_state, config_dict, full_band_arguments, neutral_at_zero, validate_initialization
 
 
 FEATURE_CONTROL_MODEL_FORMAT_VERSION = 1
@@ -51,8 +52,10 @@ class FeatureControlMLPConfig:
     hidden_dimensions: tuple[int, ...] = (64, 32)
     dropout: float = 0.0
     increment_logit_bound: float = DEFAULT_INCREMENT_LOGIT_BOUND
+    control_initialization: str = field(default=EQUAL_POWER, kw_only=True)
 
     def __post_init__(self):
+        validate_initialization(self.control_initialization)
         if not self.hidden_dimensions or any(int(value) <= 0 for value in self.hidden_dimensions):
             raise ValueError("hidden_dimensions must contain positive integers")
         if not 0.0 <= float(self.dropout) < 1.0:
@@ -61,9 +64,7 @@ class FeatureControlMLPConfig:
             raise ValueError("increment_logit_bound must be greater than 0")
 
     def to_dict(self):
-        payload = asdict(self)
-        payload["hidden_dimensions"] = list(self.hidden_dimensions)
-        return payload
+        return config_dict(self)
 
 
 @dataclass(frozen=True)
@@ -128,8 +129,10 @@ class TCNBiLSTMTransitionControlConfig:
     output_dimension: int = len(TRANSITION_CONTROL_OUTPUT_NAMES)
     dropout: float = 0.0
     increment_logit_bound: float = DEFAULT_INCREMENT_LOGIT_BOUND
+    control_initialization: str = field(default=EQUAL_POWER, kw_only=True)
 
     def __post_init__(self):
+        validate_initialization(self.control_initialization)
         if (
             type(self.encoder_channels) is not tuple
             or len(self.encoder_channels) != 2
@@ -166,9 +169,7 @@ class TCNBiLSTMTransitionControlConfig:
             raise ValueError("increment_logit_bound must be positive")
 
     def to_dict(self):
-        payload = asdict(self)
-        payload["encoder_channels"] = list(self.encoder_channels)
-        return payload
+        return config_dict(self)
 
 
 @dataclass(frozen=True)
@@ -176,14 +177,15 @@ class TCNBiLSTMTransitionControlOutput:
     """Bounded per-halfbeat transition controls.
 
     ``controls`` has shape ``(B, 32, 10)`` (or ``(32, 10)`` for a single
-    example).  The controller logits are retained for diagnostics and future
-    constraint transforms; the public controls are sigmoid-bounded to [0, 1].
+    example). All physical controls lie in [0, 1]. The equal-power contract
+    also retains the mix position for sample-level gain generation.
     """
 
     format_version: int
     model_name: str
     controls: torch.Tensor
     controller_logits: torch.Tensor
+    phase_position: torch.Tensor | None = None
 
     def __getitem__(self, name: str) -> torch.Tensor:
         try:
@@ -212,7 +214,18 @@ class TCNBiLSTMTransitionControlOutput:
     def mix_position(self):
         """Monotone target ownership curve for the current two-band renderer."""
 
-        return self.gain_b
+        return self.gain_b if self.phase_position is None else self.phase_position
+
+    def render_controls(self, index=None):
+        if self.phase_position is None:
+            controls = {name: self[name] for name in TRANSITION_CONTROL_OUTPUT_NAMES}
+        else:
+            controls = {name: self[name] for name in (*TRANSITION_CONTROL_OUTPUT_NAMES[2:8], "vocal_ducking")}
+            controls.update(mix_position=self.phase_position, low_end_position=self.low_end_position)
+        return controls if index is None else {k: v[index] for k, v in controls.items()}
+
+    def renderer_arguments(self, sample_count, index=None):
+        return full_band_arguments(self.render_controls(index), TRANSITION_CONTROL_OUTPUT_NAMES, sample_count)
 
     @property
     def low_end_position(self):
@@ -227,6 +240,7 @@ class FeatureControlMLP(nn.Module):
     def __init__(self, config: FeatureControlMLPConfig | None = None):
         super().__init__()
         self.config = config or FeatureControlMLPConfig()
+        bind_control_state(self)
         input_dimension = 2 * FEATURE_DIMENSION + GLOBAL_FEATURE_DIMENSION
         layers: list[nn.Module] = [nn.LayerNorm(input_dimension)]
         previous = input_dimension
@@ -292,6 +306,7 @@ class TCNBiLSTMTransitionControl(nn.Module):
     def __init__(self, config: TCNBiLSTMTransitionControlConfig | None = None):
         super().__init__()
         self.config = config or TCNBiLSTMTransitionControlConfig()
+        bind_control_state(self)
         first_channels, last_channels = self.config.encoder_channels
         kernel_size = int(self.config.tcn_kernel_size)
         dilation = int(self.config.tcn_dilation)
@@ -337,9 +352,7 @@ class TCNBiLSTMTransitionControl(nn.Module):
             2 * self.config.controller_hidden_size,
             self.config.output_dimension,
         )
-        # Start with linear ownership curves and neutral auxiliary controls.
-        # The monotone transform below turns zero increment logits into the
-        # equal-power-compatible linear control baseline.
+        # Both contracts start with zero logits; their physical mappings differ.
         nn.init.zeros_(self.output_head.weight)
         nn.init.zeros_(self.output_head.bias)
 
@@ -381,17 +394,27 @@ class TCNBiLSTMTransitionControl(nn.Module):
             self.config.increment_logit_bound,
         )
         controls = controls.clone()
-        controls[..., 0] = 1.0 - mix_position
-        controls[..., 1] = mix_position
+        equal_power = self.config.control_initialization == EQUAL_POWER
+        if equal_power:
+            angle = mix_position * (math.pi / 2)
+            controls[..., 0] = torch.cos(angle).clamp(0, 1)
+            controls[..., 1] = torch.sin(angle).clamp(0, 1)
+            controls[..., 2:8] = 1 - neutral_at_zero(controller_logits[..., 2:8])
+            controls[..., 9] = neutral_at_zero(controller_logits[..., 9])
+        else:
+            controls[..., 0] = 1.0 - mix_position
+            controls[..., 1] = mix_position
         controls[..., 8] = low_end_position
         if squeezed:
             controls = controls.squeeze(0)
             controller_logits = controller_logits.squeeze(0)
+            mix_position = mix_position.squeeze(0)
         return TCNBiLSTMTransitionControlOutput(
             format_version=TRANSITION_CONTROL_MODEL_FORMAT_VERSION,
             model_name=TRANSITION_CONTROL_MODEL_NAME,
             controls=controls,
             controller_logits=controller_logits,
+            phase_position=mix_position if equal_power else None,
         )
 
     @property
@@ -405,6 +428,7 @@ class VocalFeatureControlMLP(nn.Module):
     def __init__(self, config: VocalFeatureControlMLPConfig | None = None):
         super().__init__()
         self.config = config or VocalFeatureControlMLPConfig()
+        bind_control_state(self)
         input_dimension = 2 * FEATURE_DIMENSION + GLOBAL_FEATURE_DIMENSION
         self.interval_mlp = _control_mlp(
             input_dimension,
@@ -455,7 +479,9 @@ class VocalFeatureControlMLP(nn.Module):
         duck_window = 4.0 * vocal_position * (1.0 - vocal_position)
         vocal_duck = (
             float(self.config.maximum_vocal_ducking)
-            * torch.sigmoid(vocal_duck_logits)
+            * (neutral_at_zero(vocal_duck_logits - self.config.initial_vocal_duck_logit)
+               if self.config.control_initialization == EQUAL_POWER
+               else torch.sigmoid(vocal_duck_logits))
             * duck_window.unsqueeze(1)
         )
         vocal_base_a = torch.cos(vocal_position * (math.pi / 2.0)).clamp(0.0, 1.0)

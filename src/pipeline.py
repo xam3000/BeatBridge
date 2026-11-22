@@ -22,9 +22,7 @@ from src.analysis.pre_analysis import (
 )
 from src.candidates import CandidateGenerationConfig, TrackReference
 from src.candidates.generation import generate_candidates as generate_candidates_from_grids
-from src.candidates.variable import (
-    generate_variable_candidates_from_grids,
-)
+from src.candidates.variable import BaselineCandidateGenerationConfig, validate_baseline_cue
 from src.cutting.equal_power_fade_cut import EqualPowerFadeCut
 from src.cutting.fade_cut import FadeCut
 from src.cutting.simple_cut import SimpleCut
@@ -250,7 +248,7 @@ class BeatBridgePipeline:
         )
         return self.adjusted_song1, self.adjusted_song2
 
-    def cut(self, sample1, sample2, adjust_tempo=True):
+    def cut(self, sample1, sample2, adjust_tempo=True, *, baseline_bars=None):
         song1 = self.song1
         song2 = self.song2
         beat_frames2 = self.beat_frames2
@@ -259,6 +257,13 @@ class BeatBridgePipeline:
             song1, song2 = self.adjust_tempo()
             sample2 = int(round(int(sample2) * self.adjusted_sample_scale2))
             beat_frames2 = self.adjusted_beat_frames2
+
+        if baseline_bars is not None:
+            source, target = self.cutter.resolve_cut_samples(
+                song1, song2, sample1, sample2, self.beat_frames1, beat_frames2
+            )
+            validate_baseline_cue(self.beat_frames1, source, baseline_bars, song1.shape[-1], "source")
+            validate_baseline_cue(beat_frames2, target, baseline_bars, song2.shape[-1], "target")
 
         self.cut_song = self.cutter.cut(
             song1,
@@ -299,6 +304,7 @@ def render_transition(
     renderer="fade",
     *,
     fade_beats=8,
+    baseline_bars=None,
     target_sample_rate=DEFAULT_SAMPLE_RATE,
     target_channels=DEFAULT_CHANNELS,
     analysis=None,
@@ -328,6 +334,10 @@ def render_transition(
     if tempo_adjuster is None:
         tempo_adjuster = TimeStretch()
 
+    if baseline_bars is not None:
+        config = BaselineCandidateGenerationConfig(transition_lengths_bars=(baseline_bars,))
+        baseline_bars = config.transition_lengths_bars[0]
+        fade_beats = 4 * baseline_bars
     cutter = build_cutter(renderer, fade_beats=fade_beats)
     pipeline = BeatBridgePipeline(
         song1,
@@ -344,6 +354,7 @@ def render_transition(
         cutpoint1,
         cutpoint2,
         adjust_tempo=True,
+        baseline_bars=baseline_bars,
     )
     transition_start_sample = pipeline.effective_source_cutpoint
     transition_end_sample = transition_start_sample + int(
@@ -431,12 +442,7 @@ def generate_transition_candidates(
         beat_frames2,
         int(target_sample_rate) / float(sample_rate2),
     )
-    generator = (
-        generate_variable_candidates_from_grids
-        if int(getattr(config, "format_version", 1)) == 2
-        else generate_candidates_from_grids
-    )
-    return generator(
+    return generate_candidates_from_grids(
         TrackReference(str(song1_path), _file_sha256(song1_path)),
         bpm1,
         beat_frames1,

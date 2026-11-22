@@ -52,13 +52,15 @@ from .variable_model import (
     VARIABLE_LENGTH_CONDITIONING_VERSION,
     VARIABLE_MLP_MODEL_FORMAT_VERSION,
     VARIABLE_TIME_SHARED_MLP_MODEL_NAME,
-    VariableTimeSharedMLP,
-    VariableTimeSharedMLPConfig,
     VariableTimeSharedMLPOutput,
     VARIABLE_TCN_BILSTM_MODEL_FORMAT_VERSION,
     VARIABLE_TCN_BILSTM_MODEL_NAME,
-    VariableTCNBiLSTMControlConfig,
     VariableTCNBiLSTMControlOutput,
+)
+from .variable_control_initialization import (
+    VariableTimeSharedMLP,
+    VariableTimeSharedMLPConfig,
+    VariableTCNBiLSTMControlConfig,
     VariableTCNBiLSTMTransitionControl,
 )
 from .variable_runner import (

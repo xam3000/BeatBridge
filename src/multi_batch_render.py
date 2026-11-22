@@ -12,10 +12,11 @@ import re
 import sys
 import uuid
 
-from src.analysis.pre_analysis import PreAnalysis
-from src.batch_render import DEFAULT_RENDERERS, RANKING_METHODS, generate_and_render_batch
+from src.analysis.pre_analysis import PreAnalysis, PartialPreAnalysis
+from src.pipeline import CUTTERS
+from src.batch_render import RANKING_METHODS, _continuation_analysis, generate_and_render_batch
 from src.ranking import load_learned_cue_ranker
-from src.candidates import CandidateGenerationConfig, VariableCandidateGenerationConfig
+from src.candidates import BaselineCandidateGenerationConfig, CandidateGenerationConfig, VariableCandidateGenerationConfig
 from src.dataset import (
     DEFAULT_TRACK_EXCLUSIONS_PATH,
     filter_excluded_tracks,
@@ -86,7 +87,11 @@ def generate_multi_song_batch(
         if analysis_location is None
         else Path(analysis_location)
     )
-    analysis = PreAnalysis(str(cache_path) + os.sep)
+    if ranking_method == "mert_continuation_v1":
+        analysis = _continuation_analysis(analysis_location)
+        cache_path = analysis.analysis_location
+    else:
+        analysis = PreAnalysis(str(cache_path) + os.sep)
     song_paths, bpm_excluded_tracks, bpm_analysis_failures = _filter_tracks_by_bpm(
         song_paths,
         analysis,
@@ -241,15 +246,17 @@ def _validate_request(song_paths, top_targets, top_transitions, renderers):
         raise ValueError("top_transitions must be greater than 0")
     if not renderers:
         raise ValueError("At least one renderer must be requested")
-    unknown_renderers = set(renderers).difference(DEFAULT_RENDERERS)
+    unknown_renderers = set(renderers).difference(CUTTERS)
     if unknown_renderers:
         raise ValueError(f"Unknown renderer(s): {', '.join(sorted(unknown_renderers))}")
 
 
 def _normalise_transition_lengths(transition_lengths_bars):
     """Validate requested lengths through the additive variable-length contract."""
-    variable_config = VariableCandidateGenerationConfig(
-        transition_lengths_bars=tuple(transition_lengths_bars),
+    lengths = tuple(transition_lengths_bars)
+    config_type = BaselineCandidateGenerationConfig if any(n in (1, 3) for n in lengths) else VariableCandidateGenerationConfig
+    variable_config = config_type(
+        transition_lengths_bars=lengths,
     )
     return variable_config.transition_lengths_bars
 
@@ -261,6 +268,15 @@ def _candidate_generation_config(
     ranking_method="feature_baseline_v3",
 ):
     """Keep the historical v1 default while enabling v2 lengths additively."""
+    if ranking_method == "mert_continuation_v1":
+        if tuple(transition_lengths_bars) != (4,) or approximate_grid_policy != "reject":
+            raise ValueError("mert_continuation_v1 requires --transition-bars 4 and detected grids")
+        return BaselineCandidateGenerationConfig(transition_lengths_bars=(4,))
+    if any(n in (1, 3) for n in transition_lengths_bars):
+        if ranking_method == "learned_cue_ranker_v1":
+            raise ValueError("The trained cue ranker supports only 2/4/6/8 bars")
+        return BaselineCandidateGenerationConfig(transition_lengths_bars=tuple(transition_lengths_bars),
+                                                approximate_grid_policy=approximate_grid_policy)
     if (
         tuple(transition_lengths_bars) == DEFAULT_TRANSITION_LENGTHS_BARS
         and ranking_method == "feature_baseline_v3"
@@ -276,11 +292,7 @@ def _candidate_generation_config(
 
 
 def _candidate_generator_name(candidate_config):
-    return (
-        "bar_grid_v2_length_specific"
-        if int(getattr(candidate_config, "format_version", 1)) == 2
-        else "bar_grid_v1"
-    )
+    return getattr(candidate_config, "generator", "bar_grid_v1")
 
 
 def _candidate_request_config(candidate_config):
@@ -386,7 +398,8 @@ def _filter_tracks_by_bpm(
             raise ValueError("analysis_location is required with multiple analysis workers")
 
         def analyse_independently(song_path):
-            worker_analysis = PreAnalysis(str(Path(analysis_location)) + os.sep)
+            worker_analysis = (PartialPreAnalysis(analysis_location) if isinstance(analysis, PartialPreAnalysis)
+                               else PreAnalysis(str(Path(analysis_location)) + os.sep))
             return song_path, _analyse_bpm(worker_analysis, song_path)
 
         with ThreadPoolExecutor(max_workers=int(workers)) as executor:
@@ -499,7 +512,7 @@ def build_argument_parser():
     parser.add_argument(
         "--renderers",
         nargs="+",
-        choices=DEFAULT_RENDERERS,
+        choices=tuple(CUTTERS),
         default=("equal_power",),
     )
     parser.add_argument("--target-sample-rate", type=int, default=44_100)
@@ -511,7 +524,7 @@ def build_argument_parser():
         "--transition-bars",
         nargs="+",
         type=int,
-        choices=(2, 4, 6, 8),
+        choices=(1, 2, 3, 4, 6, 8),
         default=DEFAULT_TRANSITION_LENGTHS_BARS,
         help="Candidate transition lengths in bars (default: 2 4).",
     )

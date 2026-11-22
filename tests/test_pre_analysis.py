@@ -2,14 +2,19 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import subprocess
 
 import numpy as np
+import pytest
 import soundfile as sf
 
+from src.analysis.models import BeatGridMetadata
 from src.analysis.pre_analysis import (
     ANALYSIS_CACHE_FILENAME,
     ANALYSIS_CACHE_FORMAT_VERSION,
     ANALYSIS_CACHE_NAMESPACE,
+    RECOVERED_ANALYSIS_CACHE_FILENAME,
+    PartialPreAnalysis,
     PreAnalysis,
     _analysis_id,
 )
@@ -38,25 +43,42 @@ def test_legacy_cache_is_marked_unknown_without_mutating_legacy_artifact(tmp_pat
     assert set(path.name for path in cache_directory.iterdir()) == {"00_pre_analysis.txt"}
 
 
-def _stub_fallback_analysis(analysis, *, sample_rate=8_000):
+def _stub_librosa_analysis(analysis, *, sample_rate=8_000):
     def load_song():
-        analysis.song = np.zeros(sample_rate * 5, dtype=np.float32)
+        analysis.song = np.zeros(sample_rate * 20, dtype=np.float32)
         analysis.sr = sample_rate
 
     def find_bpm():
         analysis.bpm = 120.0
-        analysis.beat_frames = list(range(0, sample_rate * 5, sample_rate // 2))
+        analysis.beat_frames = list(range(0, sample_rate * 20, sample_rate // 2))
 
     analysis.load_song = load_song
     analysis.find_bpm = find_bpm
-    analysis.auftakt_analysis_comparison = lambda: None
+
+
+def _stub_verified_analysis(analysis):
+    _stub_librosa_analysis(analysis)
+
+    def merge():
+        analysis.beat_frames = [
+            (sample, index % 4 + 1, 4)
+            for index, sample in enumerate(analysis.beat_frames)
+        ]
+        analysis.grid_metadata = BeatGridMetadata(
+            grid_source="auftakt_matched_to_librosa",
+            fallback_used=False,
+            backend_version="synthetic",
+            confidence=1.0,
+        )
+
+    analysis.auftakt_analysis_comparison = merge
 
 
 def test_current_cache_is_hash_scoped_complete_and_atomic(tmp_path, monkeypatch):
     song = tmp_path / "song.wav"
     sf.write(song, np.zeros(8_000, dtype=np.float32), 8_000)
     analysis = PreAnalysis(tmp_path / "analysis")
-    _stub_fallback_analysis(analysis)
+    _stub_verified_analysis(analysis)
     replacements = []
     real_replace = os.replace
 
@@ -85,7 +107,7 @@ def test_current_cache_is_hash_scoped_complete_and_atomic(tmp_path, monkeypatch)
     assert payload["analysis_config"]["analysis_algorithm"] == "beatbridge_pre_analysis_v2"
     assert payload["analysis_config"]["beat_backend"]["library_version"]
     assert "binary_sha256" in payload["analysis_config"]["bar_backend"]
-    assert payload["result"]["grid_metadata"]["fallback_used"] is True
+    assert payload["result"]["grid_metadata"]["fallback_used"] is False
     assert result.grid_metadata.analysis_id == analysis.analysis_id
     assert result.grid_metadata.beat_grid_sha256
 
@@ -98,7 +120,7 @@ def test_same_stem_with_different_audio_uses_distinct_cache_directories(tmp_path
     sf.write(first, np.zeros(8_000, dtype=np.float32), 8_000)
     sf.write(second, np.ones(8_000, dtype=np.float32) * 0.1, 8_000)
     analysis = PreAnalysis(tmp_path / "analysis")
-    _stub_fallback_analysis(analysis)
+    _stub_verified_analysis(analysis)
 
     analysis(first)
     first_directory = analysis.cache_directory
@@ -122,12 +144,12 @@ def test_stale_legacy_cache_does_not_taint_fresh_v2_provenance(tmp_path):
         encoding="utf-8",
     )
     analysis = PreAnalysis(tmp_path / "analysis")
-    _stub_fallback_analysis(analysis)
+    _stub_verified_analysis(analysis)
 
     result = analysis(song)
 
     assert result.grid_metadata.analysis_id == analysis.analysis_id
-    assert result.grid_metadata.fallback_used is True
+    assert result.grid_metadata.fallback_used is False
     assert (analysis.cache_directory / ANALYSIS_CACHE_FILENAME).is_file()
 
 
@@ -136,7 +158,7 @@ def test_analysis_contract_change_creates_a_new_cache_identity(tmp_path):
     sf.write(song, np.zeros(8_000, dtype=np.float32), 8_000)
     cache_root = tmp_path / "analysis"
     first = PreAnalysis(cache_root)
-    _stub_fallback_analysis(first)
+    _stub_verified_analysis(first)
     first(song)
 
     changed = PreAnalysis(cache_root)
@@ -145,12 +167,70 @@ def test_analysis_contract_change_creates_a_new_cache_identity(tmp_path):
         "analysis_algorithm": "beatbridge_pre_analysis_test_changed",
     }
     changed.analysis_id = _analysis_id(changed.analysis_config)
-    _stub_fallback_analysis(changed)
+    _stub_verified_analysis(changed)
     changed(song)
 
     assert first.cache_directory != changed.cache_directory
     assert (first.cache_directory / ANALYSIS_CACHE_FILENAME).is_file()
     assert (changed.cache_directory / ANALYSIS_CACHE_FILENAME).is_file()
+
+
+@pytest.mark.parametrize("analysis_class", [PreAnalysis, PartialPreAnalysis])
+@pytest.mark.parametrize("historical_fallback", [False, True])
+def test_auftakt_failure_then_detection_retries_and_preserves_history(
+    tmp_path, monkeypatch, analysis_class, historical_fallback,
+):
+    song = tmp_path / "retry.wav"
+    song.write_bytes(b"synthetic audio identity")
+    cache_root = tmp_path / "analysis"
+    analysis = analysis_class(cache_root)
+    _stub_librosa_analysis(analysis)
+    monkeypatch.setattr("src.analysis.pre_analysis.tmp_folder", tmp_path / "work")
+    calls = []
+    if historical_fallback:
+        _stub_verified_analysis(analysis)
+        analysis(song)
+        historical_path = analysis.cache_directory / ANALYSIS_CACHE_FILENAME
+        payload = json.loads(historical_path.read_bytes())
+        payload["result"]["grid_metadata"].update(
+            fallback_used=True, grid_source="fallback_from_detected_beats",
+        )
+        historical_bytes = json.dumps(payload).encode()
+        historical_path.write_bytes(historical_bytes)
+        analysis = analysis_class(cache_root)
+        _stub_librosa_analysis(analysis)
+        assert analysis.load_cached_analysis(song).grid_metadata.fallback_used is True
+
+    def run_auftakt(command, *, check):
+        assert check
+        calls.append(command)
+        if len(calls) == 1:
+            raise subprocess.CalledProcessError(1, command)
+        lines = ["aufTAKT header"] + [
+            f"{index / 2},{(index + 1) % 4 + 1},4" for index in range(40)
+        ]
+        Path(command[-1]).write_text("\n".join(lines), encoding="utf-8")
+
+    monkeypatch.setattr("src.analysis.pre_analysis.subprocess.run", run_auftakt)
+    fallback = analysis(song)
+    assert fallback.grid_metadata.fallback_used is True
+    assert fallback.beat_frames[0][1] == 1
+    assert analysis.merge_diagnostics["error_type"] == "CalledProcessError"
+    if not historical_fallback:
+        assert not (analysis.cache_directory / ANALYSIS_CACHE_FILENAME).exists()
+        assert analysis.load_cached_analysis(song) is None
+
+    detected = analysis(song)
+    assert detected.grid_metadata.is_verified_detection
+    assert detected.beat_frames[0][1] == 2
+    assert detected.grid_metadata.beat_grid_sha256 != fallback.grid_metadata.beat_grid_sha256
+    assert detected.grid_metadata.analysis_id == fallback.grid_metadata.analysis_id
+    assert analysis_class(cache_root).load_cached_analysis(song) == detected
+    assert analysis_class(cache_root)(song) == detected
+    assert len(calls) == 2
+    if historical_fallback:
+        assert historical_path.read_bytes() == historical_bytes
+        assert (analysis.cache_directory / RECOVERED_ANALYSIS_CACHE_FILENAME).is_file()
 
 
 def test_documented_auftakt_hash_matches_tracked_binary():

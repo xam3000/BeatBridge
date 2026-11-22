@@ -15,6 +15,8 @@ import librosa
 import numpy as np
 import torch
 
+from src.ml.control_initialization import read_model_config
+
 from src.analysis.pre_analysis import PreAnalysis
 from src.bridge import extract_aligned_vocal_bridge
 from src.control import (
@@ -476,13 +478,7 @@ def _load_best_vocal_model(training_run_directory):
     if int(checkpoint["epoch"]) != int(manifest["best_epoch"]):
         raise ValueError("Best checkpoint epoch differs from the training manifest")
     raw_model_config = model_contract["config"]
-    model_config = VocalFeatureControlMLPConfig(
-        hidden_dimensions=tuple(raw_model_config["hidden_dimensions"]),
-        dropout=float(raw_model_config["dropout"]),
-        increment_logit_bound=float(raw_model_config["increment_logit_bound"]),
-        maximum_vocal_ducking=float(raw_model_config["maximum_vocal_ducking"]),
-        initial_vocal_duck_logit=float(raw_model_config["initial_vocal_duck_logit"]),
-    )
+    model_config = read_model_config(VocalFeatureControlMLPConfig, raw_model_config)
     model = VocalFeatureControlMLP(model_config)
     model.load_state_dict(checkpoint["model_state_dict"])
     model.eval()

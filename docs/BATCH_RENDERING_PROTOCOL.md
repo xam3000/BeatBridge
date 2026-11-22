@@ -4,7 +4,15 @@ _Vertragsversion: 1, eingeführt am 2026-07-21._
 
 Das Batch-Rendering ist die stabile Grenze zwischen Kandidatengenerierung und dem späteren Hörvergleich. Es rendert ausschließlich akzeptierte `TransitionCandidate`-Einträge und schreibt pro Lauf WAV-Dateien sowie ein vollständiges JSON-Manifest.
 
+**Baselinefenster ab 19.11.2026.** Mit `BaselineCandidateGenerationConfig` oder im Paarbatch mit `--baseline-bars 1 2 3 4` prüft der Generator jede Länge einzeln. Jede vorgeschlagene Grenze braucht auf beiden Seiten die gewünschte Anzahl vollständiger, zusammenhängender 4/4-Takte. Das Manifest kennzeichnet die Kandidaten mit `baseline_bar_grid_v3` und Format 3. Beim Fade beginnt A am Source-Cue, B endet am Target-Cue. Die Überlagerung dauert so lange wie das kürzere der beiden tempoangepassten Fenster. Der harte Schnitt hat null Überlagerung. Für den historischen Candidate-v2-Export gilt dessen eigener Vertrag mit gleichen Fensterlängen. Feste Controller verwenden weiterhin vier Takte.
+
 ## Ausgabe-Struktur
+
+Beim MERT-Batch beziehen sich `candidate_rank` und `candidate_score` auf die Regelbewertung im gemeinsamen, von unvollständigen MERT-Fenstern bereinigten Pool. `selection_rank` und `selection_score` stammen vom Studienkopf. Auf dev01 sind alle 144 generierten Cues zulässig. Ab P10 run02 protokolliert `cue_ranking.provenance.encoder_runtime` CUDA-Gerät, GPU, bf16-Autocast, Pooling- und Kopfpfad. Ohne native CUDA-bf16-Unterstützung bricht die Studieninferenz ab.
+
+Der F2-Auswertungsvertrag für P10 verwendet für Recall@1 und MRR jede Quellaufnahme (eindeutiger Datei-SHA) als Einheit und für die Kontrollquoten jede Recording-Gruppe. Das zusätzliche Gruppenmittel für Recall steht im P10-Bericht. Maßgeblich für die Auswahl ist die spezifische F2-Regel im eingefrorenen P01-Protokoll.
+
+Für den Vier-Takt-Studienkopf wählt der Paarbatch `--ranking-method mert_continuation_v1` und verwendet standardmäßig den lokal bestätigten partiellen aufTAKT-Analysevertrag. Die MERT-Laufzeit aus P07 muss im Pythonpfad liegen. Die Inferenz lädt die [P10-Auswahl](masterarbeit/review_jp_20261118/p10/selection.json), prüft Modellrevision und Gewichts-SHA und extrahiert je Original die 24-kHz-Taktzustände. Die vier Takte vor S und die vier Takte ab T werden getrennt kodiert. Die Score-Reihenfolge ist absteigend, bei Gleichstand entscheidet die Kandidaten-ID. Regel und MERT erhalten die gemeinsam gültigen Cues. Das Manifest enthält die Regel in `candidate_ranking`, MERT samt Herkunft und Fensterausschlüssen in `cue_ranking` und die verwendete Methode sowie den MERT-Rang an jedem gerenderten Eintrag. Im Mehrsongbatch sind zusätzlich `--transition-bars 4` erforderlich. [Vollständiger CLI-Aufruf und echter Render](masterarbeit/REVIEW_JP_P10_RANKING_20261119.md#batch-render-und-reproduktion)
 
 ```text
 output/batches/help_to_breath/
@@ -87,7 +95,7 @@ result = generate_and_render_batch(
     "musik/song_a.wav",
     "musik/song_b.wav",
     "output/batches/song_a_to_song_b",
-    renderers=("simple", "fade", "equal_power", "tempo_fade"),
+    renderers=("simple", "fade", "equal_power"),
 )
 print(result.manifest_path)
 ```

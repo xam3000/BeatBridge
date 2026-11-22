@@ -26,12 +26,14 @@ from .model import (
     TRANSITION_CONTROL_OUTPUT_NAMES,
     VOCAL_FEATURE_CONTROL_MODEL_NAME,
     FeatureControlMLP,
+    FeatureControlMLPConfig,
     TCNBiLSTMTransitionControl,
     TCNBiLSTMTransitionControlConfig,
     VocalFeatureControlMLPConfig,
     VocalFeatureControlMLP,
 )
 from .runner import (
+    ConstantRateTCNTrainingConfig,
     TCNBiLSTMTrainingConfig,
     TrainingConfig,
     run_feature_control_training,
@@ -42,7 +44,8 @@ from .variable_runner import (
     VariableTemporalTrainingConfig,
     run_variable_tcn_bilstm_training,
 )
-from .variable_model import VariableTCNBiLSTMControlConfig
+from .variable_control_initialization import VariableTCNBiLSTMControlConfig
+from .control_initialization import EQUAL_POWER, LEGACY, run_initialization
 from .variable_waveform_cache import (
     VARIABLE_WAVEFORM_CACHE_ROOT,
     VARIABLE_WAVEFORM_RENDER_SAMPLE_RATE,
@@ -222,6 +225,10 @@ def build_argument_parser():
         help="PyTorch device: auto (CUDA if available), cpu, cuda, or cuda:<index>",
     )
     tcn_train_parser.add_argument("--resume", action="store_true")
+    tcn_train_parser.add_argument(
+        "--constant-learning-rate", action="store_true",
+        help="Use the fixed AdamW rate of the September reference, without warmup or scheduler.",
+    )
     _add_wandb_options(tcn_train_parser)
 
     variable_cache_parser = subparsers.add_parser("cache-variable-waveforms")
@@ -414,6 +421,9 @@ def build_argument_parser():
     )
     vocal_train_parser.add_argument("--resume", action="store_true")
     _add_wandb_options(vocal_train_parser)
+    for command in (train_parser, vocal_train_parser, tcn_train_parser, variable_train_parser):
+        command.add_argument("--control-initialization", choices=(EQUAL_POWER, LEGACY),
+                             help="Fresh runs default to equal_power_v1; resume inherits its bound contract.")
 
     vocal_sweep_parser = subparsers.add_parser(
         "sweep-vocal",
@@ -488,6 +498,11 @@ def build_argument_parser():
 
 def main():
     args = build_argument_parser().parse_args()
+    if hasattr(args, "control_initialization"):
+        control_initialization = run_initialization(
+            args.output_directory, args.resume, args.control_initialization,
+            getattr(args, "initialize_from_manifest", None),
+        )
     if args.command == "model-info":
         model = FeatureControlMLP()
         print(
@@ -626,6 +641,7 @@ def main():
         result = run_feature_control_training(
             args.dataset_directory,
             args.output_directory,
+            model_config=FeatureControlMLPConfig(control_initialization=control_initialization),
             config=config,
             waveform_cache_root=args.cache_root,
             resume=args.resume,
@@ -641,7 +657,8 @@ def main():
         return 0
 
     if args.command == "train-tcn-bilstm":
-        config = TCNBiLSTMTrainingConfig(
+        config_class = ConstantRateTCNTrainingConfig if args.constant_learning_rate else TCNBiLSTMTrainingConfig
+        config = config_class(
             seed=args.seed,
             max_epochs=args.max_epochs,
             batch_size=args.batch_size,
@@ -656,6 +673,7 @@ def main():
         result = run_tcn_bilstm_transition_control_training(
             args.dataset_directory,
             args.output_directory,
+            model_config=TCNBiLSTMTransitionControlConfig(control_initialization=control_initialization),
             config=config,
             waveform_cache_root=args.cache_root,
             resume=args.resume,
@@ -699,6 +717,7 @@ def main():
         result = run_variable_tcn_bilstm_training(
             args.dataset_directory,
             args.output_directory,
+            model_config=VariableTCNBiLSTMControlConfig(control_initialization=control_initialization),
             config=config,
             waveform_cache_root=args.cache_root,
             transition_lengths=args.transition_bars,
@@ -742,6 +761,7 @@ def main():
             device=args.device,
         )
         model_config = VocalFeatureControlMLPConfig(
+            control_initialization=control_initialization,
             hidden_dimensions=tuple(args.hidden_dimensions),
             dropout=args.dropout,
             maximum_vocal_ducking=args.maximum_vocal_ducking,
@@ -777,7 +797,8 @@ def main():
                 "WANDB_SWEEP_ID and WANDB_RUN_ID values."
             )
 
-        parameters = load_sweep_parameters()
+        parameters = dict(load_sweep_parameters())
+        requested = parameters.pop("control_initialization", None)
         training_fields = set(VocalTrainingConfig.__dataclass_fields__) - {
             "device",
             "training_sample_rate",
@@ -810,10 +831,12 @@ def main():
         model_parameters["hidden_dimensions"] = tuple(
             model_parameters["hidden_dimensions"]
         )
-        model_config = VocalFeatureControlMLPConfig(**model_parameters)
         output_directory = (
             Path(args.output_root).resolve() / sweep_id / sweep_run_id
         )
+        mode = (run_initialization(output_directory, True, requested)
+                if output_directory.exists() else requested or LEGACY)
+        model_config = VocalFeatureControlMLPConfig(**model_parameters, control_initialization=mode)
         result = run_vocal_feature_control_training(
             args.dataset_directory,
             output_directory,
@@ -840,7 +863,8 @@ def main():
         return 0
 
     if args.command == "sweep-tcn-bilstm":
-        parameters = load_sweep_parameters()
+        parameters = dict(load_sweep_parameters())
+        parameters.setdefault("control_initialization", LEGACY)
         training_fields = set(TCNBiLSTMTrainingConfig.__dataclass_fields__) - {
             "device",
             "training_sample_rate",
@@ -893,7 +917,8 @@ def main():
         return 0
 
     if args.command == "sweep-variable-tcn-bilstm":
-        parameters = load_sweep_parameters()
+        parameters = dict(load_sweep_parameters())
+        parameters.setdefault("control_initialization", LEGACY)
         default_training_config = VariableTemporalTrainingConfig()
         training_fields = set(default_training_config.to_dict()) - {
             "device",
@@ -929,6 +954,7 @@ def main():
             waveform_cache_root=args.cache_root,
             transition_lengths=args.transition_bars,
             batch_size=int(parameters["batch_size"]),
+            model_config=model_config,
             resume=False,
             save_checkpoints=False,
             wandb_config=WandbConfig(

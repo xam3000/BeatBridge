@@ -118,6 +118,7 @@ def load_checkpoint_state(run_dir: Path, which: str = "best") -> dict:
 
 
 def build_model(kind: str, manifest: dict):
+    from src.ml.control_initialization import read_model_config
     from src.ml.model import (
         FeatureControlMLP,
         FeatureControlMLPConfig,
@@ -129,14 +130,11 @@ def build_model(kind: str, manifest: dict):
 
     config = dict(manifest["contract"]["model"]["config"])
     if kind == "mlp_v1":
-        config["hidden_dimensions"] = tuple(config["hidden_dimensions"])
-        return FeatureControlMLP(FeatureControlMLPConfig(**config))
+        return FeatureControlMLP(read_model_config(FeatureControlMLPConfig, config))
     if kind == "vocal_mlp_v2":
-        config["hidden_dimensions"] = tuple(config["hidden_dimensions"])
-        return VocalFeatureControlMLP(VocalFeatureControlMLPConfig(**config))
+        return VocalFeatureControlMLP(read_model_config(VocalFeatureControlMLPConfig, config))
     if kind == "tcn_v1":
-        config["encoder_channels"] = tuple(config["encoder_channels"])
-        return TCNBiLSTMTransitionControl(TCNBiLSTMTransitionControlConfig(**config))
+        return TCNBiLSTMTransitionControl(read_model_config(TCNBiLSTMTransitionControlConfig, config))
     raise ValueError(kind)
 
 

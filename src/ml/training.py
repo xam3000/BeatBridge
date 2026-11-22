@@ -99,16 +99,7 @@ def full_band_self_supervised_batch_loss(
         rendered = renderer(
             source,
             target,
-            controls.gain_a[index],
-            controls.gain_b[index],
-            controls["eq_low_A"][index],
-            controls["eq_low_B"][index],
-            controls["eq_mid_A"][index],
-            controls["eq_mid_B"][index],
-            controls["eq_high_A"][index],
-            controls["eq_high_B"][index],
-            controls.low_end_ownership[index],
-            controls.vocal_ducking[index],
+            *controls.renderer_arguments(source.shape[-1], index),
         )
         terms = objective(
             rendered,

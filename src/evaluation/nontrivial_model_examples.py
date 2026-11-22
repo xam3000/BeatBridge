@@ -15,6 +15,8 @@ import uuid
 import numpy as np
 import torch
 
+from src.ml.control_initialization import read_model_config
+
 from src.control import DifferentiableVocalAwareRenderer
 from src.evaluation.all_models_control_study import (
     ALL_MODELS_STUDY_FORMAT_VERSION,
@@ -25,8 +27,8 @@ from src.evaluation.all_models_control_study import (
 from src.evaluation.control_probe import _audio_metadata, _write_audio_atomic
 from src.features.variable_contract import SUPPORTED_VARIABLE_LENGTHS
 from src.ml.variable_data import VariableFeatureDataset
-from src.ml.variable_model import (
-    VARIABLE_TCN_BILSTM_MODEL_NAME,
+from src.ml.variable_model import VARIABLE_TCN_BILSTM_MODEL_NAME
+from src.ml.variable_control_initialization import (
     VariableTCNBiLSTMControlConfig,
     VariableTCNBiLSTMTransitionControl,
 )
@@ -336,19 +338,7 @@ def _load_variable_tcn(run_directory, dataset_directory):
         expected_runner_name=VARIABLE_TEMPORAL_TRAINING_RUNNER_NAME,
     )
     raw = contract["model"]["config"]
-    config = VariableTCNBiLSTMControlConfig(
-        encoder_channels=tuple(raw["encoder_channels"]),
-        tcn_kernel_size=int(raw["tcn_kernel_size"]),
-        tcn_dilation=int(raw["tcn_dilation"]),
-        fusion_dimension=int(raw["fusion_dimension"]),
-        controller_hidden_size=int(raw["controller_hidden_size"]),
-        controller_layers=int(raw["controller_layers"]),
-        output_dimension=int(raw["output_dimension"]),
-        dropout=float(raw["dropout"]),
-        increment_logit_bound=float(raw["increment_logit_bound"]),
-        maximum_vocal_ducking=float(raw["maximum_vocal_ducking"]),
-        initial_vocal_duck_logit=float(raw["initial_vocal_duck_logit"]),
-    )
+    config = read_model_config(VariableTCNBiLSTMControlConfig, raw)
     model = VariableTCNBiLSTMTransitionControl(config)
     model.load_state_dict(checkpoint["model_state_dict"])
     model.eval()

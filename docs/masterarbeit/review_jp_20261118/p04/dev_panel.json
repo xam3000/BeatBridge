@@ -1,0 +1,14 @@
+{
+  "format_version": 1,
+  "split": "development",
+  "selection_note": "Technical fixture, first three stored cues of the first D2 train pair with verified detection and matching FP1 grid hashes in the merge-v2 retry cache. Selector labels stand in for future selections.",
+  "pair_manifest": "output/batches/all_music_recursive_bpm145_165_top1_20260805/pairs/40__Cosmic_Frequency_Official_Decibel_outdoor_2025_Anthem_Ran_D__target-01__Stuck_In_The_Middle_Ran_D/manifest.json",
+  "pair_manifest_sha256": "9aa40019447aac8ae572fa98afecd7b8980a8667bff6f9a31f2167a0db2aed83",
+  "selectors": {
+    "ssl": "candidate-d9f02eabd1604867",
+    "rule": "candidate-7290af38f10e4262",
+    "random": "candidate-73f0b62ab01e0191"
+  },
+  "source_feature_directory": "output/feature_cache/feature_protocol_v1/8395fb4315dd1848/337a1fbb12cbe92ea939",
+  "target_feature_directory": "output/feature_cache/feature_protocol_v1/e4c993f43b743153/257cc474c4afd7bc57a4"
+}

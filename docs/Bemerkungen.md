@@ -1,5 +1,471 @@
 # Beobachtungen, Entscheidungen und Gelerntes
 
+## 19.11.2026 · P11-F-5 · Nutzercommit geprüft
+
+Mit `git ls-tree`, `git show 16c525e:<Pfad>` und einem lesenden SHA-256-Abgleich im Projektinterpreter wurden die vier F-5-Dateien geprüft. Beide Protokollblobs treffen die in run02 hinterlegten Hashes. Der committete Prüfnachweis stimmt inhaltlich mit dem lokalen Abschlussaudit überein. Alle drei Sitzungskennungen wurden aus den privaten Zuordnungen reproduziert und die drei Player-Einstiege gefunden. F-5 ist erledigt. Vor der ersten Sitzung prüft die Versuchsleitung den tatsächlichen Hörplatz mit dem Teilnehmerkonto.
+
+## 19.11.2026 · Unabhängiger Review R_P11_02
+
+**Raster, Originalsamples und Dateidauer.** Die Frage war, ob die neue Brücke am detektierten A-Raster endet, die Audiosamples um die B-Schläge bewahrt und die Enddateien ausschließlich im Nachlauf gekürzt wurden. `.venv\Scripts\python.exe -B -X utf8 -` las per Inline-Sonde die 14 hashgeprüften Original-FLACs, die historischen Analyse-Caches, 21 Float-WAVs und 49 PCM24-Master. Die Sonde resampelte mit SoXR, wiederholte zwei globale Rubber-Band-Stretches direkt über FFmpeg und benutzte weder die P11-Render- noch die Audit-Funktion. Alle 17 Grenzen je Cue stimmen mit den gecachten 4/4-Fenstern und ihren Zeittransformationen überein. Alle 672 zweikanaligen 441-Frame-Abschnitte an den Intervallgrenzen stimmen samplegenau mit dem rekonstruierten B-Signal überein. 227 Beatintervalle sind lokal gestreckt, 109 unverändert. In allen 49 Mastern liegen A-Vorlauf, bei den sieben Ankern auch die vollständige A-Brücke, und der B-Nachlauf innerhalb einer PCM24-Stufe des Originals nach ausgewiesenem Gain. Die Kürzung beträgt maximal 7.526 Frames bzw. 170,66 ms. Jedes Paar hat eine Framezahl und Dateigröße. P06/A enthält bei nativen 48 kHz einen Medianabstand von 17.920 Samples, entsprechend 160,714 BPM. Exit 0. Damit sind das technische Raster und der Zuschnitt bestätigt. Der folgende Check bindet die fertigen Stimuli an die Auswahl und die öffentlichen Player.
+
+**Freeze, Cues und Blindpakete.** Die Frage war, ob run02 exakt dieselben Cues kreuzt, die Blindpakete wirklich vollständig sind und die alte Playerkopie aus dem Studienordner entfernt ist. Der direkte Zugriff auf die P01-Arbeitskopie war durch Dateirechte blockiert. Die Inline-Sonde mit `.venv\Scripts\python.exe -B -X utf8 -u -` holte die verbindliche Paarliste aus `git show 2a70dc1:docs/masterarbeit/review_jp_20261118/p01/evaluation_population.json`. Im ersten Lauf brach die Sonde nach sieben Pools und 49 Mastern ab. Die Suche nach `session_id` traf im archivierten HTML auf eine Referenz im Exportcode. Zwei Folgeaufrufe endeten wegen fehlerhafter Einbettung des geänderten Ausdrucks vor Ausführung mit SyntaxError. Im korrigierten Lauf prüfte die Sonde das geparste Sitzungsobjekt. Sie bestätigte elf eingefrorene Paare mit 22 Recording-Gruppen, vier identische Ausschlüsse, sieben byteidentische Pools und Auswahlmanifeste mit zusammen 38.556 Kandidatenzeilen, 49 Master, 147 anonymisierte Kopien und drei reproduzierbare Zufallszuteilungen. Sie verifizierte beide Protokollhashes, die neuen Sitzungskennungen und den versionierbaren Prüfnachweis. Die drei Altplayer liegen im Archiv. Die Rastergrenzen stehen in `d476124` und `2a70dc1`. Exit 0. Die technische Prüfung betrifft die jeweiligen Playerordner, der Zugang am Hörplatz bleibt bei der Versuchsleitung.
+
+Beim Einlesen des Skill-Archivs scheiterte der erste Aufruf an cp1252. Der Wiederholungsaufruf mit `PYTHONIOENCODING=utf-8` und `-X utf8` las es vollständig. Der erste Versuch, diesen Journaleintrag anhängend zu schreiben, scheiterte mit verweigertem PowerShell-Dateizugriff. Der Abschnitt wurde anschließend am Dateianfang eingefügt.
+
+
+**Finale E/D-Brücken und lokaler Stretchbedarf.** Die Frage war, ob die geprüften Float-WAVs den veröffentlichten PCM-Brücken entsprechen. `.venv\Scripts\python.exe -B -X utf8 -u -` wiederholte den Raster- und Wellenformcheck mit dem Zwei-Band-Renderer auf den rekonstruierten Brücken und den gespeicherten Controls. Alle 42 E/D-Rohhashes und normalisierten PCM-Samples stimmten innerhalb einer PCM24-Stufe. Die sieben Anker entsprachen dem vollständigen A-Signal der Brücke. Kein neuer Optimierungslauf. Die stärkste lokale Tempoanpassung lag bei P07/Regel im zehnten Intervall, Eingabe 11.611 und Ausgabe 17.405 Frames, Faktor 0,667. Die historische A-Brücke endete maximal 185,92 ms vor ihrem Rasterende. Exit 0. Das Replay verbindet die Float-Artefakte mit den 49 Enddateien. Die Hörwirkung des lokalen Stretchings bleibt offen.
+
+**Blindung bei separater WAV-Analyse.** `.venv\Scripts\python.exe -B -X utf8 -u -` las aus den drei Playerpaketen Stichproben des jeweils zweisekündigen Anfangs und Endes und verglich die Ausschnitte nach linearer Pegelanpassung. Frage war, ob die Regelbedingung trotz gleicher Dateigröße aus mitgelieferten Samples ableitbar bleibt. Alle 21 Seiten ergaben bei einem relativen Fehlerschwellwert von 10⁻⁵ zwei Zweiergruppen und eine Dreiergruppe. Matchfehler innerhalb eines Cues maximal 1,12 × 10⁻⁶, zwischen Cues minimal 0,978. Der anschließend gelesene Schlüssel bestätigt die Dreiergruppe als Regel-Cue plus Anker. Exit 0. Wer das Design kennt und WAVs außerhalb des Players analysiert, kann die Regelgruppe erkennen. Die Versuchsleitung kontrolliert die Nutzung am geschlossenen Hörplatz. Keine Bewertung oder Wiedergabe.
+
+## 19.11.2026 · F zu R_P11_01
+
+- Korrekturlauf mit der Projekt-venv und der lokalen P07-Runtime, `HF_HUB_OFFLINE=1`, `-B -X utf8 -u -m src.evaluation.p11_stimuli --revise-from output/review_jp_20261118/p11_hoerversuch/run01 --output output/review_jp_20261118/p11_hoerversuch/run02`. Alle sieben vollständigen Panels neu gerendert, 21 gebundene Cues, vier frühere Rasterausschlüsse, 49 gemeinsame P04-Exporte, drei neue Pakete. Exit 0. Der anschließende Lauf `-m src.evaluation.p11_verify --root output/review_jp_20261118/p11_hoerversuch/run02` prüfte zwei auswählende Ranker und die Zufallswahlen, lokale PCM-Grenzen, Geometrie, Cut, Lautheit, Dateigröße, öffentliche Playerobjekte und bytegleiche WAVs in allen 147 Kopien. Exit 0. Größte Lautheitsabweichung 0,02 LU, höchster True Peak −12,16 dBTP. Ein projektlokaler Lesecheck verglich beide versionierbaren Prüfnachweise byteweise mit der Ausgabe, prüfte die P11-Dokumentlinks und den SHA der historischen Protokollfassung. `git diff --check` für die bearbeiteten versionierten Status-, Journal- und Matrixdateien bestand mit Windows-Zeilenendehinweisen. Nächster Teilauftrag war der separat protokollierte unabhängige R_P11_02. Anschließend stehen Nutzercommit und Kontrolle des Hörplatzes aus.
+
+- Lesender Reproduktionstest mit Projekt-Python, Funktionsaufruf `p11_verify.verify(run01) == read_json(run01/"verified.json")`. Nach Auslagerung der Zwischenpakete und Archivierung des ursprünglichen Studienprotokolls bestätigte der vollständige Audit die historischen 49 WAVs, 147 Teilnehmerkopien und alle alten Hashbindungen. Exit 0. Run01 ist als Beleg für den früheren Stand reproduzierbar und für Teilnehmer gesperrt.
+
+- Fachregression mit `.venv\Scripts\python.exe -B -X utf8 -m pytest -q tests/test_p11_alignment.py tests/test_render_comparison.py --basetemp=output/review_jp_20261118/p11_hoerversuch/pytest_f01`. 25 Tests bestanden, zwei bekannte audioread-Warnungen. Stereo-Sinus mit markierten Schlägen und wechselnden Intervalllängen durchlief den realen Rubber-Band-Pfad. Die Impulse landeten an den erwarteten Samples, die Tonhöhe blieb bei 440 Hz innerhalb der Prüftoleranz. Beide Gate-Grenzen und Überschreitungen wurden geprüft. Anschließend P04 auf die feststehenden Cues angewandt.
+- Historische Diagnose und unabhängige Pegelreferenz mit `src.evaluation.p11_review_check`. Die Projekt-venv nutzte eine separate lokale Prüflaufzeit unter `p11_hoerversuch/review_runtime`. Der erste Downloadversuch war durch den Netzwerkfilter blockiert. Nach Freigabe wurde pyloudnorm 0.1.1 als PyPI-Wheel installiert. Im ersten Auditversuch verwechselte die Textsuche einen JavaScript-Verweis mit einer Kennung in den eingebetteten Sitzungsdaten. Die Prüfung liest jetzt das JSON-Objekt. Der zweite Versuch erreichte die Referenzmessung und meldete die fehlende Laufzeitabhängigkeit future. Nach Installation von future 1.0.0 lieferte derselbe Aufruf `output/review_jp_20261118/p11_hoerversuch/run02/review_check.json`. Auf vier synthetischen Stereosignalen lag die größte Differenz zwischen FFmpeg und pyloudnorm (DeMan) bei 0,0595 LU, im Gate-Fall bei 0,0424 LU. Die Detektorzeiten wurden nur aus Receipts und Cache ausgewertet. Die Referenzmessung verwendete ausschließlich synthetische Signale. [Paketquelle](https://pypi.org/project/pyloudnorm/0.1.1/) · [Lizenz](https://github.com/csteinmetz1/pyloudnorm/blob/master/LICENSE)
+- Die drei historischen Player-/Schlüsselpaare wurden vor dem Archivieren im Rohdatencheck verglichen. Die Schlüssel waren bytegleich. Nur der neuere Satz enthielt die Kennung im eingebetteten Sitzungsobjekt. Den älteren Pfad `run01/sessions` am 19.11. vollständig und ohne Löschen nach `output/review_jp_20261118/p11_archiv_run01_sessions` verschoben. Die ursprünglichen Stimuli und Ergebnismanifeste verbleiben in run01. Nächste Prüfung ist der Abgleich der Teilnehmerpakete von run02.
+
+## 19.11.2026 · R_P11_01 · Unabhängiger Review P11
+
+- **Frage und Begründung.** Trägt das P11-Material den Hörversuch? Geprüft werden drei tragende Behauptungen: (a) Expositionsfreiheit der 22 Aufnahmegruppen, (b) Blindung und Verifikationsbindung der Teilnehmerkopien, (c) Renderkonsistenz der Übergänge (Tempo, Fenster, Schnittpunkte). Der Review ist ein eigener Auftrag, nicht Selbstfreigabe des Bauagenten. Es gab keine Ratings, kein Anhören und keine Entblindung.
+- **Eingaben und Setup.** Protokollfreeze `2a70dc1`, Lauf `output/review_jp_20261118/p11_hoerversuch/run01/`, Prüfnachweis `docs/masterarbeit/review_jp_20261118/p11/verified.json`, Dokumente unter `docs/masterarbeit/review_jp_20261118/p11/`, `docs/masterarbeit/review_jp_20261118/p01/evaluation_population.json`, Grid-Receipts unter `run01/cache/grid_receipts/`. Projekt-venv `.venv\Scripts\python.exe -B -X utf8`. Hilfsskripte liegen nur unter `%TEMP%\opencode\` (`p11_exposure_check.py`, `p11_clip_check.py`, `p11_grid_check.py`, `p11_tempo_check.py`), nicht im Repository. Lesezugriff nur, keine Schreibvorgänge im Repository außer Bericht und diesem Eintrag.
+- **Befehle und Umfang.**
+  1. Replay der Verifikation: `verify(Path("…/run01"))` aus `src.evaluation.p11_verify` als Funktionsaufruf ohne `__main__`, damit `verified.json` nicht überschrieben wird. Umfang: alle 11 Paarbindungen, 7 Panels, 49 Clips mit Messung, 147 Teilnehmerkopien, drei Sitzungsschlüssel.
+  2. Expositions-Textsuche über `output/` und `docs/` (ohne `p11_hoerversuch/` und ohne `docs/…/p01/`): 22 Gruppen-IDs und Datei-SHA-256. Positive Kontrolle: Treffer in den P01-Expositionsartefakten. Pilot-Ordner `pilot01`/`pilot02` separat gescannt.
+  3. Frame-Längen aller 49 Clips per `soundfile.info` je Zelle.
+  4. Verzeichnisvergleich `run01/blind/` gegen `run01/sessions/` (153 Dateien je Baum mit SHA-256). Zuordnungsschlüssel `VP01` per SHA-256 verglichen. Dateigrößen je Seite gruppiert.
+  5. Fensterspannen und Schlagintervalle aus `stimuli/results.json` (`source_beats`, `target_beats`, `bridge_samples`, `target_sample_scale`, `tempo_backend`) und BPM-Feldern aus `selection.json`. Vergleich mit `src/pipeline.py:225–231` und `src/evaluation/p11_stimuli.py:47`.
+  6. Grid-Receipts der vier Ausschlüsse (Abdeckung, längster Block) und BPM-Feldwerte aller 22 Aufnahmen. Zeitstempel der Receipts, Protokolldatei, Verifikations- und Blindpakete.
+  7. Prüfung der Verfügbarkeit von `pyloudnorm` in der Projekt-venv (nicht vorhanden).
+- **Ergebnis einschließlich Fehlern.** Kein Prüflauf brach ab. Der Replay von `verify` bestätigt 49 Clips, 3 Sitzungen, Maximalabweichung 0,01 LU, höchsten True Peak −12,28 dBTP, dieselben Inventar- und Protokoll-SHA und dieselben Sitzungskennungen wie `verified.json`. Die Expositionssuche findet keine der 22 Gruppen in Trainings-, Validierungs-, Dataset-, Batch-, Pilot- oder Modellmanifesten außerhalb von P01/P11. Die Pilotordner enthalten keine finalen Gruppen. Geometrie: `bridge_samples` entspricht in allen 21 Zellen dem kürzeren der beiden Fensterspannen. In vier unskalierten Zellen (P02 SSL und Regel, P06 Regel, P09 Regel) weichen die Median-Schlagabstände um 1,4–2,9 % ab. In neun von 21 Zellen beträgt die Spannen-Differenz mindestens 40 ms, maximal 186 ms. Bei P09 Regel endet die Brücke 160 ms vor dem 16. A-Schlag. Die BPM-Feldwerte 160,714… treten in 17 Grid-Receipts auf, darunter drei Fallback-Receipts. Im Receipt P06-Quelle widerspricht `median_interbeat_interval_samples = 17920` dem BPM-Feld im selben Receipt. Die Gruppen-Blindung: In jedem Paar bilden `rule/E`, `rule/D` und `rule/anchor` eine Dreiergruppe identischer Dateigröße. Im Ordner `run01/sessions/` liegt eine zweite Playerkopie ohne `session_id` im `index.html`, mit anderem SHA-256; die Zuordnung ist identisch. Die Ausschlusswerte (P04 100/50/0 Takte; P05 78,29/99,51/58; P08 99,74/90,24/46; P11 50/99,65/45) stimmen mit `materialbericht.md` überein. Die Protokolldatei (15:18:29) liegt vor der ersten Rasterprüfung (15:25:58). Unversioniert sind Protokoll und Durchführung; der Commit ist offen. Die Schwelle 0,98 steht im Analyseprotokoll vom 18.11., nicht im P11-Protokoll. `pyloudnorm` ist nicht installiert; die Lautheitsprüfung ist nicht unabhängig.
+- **Hinweis zum Zugriff.** Ich habe die Schlüsseldateien `zuordnung.json` für den Hash-Vergleich und die Größenprüfung gelesen. Sie blieben unverändert. Ein solcher Zugriff gehört in das Versuchsleiter-Protokoll.
+- **Schlussfolgerung.** Der Bericht [R_P11_01](masterarbeit/review_jp_20261118/reviews/R_P11_01.md) listet die Befunde F-1 bis F-6 mit Priorität. F-1 (Tempo und Fensterkonsistenz, P1) ist ein echter Fehler im Stimulusvertrag; seine Ursache (BPM-Feld oder Grid) ist offen. F-2 (Blindung über Dateilänge) und F-3 (zweite Playerkopie) sind echte Mängel mit P2. F-4 und F-5 betreffen Dokumentation und Versionierung der Vorregistrierung. F-6 ist eine Unsicherheit bei der Lautheitsmessung. P11 ist nicht für die geschlossenen Sitzungen freizugeben.
+- **Gelernt (19.11.2026, erster Review-Durchgang P11):** Symptom: Die Stretch-Entscheidung zeigt „nicht nötig“, obwohl die Schlagspannen im Fenster um bis zu 2,9 % abweichen. Ursache: `pipeline.adjust_tempo` vergleicht nur die BPM-Felder, das Tempo-Gate in `p11_stimuli` ebenfalls, und die BPM-Felder sind für 17 Receipts identisch. Regel: Tempo- und Phasenkontrolle am tatsächlich gerenderten Fenster prüfen, nicht am Feldwert allein.
+- **Nächster Schritt.** Der Autor entscheidet über die Behandlung von F-1 und F-2 (Gate, Ersatz, Ausschluss oder Konfundierungsbericht). Danach Korrekturlauf `run02` mit neuem Pfad und datiertem Protokollnachtrag durch P11-F. Die Dateien `sessions/` sind aus dem Studienordner zu nehmen, ohne Löschung ohne Protokoll. Der Nutzer committet Protokoll und Durchführung. Registerzeile R·P11 bleibt offen.
+
+## 19.11.2026 · P11 · Finaler Stimulusbestand
+
+- Übergabeprüfung. Ein Leseabgleich mit Projekt-Python bestätigte die bytegleichen Dokumentationskopien von `p10/review_check.json` und `p11/verified.json` sowie alle sechs lokalen Links der drei P11-Dokumente. Die erste Kopie in den P10-Dokumentationsordner scheiterte an den Windows-Dateirechten und gelang mit freigegebenem Schreibzugriff. `git diff --check` auf den bearbeiteten versionierten Bestandsdokumenten, Batchdateien und dem Batchtest ergab Exit 0 mit Zeilenende-Hinweisen. Die Unterlagen stehen für R zu P11 bereit.
+
+- Hauptlauf mit Projekt-Python, lokalem P07-Runtime-Pfad und `HF_HUB_OFFLINE=1`: `-B -X utf8 -u -m src.evaluation.p11_stimuli` prüfte die elf Paare aus dem P01-Commit. Sieben zulässige Paare, 38.556 Cues im gemeinsamen Pool, 21 verschiedene gewählte Cues und 49 finale WAVs aus P04. Vier symmetrische Ausschlüsse. Exit 0, Protokoll `output/review_jp_20261118/p11_hoerversuch/run01-attempt01.log`. Der erste Ausgabeordner `sessions` war ein technischer Zwischenstand. Anschließend erzeugte `-m src.evaluation.p11_stimuli --package-only` aus demselben Inventar die drei endgültigen Ordner unter `run01/blind` mit der im Entwicklungspilot geprüften Exportkennung. Exit 0.
+- Abschlussaudit mit `.venv\Scripts\python.exe -B -X utf8 -m src.evaluation.p11_verify`. Ziel war, den privaten Bestand bis zur jeweiligen Teilnehmerdatei nachzuweisen. Alle elf Paarbindungen und Ausschlüsse, sieben vollständige P04-Panels, Cue-Gewinner, 49 erneut gemessene WAVs, drei Personenpermutationen und 147 Kopien bestätigt. Dauer 18,899–19,166 s, maximale Abweichung 0,01 LU, höchster Peak −12,28 dBTP. Exit 0. Die [Prüfdatei](masterarbeit/review_jp_20261118/p11/verified.json) bindet Inventar, Studienprotokoll und Sitzungskennungen. Nächster Meilenstein ist der unabhängige P11-Review. Menschliche Ratings stehen aus.
+
+- Wiederholte Bedienprobe am Entwicklungspilot `pilot02`, um die Bindung der exportierten Kennung direkt gegen den privaten Pilotschlüssel zu prüfen. Aufruf mit Projekt-Python und `-B -X utf8 -m src.evaluation.p11_pilot_check output/review_jp_20261118/p11_hoerversuch/pilot02`. Chrome konnte im eingeschränkten Prozess nicht starten (Exit 2147483651). Mit freigegebenem lokalem Chrome lief dieselbe Prüfung erfolgreich durch. Sieben anonyme IDs, Sperre unvollständiger Eingaben, Randwerte 0 und 100 sowie Exportkennung bestätigt. Die synthetischen Eingaben verblieben im temporären Browserprofil. Für das finale Material folgt eine technische Zuordnungsprüfung.
+
+- Rasterprüfung vor der Cue-Wahl. Der Finalrender analysierte das erste Paar selbst. Parallel prüfte `src.evaluation.p11_stimuli --preanalyse-after 1 --workers 6` die übrigen 20 Originale mit der partiellen aufTAKT-Analyse. Jeder Detektorbeleg bindet den SHA-256 des Originals. Der Lauf endete regulär. Drei inkrementelle Aufrufe mit `--record-grid-exclusions` übernahmen die verfügbaren Negativbelege vor dem Render des betroffenen Paars (P04/P05, P08, P11). Auf der Quellseite verfehlten P04 und P08 die aufTAKT-Abdeckung, P05 und P11 die librosa-Abdeckung. Bei P04 war zusätzlich der längste durchgängige Taktblock zu kurz. Alle sieben Bedingungen des jeweiligen Paars sind symmetrisch ausgeschlossen. Nächster Schritt war der Abschluss der verbleibenden Panels auf denselben eingefrorenen Paaren.
+
+## 19.11.2026 · F zu R_P10_01
+
+- P11-Finalvertrag und Analysepfad. `.venv\Scripts\python.exe -B -X utf8 -m pytest -q tests/test_batch_render.py tests/test_multi_batch_render.py tests/test_render_comparison.py tests/test_p10_continuation.py tests/test_pre_analysis.py` prüfte die Bindung von Studiencue und Rechenpräzision sowie die Analyserwahl für frische partielle aufTAKT-Grids. 56 Tests bestanden in 62,47 s, zwei bekannte audioread-Deprecations. Technische Prüfung auf realen Finalpaaren folgt im P11-Inventar.
+
+- P11-Vorprüfung für den verbindlichen P04-Pfad mit Projekt-Python und lokalem P07-PYTHONPATH bei `HF_HUB_OFFLINE=1`. Import von `demucs.api.Separator` und Auflösung des gebundenen R1-Vertrags über `load_fixed_inference_contract(..., transition_bars=4)` gelangen. Vorgeschriebener Feature-Vocalpfad ist Demucs/htdemucs. Der Lauf nutzt diesen lokalen Pfad.
+
+- P11-Exportbindung. Der zweite Pilot mit denselben P04-Entwicklungsclips (`src.evaluation.p11_player`, danach `src.evaluation.p11_pilot_check`, Ziel `p11_hoerversuch/pilot02`) speichert die SHA-256-Kennung des privaten Sitzungsschlüssels in der Rohdatei. Die Chrome-Bedienprobe bestand einschließlich leerer Pflichtfelder, gültiger Null und Höchstwert. Keine Hörurteile erhoben.
+
+- Fachregression mit `.venv\Scripts\python.exe -B -X utf8 -m pytest -q tests/test_batch_render.py tests/test_p10_continuation.py tests/test_render_comparison.py tests/test_baseline_lengths.py tests/test_multi_batch_render.py`. 51 bestanden, zwei bekannte audioread-Deprecations. Neuer GPU-freier Test deckt Default, 4/4-Guard, gemeinsamen Pool, Auswahl ohne Rückfüllung, Manifest und gerenderte ID ab. Die Gerätefehlerpfade brechen ab.
+- `src.evaluation.p10_listening --output output/review_jp_20261118/p10_ranking/run02/autorensichtung` mit Projekt-Python. Zehn feste Entwicklungsfälle, 20 geprüfte PCM24-Clips, Exit 0. Die neue Anleitung fordert die Notizen vor Öffnen der Zuordnung. Anschließend P11-Playerpilot.
+- P11-Pilot vor Finalaudio: `src.evaluation.p11_player` mit P04 run02/panel schrieb die sieben vorhandenen Entwicklungsclips unter anonymen Labels in `p11_hoerversuch/pilot01/player`, den Schlüssel separat. `src.evaluation.p11_pilot_check output/review_jp_20261118/p11_hoerversuch/pilot01` prüfte im temporären headless Chrome die Blockierung unvollständiger Eingaben sowie den JSON-Export mit 0 und 100. Exit 0. Automatisch eingesetzte Testwerte wurden verworfen. Nächster Schritt: feste P01-Paare nach dem datierten Protokoll verarbeiten.
+
+- `.venv\Scripts\python.exe -B -X utf8 -m src.evaluation.p10_review_check` prüfte die Statistik- und Gerätebefunde gegen die 2.830 Einzelränge, 26 Paarwerte und beide dev01-Manifeste. Ergebnis in `p10_ranking/run02/review_check.json`. Bootstrap 0,83215–0,87864, Gruppenrecall 0,853347, SD der Paar-ρ 0,38633, t-Intervall −0,18352 bis +0,12856, Zufallswahrscheinlichkeit für null Treffer 0,83428. Alle 144 Scores, Regelränge, Renderdaten und WAV-SHA stimmen überein. Die neue Provenienz nennt cuda:0, RTX 5070 Ti, bfloat16, Float32-Pooling und CPU-Kopf. Zahlen von run01 gelten weiter.
+
+- R10-01, dev01 erneut aus beiden Originalen extrahiert. Projekt-Python mit P07-Runtime im PYTHONPATH, `-m src.batch_render`, Quellen und Optionen wie im P10-Bericht (je zwölf Grenzen, Equal Power, Top-1, 5/14 s), neues Ziel `output/review_jp_20261118/p10_ranking/run02/batch`. CUDA mit nativem bf16 lieferte 144 Scores und ein WAV, Rang 1 wieder `candidate-91852b13b5134942`, null Render- und Metrikfehler. Optionale nnAudio-Importmeldung. Anschließend numerischer Vergleich gegen run01.
+
+## 19.11.2026 · R zu P10 · Unabhängiger Review
+
+- **Frage und Begründung.** Belegen P10-Auswahl, Expositionsfreiheit, Live-Scores und Batchkorrektheit den Meilenstein? Der Bauagent hat P10 umgesetzt; der Arbeitsrahmen verlangt vor P11 eine unabhängige Prüfung von Verträgen, Rohartefakten und Behauptungen.
+- **Eingaben und Setup.** Arbeitsstand mit unversionierten P10-Dateien. Geprüft wurden `output/review_jp_20261118/p10_ranking/run01/` (Validation, Pairs, Batch, `verified.json`), das P07-Vollmanifest, die P08-Panels in `run02`, der P09-Audit und die P01-Population `evaluation_population.json`. Keine Trainings-, Audio- oder Hörläufe, keine Evaluationspopulation außerhalb der Validation. Prüfskripte lagen nur unter `C:\Users\max_h\AppData\Local\Temp\opencode\`.
+- **Befehle und Umfang.**
+  1. `.venv\Scripts\python.exe -B -X utf8 -m pytest -q -p no:cacheprovider tests/test_p10_continuation.py tests/test_p09_metric.py tests/test_p08_continuation.py`. Ergebnis: 21 bestanden, 1 Fixture-Fehler `PermissionError` auf dem systemweiten Pytest-Temp-Verzeichnis. Das ist ein Umgebungsfehler, kein Testergebnis.
+  2. `.venv\Scripts\python.exe -B -X utf8 -m pytest -q -p no:cacheprovider --basetemp=output/review_jp_20261118/p10_ranking/review_pytest_p08 tests/test_p08_continuation.py`. Ergebnis: 15 bestanden. Der Basisordner wurde danach entfernt.
+  3. Schreibgeschützte Neuberechnung mit `src.evaluation.p10_verify.verify(...)`, ohne Überschreiben von `verified.json`. Ergebnis: identisch mit der gespeicherten Datei (14 Bedingungen, 2.830 Queries, 144 Live-Scores, Abweichung 0,0, 26 Konflikte, 20 Clips).
+  4. Unabhängige Nachrechnung aus Rohdaten: P01-Gruppen und SHAs gegen P07 (283 Gruppen, 290 Originale), P07-Ausschlüsse, P08-Validation/-Train und Entwicklungspaare. Kennzahlen aus `validation/mert_s2_20260926.csv`. Bootstrap über 54 Aufnahmen (10.000 Ziehungen, Seed 20261119). Paar-ρ-Intervall. Panelzusammensetzung. Top-1-Übereinstimmung aus `candidate_scores.csv`. Gruppengewichtung. Überlagerungslänge aus dem Batchmanifest.
+- **Ergebnis einschließlich Fehlern.** Keine Datenleckage, keine Index-, Tempo- oder Renderabweichung im geprüften Pfad, Auswahl entspricht der Regel in `EVALUATION_PROTOCOL.md` (F2). Recall@1 85,59 %, Bootstrap-95-%-Intervall 83,2 bis 87,9 %. Gruppengewichtet 85,33 %. Paar-ρ −0,0275, t-95-%-Intervall −0,184 bis +0,129. Erwartete Top-1-Übereinstimmung bei Zufall 0,18, P(0 von 26) ≈ 0,83. Befunde: R10-01 (P2, Gerät und Präzision des Rankers nicht gebunden, `src/ranking/continuation.py:149`), R10-02 (P2, kein Test für den MERT-Zweig in `src/batch_render.py`), R10-03 bis R10-05 (P2 Berichtsgrenzen zu Auswahl-Validation, Querübertragung und Kontrolle), R10-06 bis R10-10 (P3), R10-11 (außerhalb P10). Bericht: `docs/masterarbeit/review_jp_20261118/reviews/R_P10_01.md`.
+- **Schlussfolgerung.** P10 ist technisch korrekt und aus den Rohartefakten reproduzierbar. Die Aussagekraft ist begrenzt: Validationszahl optimistisch, Übertragung auf Querpaare ungeprüft, keine Hörbelege.
+- **Nächster Schritt.** F: R10-01 und R10-02 vor dem Rendern der P11-Stimuli beheben und den Test wiederholen. Danach R10-03 bis R10-05 im Bericht übernehmen. Der Nutzer committet die P10-Dateien. Eintrag der Zeile „R · P10“ im Register nach diesem Bericht aktualisieren.
+
+## 19.11.2026 · P10 · Batch und Entwicklungsvergleich
+
+- Dokumentübergabe am 19.11. geprüft. Ein kurzer Leseabgleich per Projekt-Python bestätigte alle 14 lokalen Links des P10-Berichts, 14 Datenzeilen in Bericht und CSV sowie bytegleiche Dokumentkopien von Auswahl, Tabelle und Prüfnachweis. Die P10-Abschnittszählung aus den Fall-IDs ergab 217 introartige Positive aus 40 Gruppen und 627 dropartige aus 49 Gruppen. `git diff --check` auf den bearbeiteten Bestandsdateien endete mit 0 und den Git-Hinweisen zur Windows-Zeilenendekonvertierung. Nächster Schritt ist der unabhängige Review R.
+
+- Abschlussprüfung mit `.venv\Scripts\python.exe -B -X utf8 -m src.evaluation.p10_verify`. Aus den Einzelrängen, Scores, Gruppen und Cue-IDs ließen sich alle 14 Tabellenzeilen bis 10⁻¹² reproduzieren. Für dev01 stimmten alle 144 Live-Scores exakt mit den Cachewerten überein. Aus den nativen Rastern und dem Tempofaktor folgen 277.473 Überlagerungssamples, das 19-s-WAV hat 837.900 Stereoframes. Alle 20 Sichtungsdateien sind dem richtigen Top-1-Cue zugeordnet und per SHA geprüft. Befund in `run01/verified.json`.
+- Replay des Regelvergleichs mit `src.evaluation.p10_pairs --output output/review_jp_20261118/p10_ranking/run01/pairs_replay` sowie zweiter erfolgreicher CLI-Batch mit identischen Eingaben unter `batch_replay`. Anlass war die gemeinsame Behandlung technisch unvollständiger Cuefenster in Offline- und Livepfad. Beide Prozesse endeten mit Exit 0. `Get-FileHash` bestätigte bytegleiche 3.744 Cuezeilen, Paarmetriken, Gesamttabelle, Batchmanifest und Equal-Power-WAV gegenüber dem ersten Erfolg. Der unabhängige Meilensteinreview steht aus.
+
+- Regression für Auswahl, native Fenster, bestehende Selektoren und Vier-Takt-Batch. Aufruf `.venv\Scripts\python.exe -B -X utf8 -m pytest -q tests/test_p10_continuation.py tests/test_batch_render.py tests/test_multi_batch_render.py tests/test_baseline_lengths.py tests/test_p07_bar_representations.py tests/test_p08_continuation.py tests/test_p09_metric.py tests/test_learned_cue_ranker_integration.py`. 60 Tests bestanden in 14,79 s, zwei bekannte audioread-Deprecations (aifc/sunau). Die neuen Fälle prüfen halbe Treffer bei Gleichstand, Gruppenmakro, Mindestfallzahl, Studienseed und Dreiseedmittel, Stufengleichstand sowie Lücken, Samplekonversion und falsche Grididentitäten. Weiter mit Rohdaten- und Batchabgleich.
+
+- Autorenvorlage nach Speicherung der Offlinetabelle. `.venv\Scripts\python.exe -B -X utf8 -u -m src.evaluation.p10_listening` löste die ersten zehn der 26 abweichenden Top-1-Paare wieder gegen die P07-Validation-Originale auf. Alle 20 Equal-Power-Clips wurden als Stereo-PCM24 bei 44.100 Hz geschrieben und gegen die Render-Samples bis auf Quantisierung geprüft. Je Clip 19 Sekunden. Unter `p10_ranking/run01/autorensichtung/` liegen A/B-Links, leere Notizfelder und die separate Cue-Zuordnung. Die tatsächliche Sichtung durch den Autor steht aus.
+
+- CLI-Wiederholung auf dev01 mit dem P07-Runtime-Pfad und denselben Argumenten wie im ersten Versuch. `src.batch_render` bewertete alle 144 Kandidaten mit live aus den beiden Originalen extrahierten MERT-Zuständen. Top-1 war `candidate-91852b13b5134942`. Ein Equal-Power-WAV und das vollständige Manifest liegen unter `p10_ranking/run01/batch/`; null Render- oder Messfehler. Der lokale Encoder meldete den optionalen CQT-Import von nnAudio. Weiter mit Gegenprüfung der Live-Scores, Cue-Geometrie und exportierten Samples.
+
+- Regelvergleich auf gerichteten Entwicklungspaaren. `.venv\Scripts\python.exe -B -X utf8 -u -m src.evaluation.p10_pairs` bildete aus 53 Validation-Gruppen 26 disjunkte Nachbarpaare in Gruppen-ID-Reihenfolge. Pro Paar bewerteten die Regel und alle 14 P09-Bedingungen dieselben 144 Vier-Takt-Cues. Alle 3.744 Cues waren auswertbar. Der Studienkopf und die Regel wählten in 0/26 Paaren denselben Cue, mittleres Paar-ρ −0,027481. Die gespeicherte Tabelle `p10_ranking/run01/pairs/offline.csv` und die Einzelwerte dienen als Grundlage der begrenzten Autorensichtung.
+
+1. Der erste CLI-Batch sollte die Offlineentscheidung auf Originalaudio nachspielen. Aufruf über `src.batch_render` mit `mert_continuation_v1`, «Under Attack» → «Keep It Raw», je zwölf Grenzen, Equal Power, Top-1, 5/14 s Vorschau. Die Kandidaten wurden erzeugt. Vor der MERT-Inferenz brach der Prozess mit `ModuleNotFoundError: transformers` ab. Die P07-Laufzeit ist separat unter `output/review_jp_20261118/p07/runtime` installiert. Wiederholung mit dem dokumentierten PYTHONPATH und unveränderten Eingaben.
+
+## 19.11.2026 · P09 · Technischer Smoke und Hauptläufe
+
+**Abschlussaudit.** Nach dem erfolgreichen Smoke unter `smoke02` lief `.venv\Scripts\python.exe -B -X utf8 -u -m src.ml.p09_train --output output/review_jp_20261118/p09_metrik/run01 --journal docs/Bemerkungen.md` auf der lokalen RTX 5070 Ti bis Exit 0. Die 14 Einzelzeilen am Ende dieses Journals berichten Budget und Ergebnis. Je trainiertem Kopf wurden beim Laden des Best-Checkpoints beide Validationskennzahlen exakt reproduziert.
+
+Mit `.venv\Scripts\python.exe -B -X utf8 -m src.evaluation.p09_verify --run output/review_jp_20261118/p09_metrik/run01 --receipt docs/masterarbeit/P09_VERIFIED_20261119.json --figure docs/masterarbeit/P09_LERNVERLAEUFE_20261119.png` wurden die Run-Artefakte gegen P08 geprüft. Der erste Durchgang erreichte nach erfolgreicher Datenprüfung beim PNG-Export einen PermissionError. Derselbe Aufruf im Benutzerkontext endete mit Exit 0. Geprüft wurden 14 × 2.830 Einzelränge, Makromittel je Aufnahme, alle 360 Epochen mit Order-Hash und Budget, die früheste maximale Recall-Epoche, zwölf Checkpoint-SHAs und für jede Bedingung elf vollständige Originalpanels aus den Vier-Takt-Fenstern auf CPU. Die Einzelränge der CPU-Stichprobe und die beiden Kennzahlen aller Bedingungen stimmten überein. Grafik visuell auf Beschriftungen und Zuordnung der zwölf Kurven geprüft. P10 übernimmt die Modelle für den Abkürzungstest. [Prüfnachweis](masterarbeit/P09_VERIFIED_20261119.json)
+
+Mit `.venv\Scripts\python.exe -B -X utf8 -m pytest -q -p no:cacheprovider --basetemp=output/p09_pytest_20261119_a tests/test_p09_metric.py tests/test_p08_continuation.py tests/test_p07_bar_representations.py` wurde geprüft, ob die optimierten Fenster und Masken die P08-Semantik erhalten und alle Stufen den vereinbarten Score liefern. Synthetische Fälle umfassten Rang und Norm der Bilinearform, Asymmetrie, Mischgradient, Parameterzahlen, Restbatch, Variantenrotation, Scoregleichstände und ungleich viele Queries pro Aufnahme. 26 Tests bestanden in 6,93 s. Der Trainingslauf verwendet dieselben geprüften Funktionen. Anschließend werden die Einzelränge, Lernverläufe und gespeicherten Checkpoints abgeglichen.
+
+Der erste technische Lauf prüfte mit `.venv\Scripts\python.exe -B -X utf8 -u -m src.ml.p09_train --smoke --output output/review_jp_20261118/p09_metrik/smoke01 --journal docs/Bemerkungen.md` das Pooling und die Negativmaske auf einem P08-Batch. Die klassische Referenzprüfung bestand. Der Lauf erreichte den deterministischen Kosinus auf 24 Validationsqueries und brach beim Anhängen des Journaltextes mit einem PermissionError ab. Der nächste Smoke erhält einen eigenen Pfad. Seine sechs Bedingungen bleiben vom Trainingsbudget getrennt.
+
+## 19.11.2026 · P08 · Paarbestand, Geometrie und Trainings-Smokes
+
+**Stichprobe am Loader für P09.** Mit der Projekt-venv per `python -B -X utf8 -` für die erste, mittlere und letzte Validationsquery beider Familien die von `retrieval_item` gelieferten Arrays direkt gegen die passenden Originaldateien aus P07 verglichen. Für jede Query den positiven Index und die vier Zeilen vor d, für alle neun Kandidaten die vier Zeilen ab ihrem eigenen T geprüft. Alle 60 Fenster waren elementweise identisch. `git diff --check` ergab Exit 0 mit den üblichen Windows-Zeilenendenhinweisen. Die Übergabe verweist auf run02.
+
+**Regression und Smoke-Replay, Abschluss.** Den korrigierten Lauf um die vorhandenen Renderer-/Kandidatentests und zwei Fälle für FP16-Eingaben und einen geänderten Releasehash erweitert. `.venv\Scripts\python.exe -B -X utf8 -m pytest -q tests/test_p08_continuation.py tests/test_p07_bar_representations.py tests/test_baseline_lengths.py tests/test_rendering.py tests/test_candidates.py` ergab **61 bestanden in 15,42 s**, zwei bekannte audioread-Deprecations (`aifc`, `sunau`). In einem separaten Venv-Aufruf `src.evaluation.p08_smoke.run(OUTPUT,P07)` vollständig mit `P08_SMOKE_20261119.json` verglichen. Beide Schritte auf run02 reproduzierten den Nachweis exakt, einschließlich Query-IDs, Ansichten, Gewichtsänderungen und festem Validation-Panel. P09 kann mit der versiegelten Instanz beginnen.
+
+**Regression, erster Lauf.** `.venv\Scripts\python.exe -B -X utf8 -m pytest -q tests/test_p08_continuation.py tests/test_p07_bar_representations.py tests/test_baseline_lengths.py` ergab 24 bestandene und zwei fehlgeschlagene Tests in 8,50 s. Die synthetische Rendererfixture übergab JSON-Listen statt der im Pipelineaufruf verwendeten Beat-Tupel. Die DCL-Gradientenprobe lag bei τ⁺ = 0 exakt am Knick der Untergrenze, wo PyTorch für `maximum` und `clamp_min` verschiedene zulässige Subgradienten wählt. Fixture auf Tupel und Gradientenvergleich ins Innere der zwei Zweige gelegt. Eine separate SHA- und BPM-Prüfung mit der Projekt-venv ergab sieben byteidentische Dateien zwischen run01/run02. Von den 5.660 frei gezogenen fremden Validationstellen erfüllen 4.560 ebenfalls die 5-%-Regel. Die beiden Ziehungsregeln definieren also keine disjunkten Tempoklassen. Als Nächstes die korrigierten Tests und den gegen den Vollaudit gebundenen Loader ausführen.
+
+**P08-Vollaudit.** `.venv\Scripts\python.exe -B -X utf8 -m src.evaluation.p08_verify --receipt docs/masterarbeit/P08_VERIFIED_20261119.json` mit Zugriff auf das P13-Rohmanifest. Exit 0. Alle 762 Ansichten der Originalgruppe zugeordnet und die Augmentierungsraster mit den Originalen verglichen. Die erneute Ziehung reproduzierte sämtliche Query-IDs, Budgets, Ausschlüsse, Antworten, Negativen, Kontrollfälle und Kandidatenreihenfolgen. Separater Inhaltscheck für jedes Fenster in beiden Splits. Kleinster beobachteter Abstand 17 vollständige Zwischentakte, größte relative BPM-Differenz der tempoähnlichen Paare 0,0303031. Im realen P13-Render begann die effektive Zieleinblendung bei Sample 8.466.944, also 512 Samples nach dem Beginn ihres Rasterfensters. Die Vorschaugrenzen und die P07-Zeilen-/Beatkoordinaten stehen im [Vollaudit](masterarbeit/P08_VERIFIED_20261119.json). Anschließend Formel, Grenzfälle und Sperren gezielt regressionsprüfen.
+
+**Smokes, Pfadkorrektur und run02.** Mit `.venv\Scripts\python.exe -B -X utf8 -m src.evaluation.p08_smoke --receipt docs/masterarbeit/P08_SMOKE_20261119.json` je Familie einen CPU-Schritt auf 32 realen Queries ausgeführt. Versuch 1 erreichte das Speichern, brach dort mit WinError 5 ab. Beim identischen Aufruf außerhalb der Sandbox scheiterte Versuch 2 schon am Lesen des run01-Manifests. `icacls` zeigte die vom privaten Python-Tempverzeichnis geerbten Eigentümerrechte. Der Builder veröffentlicht jetzt aus einem regulären Nachbarverzeichnis per Rename. Erneuter Lauf von `src.features.p08_pairs` auf denselben Eingaben nach `run02`, Exit 0. Der Smoke auf run02 aus der Nutzerumgebung bestand einschließlich Schreiben des [Nachweises](masterarbeit/P08_SMOKE_20261119.json). Klassisch/MERT jeweils 32 × 4 Takte, vier explizite und 30–31 fremde Batchnegative. Gradientennormen 3,52236 / 3,10114 und maximale Gewichtsänderungen 0,00100002 / 0,00100000. Beide Loader lasen dieselbe erste Validationsquery samt neun Kandidaten. Eine getrennte Venv-Sonde auf den nativen P13-Analyserastern bestätigte die Beatindizes 203/219/235 und 484/500/516 für die äußeren Grenzen um S und T. Nächster Schritt ist der inhaltliche Vollaudit mit reproduzierter Ziehung.
+
+**Echter Paarbau, run01.** Nach der schriftlichen Festlegung mit `.venv\Scripts\python.exe -B -X utf8 -m src.features.p08_pairs` beide vollständigen P07-Entwicklungssplits verarbeitet. Der Lauf prüfte P07-Manifestsumme, Original-Cache, klassische Skalierungsdateien und die nativen Viertelgrenzen jeder Originalansicht. Exit 0. Ein anschließender JSON-Lesezugriff auf Manifest, Dateihashes und erste Validationszeile ergab 12.999/2.830 verwendbare Train-/Validationqueries bei 13.351/3.016 Ziehungen. 352/186 hatten zu wenige strukturfremde Same-Track-Kandidaten. Die getrennte Intro↔Drop-Probe umfasst 844 Queries aus 49 Gruppen. Als Nächstes folgen Prüfung der einzelnen Kandidaten und Training auf den versiegelten IDs.
+
+Die erste Frage war, in welcher Zeitbasis S und T liegen und ob die zwei Fadefenster gleich lang sind. Mit der Projekt-venv (`-X utf8 -c`, JSON-Lesezugriff) die erste P07-Ansicht samt Originalanalyse, den P04-Entwicklungscue und die Vier-Takt-Zeile aus P13 ausgelesen. Die erste P07-Analyse beginnt mit Zählzeit 2. Der P04-Cue nennt Beatindex 219 bei Sample 3.701.760 und Beatindex 500 bei Sample 8.734.720. Beim Lesen des P13-Rohmanifests verweigerte die Sandbox den Zugriff. Derselbe lesende Aufruf mit Freigabe gelang. Die gerenderte Vorschau enthält 355.976 − 88.200 = 267.776 Übergangssamples bei 44,1 kHz. Die P13-Rasterfenster haben 267.776 und 268.288 Samples. Deshalb prüft P08 Sampleanschluss, native Beatindizes und die kürzere effektive Dauer. Gleichungen (7) und (8) im NeurIPS-Original von Chuang et al. geprüft. Mit M = 1 braucht die Korrektur eine positive Fortsetzung sowie die tatsächliche Zahl gültiger Negativer je Zeile. [Festlegungen vor der Ziehung](masterarbeit/REVIEW_JP_P08_PAARE_20261119.md)
+
+## 19.11.2026 · P07 Gesamtextraktion
+
+- **Frage und Begründung:** Materialisiert der über die September-
+  Splitautorität gebundene Gesamtbestand beide Repräsentationen und alle
+  vorgesehenen Produktionsfassungen in derselben Taktgeometrie?
+- **Setup und Befehl:** Projekt-venv, isolierter Transformers-Runtime-Pfad,
+  RTX 5070 Ti und der verifizierte Modell-Snapshot.
+  `.venv\Scripts\python.exe -B -X utf8 -m src.features.p07_extract`
+  mit Log `output/review_jp_20261118/p07/full_run_01.log`. Der Lauf begann
+  nach bestandenem echten CUDA-Smoke in einem eigenen Ausgabeverzeichnis.
+- **Ergebnis:** Exit 0. Alle 290 ausgewählten Tracks verarbeitet, darunter
+  236 Trainingsoriginale, 472 Trainingsfassungen und 54
+  Validation-Originale. 19 fehlende Vocal-Stems wurden mit den gebundenen
+  lokalen BS-RoFormer-Assets erzeugt. Extraktion 2.239,85 s inklusive
+  4,99 s Modellladen. CUDA-Spitzen 5.200.499.712 B allokiert und
+  9.105.833.984 B reserviert. Prozess-Peak-Working-Set 5.111.455.744 B.
+  Die erste RoFormer-Zeitschätzung von 597,46 s extrapolierte den
+  CUDA-Kaltstart. Der betroffene Track war nach 61,49 s inklusive
+  Taktfeatures und WAVs fertig.
+- **Vollaudit:** `.venv\Scripts\python.exe -B -X utf8 -m src.features.p07_verify --receipt output/review_jp_20261118/p07/full_verified.json`.
+  Der erste Aufruf erreichte das Speichern des Nachweises, erhielt für
+  das neue Verzeichnis unter `docs/masterarbeit/review_jp_20261118/`
+  jedoch WinError 5. Mit dem Ausgabepfad oben **bestanden** in 63,25 s.
+  Alle 762 Ansichten und 104.131 Taktzeilen je Familie geprüft.
+  Originalhashes, Splitgruppen, Cachehashes, tatsächliche Downbeats,
+  Halbbeatgrenzen, 98–142 MERT-Frames/Takt, WAV-Header und Train-Scaler
+  stimmen. Die Ausgabe umfasst 16.521.884.455 B. Der Nachweis liegt
+  zusätzlich in [P07_VERIFIED_20261119.json](masterarbeit/P07_VERIFIED_20261119.json).
+- **Übergabeprüfung:** In der Projekt-venv per `json.loads` und
+  `hashlib.sha256` abgeglichen. Beide Prüfnachweise sind inhaltlich
+  gleich, die Manifest-SHA stimmt und die Summen ergeben 762 Ansichten
+  sowie 104.131 Taktzeilen. `git diff --check` bestand. Der gezielte
+  Git-Status für P01, Originalaudio und den alten Featurevertrag war
+  leer. Der jüngste Commit ist weiterhin `2a70dc1`.
+- **Schlussfolgerung und nächster Schritt:** P07 ist vollständig
+  materialisiert. P08 kann beide Familien aus dem gleichen Manifest
+  laden und zusammenhängende Fenster anhand der gespeicherten
+  Taktgrenzen bilden.
+
+## 19.11.2026 · P07 Smoke, Cache-Resume und Regressionen
+
+- **Frage und Begründung:** Stimmen gemeinsame Taktgrenzen, Cacheidentität,
+  Pitch, Gruppenzugehörigkeit und Train-Skalierung? Der Test umfasst
+  synthetische Grenzfälle und ein Original mit zwei echten WAV-Ansichten.
+- **Setup:** Projekt-venv, isolierter Transformers-Runtime-Pfad, CUDA,
+  gebundener 95M-Snapshot und Train-Audio-SHA-Präfix `02fad84d1e81`.
+  Ausgabe `output/review_jp_20261118/p07/smoke/`.
+- **Smoke und Wiederaufnahme:** Jeweils
+  `.venv\Scripts\python.exe -B -X utf8 -m src.features.p07_extract --smoke --output output/review_jp_20261118/p07/smoke`.
+  Die Materialisierung lieferte drei Ansichten mit je 120 Takten in
+  29,01 s inklusive 5,00 s Modellladen. Peak Working Set 2.430.840.832 B,
+  CUDA 1.144.958.976 B allokiert und 1.583.349.760 B reserviert. Die
+  Warm-/Bright-Ansichten benötigten 2,64/1,86 s. Der Wiederholungslauf
+  traf alle drei Einträge in 0,83 s plus Modellladen.
+- **Prüfung der echten Dateien:** `.venv\Scripts\python.exe -B -X utf8 -m src.features.p07_verify --source output/review_jp_20261118/p07/smoke --receipt output/review_jp_20261118/p07/smoke_verified.json`.
+  Bestanden in 2,16 s. 360 Repräsentationszeilen, 99–119 MERT-Frames pro
+  Takt, exakte Halbbeatgrenzen und Skalierung, korrekte WAV-Header und
+  Bytehashes. Rund 52,06 MiB Ausgabe.
+- **Wellenformprobe:** In der Projekt-venv wurden beide Smoke-WAVs
+  geladen und nach `prepare_audio()` und `production_view()` mit
+  `np.testing.assert_array_equal` gegen den erneuten DSP-Lauf geprüft.
+  Erster `-c`-Aufruf scheiterte wegen der PowerShell-Quoting-Ebene.
+  Die Wiederholung über stdin bestand samplegenau für beide Fassungen,
+  jeweils 5.114.446 Samples bei 24 kHz. Angewandter Gain −3/−5 dB,
+  Peaks 0,860/0,820.
+- **Regressionen:** Projekt-venv pytest mit
+  `-q -p no:cacheprovider --basetemp=output/p07_pytest_20261119 tests/test_p07_bar_representations.py`.
+  Zuerst sechs bestanden und eine fehlerhafte Testannahme. Der
+  440-Hz-Ton hatte an Sample 900 einen Nulldurchgang. Der Test vergleicht
+  seither mit dem ersten Sample des Eingangssignals oberhalb der Prüfschwelle.
+  Wiederholung mit `--basetemp=output/p07_pytest_pass02 tests/test_p07_bar_representations.py tests/test_evaluation_exposure.py`:
+  **16 bestanden** in 3,80 s.
+- **Legacy-Regressionslauf:** Erneute Ausführung mit
+  `--basetemp=output/p07_pytest_pass03 tests/test_p07_bar_representations.py tests/test_evaluation_exposure.py tests/test_feature_contract.py tests/test_track_feature_cache.py tests/test_vocal_features.py tests/test_variable_features.py`.
+  **38 bestanden** in 7,03 s. Zwei bestehende audioread-Warnungen
+  zu aifc und sunau unter Python 3.14. Der alte Feature- und
+  Controllerkanalvertrag ist durch die Tests mit abgedeckt.
+- **Schlussfolgerung und nächster Schritt:** Gesamtextraktion nach
+  bestandenem Smoke gestartet. 19 der zulässigen Tracks brauchen einen
+  neuen RoFormer-Stem. Bei der ersten Neuberechnung wurden die lokalen,
+  historischen Modellassets erfolgreich wiederverwendet. Die STFT- und
+  SDPA-Warnungen stammen aus dem unveränderten RoFormer-Backend.
+
+## 19.11.2026 · P07 Vorprüfung und MERT-CUDA-Smoke
+
+- **Frage und Begründung:** Ist P01 als Git-Stand gebunden, welcher
+  September-Bestand darf in Phase 2 und trägt die lokale GPU MERT?
+  Geprüft wurden zunächst ausschließlich Metadaten und danach ein
+  autorisierter Entwicklungs-Track.
+- **Setup und Befehle:** Git-Blobprüfung von Freeze `2a70dc1` über
+  `development_population()` aus `src.features.p07_population`, Inventur
+  der Analyse- und Vocal-Manifeste per Projekt-venv, `nvidia-smi` und
+  `psutil.virtual_memory()`. `hf models info`, `hf models list --format json`
+  und `hf download --revision 12af15fef9d0ac838c3f475bfbbf26d2060dd4f5`
+  für `m-a-p/MERT-v1-95M`. Die erste Netzabfrage scheiterte mit WinError
+  10013, `--tree --format json` war inkompatibel. Zugelassener erneuter
+  Abruf und Download waren erfolgreich. Die CIM-RAM-Abfrage war gesperrt,
+  psutil meldete 63,90 GiB gesamt, 35,91 GiB verfügbar. RTX 5070 Ti,
+  16.303 MiB VRAM gesamt, 13.832 MiB zu Beginn frei. Der erste
+  paketweise Transformers-Install in einem isolierten Ausgabeverzeichnis
+  zog NumPy 2.5.5 und kollidierte laut pip mit Numba. Der verwendete
+  Runtime-Ordner enthält nur Transformers 4.49.0, Tokenizers 0.21.4,
+  Hugging Face Hub 0.36.2 und Regex, die übrige Projekt-venv bleibt aktiv.
+- **Ergebnis der Metadatenprüfung:** Alle 18 Hash-Bindungen des Receipts
+  stimmten und Protokoll und Population stimmen mit HEAD überein. Die
+  September-BPM-Liste umfasst 407 SHAs. 68 Testkomponenten-Einträge
+  entfallen, darunter ein Splitkonflikt. 281 Train und 58 Validation
+  bleiben, davon 236/54 mit akzeptiertem September-Merge-v2.
+- **CUDA-Probe und Ergebnis:** In der Projekt-venv per
+  `FrozenMert(..., "cuda").encode(audio, bars)` auf SHA
+  `0139761a8f8dd0f0b3ff788357218ddfb206a27c9af9b6c7b81c5070b1f28a8a`.
+  Der erste 48-Sekunden-Ausschnitt enthielt keinen vollständigen
+  erkannten 4/4-Takt und endete beim Frame-Pooling mit einem IndexError.
+  Die Wiederholung auf dem gesamten 195,2125-s-Original lieferte
+  78 × 13 × 768 endliche Werte, 110–121 Frames/Takt. CUDA-kalt
+  4,53 s Modellladen und 20,05 s Inferenz. GPU-Spitzen 1.144.019.456 B
+  allokiert und 1.413.480.448 B reserviert, Peak Working Set
+  2.212.519.936 B. Der optionale nnAudio-Import meldete eine Warnung,
+  im gebundenen 95M-Config ist CQT deaktiviert.
+- **Schlussfolgerung und nächster Schritt:** 95M lässt ausreichend
+  Speicher für Volltrack-Inferenz in Chunks. Der integrierte Smoke
+  verifiziert die gemeinsame Halbbeat-Geometrie, Produktion und
+  wiederverwendbaren Cache vor dem Gesamtexport.
+
+## 19.11.2026 · P01-Freeze auf ausdrücklichen Commitauftrag
+
+- **Auftrag:** Der Autor beauftragt ausdrücklich den Commit von P01 und
+  dessen Protokollierung. Die konfigurierte menschliche Git-Identität wird
+  verwendet. Keine AI-/Co-author-Trailer und kein Push. Andere Änderungen
+  im Arbeitsbaum bleiben außerhalb des P01-Commits.
+- **Fragestellung und Reasoning:** Tragen Gruppentrennung, transitive
+  Expositionssperren und deterministische Paarbildung den einzufrierenden
+  P01-Stand? Die neun gezielten Regressionen prüfen genau diesen Vertrag;
+  eine Wiederholung der Controllertrainings ist dafür nicht erforderlich.
+- **Eingaben/Setup:** Windows, Projekt-venv, synthetische Aufnahmeidentitäten
+  und Freigabefälle aus `tests/test_evaluation_exposure.py`; keine Audiodatei
+  geöffnet und kein finales Material gehört.
+- **Befehl:** `.venv\Scripts\python.exe -B -X utf8 -m pytest -q -p no:cacheprovider --basetemp=output/p01_freeze_pytest_20261119 tests/test_evaluation_exposure.py`.
+- **Ergebnis:** **PASS**, neun Tests bestanden, Exit 0, pytest-Laufzeit
+  2,19 Sekunden. Keine Fehler oder Warnungen in diesem Lauf.
+- **Nächster Schritt:** Korrigierte run04-Population und Hashbindungen prüfen,
+  den begrenzten P01-Stand committen und den tatsächlichen Commit unten
+  sowie im Aufgabenregister und STATUS nachtragen.
+- **Hash-/Populationsprüfung:** Read-only-Nachrechnung über
+  `.venv\Scripts\python.exe -B -X utf8 -` (PowerShell-Here-String), Exit 0.
+  Elf Paare enthalten genau 22 verschiedene Gruppen und Datei-SHAs,
+  stimmen mit der festgelegten Sortierung überein und sind im Katalog
+  zulässig. Der Katalog-SHA entspricht der Paarliste; Paarliste, Katalog und
+  Quellenregister sind bytegleich mit run04. Die Katalogbindungen beider
+  historischen Bestände stimmen ebenfalls. Keine Audiodatei geöffnet.
+  Anschließend `p01/FREEZE_RECEIPT.json` neu angelegt: 18 gebundene Dateien
+  mit Dateigröße/SHA-256 einschließlich Protokoll, Historie, P01-Review,
+  Auditcode und Regressionen. Der alte Rohstatus der Paarliste bleibt als
+  Erzeugungszustand erhalten. Der Commit ist die Freeze-Autorität.
+- **Indexprüfung vor Commit:** `git diff --cached --check` bestand. Eine
+  weitere `.venv\Scripts\python.exe -B -X utf8 -`-Prüfung bestätigte genau
+  19 P01-Dateien im Index und alle 18 im Receipt gebundenen Größen/SHA-256
+  gegen `git show :<Pfad>`, Exit 0. Keine fremde Änderung gestagt. Der
+  Hashbezug auf Git-Dateibytes ist im Receipt festgehalten, da Windows-
+  Checkouts bei Textdateien LF/CRLF umwandeln können.
+- **Commit:** `git commit -m "Freeze P01 evaluation protocol and 11 disjoint pairs"`
+  erfolgreich, Exit 0. Commit
+  `2a70dc185bbcf62806d5d426783e03f347c01dd6` auf `main`, 19 neue Dateien.
+  Autor und Committer entsprechen der unverändert verwendeten konfigurierten
+  menschlichen Identität; kein zusätzlicher Trailer. Commitnachricht und
+  leeren Index anschließend mit `git show -s` und
+  `git diff --cached --name-status` gelesen. Kein Push.
+- **Protokollierung:** Commit-ID in `docs/REVIEW_JP_UMSETZUNG.md` und
+  `docs/STATUS.md` nachgetragen, P01 als eingefroren und P07 als startbereit
+  markiert. Diese nachträglichen Journaleinträge liegen zusammen mit den
+  bereits vorhandenen übrigen Dokumentänderungen im Arbeitsbaum; der
+  Freeze-Nachweis selbst ist im P01-Commit enthalten. Der getrennte P06-
+  Commit wird nicht durch diesen P01-Commit ersetzt.
+- **Abschlussprüfung:** `.venv\Scripts\python.exe -B -X utf8 -` prüfte die
+  18 gebundenen Git-Dateibytes erneut gegen den tatsächlichen Commit,
+  dessen exakten 19-Dateien-Umfang, unveränderte P01-Arbeitsdateien, leeren
+  Index, fehlende Co-author-Trailer und die Commit-ID in allen drei
+  Projektdokumenten. **PASS**, Exit 0.
+  `git diff --check -- docs/STATUS.md docs/Bemerkungen.md` ebenfalls
+  **PASS**, nur LF/CRLF-Hinweise. Schlussfolgerung: P01 ist eingefroren,
+  die Voraussetzung für P07 ist erfüllt. Keine neuen Experimente gestartet.
+
+## 19.11.2026 · F zu R_P01_01
+
+Am 19.11. wurde der Vollaudit aus denselben 542 Originalpfaden in einem separaten Ausgabeordner wiederholt. Der Bytevergleich von Paarliste und Katalog gegen run04 bestand. Im Quellenregister hatte sich allein der Dokumenthash der fortgeschriebenen Evidenzmatrix geändert. Der Prüfer konnte alle geprüften lokalen Beleglinks auflösen. Beide Prüfungen endeten mit Exit 0. Auch `git diff --check` ergab Exit 0 (Hinweise zur Windows-Zeilenendekonvertierung). Damit ist die Elferliste für den Nutzercommit reproduziert.
+
+- Frage war, welche gleichnamigen Neuaufnahmen nach unabhängigen Katalogbelegen zulässig bleiben und wie weit die Headerprüfung reicht. HEAD b40a60a, volle ffprobe-Tags der vier FLACs, run03, Freigabe-CSV, Auditcode und externe Händler-/Künstlerkataloge abgeglichen. Keine ISRC bei den vier Kandidaten. Ergebnisse je Titel mit Quellen im Expositionsnachweis. Eine Beatport-Seite war mit HTTP 403 nicht abrufbar.
+- Projekt-venv, Python-Headerprobe (42 Bytes je FLAC, STREAMINFO-Typ und Länge geprüft), Dauervergleich aus dem Katalog. 84 gesetzte und 433 fehlende Altwerte, 25 verschiedene gesetzte Neuwerte, null Treffer, 14 Dauerpaare unter 50 ms. Keine Dekodierung. Persönliche Vertrautheit nicht abgefragt.
+- `.venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests/test_evaluation_exposure.py tests/test_variable_corpus_inventory.py` ergab 11 bestandene Tests in 2,39 s. Vollaudit mit `src.evaluation.audit_exposure.run` in neuem run04 und korrigierter Freigabe-CSV: Exit 0, 542 Dateien, 54 Quellen, 22 zulässige und drei offene Gruppen. Die getrennte Nachrechnung über Gruppenschlüssel und SHA-Reihenfolge bestätigt sämtliche 22 A/B-Zuordnungen und elf disjunkte Paare. Katalog-SHA `39a70ba20c168304b727bcec22bd5339577d9bfa32735777ab2b31058a6d4b35`. Run03 bleibt historischer Vergleich. Nächster Schritt ist der Nutzercommit für P07, unabhängig folgt Review R zu P06.
+
+
+## 2026-11-18 — Review R_P01_01 (unabhängig) zu P01
+
+- **Fragestellung und Reasoning.** Trägt die P01-Population (25 Gruppen, zwölf Paare, Herkunftstabelle, Protokoll) einem unabhängigen Review stand? Geprüft: Paarregel, Dateiidentität, Gruppenschlüssel, Expositionsstatus, Reproduzierbarkeit, und ob die Begleittexte nicht mehr behaupten als die Daten zeigen. Verdacht bei Titelkollisionen (Herkunft nur über Tags) und bei der MD5-Aussage für den Altbestand.
+- **Eingaben und Setup.** Checkout `b40a60a` mit nicht committeten P01-Artefakten. Originalaudio nur lesend, keine Dekodierung, kein Hören, keine finalen Testdaten, keine Änderung an Produktionscode, Manifesten oder Originalen. Arbeitsdateien in `C:\Users\max_h\AppData\Local\Temp\opencode\p01_review\`.
+- **Lauf 1: vollständiger Audit in neues Temp-Verzeichnis.** `.venv\Scripts\python.exe -B -X utf8 -m src.evaluation.audit_exposure C:\Users\max_h\AppData\Local\Temp\opencode\p01_review\run_repro --clearance docs/masterarbeit/review_jp_20261118/p01/clearance_erweiterung_20261118.csv`. Ergebnis: Exit 0, 542 Dateien, 541 SHAs, 54 Quellen, 25 eligible, 0 pending, 503 exposed, Katalog-SHA `68ab985e…` wie dokumentiert. `evaluation_population.json` und `exposure_tracks.csv` sind byteidentisch zu `run03` (SHA-256-Präfixe `093E4C02…` und `68AB985E…`).
+- **Lauf 2: unabhängige Neuberechnung** (`check_p01.py`, Temp). SHA-256 aller 542 Dateien, FLAC-STREAMINFO-MD5 aus dem Header, ffprobe-Tags, Gruppenschlüssel mit `_recording_group_key`, Paarbildung nach `P01-v1`-Hash. Ergebnis: Population und Paare identisch. 25 neue SHA disjunkt zu allen Altdateien. Keine Gruppenschlüsselkollision. Keine ISRC in den 25 neuen Dateien. Alle 25 MD5 gesetzt und kein Treffer unter den gesetzten Altwerten. Vier Basistitelkollisionen bestätigt (This Feeling, Voices, Brace For Impact, Nightmare).
+- **Befund: MD5-Aussage zu weit.** Im Altbestand haben nur 84 von 517 Dateien einen gesetzten MD5, 433 haben den Nullwert (Prüfung `md5()` über Header, Temp). Die Formulierung „in den 517 Altdateien ohne Treffer“ im P01-Nachlieferungseintrag unten ist entsprechend zu korrigieren.
+- **Befund: Dauerkoinzidenzen.** 14 neue Dateien liegen unter 50 ms Dauerdifferenz zu Altdateien mit anderen Tags. Nicht dekodiert, nicht gehört. Als Restgrenze ausweisen.
+- **Befund: Herkunft der Titelkollisionen.** Protokoll verlangt Abgleich auf Veröffentlichungsebene und sagt, Tags oder Hashes allein begründen keine Unabhängigkeit. Die Trennung beruht nur auf Interpret, Jahr und Dauer. Korrektur vor dem Commit verlangt (siehe `docs/masterarbeit/review_jp_20261118/reviews/R_P01_01.md`, Befund 1).
+- **Suche nach früherer Verwendung.** Textsuche in Python über 16.130 Text-/JSON-/CSV-/MD-/YAML-Dateien in `output/`, `docs/`, `config/`, `review_jp/` nach den 25 neuen SHA-256 (Python, Temp). Treffer nur in den Auditartefakten selbst (run02, run03, Herkunftstabelle, Paarlisten), in keinem Manifest, Datensatz, Batch oder Studienartefakt. Binäre Caches nicht erfasst.
+- **Tests.** `.venv\Scripts\python.exe -B -X utf8 -m pytest tests/test_evaluation_exposure.py -q -p no:cacheprovider`: 9 bestanden in 3,03 s.
+- **Byte-Summe.** Die 542 Audiodateien ergeben 17.911.333.000 Byte, wie im Eintrag darunter angegeben.
+- **Schlussfolgerung.** Technische Population ist korrekt und reproduzierbar. Der Freeze sollte erst nach Behebung von Befund 1 erfolgen. Befunde 2 bis 4 sind Textpräzisierungen.
+- **Nächster Schritt.** Autor und Nutzer entscheiden zu Befund 1 (Veröffentlichungsnachweis für die vier Kollisionen oder `unclear` mit Neulauf `run04`). Keine Commits durch den Reviewer.
+
+## 2026-11-18 — P01, Nachlieferung unter `musik/erweiterung/`
+
+- **Fragestellung und Eingaben.** Reicht die Lieferung für zehn bis zwölf disjunkte Paare? Die Bestandsaufnahme mit `Get-ChildItem -Recurse -File` ergibt 25 FLAC-Dateien. Ausgangspunkt ist der erste P01-Katalog mit 517 Pfaden. Der Autor hat die Lieferung benannt und vermutet keine Doppelungen, hat diese aber selbst nicht geprüft. Für den Abgleich gelten die bereits festgelegten Auswahl- und Gruppenkriterien.
+- **Herkunft.** Auf die gesonderte Frage nach selbst ausprobierten BeatBridge-Übergängen und früherem Probehören im Projekt verneint der Autor eine solche Verwendung und gibt an, die Stücke soeben heruntergeladen zu haben. Diese Auskunft vom 18.11. und der tatsächliche Lieferpfad sind in der [Hash-gebundenen Herkunftstabelle](masterarbeit/review_jp_20261118/p01/clearance_erweiterung_20261118.csv) hinterlegt.
+- **Aufnahmeidentität.** PowerShell-Here-Strings an `.venv\Scripts\python.exe -B -X utf8 -`. 25 neue FLACs (1.122.241.419 Bytes) mit `inventory_file`, vollständigem Datei-SHA, FFprobe-Tags und normalisiertem Interpret/Titel gegen den P01-Katalog geprüft. Zusätzlich Titelfassungen ohne Edit-Zusätze und ähnliche Schreibweisen verglichen. Vier gleiche Basistitel: This Feeling, Voices, Brace For Impact, Nightmare. Einzelfallabgleich von Interpret, Jahr, Dauer und im Header hinterlegter STREAMINFO-MD5 gegen die Altdateien. Alle 25 Header-Prüfsummen sind gesetzt, innerhalb der Lieferung eindeutig und ohne Treffer bei den 84 Altdateien mit gesetztem MD5 (433 ohne Prüfsumme). Keine ISRC in der Lieferung. Exit 0. Zuordnung der vier Fälle im Expositionsnachweis. Der Audit verwendete weder Audio-Decodierung noch Hörprobe.
+- **Weitere Exposition.** Gleicher venv-Aufruf. 271 Text-/JSON-/CSV-/Logdateien der P04–P06-Artefakte in `output/review_jp_20261118/` und `docs/masterarbeit/review_jp_20261118/` auf neue Datei-SHAs, FLAC-Namen und Lieferordner geprüft. Zusätzlich mit `rg --files --no-ignore -g analysis.json -g manifest.json output` 13.772 Pfade auf die 16-stelligen Cache-Schlüsselpräfixe der 25 Dateien abgeglichen. Beide Prüfungen ohne Treffer, Exit 0. Der Hauptabgleich umfasst weiterhin die historischen Dataset-, Batch-, Run-, Hörsatz- und Ledgerbelege.
+- **Historie und Vorhersage der Paarung.** Die drei öffentlichen Dateien von run01 vor der Aktualisierung mit dem lokalen Lauf byteweise verglichen und im Unterordner `bestand_20261118_run01/` gesichert. Exit 0. Ein separater Metadatenaufruf rekonstruierte aus den 25 Gruppenschlüsseln die bereits festgelegte SHA-Sortierung. Sie ergibt zwölf Paare und an Position 25 „Area 51“. Die maschinelle Liste wird gegen diese Reihenfolge geprüft.
+- **Werkzeug und Freigabetabelle.** `.venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests/test_evaluation_exposure.py tests/test_variable_corpus_inventory.py`: 11 Tests bestanden in 5,16 s. Separater venv-Aufruf prüft die vollständige Übereinstimmung der 25 Freigabe-SHAs mit den neu erhobenen Datei-SHAs, Quellenangaben, Entscheidungswerte, historische Fehlmenge im Archiv und relative Nachweislinks. Exit 0. Die Zählung der Originaldateigrößen ergibt insgesamt 17.911.333.000 Bytes einschließlich der Nachlieferung.
+- **Vollinventur vor und nach Herkunftsentscheidung.** `.venv\Scripts\python.exe -B -X utf8 -m src.evaluation.audit_exposure output/review_jp_20261118/p01_exposition/run02` ohne Freigaben und derselbe Aufruf mit Ziel `run03` und `--clearance docs/masterarbeit/review_jp_20261118/p01/clearance_erweiterung_20261118.csv`. Beide Exit 0. Je 542 Originalpfade, 541 verschiedene Datei-SHAs, 54 historische Quellen. Zunächst 503 exponierte und 25 offene Gruppen, anschließend 503 exponierte und 25 zulässige Gruppen. Fehlmenge 0, Status `awaiting_user_commit`. SHA-256 des finalen CSV-Katalogs `68ab985e2e2734cf1b16bd5044ac935cad4c2e8206c5d670ec4c16fbcb384356`.
+- **Prüfung der Auslieferung.** Separater venv-Aufruf gegen Originale, `run01` bis `run03` und öffentliche Dateien. Alle 25 neuen Original-SHAs erneut berechnet, unveränderte 517 historische Zeilen und aktuelle Pfadmenge geprüft. Gruppenschlüssel und SHA-Sortierung separat rekonstruiert, jede einzelne A/B-Zuordnung abgeglichen, zwölf disjunkte Paare und höchste Verwendung je Gruppe von eins bestätigt. Gruppe an Position 25 ist Faceless – Area 51. Alle drei versionierbaren Ausgabedateien sind byteidentisch zu `run03`. Exit 0. Nächster Schritt ist der unabhängige Review, danach der Nutzercommit. Keine Phase-2/3-Experimente in dieser Sitzung.
+- **Abschlusskontrolle.** Gleicher venv-Aufruf prüfte alle zwölf lesbaren Tabellenzeilen anhand der SHA-Zuordnungen im JSON/CSV, den ausgeschriebenen Katalog-SHA und die lokalen Links. Exit 0. `git diff --check -- docs/Bemerkungen.md docs/STATUS.md` ohne Befund, `git diff --cached --name-only` leer. Die Dateien sind für den Commit durch den Autor vorbereitet.
+
+## 2026-11-18 — P03 Inferenz- und Analysevertrag
+
+- **Ursachen vor der Änderung.** Im GUI-ML-Pfad multiplizierte das
+  Zielfeaturefenster mit `BPM_A / BPM_B`, der Dataset-Export mit
+  `BPM_B / BPM_A`. Der GUI-Zweig für das Vocal-MLP erzwang RoFormer auch
+  für Features. D2 deklariert Demucs/`htdemucs`. Der September-Run R2
+  deklariert für Renderer-Stems ein RoFormer-Modell, das gebundene
+  Waveform-Manifest bestätigt das Backend. August-Vocal-Runs binden
+  Waveform-Manifeste mit `htdemucs` aus der Zeit vor dem Backendfeld.
+  `PreAnalysis.__call__` speicherte das Ergebnis auch nach einem
+  aufTAKT-Fehler. Beim Wiederlesen wurde das vervollständigte Grid
+  strukturell validiert, ohne den Fallbackstatus für den Treffer zu prüfen.
+- **Checkpoints und Verträge.** Können die lokalen festen Modelle mit den
+  tatsächlich gebundenen Eingaben geladen werden, auch bei gemischten
+  Vocal-Backends? PowerShell-Here-String an
+  `.venv\Scripts\python.exe -B -X utf8 -` mit `_load_model_run`,
+  `load_fixed_inference_contract`, `fixed_preview_renderer_options` und einem
+  CPU-Forward pro Run. Eingaben waren die Best-Checkpoints R1–R3, die zwei
+  Vocal-Runs vom August mit `htdemucs`, ihre Dataset- und gebundenen
+  Train-/Validation-Waveform-Manifeste sowie leere Featuretensoren (32 × 54
+  je Track, 16 global). Exit 0, fünf kompatible Modellkonfigurationen und
+  erfolgreiche Forwards. Alle fünf nutzten Demucs-Features. Die August-Runs
+  lösten Demucs-Stems auf, R2 RoFormer-Stems. D1/D2 lieferten
+  `train-d361f7da6414a9e6` bzw. `train-8c3304bd1106d35a`. 127 Taps bei
+  11.025 Hz ergaben im 44,1-kHz-Preview 511 Taps. Damit ist die
+  Vertragsauflösung an realen Artefakten belegt. Der Test sagt nichts über
+  den Klang und verwendete keine Audio- oder finalen Evaluationsdaten.
+- **Fachliche Regression 01.** `.venv\Scripts\python.exe -m pytest -q
+  -p no:cacheprovider --basetemp output/pytest_p03_focused_20261118_01`
+  mit `test_gui_ml_transition.py`, `test_pre_analysis.py`,
+  `test_partial_merge.py`, `test_feature_dataset_export.py` und
+  `test_variable_dataset.py` unter `tests/`. Synthetische Manifeste und
+  Audios prüften GUI-Cue, Backendbindung, Analyserecovery und Exporte.
+  37 bestanden, 3 fehlgeschlagen. Die drei GUI-Fixtures wählten die
+  erwarteten Cues, lieferten dem echten FIR-Renderer aber eine zu kurze
+  100-Sample-Brücke. Brücken-Fixture auf 512 Samples erweitert.
+- **Fachliche Regression 02.** Gleicher venv-Pytest-Aufruf mit
+  `--basetemp output/pytest_p03_regression_20261118_02
+  -o faulthandler_timeout=40`, zwei OpenBLAS-/OpenMP-Threads und den
+  14 Dateien aus Lauf 04. 102 bestanden, 3 fehlgeschlagen. Der erste
+  Import von librosa/Numba löste nach 40 s einen Stackdump aus und lief
+  weiter. Der GUI-Fall B=150, A=120 scheiterte am zu kurzen Nachlauf
+  der Fixture. Zwei variable Datasettests meldeten Windows-Zugriffsfehler
+  beim atomaren Umbenennen der Testverzeichnisse. Die Wiederholung nutzte
+  einen frischen Basispfad und einen längeren GUI-Nachlauf.
+- **GUI-Regressionslauf 03.** `.venv\Scripts\python.exe -m pytest -q
+  -p no:cacheprovider --basetemp output/pytest_p03_gui_20261118_03
+  tests/test_gui_ml_transition.py` mit zwei OpenMP-Threads. Die drei
+  BPM-Fälle sollten bis durch den Vocal-Renderer laufen. Feature-/Stem-
+  Extraktion und Modelloutputs waren kontrolliert, WAV-Header und
+  Renderer echt. 12 bestanden, 1 fehlgeschlagen. Bei B=150, A=120
+  erreichte der Test den korrekten Cue bei 10 s, das Testarray war aber
+  nur 16 s lang und der Preview verlangte 8 s Nachlauf. Die Fixture
+  erhielt 20 s.
+- **Abschließende Regression 04.** `.venv\Scripts\python.exe -m pytest -q
+  -p no:cacheprovider --basetemp output/pytest_p03_final_20261118_04`
+  mit `OPENBLAS_NUM_THREADS=2`, `OMP_NUM_THREADS=2` und jeweils unter
+  `tests/`:
+  `test_gui_ml_transition.py`, `test_pre_analysis.py`,
+  `test_partial_merge.py`, `test_feature_dataset_export.py`,
+  `test_variable_dataset.py`, `test_rendering.py`,
+  `test_time_stretch.py`, `test_candidates.py`, `test_batch_render.py`,
+  `test_track_feature_cache.py`, `test_vocal_features.py`,
+  `test_global_pair_features.py`, `test_feature_contract.py` und
+  `test_ml_data.py`. Geprüft wurden Vertragsabweichungen, Fensterpositionen
+  für B→A mit 120→150, 150→120 und 120→120 BPM, sowie Fallback → erkanntes
+  Grid beim nächsten Aufruf, mit und ohne historischen Fallback, in
+  beiden Merge-Versionen. Im Retrytest simulierte der Subprozess zunächst
+  einen Fehler und schrieb dann eine aufTAKT-Ausgabe. Parser, Merge und
+  Cache liefen produktionsnah. Ergebnis: 105 bestanden, zwei
+  `audioread`-Deprecation-Warnungen, Exit 0 in 20,17 s. Die
+  Umbenennungsfehler aus Lauf 02 traten nicht erneut auf. P03 ist damit
+  fachlich geprüft. Historische Auswirkungen und Grenzen der Prüfung
+  stehen in der [P04-Übergabe](masterarbeit/REVIEW_JP_P03_INFERENZ_20261118.md).
+- **Abschlusskontrolle.** `git diff --check` für die bearbeiteten
+  versionierten Dateien und ein PowerShell-Here-String an
+  `.venv\Scripts\python.exe -B -X utf8 -`. Geprüft, ob alle neun
+  Python-Dateien parsbar sind, die vier neuen Dateien keine überzähligen
+  Zeilenend-Leerzeichen haben, die drei lokalen Übergabelinks auflösen
+  und der Umsetzungsplan P03 als abgeschlossen und für P04 erfüllt führt.
+  Beide Aufrufe Exit 0. Git meldete LF-/CRLF-Hinweise. Nächster
+  Implementierungsauftrag ist P04 gemäß seinen Voraussetzungen.
+
+## 2026-11-18 — P01, Metadatenprüfung und Evaluationsprotokoll
+
+- **Bestandsaufnahme.** Welche lokalen Quellen belegen auch Auswahl, Ablehnung und Probeanhören vor den eigentlichen Experimenten? Unter Windows mit `.venv\Scripts\python.exe -X utf8 -` die JSON-Felder der Korpus-, Dataset-, Batch-, Producer-, Run- und Hörsatzmanifeste ausgelesen und D1–D4, T1/T2, R1–R4 und P1–P5 im Ledger nachgeschlagen. Ein zunächst rekursiver Suchlauf lieferte im ersten Aufruffenster keine Ausgabe. Die gezielte Abfrage der Rootmanifeste gelang. Die Batchwurzeln führen zusätzlich zu `songs` die BPM-Ablehnungen, Analysefehler, Policy-Ausschlüsse und Duplikate. In den Hörsätzen finden sich Originaltrackpfade oder das eingebettete Datasetbeispiel. Run-Verträge identifizieren die Datensätze per Manifest-SHA. Folgerung für den Audit ist die Verknüpfung dieser Quellen auf Aufnahmeebene.
+- **Unabhängige Pfadprobe.** Gleicher venv-Aufruf, Mengenvergleich aller FLAC-Pfade unter `musik/` mit `songs`, Duplikat-, Policy- und BPM-Entscheidungen aus den Rootmanifesten `all_music_recursive_bpm145_165_top1_20260805` und `prive/_top1000/_baseline/_20260921_fixed`. Exit 0. 119 und 398 Einträge, 517 von 517 Dateipfaden belegt, Differenzmenge leer. Schon diese zwei Quellen schließen den aktuellen Bestand aus. Anschließend die Bytes, Metadaten und Recording-Verknüpfungen prüfen; Minimum von 20 neuen Aufnahmen beim Autor angefragt.
+- **Abhängigkeitsprobe an Rohmanifesten.** Gleicher venv-Aufruf. Gerichtete Paare in P1/P2/P3/P5 dedupliziert und die ungerichteten Komponenten über beide Trackpfade gebildet. Exit 0. P1 ergibt 8 Beispiele/8 Paare/2 Komponenten, P2 9/3/1, P3 6/6/4, P5 20/5/2. Bei P5 tritt ein Track in drei verschiedenen Paaren auf. Der Korpus weist für die zwei HELP_LESS-Fassungen unterschiedliche SHAs und dieselbe Gruppe aus. Historische Pfadkomponenten sind eine Obergrenze der Unabhängigkeit. Für die Schlussauswertung gilt die strengere Recording-Gruppierung.
+- **Container- und CLI-Stichprobe.** Gleicher venv-Aufruf mit `inventory_file` auf dem ersten Basis-FLAC. FFprobe liefert Interpret, Titel, ISRC und positive Dauer. Der vollständig neu gerechnete SHA beginnt mit `94bb39c0`. Zwei GUI-Exportmetadaten identifizieren dieselben beiden Originaltracks. Die GUI-Belege werden im Quellenregister mitgeführt.
+- **Regression.** Können ein abweichender Datei-SHA, transitive Varianten oder zusätzliche Cues die Mindestgröße fälschlich erfüllen? `.venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests/test_evaluation_exposure.py tests/test_variable_corpus_inventory.py`, synthetische Identitäten und bestehende Gruppierungsfixtures. 10 Tests bestanden in 3,22 s. Sie prüfen Radio-/Extended-Fassungen, ISRC und Alias über mehrere Kanten, offene Herkunft, widersprüchlichen historischen SHA, unbekannten Alias, deterministische Vertreter und disjunkte Paarung bei 19 bis 26 Gruppen. Nächster Schritt ist der Abgleich gegen den vollständigen lokalen Bestand.
+- **Vollinventur, erster Versuch.** `.venv\Scripts\python.exe -B -X utf8 -m src.evaluation.audit_exposure output/review_jp_20261118/p01_exposition/run01` las Tags und Dateibytes der Originale und stoppte beim Verknüpfen von R4 mit `KeyError: dataset`. Es entstand kein Ausgabebündel. Der variable Run speichert den Verweis direkt in `contract.dataset_manifest_sha256`. Den Adapter nach Prüfung des tatsächlichen R4-Vertrags ergänzt. Eine separate Quellenprobe mit Manifest-SHAs und für dort fehlende Pfade neu berechneten Hashes verknüpfte danach 517 Pfade, 516 verschiedene Datei-SHAs und 54 Quellen (Exit 0).
+- **Vollinventur, Wiederholung.** Gleicher CLI-Aufruf mit korrigiertem R4-Zugriff und allen Originalbytes. Exit 0. 517 Dateien, 516 unterschiedliche SHAs, 503 technisch zusammengeführte Gruppen, sämtliche exponiert. 54 historische Quellen. Kein Kandidat mit offener Herkunft, keine zulässige Gruppe. Das Bündel unter `output/review_jp_20261118/p01_exposition/run01/` wurde in den versionierbaren P01-Ordner übernommen. SHA-256 des CSV-Katalogs `d59b03bff3f80b093222e1f4805478f2b5f814b06a30f49f543894b880f4406f`. Das JSON meldet null Paare und 20 bzw. 24 fehlende Gruppen. Eine zusätzliche Ausgabe auf Basis von Audioqualität war für diese Entscheidung nicht erforderlich.
+- **Nachlieferung und Integrität.** Gleicher gezielter pytest-Aufruf nach Ergänzung des Falls „bereits als exponiert belegte Gruppe später als unbenutzt gemeldet“. 11 Tests bestanden in 3,04 s. Separate Prüfung mit `.venv\Scripts\python.exe -X utf8 -` vergleicht die Pfadmenge im CSV mit dem Dateisystem, prüft jeden Quellcode und jede SHA-Syntax, die Prüfsummenbindung, Zähler, Fehlmengen und alle lokalen Links in Protokoll und Nachweis. Vier Originaldateien erneut als Bytes gehasht. Exit 0. Mit den tatsächlich publizierten Gruppen bleiben für P2 drei Paare in einer Komponente, für P5 fünf in zwei Komponenten. `git diff --check -- docs/STATUS.md docs/Bemerkungen.md` ohne Befund (Git meldet Windows-Zeilenenden). `git check-attr text eol` bestätigt LF für den hashgebundenen CSV-Katalog. `git diff --cached --name-only` war leer.
+- **Reproduktion des für den Commit vorbereiteten Bündels.** `.venv\Scripts\python.exe -X utf8 -` rief den vollständigen Audit über `run()` in einem frischen temporären Verzeichnis auf. Eingaben waren alle 517 Originaldateien, die historischen Quellen und der nun vorhandene P01-Referenzkatalog. Alle drei Ausgabedateien per Bytevergleich mit den Fassungen unter `docs/masterarbeit/review_jp_20261118/p01/` geprüft. Exit 0, alle drei bitgleich. Der unabhängige Review R steht aus. Laut Autor ist neue Musik derzeit nicht verfügbar. Beschaffung zurückgestellt, Phase 2/3 bleibt vor dem Freeze, Weiterarbeit an P04 und P13 möglich.
+
+## 2026-11-18 — P02, Nachweisprüfung für Kapitel 5
+
+- **Prüflauf 1 · Populationen und Rohwerte.** Können die Kapitelzahlen auf tatsächliche Beispiele, gerichtete Paare und bekannte Recording-Gruppen zurückgeführt werden? PowerShell-Here-String an `.venv\Scripts\python.exe -B -X utf8 -`. Gezählt wurden Dataset-JSONL, öffentliche Hörmanifeste und die beiden Batchmanifeste, verbunden mit der PRIVE-Recording-Gruppentabelle. Zusätzlich wurden die ersten und gewählten Validation-Losswerte in den Septemberhistorien verglichen. Die Auszählung bestätigte die D1–D4- und T1/T2-Umfänge und die vier direkt gehörten Präferenzzählungen. Der Lauf brach nach R1–R3 mit `KeyError: best_epoch` ab, da das variable Rootmanifest kein solches Feld trägt. Die Wiederholung muss R4 über Historie und Checkpointmetadaten auswerten. Keine Audio-, NPZ- oder Modellberechnung.
+- **Prüflauf 2 · Cache, Sweep und Hörprovenienz.** Gleicher venv-Aufruf mit D4-Index, Cachebericht, R4-Historie, Review-JSONs, W&B-Snapshot und lokalen Sweep-Historien sowie P5-Analyse/Entblindungsdatei. Erster Anlauf mit `StopIteration` durch ein zu enges Cache-Glob, mit `*full*` erfolgreich wiederholt. R4: 622 akzeptierte Validation-Beispiele aus 53 Hashes, 52 Recording-Gruppen und 52 gerichteten Paaren, 12 Provenienz- und 2 Backend-Rundungsrejektionen. Erster Logpunkt E1, numerisches Minimum E34, Ende E40. Die Sweep-Spitzen und die Werte der ausgewählten Komponenten stammen aus den jeweiligen Best-Epochen. Beim Lesen der Methodenprovenienz wurden zusätzlich zwei historische unbewertete Entwicklungsschlüssel als JSON geöffnet. Die Buchstabenzuordnungen wurden weder ausgewertet noch in die Matrix übernommen. Keine Schlüssel eines neuen Evaluationssets und keine Audiodaten gelesen.
+- **Prüflauf 3 · Bezugspunkte und Hörexposition.** Gleicher venv-Aufruf mit R2–R4-Validationswerten, den P5-Methodenmetadaten und D4-Split-/Trainmetadaten. Erfolgreich. P5 bindet die vier September-Checkpoints E1/E34/E18/E34. Auf den 20 Stimuli ergeben sich 8 Cues mit zwei D4-Test-Hashes, 7 mit einem in D4-Trainmetadaten geführten Hash und 5 außerhalb der D4-Autorität. Nach Ausschluss von Beispiel 11 ergeben sich 7/7/5. Die R4-Verbesserung ab E1 beträgt 9,8749 %. Die R3-Teilstrecken E0→E1 und E1→Best ergeben 81,4606 % bzw. 10,7340 % mit verschiedenen Nennern. Diese Befunde gehen mit ihren Bezugsgrößen in die Matrix ein.
+- **Prüflauf 4 · Integrität, Auswahlregeln und Rechenprobe.** PowerShell-Here-String an dasselbe venv-Python, mit W&B-CSV, Runmanifesten/-historien, Review-JSONs und P5-Metadaten. Der erste Versuch brach mit `FileNotFoundError` ab, weil der vollständige W&B-Name statt des Run-ID-Suffixes als Ordner verwendet wurde. Korrigierter Lauf Exit 0. 91 Sweep-Historien SHA-geprüft und gegen CSV-Minimum, Budget, Seed und leere Best-Checkpoint-Einträge abgeglichen. Aus den Best-Epochen bestätigt: 44,5382 % weniger gewichteter Energy-Loss, 100,4726 % der Netto-Lossdifferenz im ausgewählten Zweiervergleich. Alle 13 September-Dateihashes stimmen. Die vier Best-Checkpoints wurden mit `torch.load(weights_only=True, map_location='cpu')` gelesen und stimmen mit der aus der Historie nachgespielten Auswahlregel überein. P5-Eingangs-Hashes und die Zahl der WAV-Hash-Einträge stimmen mit der bestehenden Analyse, WAVs wurden hier nicht neu gehasht. Die Reviewrechnungen ergeben 99,8996 % ab gedämpftem Start und 97,3337 % mit fremdem Zwei-Band-Nenner. Kein Training und kein Hörvorgang.
+- **Prüflauf 5 · Historische Entwicklungsverträge.** Gleicher venv-Aufruf. Aus den beiden Entwicklungsdateien von 04.09. nur den Methodenblock vor dem Paarblock gelesen und Checkpoint-Epochen, Seed und `min_delta` in den referenzierten Trainingsmanifesten geprüft. Zwei Vorläufe endeten mit `KeyError` beim Pfadzugriff für die Equal-Power-Provenienz ohne Run; der korrigierte Lauf filterte auf `run_id` und bestand. Keine Buchstabenzuordnung gelesen. Getrennter venv-Aufruf mit dem D2-Metadaten-Export und `numpy.random.default_rng(20261113)` reproduzierte die historische Review-Train-Stichprobe für die gemeinsame Kurve: 60 Cues aus 40 Hashes, 32 gerichteten Paaren, 34 belegten Recording-Gruppen plus 6 ungedeckten Hashes. Gemäß Exportcode folgen NPZ- und JSONL-Einträge innerhalb eines Splits derselben Reihenfolge. Beide Befunde sind in die Matrix übernommen.
+- **Prüflauf 6 · Kapitelabdeckung und Bestandsschutz.** PowerShell-Here-String an `.venv\Scripts\python.exe -B -X utf8 -`. Eingaben: Kapitel 5, Matrix, vier Dataset-Manifeste samt JSONL-Metadaten, historische Hör-JSONs, STATUS und Umsetzungsregister. Abgleich aller Zeilen mit Ziffern oder englischen Zahlwörtern gegen den Zuordnungsindex. Der erste Anlauf griff auf die Thesisdatei im übergeordneten Git-Verzeichnis zu und scheiterte mit Exit 128 von Git. Korrektur: `git -C overleaf show 75a8664:chapters/05_results.tex`. Der zweite Anlauf fand den Verweis auf das SHA-Verfahren sowie LaTeX-Spaltenbreiten. Der Verweis wurde der Provenienz zugeordnet und LaTeX-Strukturanweisungen aus der Zahlensuche herausgenommen. Exit 0 im korrigierten Lauf: 44 zahlenführende Kapitelzeilen und 4 zusätzliche Caption-/Textstellen sind zugeordnet, 33 klassifizierte Matrixzeilen vollständig befüllt. Historisches Ledger und Kapitel 5 stimmen mit ihren jeweiligen Git-Fassungen überein. Dataset-/JSONL-Hashes, vier abgeschlossene Direktstudien, vier unbewertete Exporte, die 95 expliziten Ränge und 100 gespeicherten WAV-Hashnachweise im korrigierten Hörsatz stimmen. Die WAV-Dateien wurden dabei nicht geöffnet.
+- **Patchkontrolle und Übergabe.** `git diff --check -- docs/RESULTS_EVIDENCE_LEDGER.md docs/STATUS.md docs/Bemerkungen.md` bestanden, Git meldet die übliche LF-/CRLF-Konvertierung. Das Ledger wurde ausschließlich ergänzt. P02 ist in STATUS und Aufgabenliste abgeschlossen, die [P06-Vergleichsbedingungen](RESULTS_EVIDENCE_LEDGER.md#an-p06-übergebene-vergleichsbedingungen) stehen je Pfad im Ledger. P06 folgt nach P04 und P05. Kein neuer Trainings-, Render- oder Hörlauf. Originale und historische Artefakte blieben unverändert.
+- **Prüflauf 7 · Quellenpfade.** PowerShell-Here-String an dasselbe venv-Python expandierte die Platzhalter in den Matrixpfaden und prüfte Markdown-Ziele, Zeilenenden und Leerraum. Exit 0: 71 unterschiedliche repository-relative Artefaktangaben lösen auf. `git diff --numstat -- docs/RESULTS_EVIDENCE_LEDGER.md` zeigte 176 Ergänzungen und keine Löschung. `git -C overleaf status --short -- chapters/05_results.tex` meldete keine Änderung. Die Übergabe kann auf den verlinkten Quellen aufbauen.
+
+## 2026-11-18 — P00, Bestandsaufnahme für den Review-JP-Plan
+
+- **Frage und Zweck.** Welche historischen Dateien können P01–P03 und die spätere Controllerdiagnose tatsächlich als Eingaben verwenden? Verzeichnisnamen allein belegen weder die Identität eines Laufs noch eine unabhängige Evaluation.
+- **Setup und Inventur.** Checkout `b40a60a`, Windows, Projekt-venv. Gelesen wurden die sieben Dataset-Manifeste, die vier September-Runverträge und Historien, das R4-I/O-Audit, Korpus-, Feature-, Stem- und Cachemetadaten. `nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv`, Python mit `winreg`, `psutil`, `importlib.metadata`, `torch.cuda.is_available()`, `shutil.disk_usage` sowie `hf cache list --revisions --show-warnings` ermitteln den lokalen Stand. Der Hub-Cache meldet HTDemucs und ignoriert ein fachfremdes unvollständiges Repository ohne Snapshot. Die erste flache Suche nach Analyse-JSONs verfehlte die verschachtelten Caches. Eine rekursive Dateisuche bestätigt die Einträge unter `pre_analysis/.../v2/<SHA>/<Konfiguration>/analysis.json`.
+- **Prüflauf 1, Integrität.** PowerShell-Here-String an `.venv\Scripts\python.exe -B -X utf8 -`. Für `output/training_runs/prive*20260926_run01/manifest.json` alle Einträge aus `files` gegen Dateigröße und SHA-256 geprüft (`hashlib.file_digest`), Datasetreferenzen gegen die SHA-256 der lokalen Dataset-Manifeste aufgelöst, Epochen und Validation-Loss aus `history.json` gelesen. Bei R4 zusätzlich SHA-256 von Cacheindex und Cache-Rootmanifest mit dem Runvertrag verglichen.
+- **Ergebnis.** Exit 0. Alle 13 Dateieinträge (acht Checkpoints, vier Historien, ein I/O-Audit), vier Datasetverweise und beide R4-Cachehashes stimmen. R1/R2/R3 beginnen bei Epoche 0, R4 bei Epoche 1. R4 liest 2.649 Train- und 622 Validation-Beispiele bei 14 Cacheausschlüssen und null Testzugriffen. Checkpoints nur als Bytes gehasht. Kein Laden von Audio, Stems oder NPZ-Inhalten, kein Modelllauf.
+- **Folgerung.** D2 und D4 samt zugehörigen Läufen sind lokal identifizierbar. P02 kann die Vergleichsmatrix beginnen. P01 muss die globale Exposition auf Recording-Ebene getrennt prüfen.
+- **Zusatzprüfung, Cachebestand.** Dateizählung und Gruppierung der Track-Feature-Manifeste nach Vocal-Backend mit `.venv\Scripts\python.exe -B -X utf8 -`. Der erste Befehl endete vor der Ausführung mit `SyntaxError` (offene Klammer). Der zweite bestätigte 20 + 99 + 398 FLAC-Dateien und stoppte mit `KeyError: 'vocal_backend'`. Ältere Manifeste lassen das Feld aus. Die nächste Auszählung weist fehlende Angaben eigens aus.
+- **Wiederholung.** Gleiche Eingaben, Zugriff per `dict.get` und Zählung von `feature_protocol_v1/*/*/manifest.json`, `example-*` und `v2/*/*/analysis.json`. Exit 0. Basiscache 72 Demucs plus ein Manifest ohne Backendfeld, fünf weitere Roots mit 23, 287, 6, 54 bzw. 5 RoFormer-Manifesten. 474/534 feste Waveform-Beispielordner, 466 Analyse-JSONs im untersuchten PRIVE-Merge-v2-Root. Diese Zahlen sind Cacheeinträge. Der jeweilige Dataset- oder Runvertrag entscheidet über ihre Verwendbarkeit.
+- **Prüflauf 2, Aufgabenabdeckung und Reservierungen.** Kann die Folgesitzung jedes Reviewthema einem Paket und einem Nachweis zuordnen, ohne vorhandene Läufe zu überschreiben? PowerShell-Here-String an `.venv\Scripts\python.exe -B -X utf8 -`, Eingaben: neue Aufgabenliste, STATUS und der lokale Dateibaum. Register auf Reihenfolge/Vollständigkeit, Tabellenfelder, Quellen- und Übergabelinks, freie Ergebnispfade und Format geprüft. Exit 0: 5 Entscheidungen, 10 Grundsätze, 21 Pakete (P00–P16, R/F, O1/O2), B1–B4/N1–N8, Phasen 0–6 und die zehn nummerierten Teilphasen 1.1–2.6. Alle 18 lokalen Links lösen auf. Die 18 reservierten Runverzeichnisse sind eindeutig und frei, die vorgesehenen neuen Protokoll-/Auditziele ebenfalls frei. STATUS verweist im neuesten Eintrag auf die Liste.
+- **Prüflauf 3, Übertragungsfehler.** Gleicher venv-Aufruf. Tabellenzellen der Aufgabenliste mit allen sieben lokalen Dataset-Manifesten und vier Runmanifesten samt Historien verglichen. Exit 0: Verzeichnisnamen, Dataset- und Run-IDs, Splitzahlen je Länge, erste/ausgewählte/letzte Epochen, beide gerundeten Losswerte, Seed, Patience und Renderparameter stimmen. Damit sind die Referenzen für P02/P06 reproduzierbar benannt.
+- **Patchkontrolle.** `git diff --check -- docs/STATUS.md docs/Bemerkungen.md` mit Exit 0. Die neue unversionierte Aufgabenliste wurde in Prüflauf 2 auf nachlaufende Leerzeichen und Schlussumbruch geprüft. Git meldet die übliche LF-/CRLF-Konvertierung und bei `git status --short --branch` die bereits vorgefundene unlesbare `.pytest_cache/`. Vorhandene Änderungen und beide vorher unversionierten Reviewdokumente blieben erhalten.
+- **Übergabe.** [P00-Aufgabenliste](REVIEW_JP_UMSETZUNG.md) abgeschlossen. Autorenantworten vom 18.11. zu E2/E3, fehlende Betreuungsrückmeldung zu E1/E4/E5 und interner Zieltermin 27.11. sind eingetragen. Nächster Auftrag P01 mit Review R. P02 und P03 können unabhängig starten. P00 hat keine neuen Experimente, Trainings oder Bewertungen erzeugt.
+
 ## 2026-11-18 — Fertige PowerPoints zur Versionierung übernommen
 
 - **Fragestellung und Reasoning:** Die beiden fertigen Vorträge waren wegen
@@ -7947,3 +8413,408 @@ Caches werden nicht migriert oder überschrieben.
   keine Thesis- oder Originaldatenänderung, kein Commit. Eine native
   PowerPoint-Laufzeitprüfung und ein tatsächlich gesprochener Probevortrag
   sind weiterhin nicht durchgeführt; 20 Minuten sind ein geplantes Budget.
+
+## 2026-11-18 — Review-JP: Sichtung und gezielte Befundprüfung
+
+- **Fragestellung und Reasoning:** Welche Reviewbefunde gelten für den
+  aktuellen Stand, und tragen die Zahlen die vorgeschlagenen Schlussfolgerungen?
+  Besonders prüfen: TCN-Initialisierung, Bezugsgröße der 99,9 % und die
+  Gleichsetzung von positionsgleichen mit nutzlosen Featurekanälen. Eine
+  Vollsuite beantwortet diese Interpretationsfragen nicht; deshalb eine
+  enge synthetische/rechnerische Stichprobe.
+- **Eingaben/Setup:** Windows, Repository `b40a60a`, projektlokale `.venv`,
+  CPU, `torch.manual_seed(0)`, neues untrainiertes
+  `TCNBiLSTMTransitionControl().eval()`, zwei Nulltensoren `(32,54)` und
+  ein globaler Nulltensor `(16,)`. Gelesene vorhandene Ergebnisse:
+  `review_jp/results/b1_b2_tcn_fresh_init.json`,
+  `b1_b2_mlp_v1_top3.json` und `b3_b4_feature_and_dependency_audit.json`.
+  Keine Audio-, Cache-, Checkpoint- oder Testsplitdateien geöffnet.
+- **Testumfang/Befehl:** PowerShell-Here-String an
+  `.venv\Scripts\python.exe -B -X utf8 -` übergeben. Assertions prüfen
+  die Lossreihenfolge, den aus den Rohwerten berechneten Prozentanteil,
+  Ausgabeform `(32,10)`, sechs EQ-Kanäle und Ducking exakt 0,5, linearen
+  `gain_B` und seine Abweichung von der Sinus-Equal-Power-Kurve. Im Feature-
+  JSON für beide Datensätze: `transition_position` ohne Variation zwischen
+  Beispielen, aber mit 32 Werten und positiver Streuung innerhalb des Fensters.
+- **Ergebnis:** **PASS**, Exit 0. TCN-JSON: `fresh_init_only`, top3 vom
+  31.07., 45 Train-/9 Validationbeispiele. Losswerte: Start
+  `1.9628742800818548`, Zwei-Band-Equal-Power `0.3059589597913954`, feste
+  Full-Band-Kurve `0.24285628563827938`, direkte Full-Band-Optimierung
+  `0.24112767477830252`. Anteil fester Kurve am beobachteten direkten Gewinn:
+  `99.89960132027255 %` ab frischem TCN-Start; `97.33367793091288 %` ab dem
+  vorhandenen Zwei-Band-Equal-Power-Wert (kein zusätzlicher Nachweis einer
+  matched Full-Band-Baseline). Aktuelles Modell: Hilfscontrols 0,5, Hauptgains
+  linear. Positionskanal: 32 Werte, Standardabweichung `0.28853414550967793`,
+  Variation zwischen Beispielen 0. Kein Fehler in diesem Prüflauf.
+- **Lesender Versions-/Quellenabgleich:**
+  `git diff --stat 56b982a HEAD -- src tests overleaf` zeigt nur den geänderten
+  `overleaf`-Verweis, keine Änderung in `src/` oder `tests/`. Vier September-
+  Runordner R1–R4 vorhanden; ihre Artefaktvollständigkeit nicht geprüft.
+  Codefundstellen für feste Energieform und inverse GUI-Cue-Skalierung gelesen.
+  Aktuelle Einleitung/Diskussion behandeln bereits die eingeschränkte
+  Vergleichbarkeit, fehlende Baselines und das explorative Nullresultat.
+- **Werkzeugfehler bei der Pflichtlektüre:** `.skill` ist ein ZIP-Archiv;
+  `Get-Content -Raw` lieferte Binärtext. Der erste ZIP-Leseaufruf mit der
+  `.venv` scheiterte nur bei der Konsolenausgabe an cp1252
+  (`UnicodeEncodeError`). Mit `-X utf8` vollständig gelesen. Das waren
+  Lesehilfen, keine Projekt-/Modelltests; keine Quelldatei verändert.
+- **Schlussfolgerung und nächster Schritt:** Einordnung unter
+  `docs/masterarbeit/REVIEW_JP_EINORDNUNG_20261118.md` festgehalten.
+  Vor einer Thesisübernahme neuer Zahlen zunächst die Diagnose für die
+  tatsächlich berichteten September-Läufe planen. Keine Reviewmessung an
+  Audio reproduziert, keine Vollsuite, kein Training oder Hörtest, keine
+  Software-/Thesis-/Originaldatenänderung, kein Commit. Der Vierwochenplan
+  und die neue SSL-Cue-Metrik sind Empfehlungen des Reviews, kein beschlossener
+  Umfang.
+- **Dokumentationsprüfung:** Fünf relative Dateilinks der neuen Einordnung
+  mit einer weiteren Here-String-Prüfung über
+  `.venv\Scripts\python.exe -B -X utf8 -` erfolgreich aufgelöst (**PASS**).
+  Der erste `git diff --check -- docs/STATUS.md docs/Bemerkungen.md`
+  meldete eine zusätzliche Leerzeile am Dateiende des neuen Logblocks;
+  entfernt und den Block als Abschnitt zweiter Ebene abgesetzt.
+  Wiederholung **PASS**, Exit 0; nur der bestehende LF/CRLF-Hinweis bleibt.
+
+## 2026-11-18 — Umsetzungsprompts für den vollständigen Review-JP-Plan
+
+- **Auftrag und Entscheidung:** Der Nutzer bezeichnet den Aktionsplan als
+  eigenen Plan und möchte kopierbare Umsetzungsprompts mit Modellangaben.
+  Die vorherige Empfehlung des Agenten, zunächst nur die Diagnose zu
+  bearbeiten und den restlichen Umfang erneut zur Entscheidung zu stellen,
+  ist überholt. Die neue Promptfolge deckt Phasen 0–5 vollständig und Phase 6
+  sowie Beat This als optionale Arbeiten ab. Tatsächliche offene E2-/E3-
+  Entscheidungen werden dadurch nicht als bereits erfolgt ausgegeben.
+- **Artefakt:**
+  `docs/masterarbeit/UMSETZUNGSPROMPTS_REVIEW_JP_20261118.md` enthält
+  P00–P16, wiederverwendbare Review-/Korrekturprompts R/F, O1/O2 und einen
+  Fortsetzungsprompt. Gemeinsamer Arbeitsrahmen mit Pflichtlektüre,
+  Testprotokoll, Erhalt historischer Artefakte, Commitzuständigkeit des
+  Nutzers und neuer Evaluationspopulation. Empfehlung: Sol High für
+  abgegrenzte Implementierung, Astra High/Extra High für Versuchsdesign,
+  schwierige Implementierung und Ergebnisinterpretation. Die konkrete
+  Zuordnung ist eine Aufgabenempfehlung, kein gemessener Modellvergleich.
+  Modellnamen und grundsätzliche Einsatzbereiche anhand offizieller
+  OpenAI-Seiten am 18.11. geprüft; Quellen stehen im Artefakt. Für Claude
+  wird das vorhandene Reviewmodell empfohlen, keine unbestätigte Version.
+- **Fragestellung der Dokumentationsprüfung:** Sind alle Hauptaufträge
+  enthalten und in neuen Sitzungen ohne zusätzliche Chatvorgeschichte
+  benutzbar? Sind die kopierbaren Blöcke formal vollständig?
+- **Setup/Befehl:** Windows, projektlokale `.venv`;
+  PowerShell-Here-String an `.venv\Scripts\python.exe -B -X utf8 -`.
+  Gelesen wurden nur die neue Promptdatei und zwei vorhandene Quellpfade.
+- **Umfang und Ergebnis:** **PASS**, Exit 0. P00–P16 vollständig und in
+  Reihenfolge, R/F und O1/O2 vorhanden; 22 Textblöcke mit 44 passenden
+  Fence-Markern einschließlich Fortsetzungsprompt. Jeder Block verweist auf
+  den gemeinsamen Arbeitsrahmen. Keine nachlaufenden Leerzeichen.
+  Commitzuständigkeit und offene tatsächliche Betreuungsentscheidung
+  ausdrücklich vorhanden; referenzierter Aktionsplan und frühere
+  Einordnung existieren. Zusätzlich
+  `git diff --check -- docs/STATUS.md docs/Bemerkungen.md` ohne
+  Whitespacebefund; bestehender LF/CRLF-Hinweis bleibt. `git status` meldet
+  weiterhin die bekannte unlesbare `.pytest_cache`-Directory als Warnung;
+  keine Blockade der Dokumentation.
+- **Schlussfolgerung und nächster Schritt:** Promptfolge bereitgestellt,
+  STATUS mit neuem Nutzerauftrag ergänzt. Nächster Ausführungsauftrag ist
+  P00. In dieser Sitzung keine Implementierung, Audio-/ML-Experimente,
+  Studienbewertung, Modellinstallation oder Commits ausgeführt.
+
+### 18.11.2026 · P04 · synthetischer Erstlauf
+
+Geprüft wurden Rendergleichheit, Wiederholung, Gradienten, Paargewichtung, LUFS und Export mit deterministischen Stereo-Signalen. Befehl `.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider tests/test_render_comparison.py --basetemp=output/review_jp_20261118/p04_render/pytest01`. Zehn Tests bestanden. Drei Temp-Fixtures scheiterten vor ihrem Testkörper mit WinError 3, weil das Elternverzeichnis des gewählten Testpfads fehlte. Nächster Lauf mit vorhandenem Elternpfad.
+
+### 18.11.2026 · P04 · synthetische Abnahme
+
+Wiederholung des Erstlaufs mit `--basetemp=output/review_jp_20261118/p04_render/pytest02`, sonst gleicher Befehl und gleiche Eingaben. Alle 13 Tests bestanden in 20,89 s. Der echte FadeCut-Aufruf stimmt bis 5·10⁻⁷ absolut mit dem Render überein. Wiederholungen liefern identische Float32-Bytes. Mit einer Impulsspitze senkte der Paarabgleich alle sieben Dateien ab. Nachgelesene PCM24-Brücken bestätigten die sekundären Proxywerte. Als Nächstes alle vier September-Adapter auf begrenztem Train-/Validationmaterial und den Panel-Export auf Entwicklungsdaten ausführen.
+
+### 18.11.2026 · P04 · vier reale Diagnose-Smokes
+
+Frage war, ob E/F/M/D dieselben Fenster, Features und Objectives wie der jeweilige Trainingspfad benutzen können. Vier Aufrufe mit `.venv\Scripts\python.exe -m src.evaluation.render_comparison diagnose <R> --bars 4 --limit 1 --steps 2 --output output/review_jp_20261118/p04_render/run01/<R>`. Jeweils erstes Trainbeispiel für F, erstes gültiges Validationbeispiel für E/F/M/D, CPU, September-Best-Checkpoint. R1–R3 verwendeten D2, R4 den an D4 gebundenen Index. Alle vier Prozesse Exit 0. Roh-Loss in Reihenfolge E/F/M/D, gerundet:
+
+| Lauf | E | F | M | D |
+|---|---:|---:|---:|---:|
+| R1 | 0,209803 | 0,208880 | 0,191966 | 0,204922 |
+| R2 | 0,116434 | 0,113869 | 0,113701 | 0,113041 |
+| R3 | 0,221545 | 0,197740 | 0,196244 | 0,192934 |
+| R4 | 0,200088 | 0,198396 | 0,191408 | 0,196645 |
+
+Je Profil vier Zeilen und erfolgreiche bitgleiche E-Wiederholung. Die Einzelbeispiele und zwei Updates belegen die Verarbeitbarkeit. P06 übernimmt den vollen Paarumfang und 80 Updates. Als Nächstes das Entwicklungs-Hörpanel durch den CLI-Pfad schicken.
+
+### 18.11.2026 · P04 · erster Entwicklungs-Panelaufruf
+
+`.venv\Scripts\python.exe -m src.evaluation.render_comparison study docs/masterarbeit/review_jp_20261118/p04/dev_panel.json --steps 2 --output output/review_jp_20261118/p04_render/run01/panel`, erste drei Cues des ersten D2-Validationpaars, technische Platzhalter für die drei Selektoren. Der Aufruf endete mit Exit 1 vor Rendering/Export. Das Source-Grid für „2 The Dancefloor“ erfüllt die verlangte Detektionsprovenienz nicht. Kein unvollständiges Panel veröffentlicht. Nächster Schritt ist eine Metadatenprüfung der erreichbaren Entwicklungsgrids und Featurecaches bei unverändertem Akzeptanzkriterium.
+
+### 18.11.2026 · P04 · Entwicklungsgrids und Featurebindung
+
+Read-only-Python-Sonde über `.venv\Scripts\python.exe -X utf8 -`: D2-Train-/Validation-Metadaten gegen sechs vorhandene Analyse-Roots, pro Paar beide SHA-identifizierten Aufnahmen, erkannte Raster und SHA der auf 44,1 kHz und Zieltempo umgerechneten Beatframes gegen die FP1-Featuremanifeste geprüft. Null vollständige Treffer im Standard-Root, je zwei Train-Paare im Merge-v2-Retry- und PRIVE-Root. Die ersten IDs sind `example-e83fab1b79a96355` und `example-14eb8aa83ca222eb`. Für den technischen Panel-Smoke das erste belegte Paar im Retry-Root verwenden. Finale Population und Testshards wurden nicht geöffnet.
+
+### 18.11.2026 · P04 · sieben reale PCM24-Stimuli
+
+Erneuter Panelaufruf mit derselben CLI und zwei Updates, Auswahl aus dem ersten technisch passenden D2-Trainpaar, zusätzlicher Schalter `--analysis-root output/pre_analysis_variable_v2_strict_20260820_retry01 --merge-algorithm librosa_auftakt_monotonic_partial_v2`. „Cosmic Frequency“ → „Stuck In The Middle“, drei vorgegebene Cues, bei identischem BPM ohne Stretch. Exit 0. Sieben Stereo-PCM24-Dateien und Tabelle unter `output/review_jp_20261118/p04_render/run01/panel/`. Je 220.500 Samples Vorlauf, 267.776 oder 268.288 Samples Brücke, 352.800 Samples Nachlauf. Roh −4,13 bis −3,43 LUFS. Nach Export −23,03 bis −22,99 LUFS, höchster True Peak −15,50 dBTP. Gemeinsame zusätzliche Absenkung 0 dB. Sechs Roh-/Wiedergabe-Proxy-Paare, Anker ohne Proxy. Die Selektornamen bezeichnen hier Testplätze. Nächster Schritt ist die Gegenprüfung mit den ursprünglichen Trainings-Lossaufrufen und die Regression der Brückenextraktion.
+
+### 18.11.2026 · P04 · Wiederholung mit gebundenen Tabellen
+
+Alle vier `diagnose`-Aufrufe des ersten Real-Smokes wurden mit gleicher Eingabe, `--bars 4 --limit 1 --steps 2` unter `output/review_jp_20261118/p04_render/run02/{R1,R2,R3,R4}` wiederholt. Zweck war die gemeinsame Kontrolle der Eingaberate und Taktlänge, des bitweisen E-Replays und der neuen Protokoll-SHA in jeder Zeile. Viermal Exit 0. Als unabhängigen Rückvergleich die M-Zeilen auf ihren jeweiligen Original-Trainingsaufruf zurückführen.
+
+### 18.11.2026 · P04 · fachliche und bestehende Regression
+
+Synthetische, deterministische Waveforms und vorhandene Test-Fixtures. Befehl `.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider tests/test_render_comparison.py tests/test_differentiable_control.py tests/test_full_band_renderer.py tests/test_control_probe.py tests/test_rendering.py tests/test_ml_control_study.py tests/test_vocal_objective_study.py tests/test_all_models_control_study.py tests/test_gui_ml_transition.py tests/test_variable_waveform_cache.py --basetemp=output/review_jp_20261118/p04_render/pytest03`. 84 bestanden in 32,37 s, zwei bekannte audioread-Deprecations für aifc/sunau. Getestet wurden unter anderem der PCM24-Anker, identische Duplikat-Cues, Abweisung fremder Raten und verkürzter Kontexte, die vorhandenen Studienschreiber und das variable Alignment. Nächster Schritt ist die Artefaktprüfung auf den Entwicklungsdaten.
+
+### 18.11.2026 · P04 · realer Endlauf des Panel-Exports
+
+Der erfolgreiche Studienaufruf mit `dev_panel.json`, Merge-v2-Retry-Root und zwei Updates wurde unter `output/review_jp_20261118/p04_render/run02/panel` mit finalem Tabellenschema ausgeführt. Geprüft wurden zusätzlich deklarierte und tatsächlich gerenderte Cue-Koordinaten, Kontextlänge und die Digest-Bindung der Zeilen. Exit 0, sieben nachgemessene Dateien. Nächster Schritt ist der Bytevergleich beider Exporte.
+
+### 18.11.2026 · P04 · unabhängiger Vergleich mit den Trainingsadaptern
+
+Read-only-Sonde per `.venv\Scripts\python.exe -X utf8 -` auf den vier echten Validationbeispielen aus run02. Je Beispiel als Einerbatch durch `self_supervised_batch_loss`, `vocal_self_supervised_batch_loss`, `full_band_self_supervised_batch_loss` bzw. `variable_vocal_self_supervised_batch_loss` geschickt. Gleicher Best-Checkpoint und dieselben Feature-/Wellenformdaten. Gegen die tatsächlich gespeicherten M-Zeilen stimmen alle 11/15/11/18 Objective-Werte exakt überein (maximale absolute Abweichung pro Profil 0). Alle 23 Zeilen haben denselben Schlüsselsatz und binden die passende Protokoll-SHA. Alle Roh-Audiohashes und Roh-Proxys stimmen zwischen run01 und run02 überein. Für die sieben PCM24-Dateien auch Datei-SHA und sekundäre Proxywerte identisch. Exit 0. Nächster Schritt ist die Übergabe der geprüften Aufrufe an P05/P06 und P11.
+
+### 18.11.2026 · P04 · Abschlussregression mit vollständigem Referenzschnitt
+
+Gleicher pytest-Befehl und dieselben zehn Testmodule wie bei `pytest03`, neues `--basetemp=output/review_jp_20261118/p04_render/pytest04`. Zusätzlich synthetische Stereo-WAVs mit unterschiedlich langen Beatfenstern, zwei Cutpunkten im selben vorbereiteten Paar, historische BPM-Übergabe als String bzw. aus der Analyse. Verglichen wurden Vorlauf, samplegenaue Brücke und Nachlauf mit dem gesamten Referenzschnitt über `EqualPowerFadeCut.cut()`. Ein abweichendes Tempo wird zurückgewiesen. 85 Tests bestanden in 28,00 s, zwei audioread-Deprecations. Zusammen mit den Real-Smokes sind die P04-Abnahmekriterien erfüllt. P05 prüft als Nächstes den trainierbaren Start der Controller.
+
+### 18.11.2026 · P04 · Übergabeprüfung
+
+`git diff --check -- src/bridge.py docs/Bemerkungen.md docs/STATUS.md` und Read-only-Dateiprüfung mit `.venv\Scripts\python.exe -X utf8 -` für die neuen Python-Dateien, den P04-Bericht, dessen lokale Links und die fünf Tabellen unter run02. Beide Prüfungen Exit 0, nur die Git-Hinweise zur LF/CRLF-Konvertierung. Die Tabellen enthalten 23 Zeilen, davon sieben mit WAV. Die Aufrufe und die technische Auswahl der Entwicklungscues sind im P04-Bericht hinterlegt. Übergabe an P05.
+
+### 18.11.2026 · P05 · synthetischer Audio- und Gradiententest
+
+Frage war, ob alle fünf frischen Controller am echten Renderer Equal Power erreichen und jede verwendete EQ-/Ducking-Gruppe danach lernen kann. Stereo-Rauschen, getrennte Mix-/Stemanteile und nichtkonstante Features, Seed 197, bei variablen Modellen 2/4/6/8 Takte. Ein SGD-Schritt je Fall nach Backpropagation des jeweiligen Trainings-Objective. `.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider tests/test_control_initialization.py --basetemp=output/pytest_p05_start01`: 17 bestanden in 6,79 s. Eine PyTorch-Warnung zur Skalarumwandlung der Referenz bei R3. Die E0-Messung wird explizit ohne Gradientenaufzeichnung ausgeführt. Danach Gegenprobe mit echten Entwicklungsfenstern und den vier September-Checkpoints.
+
+### 18.11.2026 · P05 · echte Startzustände und historische Wiedergabe
+
+`.venv\Scripts\python.exe -m src.evaluation.check_control_initialization --p04-reference output/review_jp_20261118/p04_render/run02 --output output/review_jp_20261118/p05_initialisierung/run01`. Seed 20260926 aus den Runmanifesten. Erstes D2-/D4-Trainfenster (vier Takte, native 11.025 Hz) durch die fünf frischen Modelle. Bei allen fünf war der maximale absolute Samplefehler gegenüber dem jeweiligen P04-E-Render exakt 0. Gradienten-L2 R1/R2/R3/R4/variables MLP: 0,0020102 / 0,0085070 / 0,288335 / 0,0887884 / 0,0532853. Ein SGD-Schritt mit 0,01 veränderte bei jedem Modell das Audio. Zusätzlich je erstes historisches Validationfenster mit SHA-geprüftem September-Best-Checkpoint gerendert: viermal Controls und Roh-Proxys exakt gleich zu P04, viermal identischer Float32-Audio-SHA. Exit 0. Keine Gewichte gespeichert. Nächster Schritt ist die Runner-/Resume-Regression einschließlich echter E0.
+
+### 18.11.2026 · P05 · Regression der Modell-, Runner- und Legacy-Pfade
+
+`.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider tests/test_control_initialization.py tests/test_feature_control_model.py tests/test_vocal_control_model.py tests/test_tcn_bilstm_model.py tests/test_variable_ml.py tests/test_variable_tcn_bilstm.py tests/test_ml_training_runner.py tests/test_vocal_ml_training_runner.py tests/test_render_comparison.py tests/test_all_models_control_study.py tests/test_gui_ml_transition.py tests/test_cue_ranker_teacher.py --basetemp=output/pytest_p05_regression01`. Synthetische Fixtures, lokale CPU/CUDA-Pfade, historische Vertrags- und Teacherprüfungen. 103 bestanden, ein Fehler vor Modellzugriff beim atomaren Umbenennen des temporären Teacher-Universums (WinError 5), acht CUDA-/audioread-/Librosa-Warnungen, 52,23 s. Den einzelnen betroffenen Test in einem frischen kurzen Scratchpfad erneut ausführen.
+
+### 18.11.2026 · P05 · Wiederholung des Teacher-Fixtures
+
+`.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider tests/test_cue_ranker_teacher.py::test_teacher_waveform_cache_is_immutable_and_provenance_bound --basetemp=output/p05r2`. Identischer synthetischer Eingabefall, frisches Testverzeichnis. 1 bestanden in 3,09 s. Der vorangegangene Windows-Umbenennungsfehler war nicht reproduzierbar. Nächster Schritt ist die Endprüfung von E0, Wiederaufnahme und Übergabe.
+
+### 18.11.2026 – P05 Abschlussprobe und erweiterte Regression
+
+Die CPU-Entwicklungsprobe mit den P04-Referenzen und vier September-Best-Checkpoints wurde nach Einbau der Vertragsmarkierung wiederholt (`.venv\Scripts\python.exe -m src.evaluation.check_control_initialization --p04-reference output/review_jp_20261118/p04_render/run02 --output output/review_jp_20261118/p05_initialisierung/run02`). Exit 0, fünf Startsignale identisch, fünf wirksame erste Schritte, vier historische Replays identisch. Die Zahlen stehen in run02/probe.json.
+
+Der erweiterte pytest-Lauf mit `-q -p no:cacheprovider --basetemp=output/p05r3` umfasste test_control_initialization, test_feature_control_model, test_vocal_control_model, test_tcn_bilstm_model, test_variable_ml, test_variable_tcn_bilstm, test_ml_training_runner, test_vocal_ml_training_runner, test_render_comparison, test_all_models_control_study, test_gui_ml_transition, test_cue_ranker_teacher, test_wandb_logging, test_nontrivial_model_examples, test_ml_control_study, test_vocal_ml_control_study, test_variable_contract_hardening und test_tcn_confirmation_sweeps. 127 bestanden, zwei Fehler, acht Bibliothekswarnungen in 49,13 s. Beide Fehler betreffen historische Sweep-YAMLs ohne das neue optionale Feld. Die strikte Namensprüfung verlangt es irrtümlich. Nächster Schritt ist die Abwärtskompatibilität dieser Aufrufe und erneute Regression.
+
+### 18.11.2026 – P05 prüft die sieben vorgemerkten P06-Aufrufe
+
+Frage: Reproduzieren die späteren Startkonfigurationen den September-Vertrag bis auf Initialisierung und benannte Seeds? Eingabe: p05/p06_configs.json, lokale R1–R3-Manifeste und D2-Manifest. Mit `.venv\Scripts\python.exe -c` die sieben Argumentlisten an `src.ml.__main__.main()` übergeben, jeden Trainingsaufruf mit `unittest.mock.patch` abgefangen (R3 erst im gemeinsamen Runner). Geprüft: Zielpfad, Seed, D2-Datei-SHA, gesamter Architekturvertrag, alle ursprünglichen Trainingsfelder, Epochenbudget und bei R2 Backendmodell und konstante Lernrate sowie bei R3 der Runner ohne Scheduler. Alle sieben bestanden, Exit 0. Die drei Best-Checkpoints nennen AdamW (entkoppelter Weight Decay), LR 0,001 und keinen gespeicherten Scheduler. P06 kann die benannten Konfigurationen ausführen.
+
+### 18.11.2026 – P05 Regression nach Korrektur der Sweep-Kompatibilität
+
+Die identischen 18 pytest-Module des Laufs mit p05r3 unter `--basetemp=output/p05r4` erneut geprüft, inklusive der originalen YAMLs beider Bestätigungs-Sweeps. Die Grids ohne Versionsfeld verwenden wieder Legacy. 129 Tests bestanden in 47,11 s. Acht Warnungen betreffen zwei CUDA-Rückwärtsoperationen, veraltete Audio-Module und die kurzen synthetischen Teacher-Signale. Abschluss mit zusätzlicher unabhängiger Prüfung der Gain-Endpunkte und quadrierten Gainsumme auf den Entwicklungsfenstern.
+
+### 18.11.2026 – P05 unabhängige Gainprüfung und finaler Entwicklungs-Smoke
+
+Fragestellung: Besitzen Haupt-, Tiefton- und soweit vorhanden Vocal-Gains auch unabhängig vom P04-Audioreplay Start/Ende (1,0) bzw. (0,1) und die quadrierte Gainsumme eins über die gesamte Brücke? Prüfung der Endpunkte mit absoluter Toleranz 1e-7 und der Gainsumme mit 3e-7. Mit `.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider tests/test_control_initialization.py --basetemp=output/p05r5` bestanden alle 17 fachlichen Tests einschließlich aller variablen Längen in 6,07 s. Anschließend bzw. unabhängig mit `.venv\Scripts\python.exe -m src.evaluation.check_control_initialization --p04-reference output/review_jp_20261118/p04_render/run02 --output output/review_jp_20261118/p05_initialisierung/run03` auf den nativen Entwicklungsfenstern geprüft. Exit 0, alle fünf Start-/Gradientenprüfungen und vier Checkpoint-Replays bestanden. Die finale Tabelle mit den Originalwerten steht versionierbar in p05/entwicklungsprobe.json. Nächster Schritt ist P06.
+
+### 18.11.2026 – Konstante R3-Lernrate bis zum gespeicherten Optimierer
+
+Bei der Schlussdurchsicht fiel eine zweite Konvertierung der TCN-Trainingskonfiguration unterhalb des CLI-Trockenlaufs auf. Der explizite Vertrag für die konstante Lernrate reicht jetzt bis zum Optimierer. Geprüft mit `.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider tests/test_ml_training_runner.py tests/test_tcn_confirmation_sweeps.py tests/test_tcn_bilstm_model.py --basetemp=output/p05r6`. Der neue Integrationstest ruft die echte TCN-CLI mit einem synthetischen Train- und Validation-Beispiel für eine Epoche auf CPU auf und liest das geschriebene latest.pt. Ergebnis: Lernrate 0,001, kein Schedulerzustand, markierte Equal-Power-Gewichte und echte E0. Alle 18 Tests bestanden in 21,66 s mit zwei CUDA-Warnungen im separaten Auto-Device-Test. Die sieben P06-Wiederholungsläufe sind vorbereitet.
+
+### 18.11.2026 – P06 Rechenplatz und Paargewichtung der Referenzen
+
+Die Projekt-venv meldete über `.venv\Scripts\python.exe -c "import torch; print(torch.__version__, torch.cuda.is_available())"` PyTorch 2.13.0+cu130 und verfügbares CUDA. Für die vollständigen 80 Updates werden nativ gleich lange Fenster mit gleichem Cue-Gewicht gebündelt. Prüfung: `.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider tests/test_render_comparison.py -k p06 --basetemp=output/p06test01`. Vier CPU-Vergleiche bestanden in 5,96 s. Je Profil und fünf synthetischen Fenstern mit 2/2/1 Cues je Paar stimmen F und die unabhängigen D-Kurven nach drei Adam-Updates mit dem einzelnen P04-Pfad überein (atol 3e-6, rtol 1e-5). Nächster Schritt ist die Messung auf den geprüften September-Artefakten.
+
+### 18.11.2026 – P06 Vorprüfung der September-Artefakte
+
+Für die Diagnose müssen alle zulässigen Cues und ihre unveränderten Audiofenster zugänglich sein. Mit `.venv\Scripts\python.exe -u -m src.evaluation.controller_preflight output/review_jp_20261118/p06_controller/run01/preflight` die Manifeste, sämtliche deklarierten Run-Dateien einschließlich Best/Latest/History, Dataset-SHAs, Train-/Val-Shards, Modell-/Rendererverträge und alle benötigten Waveforms mit den nativen Nur-Lese-Loadern geprüft. R1/R2/R3 je 370/50, R4 bei 2/4/6 Takten je 663/156, bei 8 Takten 660/154. Exit 0. Sieben JSON-Dateien binden die Cue-IDs an ihre Cachemanifest-SHAs und zählen Paare, Tracks und Recording-Gruppen. Der historische Index bestimmt die R4-Auswahl. Bei der zusätzlichen Leseprüfung der drei September-Best-Checkpoints per Projekt-Python (torch.load mit weights_only=True) zeigten alle AdamW mit 0,001, Betas 0,9/0,999, epsilon 1e-8 sowie Weight Decay 0,0001. Die vollständigen Wiederholungs- und Referenzläufe können beginnen.
+
+18.11.2026 · P06 Vertauschungsprobe: Projekt-venv `-m src.evaluation.controller_response R4 output/review_jp_20261118/p06_controller/run01/smoke_swap_R4 --limit 4 --bars 8 --device cpu`. Vier echte R4-Cues mit 64 Stützstellen, 16 Zuordnungen. Alle Komponenten auf der Diagonale reproduzieren das separat gerenderte eigene Fenster. Exit 0. Für die Messreihe folgen sämtliche gleich langen Validation-Cues.
+
+18.11.2026 · P06 R1_4 legacy. Frage: Helfen die eigenen Eingaben am unveränderten Validationfenster? Projekt-venv -m src.evaluation.controller_response R1 output\review_jp_20261118\p06_controller\run01\response\R1_4_legacy --bars 4 --device cpu. Alle gleich langen Validation-Controls gegen jedes Ziel, E0-Rekonstruktion, Train-Mittelkurve, gemeinsame Audio-/Lossmessung und Kontrolle jeder Matrixdiagonale. Exit 0. Rohdaten und Log unter output/review_jp_20261118/p06_controller/run01. Nächster Schritt: Paaraggregation bei Erfolg, sonst Fehleranalyse.
+
+18.11.2026 · P06 R2_4 legacy. Frage: Helfen die eigenen Eingaben am unveränderten Validationfenster? Projekt-venv -m src.evaluation.controller_response R2 output\review_jp_20261118\p06_controller\run01\response\R2_4_legacy --bars 4 --device cpu. Alle gleich langen Validation-Controls gegen jedes Ziel, E0-Rekonstruktion, Train-Mittelkurve, gemeinsame Audio-/Lossmessung und Kontrolle jeder Matrixdiagonale. Exit 0. Rohdaten und Log unter output/review_jp_20261118/p06_controller/run01. Nächster Schritt: Paaraggregation bei Erfolg, sonst Fehleranalyse.
+
+### 18.11.2026 17:18 – P06 Trainingslauf
+
+Prüfung der Seedstreuung bzw. des R3-Startvertrags auf D2, Train/Validation 370/50. Aufruf `D:\Documents\00Uni\00master\BeatBridge\.venv\Scripts\python.exe -u -m src.ml train output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output\review_jp_20261118\p06_controller\run01\R1_equal_power_v1_seed20260926 --seed 20260926 --control-initialization equal_power_v1 --device cuda:0 --batch-size 5 --learning-rate 0.001 --weight-decay 0.0001 --gradient-clip-norm 1 --patience 6 --min-delta 0.0001 --training-sample-rate 11025 --wandb-mode disabled --max-epochs 30`. Protokoll `output/review_jp_20261118/p06_controller/run01/R1_equal_power_v1_seed20260926.log`. Endstatus `early_stopped`, letzte Epoche 7, Best E1 mit Validation-Loss 0.415208367. September-Vertrag, Budget, Dateihashes und History bestätigt. Best-Checkpoint gepaart auswerten.
+
+18.11.2026 · P06 R3_4 legacy. Frage: Helfen die eigenen Eingaben am unveränderten Validationfenster? Projekt-venv -m src.evaluation.controller_response R3 output\review_jp_20261118\p06_controller\run01\response\R3_4_legacy --bars 4 --device cpu. Alle gleich langen Validation-Controls gegen jedes Ziel, E0-Rekonstruktion, Train-Mittelkurve, gemeinsame Audio-/Lossmessung und Kontrolle jeder Matrixdiagonale. Exit 0. Rohdaten und Log unter output/review_jp_20261118/p06_controller/run01. Nächster Schritt: Paaraggregation bei Erfolg, sonst Fehleranalyse.
+
+18.11.2026 · P06 R1_4, E/F/D auf der vorgeprüften vollständigen Train-/Validationpopulation. Aufruf: python -m src.evaluation.controller_baselines R1 output\review_jp_20261118\p06_controller\run01\baseline\R1_4 --bars 4 --preflight output/review_jp_20261118/p06_controller/run01/preflight (Projekt-venv). Paargewichtete F-Kurve und unabhängige D-Kurven, Adam 80 Updates bei 0,06; CPU-Rohmessung. Exit 0. Einzelheiten in output/review_jp_20261118/p06_controller/run01/baseline_R1_4.log. Anschließend mit M und den Vertauschungen am selben Cue verbinden; bei Fehler erst Log prüfen.
+
+18.11.2026 · P06 R1_equal_power_v1_seed20260926. Eingabeabhängigkeit des abgeschlossenen Checkpoints auf 50 D2-Val-Cues mit vollständiger 50x50-Vertauschungsmatrix, neuem E0 und Train-Mittelkurve. Aufruf in der Projekt-venv: -m src.evaluation.controller_response R1 output\review_jp_20261118\p06_controller\run01\response\R1_equal_power_v1_seed20260926 --run output\review_jp_20261118\p06_controller\run01\R1_equal_power_v1_seed20260926 --device cpu. Exit 0, Log output/review_jp_20261118/p06_controller/run01/response_R1_equal_power_v1_seed20260926.log. Paarweise mit den konstanten Referenzen verbinden.
+
+### 18.11.2026 17:20 – P06 Trainingslauf
+
+Prüfung der Seedstreuung bzw. des R3-Startvertrags auf D2, Train/Validation 370/50. Aufruf `D:\Documents\00Uni\00master\BeatBridge\.venv\Scripts\python.exe -u -m src.ml train output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output\review_jp_20261118\p06_controller\run01\R1_equal_power_v1_seed20260927 --seed 20260927 --control-initialization equal_power_v1 --device cuda:0 --batch-size 5 --learning-rate 0.001 --weight-decay 0.0001 --gradient-clip-norm 1 --patience 6 --min-delta 0.0001 --training-sample-rate 11025 --wandb-mode disabled --max-epochs 30`. Protokoll `output/review_jp_20261118/p06_controller/run01/R1_equal_power_v1_seed20260927.log`. Endstatus `early_stopped`, letzte Epoche 7, Best E1 mit Validation-Loss 0.414576408. September-Vertrag, Budget, Dateihashes und History bestätigt. Best-Checkpoint gepaart auswerten.
+
+18.11.2026 · P06 R4_2 legacy. Frage: Helfen die eigenen Eingaben am unveränderten Validationfenster? Projekt-venv -m src.evaluation.controller_response R4 output\review_jp_20261118\p06_controller\run01\response\R4_2_legacy --bars 2 --device cpu. Alle gleich langen Validation-Controls gegen jedes Ziel, E0-Rekonstruktion, Train-Mittelkurve, gemeinsame Audio-/Lossmessung und Kontrolle jeder Matrixdiagonale. Exit 0. Rohdaten und Log unter output/review_jp_20261118/p06_controller/run01. Nächster Schritt: Paaraggregation bei Erfolg, sonst Fehleranalyse.
+
+18.11.2026 · P06 R1_equal_power_v1_seed20260927. Eingabeabhängigkeit des abgeschlossenen Checkpoints auf 50 D2-Val-Cues mit vollständiger 50x50-Vertauschungsmatrix, neuem E0 und Train-Mittelkurve. Aufruf in der Projekt-venv: -m src.evaluation.controller_response R1 output\review_jp_20261118\p06_controller\run01\response\R1_equal_power_v1_seed20260927 --run output\review_jp_20261118\p06_controller\run01\R1_equal_power_v1_seed20260927 --device cpu. Exit 0, Log output/review_jp_20261118/p06_controller/run01/response_R1_equal_power_v1_seed20260927.log. Paarweise mit den konstanten Referenzen verbinden.
+
+18.11.2026 · P06 Zwischenprüfung der Aggregation. Mit der Projekt-venv über stdin `controller_summary.summarize_case` für R1 Legacy und den bereits beendeten neuen Seed 20260926 aufgerufen. E/F/M/D, zugehörige Cue- und Cache-IDs, Gleichheit des neuen E0 mit E auf Audiohash-Ebene sowie die mittleren Losskomponenten gegen die History von E0 und Best geprüft. Exit 0, maximale Komponentendifferenz jeweils 2,39e-8. Die fünf Paarmittel ergeben für Legacy E/F/M/D 0,421035/0,411468/0,415208/0,367636. Die vollständige Seedreihe und die übrigen Pfade folgen.
+
+### 18.11.2026 17:22 – P06 Trainingslauf
+
+Prüfung der Seedstreuung bzw. des R3-Startvertrags auf D2, Train/Validation 370/50. Aufruf `D:\Documents\00Uni\00master\BeatBridge\.venv\Scripts\python.exe -u -m src.ml train output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output\review_jp_20261118\p06_controller\run01\R1_equal_power_v1_seed20260928 --seed 20260928 --control-initialization equal_power_v1 --device cuda:0 --batch-size 5 --learning-rate 0.001 --weight-decay 0.0001 --gradient-clip-norm 1 --patience 6 --min-delta 0.0001 --training-sample-rate 11025 --wandb-mode disabled --max-epochs 30`. Protokoll `output/review_jp_20261118/p06_controller/run01/R1_equal_power_v1_seed20260928.log`. Endstatus `early_stopped`, letzte Epoche 7, Best E1 mit Validation-Loss 0.415284480. September-Vertrag, Budget, Dateihashes und History bestätigt. Best-Checkpoint gepaart auswerten.
+
+18.11.2026 · P06 R1_equal_power_v1_seed20260928. Eingabeabhängigkeit des abgeschlossenen Checkpoints auf 50 D2-Val-Cues mit vollständiger 50x50-Vertauschungsmatrix, neuem E0 und Train-Mittelkurve. Aufruf in der Projekt-venv: -m src.evaluation.controller_response R1 output\review_jp_20261118\p06_controller\run01\response\R1_equal_power_v1_seed20260928 --run output\review_jp_20261118\p06_controller\run01\R1_equal_power_v1_seed20260928 --device cpu. Exit 0, Log output/review_jp_20261118/p06_controller/run01/response_R1_equal_power_v1_seed20260928.log. Paarweise mit den konstanten Referenzen verbinden.
+
+18.11.2026 · P06 History-Gegenprobe während der Läufe. Die Projekt-venv rief per stdin `read_table` und `check_history` für alle bereits publizierten Antworttabellen auf. Die R1–R3-Tabellen bestanden. Bei R4, Länge 2, brach der Vergleich mit Exit 1 ab: `control_smoothness` auf CPU im Einzelforward 0,191528656, im archivierten CUDA-Trainingsrunner bei E34 0,191535811. Die Hashprüfung und die CPU-Diagonalen waren zuvor erfolgreich. Zur Trennung von Rechenpfad und Artefaktfehler wird E34 auf allen vier Längen im ursprünglichen CUDA-Epochenpfad mit der in beiden lokalen W&B-Metadaten archivierten Batchgröße 4 nachgerechnet.
+
+18.11.2026 · P06 R2_4, E/F/D auf der vorgeprüften vollständigen Train-/Validationpopulation. Aufruf: python -m src.evaluation.controller_baselines R2 output\review_jp_20261118\p06_controller\run01\baseline\R2_4 --bars 4 --preflight output/review_jp_20261118/p06_controller/run01/preflight (Projekt-venv). Paargewichtete F-Kurve und unabhängige D-Kurven, Adam 80 Updates bei 0,06; CPU-Rohmessung. Exit 0. Einzelheiten in output/review_jp_20261118/p06_controller/run01/baseline_R2_4.log. Anschließend mit M und den Vertauschungen am selben Cue verbinden; bei Fehler erst Log prüfen.
+
+18.11.2026 · P06 R4_8 legacy. Frage: Helfen die eigenen Eingaben am unveränderten Validationfenster? Projekt-venv -m src.evaluation.controller_response R4 output\review_jp_20261118\p06_controller\run01\response\R4_8_legacy --bars 8 --device cpu. Alle gleich langen Validation-Controls gegen jedes Ziel, E0-Rekonstruktion, Train-Mittelkurve, gemeinsame Audio-/Lossmessung und Kontrolle jeder Matrixdiagonale. Exit 0. Rohdaten und Log unter output/review_jp_20261118/p06_controller/run01. Nächster Schritt: Paaraggregation bei Erfolg, sonst Fehleranalyse.
+
+18.11.2026 · P06 R4_4 legacy. Frage: Helfen die eigenen Eingaben am unveränderten Validationfenster? Projekt-venv -m src.evaluation.controller_response R4 output\review_jp_20261118\p06_controller\run01\response\R4_4_legacy --bars 4 --device cpu. Alle gleich langen Validation-Controls gegen jedes Ziel, E0-Rekonstruktion, Train-Mittelkurve, gemeinsame Audio-/Lossmessung und Kontrolle jeder Matrixdiagonale. Exit 0. Rohdaten und Log unter output/review_jp_20261118/p06_controller/run01. Nächster Schritt: Paaraggregation bei Erfolg, sonst Fehleranalyse.
+
+18.11.2026 · P06 R4-Replay und erneuter Artefaktabgleich. Mit der Projekt-venv `-m src.evaluation.controller_history_replay output/review_jp_20261118/p06_controller/run01/history_replay` den Originalrunner in Validation auf CUDA mit Batch 4, Best E34 und allen 622 zugelassenen Fenstern ausgeführt. Exit 0. Jede der 18 Komponenten aller vier Längen stimmt exakt mit der archivierten History überein (maximale Differenz 0). Die CPU-Einzelmessung für die gepaarten Bedingungen bleibt nachvollziehbar getrennt. Die Vorprüfung wurde mit demselben Befehl wie zuvor nach `run01/preflight_recheck` wiederholt, weil die Tonartkonfidenzen unter den 16 globalen Merkmalen liegen. Exit 0. Ein zusätzlicher Python-Abgleich per stdin der sieben JSON-Paare ergab nach Herausnehmen des ergänzten Felds vollständige Gleichheit. Die aktuellen P01-Gruppen haben innerhalb von D2 bzw. D4 null Train/Val-Überschneidungen. Zwischen den Verträgen teilt D2-Val eine Gruppe mit D4-Train (vier Takte), D2-Train sieben mit D4-Val, ihre Val-Gruppen schneiden sich nicht. Die Pfade separat interpretieren.
+
+18.11.2026 · P06 Regression CPU/CUDA. Mit `.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider tests/test_render_comparison.py tests/test_control_initialization.py tests/test_ml_training_runner.py tests/test_vocal_ml_training_runner.py --basetemp=output/p06test02` die Render-, Start- und Runnerprüfungen sowie die GPU-Bündelung der F/D-Updates geprüft. 48 bestanden, ein Fehler bei CUDA-R3, vier Warnungen, 44,01 s. Im synthetischen D-Test überschritt mindestens ein GPU-Control nach drei Updates die Toleranz gegenüber der CPU-Einzeloptimierung. Prüfung des Geräteunterschieds und des Bündelungseffekts mit Einzelforwards desselben Beispiels auf beiden Geräten.
+
+18.11.2026 · P06 R3_4, E/F/D auf der vorgeprüften vollständigen Train-/Validationpopulation. Aufruf: python -m src.evaluation.controller_baselines R3 output\review_jp_20261118\p06_controller\run01\baseline\R3_4 --bars 4 --preflight output/review_jp_20261118/p06_controller/run01/preflight (Projekt-venv). Paargewichtete F-Kurve und unabhängige D-Kurven, Adam 80 Updates bei 0,06; CPU-Rohmessung. Exit 0. Einzelheiten in output/review_jp_20261118/p06_controller/run01/baseline_R3_4.log. Anschließend mit M und den Vertauschungen am selben Cue verbinden; bei Fehler erst Log prüfen.
+
+18.11.2026 · P06 R4_6 legacy. Frage: Helfen die eigenen Eingaben am unveränderten Validationfenster? Projekt-venv -m src.evaluation.controller_response R4 output\review_jp_20261118\p06_controller\run01\response\R4_6_legacy --bars 6 --device cpu. Alle gleich langen Validation-Controls gegen jedes Ziel, E0-Rekonstruktion, Train-Mittelkurve, gemeinsame Audio-/Lossmessung und Kontrolle jeder Matrixdiagonale. Exit 0. Rohdaten und Log unter output/review_jp_20261118/p06_controller/run01. Nächster Schritt: Paaraggregation bei Erfolg, sonst Fehleranalyse.
+
+18.11.2026 · P06 numerische Einordnung und Regression. Per Projekt-Python (stdin) dieselben fünf synthetischen R3-Fenster nach drei D-Updates einzeln auf CPU und CUDA und gebündelt auf CUDA verglichen. Größte beobachtete Differenz des auffälligen EQ-Kanals zum einzelnen CPU-Fit 2,87e-5, zum einzelnen CUDA-Fit dort 1,79e-7. Der maximale beobachtete Unterschied des nachgerenderten CPU-Loss lag bei 7,46e-9. Der Test prüft nun die Bündelung gegen die Einzeloptimierung auf demselben Gerät und zusätzlich den Zielfunktionswert gegen CPU. Das Experiment und sein Budget wurden beibehalten. Identische vier pytest-Module unter `--basetemp=output/p06test03`: 49 bestanden in 45,44 s, vier bekannte Warnungen (zwei Audio-Deprecations, zwei CUDA-Backward-Operationen ohne Determinismusgarantie). Für die drei vorliegenden festen Legacy-Referenzreihen und alle R1-Wiederholungen lief außerdem der vorläufige Aufruf von `summarize_case` per stdin erfolgreich durch alle Cue- und Historykontrollen. Die finale Tabelle folgt nach dem letzten Trainingsende.
+
+18.11.2026 · P06 CPU-Einzelforward gegen den exakten R4-CUDA-Replay. Projekt-Python per stdin mit `read_table` und `check_history` auf den vier vollständigen Response-Tabellen und `history_replay/R4_{2,4,6,8}.json`. Alle vier Vergleiche bestanden. Größte absolute Abweichung eines CPU-Komponentenmittels 9,29e-6 (Glätte bei vier Takten), beim Gesamtproxy höchstens 2,13e-7. Die Rohdifferenzen werden im Evidenznachweis je Länge und Komponente ausgewiesen.
+
+18.11.2026 · P06 R2-Vertrag beim ersten neuen Training. Per Projekt-Python (stdin, JSON-Vergleich) das bereits geschriebene Runmanifest gegen September geprüft. Nach Explizitmachen der historischen AdamW-Parameter und des inaktiven Schedulers in Serialisierungsformat 3 sowie dem vorgegebenen neuen Start stimmt jedes Vertragsfeld überein, beide Budgets betragen 100. Exit 0. Die Prüfung von Ende, History und Checkpoints folgt zum Stopp jedes Seeds.
+
+18.11.2026 · P06 R4_2, E/F/D auf der vorgeprüften vollständigen Train-/Validationpopulation. Aufruf: python -m src.evaluation.controller_baselines R4 output\review_jp_20261118\p06_controller\run01\baseline\R4_2 --bars 2 --preflight output/review_jp_20261118/p06_controller/run01/preflight (Projekt-venv). Paargewichtete F-Kurve und unabhängige D-Kurven, Adam 80 Updates bei 0,06; CPU-Rohmessung. Exit 0. Einzelheiten in output/review_jp_20261118/p06_controller/run01/baseline_R4_2.log. Anschließend mit M und den Vertauschungen am selben Cue verbinden; bei Fehler erst Log prüfen.
+
+18.11.2026 · P06 fachliche Zwischenablesungen. Für die drei September-Vier-Takt-Pfade die gewichteten Komponenten aus `summarize_case` in der Projekt-venv per stdin paarweise subtrahiert. Bei R1 stieg der gewichtete Vocal-Grenzterm nach Vertauschung um 0,008405, bei R2 die gewichtete Vocal-Audibility um 0,018947. Alle zehn R3-Controls zeigten über die 50 Val-Cues Nullspannweite. Für die erste vollständige R4-Länge (zwei Takte, 52 Paare) bestand anschließend der Join samt CUDA-Historybeleg. E/F/M/D dort 0,220775/0,210506/0,194386/0,186794. Beide Aufrufe Exit 0. Drei weitere R4-Längen und die neuen Trainings-Checkpoints werden mit derselben Aggregation fertiggestellt.
+
+### 18.11.2026 17:34 – P06 Trainingslauf
+
+Prüfung der Seedstreuung bzw. des R3-Startvertrags auf D2, Train/Validation 370/50. Aufruf `D:\Documents\00Uni\00master\BeatBridge\.venv\Scripts\python.exe -u -m src.ml train-vocal output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output\review_jp_20261118\p06_controller\run01\R2_equal_power_v1_seed20260926 --seed 20260926 --control-initialization equal_power_v1 --device cuda:0 --batch-size 5 --learning-rate 0.001 --weight-decay 0.0001 --gradient-clip-norm 1 --patience 6 --min-delta 0.0001 --training-sample-rate 11025 --wandb-mode disabled --max-epochs 100 --optimizer adamw --lr-scheduler none --vocal-model roformer-model-bs-roformer-sw-by-jarredou`. Protokoll `output/review_jp_20261118/p06_controller/run01/R2_equal_power_v1_seed20260926.log`. Endstatus `early_stopped`, letzte Epoche 40, Best E34 mit Validation-Loss 0.325495856. September-Vertrag, Budget, Dateihashes und History bestätigt. Best-Checkpoint gepaart auswerten.
+
+18.11.2026 · P06 R2_equal_power_v1_seed20260926. Eingabeabhängigkeit des abgeschlossenen Checkpoints auf 50 D2-Val-Cues mit vollständiger 50x50-Vertauschungsmatrix, neuem E0 und Train-Mittelkurve. Aufruf in der Projekt-venv: -m src.evaluation.controller_response R2 output\review_jp_20261118\p06_controller\run01\response\R2_equal_power_v1_seed20260926 --run output\review_jp_20261118\p06_controller\run01\R2_equal_power_v1_seed20260926 --device cpu. Exit 0, Log output/review_jp_20261118/p06_controller/run01/response_R2_equal_power_v1_seed20260926.log. Paarweise mit den konstanten Referenzen verbinden.
+
+18.11.2026 · P06 R4_4, E/F/D auf der vorgeprüften vollständigen Train-/Validationpopulation. Aufruf: python -m src.evaluation.controller_baselines R4 output\review_jp_20261118\p06_controller\run01\baseline\R4_4 --bars 4 --preflight output/review_jp_20261118/p06_controller/run01/preflight (Projekt-venv). Paargewichtete F-Kurve und unabhängige D-Kurven, Adam 80 Updates bei 0,06; CPU-Rohmessung. Exit 0. Einzelheiten in output/review_jp_20261118/p06_controller/run01/baseline_R4_4.log. Anschließend mit M und den Vertauschungen am selben Cue verbinden; bei Fehler erst Log prüfen.
+
+### 18.11.2026 17:41 – P06 Trainingslauf
+
+Prüfung der Seedstreuung bzw. des R3-Startvertrags auf D2, Train/Validation 370/50. Aufruf `D:\Documents\00Uni\00master\BeatBridge\.venv\Scripts\python.exe -u -m src.ml train-vocal output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output\review_jp_20261118\p06_controller\run01\R2_equal_power_v1_seed20260927 --seed 20260927 --control-initialization equal_power_v1 --device cuda:0 --batch-size 5 --learning-rate 0.001 --weight-decay 0.0001 --gradient-clip-norm 1 --patience 6 --min-delta 0.0001 --training-sample-rate 11025 --wandb-mode disabled --max-epochs 100 --optimizer adamw --lr-scheduler none --vocal-model roformer-model-bs-roformer-sw-by-jarredou`. Protokoll `output/review_jp_20261118/p06_controller/run01/R2_equal_power_v1_seed20260927.log`. Endstatus `early_stopped`, letzte Epoche 16, Best E10 mit Validation-Loss 0.338731587. September-Vertrag, Budget, Dateihashes und History bestätigt. Best-Checkpoint gepaart auswerten.
+
+18.11.2026 · P06 R2_equal_power_v1_seed20260927. Eingabeabhängigkeit des abgeschlossenen Checkpoints auf 50 D2-Val-Cues mit vollständiger 50x50-Vertauschungsmatrix, neuem E0 und Train-Mittelkurve. Aufruf in der Projekt-venv: -m src.evaluation.controller_response R2 output\review_jp_20261118\p06_controller\run01\response\R2_equal_power_v1_seed20260927 --run output\review_jp_20261118\p06_controller\run01\R2_equal_power_v1_seed20260927 --device cpu. Exit 0, Log output/review_jp_20261118/p06_controller/run01/response_R2_equal_power_v1_seed20260927.log. Paarweise mit den konstanten Referenzen verbinden.
+
+18.11.2026 · P06 R4_6, E/F/D auf der vorgeprüften vollständigen Train-/Validationpopulation. Aufruf: python -m src.evaluation.controller_baselines R4 output\review_jp_20261118\p06_controller\run01\baseline\R4_6 --bars 6 --preflight output/review_jp_20261118/p06_controller/run01/preflight (Projekt-venv). Paargewichtete F-Kurve und unabhängige D-Kurven, Adam 80 Updates bei 0,06; CPU-Rohmessung. Exit 0. Einzelheiten in output/review_jp_20261118/p06_controller/run01/baseline_R4_6.log. Anschließend mit M und den Vertauschungen am selben Cue verbinden; bei Fehler erst Log prüfen.
+
+18.11.2026 · P06 R4_8, E/F/D auf der vorgeprüften vollständigen Train-/Validationpopulation. Aufruf: python -m src.evaluation.controller_baselines R4 output\review_jp_20261118\p06_controller\run01\baseline\R4_8 --bars 8 --preflight output/review_jp_20261118/p06_controller/run01/preflight (Projekt-venv). Paargewichtete F-Kurve und unabhängige D-Kurven, Adam 80 Updates bei 0,06; CPU-Rohmessung. Exit 0. Einzelheiten in output/review_jp_20261118/p06_controller/run01/baseline_R4_8.log. Anschließend mit M und den Vertauschungen am selben Cue verbinden; bei Fehler erst Log prüfen.
+
+### 18.11.2026 17:52 – P06 Trainingslauf
+
+Prüfung der Seedstreuung bzw. des R3-Startvertrags auf D2, Train/Validation 370/50. Aufruf `D:\Documents\00Uni\00master\BeatBridge\.venv\Scripts\python.exe -u -m src.ml train-vocal output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output\review_jp_20261118\p06_controller\run01\R2_equal_power_v1_seed20260928 --seed 20260928 --control-initialization equal_power_v1 --device cuda:0 --batch-size 5 --learning-rate 0.001 --weight-decay 0.0001 --gradient-clip-norm 1 --patience 6 --min-delta 0.0001 --training-sample-rate 11025 --wandb-mode disabled --max-epochs 100 --optimizer adamw --lr-scheduler none --vocal-model roformer-model-bs-roformer-sw-by-jarredou`. Protokoll `output/review_jp_20261118/p06_controller/run01/R2_equal_power_v1_seed20260928.log`. Endstatus `early_stopped`, letzte Epoche 41, Best E35 mit Validation-Loss 0.330020459. September-Vertrag, Budget, Dateihashes und History bestätigt. Best-Checkpoint gepaart auswerten.
+
+18.11.2026 · P06 Abschluss der vier R4-Längen. Die Projekt-venv las die Rohzeilen der ersten drei abgeschlossenen Längen zunächst direkt per stdin und mittelte Cue-Losswerte nach gerichtetem Paar. Nach Ende des Acht-Takt-Fits erfolgte für jede Länge der vollständige separate `summarize_case`-Aufruf, einschließlich Abgleich der Fremdzuordnungen gegen die gespeicherte Matrix (vorab auch für R2/Seed 20260926 und R4/vier Takte einzeln geprüft). Alle Abfragen Exit 0. Anteile M am Längengewinn E−D in der Reihenfolge 2/4/6/8 Takte: 77,657/77,154/78,562/76,881 Prozent. Alle vier stimmen qualitativ in M<F und S>M überein. Der frühere Zwischenlauf von git diff --check meldete Leerzeichen in neu angefügten Journaltrennzeilen. Nach Ende aller Referenzläufe wurden ausschließlich diese sieben P06-Trenner bereinigt.
+
+18.11.2026 · P06 R2_equal_power_v1_seed20260928. Eingabeabhängigkeit des abgeschlossenen Checkpoints auf 50 D2-Val-Cues mit vollständiger 50x50-Vertauschungsmatrix, neuem E0 und Train-Mittelkurve. Aufruf in der Projekt-venv: -m src.evaluation.controller_response R2 output\review_jp_20261118\p06_controller\run01\response\R2_equal_power_v1_seed20260928 --run output\review_jp_20261118\p06_controller\run01\R2_equal_power_v1_seed20260928 --device cpu. Exit 0, Log output/review_jp_20261118/p06_controller/run01/response_R2_equal_power_v1_seed20260928.log. Paarweise mit den konstanten Referenzen verbinden.
+
+### 18.11.2026 17:58 – P06 Trainingslauf
+
+Prüfung der Seedstreuung bzw. des R3-Startvertrags auf D2, Train/Validation 370/50. Aufruf `D:\Documents\00Uni\00master\BeatBridge\.venv\Scripts\python.exe -u -m src.ml train-tcn-bilstm output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805 output\review_jp_20261118\p06_controller\run01\R3_equal_power_v1_seed20260926 --seed 20260926 --control-initialization equal_power_v1 --device cuda:0 --batch-size 5 --learning-rate 0.001 --weight-decay 0.0001 --gradient-clip-norm 1 --patience 6 --min-delta 0.0001 --training-sample-rate 11025 --wandb-mode disabled --max-epochs 30 --constant-learning-rate`. Protokoll `output/review_jp_20261118/p06_controller/run01/R3_equal_power_v1_seed20260926.log`. Endstatus `completed`, letzte Epoche 30, Best E27 mit Validation-Loss 0.240035239. September-Vertrag, Budget, Dateihashes und History bestätigt. Best-Checkpoint gepaart auswerten.
+
+18.11.2026 · P06 R3_equal_power_v1_seed20260926. Eingabeabhängigkeit des abgeschlossenen Checkpoints auf 50 D2-Val-Cues mit vollständiger 50x50-Vertauschungsmatrix, neuem E0 und Train-Mittelkurve. Aufruf in der Projekt-venv: -m src.evaluation.controller_response R3 output\review_jp_20261118\p06_controller\run01\response\R3_equal_power_v1_seed20260926 --run output\review_jp_20261118\p06_controller\run01\R3_equal_power_v1_seed20260926 --device cpu. Exit 0, Log output/review_jp_20261118/p06_controller/run01/response_R3_equal_power_v1_seed20260926.log. Paarweise mit den konstanten Referenzen verbinden.
+
+### 18.11.2026 – P06 vollständige Auswertung, Kapitel- und Artefaktprüfung
+
+Fragestellung: Sind alle geplanten Trainings wirklich beendet und beruhen die F3-Aussagen auf denselben Cues und physisch passenden Referenzen? Eingaben waren alle sieben neuen Runs, die vier September-Best-Checkpoints, die sieben E/F/D-Referenzreihen (vier Längen bei R4), die 14 Modell-/Längenauswertungen sowie der CUDA-R4-Replay unter `output/review_jp_20261118/p06_controller/run01/`. Nach Ende der MLP-Reihen die Seedmittel per Projekt-Python und `summarize_case` berechnet (Exit 0). Endgültiger Aufruf: `.venv\Scripts\python.exe -u -m src.evaluation.controller_summary output/review_jp_20261118/p06_controller/run01 docs/masterarbeit/review_jp_20261118/p06`. Exit 0. Alle sieben neuen Endmanifeste samt Budget und tatsächlichen AdamW-Einstellungen, Best-/Latest-Dateien, lückenlosen Historien, Best-Epochen und neuen E0-Audiohashes geprüft. Der R3-Vertrag stimmt bis auf den vorgesehenen Startvertrag mit September überein, Ende E30/Best E27.
+
+Die unabhängige Abnahme per Projekt-Python (stdin) las CSV/JSON erneut, prüfte die Quell-SHAs des Evidenznachweises, die konstante F-Kurve je Profil/Länge, die Identität der Cue-Populationen, die lokalen Kapitellinks und alle 50 gerundeten Kontraste der zehn Haupttabellenzeilen gegen die Seedmittel. Alle bestanden ohne Rundungskorrektur. 126 aggregierte Bedingungen, 2.322 Paarzeilen, 1.782 Komponentenwerte, 269 Epochenzeilen einschließlich historischer Runs, 121.724 Zuordnungen einschließlich Diagonale. Die erzeugte Abbildung wurde visuell geprüft. Alle Referenzen liefen bis Update 80, sämtliche Response-Aufrufe endeten erfolgreich. Endergebnis und Datenverzeichnis sind im F3-Kapitel, im Ledger und im Aufgabenregister verlinkt. Keine neuen Hörurteile. Nächster Auftrag ist der unabhängige Review R zu P06.
+
+### 19.11.2026 – R zu P06, unabhängige Controllerprüfung
+
+- **Zugriff und Vorbereitung.** Die fünf ersten parallelen `Get-Content`-Aufrufe für Pflichtlektüre und Prompt wurden vor Prozessstart mit `registered runtime ownership is missing` abgewiesen. Der genehmigte Lesezugriff funktionierte. Ein erster Konsolenausdruck der archivierten `SKILL.md` mit `.venv\Scripts\python.exe -B -c` scheiterte am cp1252-Zeichen U+2194. Derselbe ZIP-Lesezugriff mit `-X utf8 -B` gelang. Bei der statischen Codeortung traf `rg` einmal auf einen nicht existierenden Modulpfad und einen Windows-ungültigen Glob. Die Folgeleseprüfung verwendete die konkreten Modulpfade.
+- **Gepaarte Rohwerte, Split und Trainingsende.** Frage war, ob F/M/D und die vertauschten Controls dieselben historischen Cues auswerten und die sieben vorab genannten Wiederholungen beendet sind. Befehl `.venv\Scripts\python.exe -X utf8 -B -` mit einmaliger Read-only-Prüfung über stdin, ohne Import der produktiven Aggregation. Eingaben waren die sieben E/F/D-Rohreihen, 14 Response-Verzeichnisse aus `output/review_jp_20261118/p06_controller/run01/`, Preflight-IDs, Recording-Gruppen, P05-Konfiguration und Runmanifeste. Geprüft wurden Cue-, Cache- und Vertragsgleichheit, konstante F-Controls, Train-/Val-Gruppentrennung im jeweiligen Vertrag, E0-Audiohashes, Matrixdiagonalen und Fremdmittel sowie paargewichtete Losswerte gegen die veröffentlichte CSV. Dazu kamen Dateigrößen/SHA-256 von History und Checkpoints, die Wahl von Best nach der vorab festgelegten Regel und der Gleichstand der beiden R3-Verträge abzüglich des neuen Ausgangsvertrags. Exit 0. 121.724 Matrixeinträge, maximale Diagonalabweichung 0. Alle sieben Runs bestätigt, Legacy-R3 mit zehn exakt konstanten Control-Kanälen und S−M = 0, EP-R3 mit S−M = 0,117630 und 77,60 % von E−D. Die Hauptkontraste können weiterverwendet werden.
+- **Abhängigkeit der Trackpaare.** Frage war, wie gemeinsame Aufnahmen das R4-Intervall beeinflussen und ob der R3-Effekt auch innerhalb desselben Paars sichtbar ist. Befehl `.venv\Scripts\python.exe -X utf8 -B -` mit separater Read-only-Nachrechnung über stdin. Verwendet wurden die Rohzeilen für vier Legacy-Profile, die vier R4-Längen insgesamt und EP-R3, außerdem `p01/exposure_tracks.csv` und die Reihenfolge der Preflight-IDs. Aus S−M je Empfänger und gleich gewichteten Paarmitteln wurden jeweils 10.000 Ziehungen über Einzelpaare und Recording-Komponenten mit Seed 20261121 berechnet. Exit 0. D2 hat 2 Komponenten aus 5 Kanten, R4 bei allen Längen 12 aus 52. R4 bei vier Takten ergibt 0,034835 bis 0,057884 für Einzelpaare und 0,035693 bis 0,058477 für Komponenten. EP-R3 bleibt auch bei Spendern aus demselben Paar positiv (0,106182). Nächster Schritt F für die Intervallangabe und deren Interpretation.
+- **Synthetische Regression.** Frage war, ob Equal Power und die Steps der Auswertung durch vorhandene isolierte Tests gedeckt sind. Befehl `.venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests/test_render_comparison.py tests/test_control_initialization.py -k 'equal_power_matches_reference or fixed_direct_start_and_paired_weighting or p06_batched_adam or fresh_audio_gradients'`. Geprüft wurden Renderer-Identität, Paargewichtung, Einzel- und Batch-Adam sowie Startgradienten, einschließlich der ausgeführten CUDA-Testfälle. Exit 0, 29 bestanden, 11 abgewählt, 45,49 s. Die technischen Invarianten stützen den Review. Keine neuen Trainings- oder Audioexperimente.
+- **Berichtskontrolle.** Frage war, ob die Fundstellen für F erreichbar sind. Über `.venv\Scripts\python.exe -X utf8 -B -` per stdin alle 14 Markdown-Linkziele und Zeilenanker, die Eindeutigkeit des Journaleintrags und Leerzeichen am Zeilenende im Review geprüft. Zusätzlich `git diff --check -- docs/Bemerkungen.md`. Beide Exit 0. Git wies auf die lokale LF/CRLF-Einstellung hin. Der Bericht ist für das Aufgabenregister bereit.
+
+### 19.11.2026 · P06 unabhängiger Review R_P06_02 (Bootstrap-Einheit, Anteile, Gruppentrennung)
+
+- **Frage.** Entspricht die Bootstrap-Einheit des R4-Intervalls dem Protokoll (ganze Komponenten bei geteilten Aufnahmen)? Reproduzieren sich Anteile M/F, Gruppentrennung und Auswahlregel unabhängig?
+- **Eingaben.** `docs/masterarbeit/review_jp_20261118/p06/pairs.csv`, `matrix.csv`, `training.csv`; `docs/masterarbeit/review_jp_20261118/p01/exposure_tracks.csv`; `output/review_jp_20261118/p06_controller/run01/preflight/*.json`; `output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805/examples.jsonl` und `output/datasets/prive_scantraxx_extension_variable_v2_fp2_roformer_2-4-6-8bar_top1x3_split20260923_run02_local_four_four/metadata/{2,4,6,8}bar/{train,validation}.jsonl`. In der D2-Datei wurden Testzeilen nur über das Feld `split` übersprungen, Testinhalte nicht ausgewertet. Nur Lesezugriff, keine Schreibzugriffe, kein Training.
+- **Befehl.** `$env:PYTHONIOENCODING='utf-8'; .venv\Scripts\python.exe docs\masterarbeit\review_jp_20261118\reviews\R_P06_02_pruefung.py` (Exit 0).
+- **Ergebnis.** Gruppentrennung D2 43/5, Schnittmenge 0 bei Gruppen und Tracks. D4 223/53 bzw. 222/53, Schnittmenge 0. Keine nicht zugeordneten Trackreferenzen. Die eine D4-Gruppe über der Preflight-Liste umfasst genau die 3 nicht gecachten Fenster, daher kein Leck. Anteile R3 EP-v1: M 77,60 %, F 47,29 %, F am gedämpften Start 93,37 %. R4: M 76,88 bis 78,56 %, F 22,39 bis 30,30 %. Paar-Bootstrap R4/4 Takte reproduziert 0,034835 bis 0,057884. Komponenten-Bootstrap (Mittel über gezogene Kanten mit Vielfachheit) 0,035708 bis 0,058904, R3 EP-v1 (2 Komponenten) 0,103475 bis 0,127067. Auswahlregel in allen 11 Historien bestätigt.
+- **Schlussfolgerung.** Befund F-1 bestätigt: Der Code zieht Paare statt Komponenten. Punktwerte unberührt, Intervalle bei R4 moderat verschoben, bei R1–R3 mit zwei Komponenten nicht belastbar. Die Komponentenzahl 0,035693 bis 0,058477 aus dem Review R_P06_01 ließ sich mit drei Schätzvarianten nicht exakt reproduzieren (siehe folgender Eintrag).
+- **Nächster Schritt.** Bericht `docs/masterarbeit/REVIEW_JP_P06_UNABHAENGIG_20261119.md`. Korrekturen F-1 bis F-7 im Schritt F.
+
+### 19.11.2026 · pytest P06-Vertrag (Initialisierung, Exposition, Renderer)
+
+- **Frage.** Halten die synthetischen Regressionstests für Initialisierung, Evaluation und Renderer?
+- **Befehl 1.** `.venv\Scripts\python.exe -m pytest -p no:cacheprovider -q tests/test_control_initialization.py tests/test_evaluation_exposure.py tests/test_render_comparison.py`. Ergebnis: 44 bestanden, 5 Fehler in `tests/test_render_comparison.py` beim Anlegen von `tmp_path`. Ursache: PermissionError auf `C:\Users\max_h\AppData\Local\Temp\pytest-of-max_h`, ein Umgebungsproblem und kein Testfehler.
+- **Befehl 2.** `.venv\Scripts\python.exe -m pytest -p no:cacheprovider -q --basetemp="C:\Users\max_h\AppData\Local\Temp\opencode\pytest_r06" tests/test_render_comparison.py`. Ergebnis: 23 bestanden, 2 Deprecation-Warnungen aus Abhängigkeiten (sunau/aifc).
+- **Schlussfolgerung.** Die fünf Fehler aus Lauf 1 sind in Lauf 2 bestanden. Keine fachlichen Fehler. Die Angabe „29 gezielt ausgeführte Regressionstests“ aus R_P06_01 betrifft eine Auswahl und ist nicht identisch mit dem hier gelaufenen Umfang.
+- **Nächster Schritt.** Temp-Berechtigung für den Standardlauf klären. Dafür ist kein Codeeingriff nötig, nur `--basetemp`.
+
+### 19.11.2026 · Schätzervarianten für den Komponenten-Bootstrap (Ad-hoc-Lauf)
+
+- **Frage.** Welcher Schätzer reproduziert das Komponentenintervall 0,035693 bis 0,058477 aus R_P06_01 für R4, 4 Takte?
+- **Befehl.** Inline `.venv\Scripts\python.exe -c`, importiert die Hilfsfunktionen aus `R_P06_02_pruefung.py`. Seed 20261121, 10.000 Ziehungen über die 12 Komponenten. Keine Dateien geschrieben.
+- **Ergebnis.** A, Mittel der Komponentenmittel: 0,032750 bis 0,059672. B, Mittel über gezogene Kanten mit Vielfachheit: 0,035708 bis 0,058904. C, eindeutige Kanten der gezogenen Komponenten: 0,036856 bis 0,055810. Kontrolle Paar-Bootstrap: 0,034835 bis 0,057884, identisch zum Code.
+- **Schlussfolgerung.** Keine der Varianten trifft die Zahl aus R_P06_01 genau. Die Konvention des Vorläuferreviews ist nicht rekonstruierbar. Die untere Grenze bleibt in allen drei Varianten über null.
+- **Nächster Schritt.** Schätzer im Protokoll festlegen (F-4) und die Journalzahl nach der Korrektur F-1 ersetzen.
+
+### 19.11.2026 · F zu R_P06_01/02, Neuauswertung aus Rohdaten
+
+Fragestellung war, wie sich der Wechsel zur Aufnahme-Komponente auf die paargewichteten Vergleiche auswirkt. Eingaben waren die gespeicherten Baselines, Response- und Swapmatrizen, Preflights, Best-Checkpoints, Historien und P01-Gruppen. Befehl `.venv\Scripts\python.exe -X utf8 -m src.evaluation.controller_summary output/review_jp_20261118/p06_controller/run01 output/review_jp_20261118/p06_controller/run02`. Erster Aufruf vor Auswertung mit PermissionError beim Lesen von exposure_tracks.csv beendet. Derselbe Aufruf mit freigegebenem Lesezugriff beendete alle 14 Modell-/Längenauswertungen mit 126 Kontrasten. Nächster Schritt ist der numerische Vergleich mit den historischen Tabellen und der direkten Nachrechnung des Reviews.
+
+### 19.11.2026 · Kontrolle von run02 gegen beide P06-Reviews
+
+`.venv\Scripts\python.exe -X utf8 -` verglich die 126 Matrixzeilen spaltenweise mit run01 (außer den beiden ersetzten Intervallspalten), sechs CSV-Dateien einschließlich Paaren und Trainingshistorien byteweise und die 14 S−M-Zeilen mit den Funktionen pair_table/components/component_bootstrap aus R_P06_02_pruefung.py. Alle Prüfungen bestanden. Bei D2 stimmen die Spannweiten, alle Intervalle sind dort leer. Die vier R4-Intervalle stimmen mit Variante B bis 10⁻¹² überein. Die gültige Journalangabe für vier Takte lautet 0,035708 bis 0,058904. Sie ersetzt die Schätzung aus R_P06_01 für die Berichterstattung. Der frühere Eintrag bleibt als Reviewhistorie erhalten. R1 wählte in allen vier Historien E1, R3 mit EP-v1 E27 von 30, Legacy E18 von 24. Matrix und Resamplingvertrag liegen zusätzlich unter docs/masterarbeit/review_jp_20261118/p06_run02/. Nächster Schritt ist die Einordnung dieser Auswahl im Kapitel.
+
+### 19.11.2026 · P13, vier reale Taktfenster
+
+`.venv\Scripts\python.exe -X utf8 -m src.evaluation.check_baseline_lengths output/review_jp_20261118/p13_laengen/run01` prüfte, ob der normale Batchrenderer alle vier angeforderten Baselinefenster am bekannten P04-Cue des D2-Trainpaars „Cosmic Frequency“ → „Stuck In The Middle“ trifft. Beide Originalhashes, erkannte 4/4-Grids und Paarmanifest wurden gebunden. Vier Equal-Power-WAVs mit je 529.200 Stereo-Frames bei 44.100 Hz nachgelesen. Die gemessenen Überlagerungen von 67.072, 133.120, 200.192 und 267.776 Samples stimmen mit dem kürzeren der beiden vollständigen Beatfenster überein. Exit 0. Dateihashes und Fenster in run01/verified.json. Technische Entwicklungsprobe, nächster Schritt ist der Abgleich mit den synthetischen Grenzfällen und GUI-Modellbeschränkungen.
+
+### 19.11.2026 · P13, Längen-, Renderer- und Bedienverträge
+
+Frage war, ob die neue Auswahl am Rand kurzer Abschnitte korrekt filtert, ob Altverträge und der explizite Alias lesbar bleiben und ob die feste GUI-Modellauswahl 1/2/3 Takte verhindert. Befehl `.venv\Scripts\python.exe -X utf8 -m pytest -q -p no:cacheprovider --basetemp=output/p13_pytest_20261119_a tests/test_baseline_lengths.py tests/test_gui_ml_transition.py tests/test_candidates.py tests/test_batch_render.py tests/test_multi_batch_render.py tests/test_rendering.py tests/test_variable_contract_hardening.py tests/test_variable_features.py`. Synthetische Beatgrids, Original-/Zielraten, Konfigurationsfixtures und ein unsichtbares Qt-Fenster. 88 Tests bestanden, zwei Deprecation-Hinweise aus audioread. Alle vier Alias-Fades samplegleich, 2/4/6/8-Pfade lesbar, manueller Durchklick durch den Autor ausstehend. Nächster Schritt ist die Übergabe im Register.
+
+### 19.11.2026 · F-4, Reihenfolge der Komponenten
+
+Zur Einordnung der abweichenden historischen Monte-Carlo-Grenzen verwendete `.venv\Scripts\python.exe -X utf8 -` die Funktionen pair_table/components/component_bootstrap des jüngeren Reviews mit R4, vier Takten, Variante B und demselben Seed. Reihenfolge des ersten enthaltenen Paars ergab [0,03570760; 0,05890377], Sortierung nach kleinster Gruppen-ID [0,03551374; 0,05847178]. Beide weichen vom früheren Journaleintrag ab. Seine genaue Ziehungsfolge ist weiterhin unbelegt. Für Reproduktion und Thesis gilt die im Protokoll festgehaltene erste Reihenfolge.
+
+### 19.11.2026 · Abschlussprüfung P06/P13
+
+Nach Vereinheitlichung des Filters für manuell gesetzte und automatisch gefundene Cues wurde derselbe reale Entwicklungsfall mit `.venv\Scripts\python.exe -X utf8 -m src.evaluation.check_baseline_lengths output/review_jp_20261118/p13_laengen/run02` erneut gerendert. Vier WAVs bestanden die PCM- und Rasterprüfung. run02 ist der gültige P13-Ausgabepfad, run01 die frühere erfolgreiche technische Probe. `.venv\Scripts\python.exe -X utf8 -m pytest -q -p no:cacheprovider --basetemp=output/p13_pytest_20261119_b tests/test_baseline_lengths.py tests/test_gui_ml_transition.py tests/test_candidates.py tests/test_batch_render.py tests/test_multi_batch_render.py tests/test_rendering.py tests/test_variable_contract_hardening.py tests/test_variable_features.py tests/test_controller_summary.py` prüfte zusätzlich eine Zeitlücke bei formal fortlaufenden Beatlabels und die P06-Komponentenbildung über beide Rollen, Gruppenalias und Kantenvielfachheit gegen direkt expandierte Bootstrapziehungen. 89 Tests bestanden, zwei Deprecation-Hinweise aus audioread. `git diff --check` für die geänderten Renderer-, Kandidaten- und GUI-Module meldete nur Git-Zeilenendhinweise. Die technische Übergabe an P14 ist möglich. Der manuelle GUI-Durchklick bleibt beim Autor.
+
+### 19.11.2026 · Lesbare Übergabe und Hashkontrolle
+
+Der Abgleich der P13-Manifeste aus run01 und run02 scheiterte im Benutzerkontext zunächst mit PermissionError auf den Sandbox-Dateien. Innerhalb der Sandbox bestätigte Get-FileHash identische Manifeste. Für die Übergabe erzeugte `.venv\Scripts\python.exe -X utf8 -m src.evaluation.check_baseline_lengths output/review_jp_20261118/p13_laengen/run03` dieselben vier Entwicklungs-WAVs im Benutzerkontext. Exit 0. Eine anschließende Prüfung mit `.venv\Scripts\python.exe -X utf8 -` las alle vier WAV-Dateien, verglich ihre SHA-256 und das JSON mit dem versionierbaren Nachweis und verglich P06-Matrix und Resamplingvertrag byteweise mit run02. Alle Vergleiche bestanden. **Gültige Übergabepfade sind P13/run03 und P06/run02.** Die frühen P13-Proben bleiben nachvollziehbar. Als Nächstes ist bei ausstehendem P01-Commit P14 vorgesehen.
+
+- 19.11.2026 · P09 Smoke classical, Stufe 0, Seed entfällt. Frage: Welche Validationsränge erreicht dieser Kopf auf den P08-Panels? Aufruf und Vertrag: `src.ml.p09_train`, `output/review_jp_20261118/p09_metrik/smoke02/config.json`. 35 verfügbare Trainingsqueries, 24 Validationsqueries, 0 Epochen, 0 Updates. Recall@1 0.500000, MRR 0.649355, Bestepoche entfällt. Einzelränge gespeichert. Weiter mit dem gepaarten Tabellenvergleich.
+
+- 19.11.2026 · P09 Smoke classical, Stufe 1, Seed 20260926. Frage: Welche Validationsränge erreicht dieser Kopf auf den P08-Panels? Aufruf und Vertrag: `src.ml.p09_train`, `output/review_jp_20261118/p09_metrik/smoke02/config.json`. 35 verfügbare Trainingsqueries, 24 Validationsqueries, 1 Epochen, 2 Updates. Recall@1 0.041667, MRR 0.238905, Bestepoche 1. Einzelränge gespeichert. Weiter mit dem gepaarten Tabellenvergleich.
+
+- 19.11.2026 · P09 Smoke classical, Stufe 2, Seed 20260926. Frage: Welche Validationsränge erreicht dieser Kopf auf den P08-Panels? Aufruf und Vertrag: `src.ml.p09_train`, `output/review_jp_20261118/p09_metrik/smoke02/config.json`. 35 verfügbare Trainingsqueries, 24 Validationsqueries, 1 Epochen, 2 Updates. Recall@1 0.041667, MRR 0.291981, Bestepoche 1. Einzelränge gespeichert. Weiter mit dem gepaarten Tabellenvergleich.
+
+- 19.11.2026 · P09 Smoke mert, Stufe 0, Seed entfällt. Frage: Welche Validationsränge erreicht dieser Kopf auf den P08-Panels? Aufruf und Vertrag: `src.ml.p09_train`, `output/review_jp_20261118/p09_metrik/smoke02/config.json`. 35 verfügbare Trainingsqueries, 24 Validationsqueries, 0 Epochen, 0 Updates. Recall@1 0.500000, MRR 0.608267, Bestepoche entfällt. Einzelränge gespeichert. Weiter mit dem gepaarten Tabellenvergleich.
+
+- 19.11.2026 · P09 Smoke mert, Stufe 1, Seed 20260926. Frage: Welche Validationsränge erreicht dieser Kopf auf den P08-Panels? Aufruf und Vertrag: `src.ml.p09_train`, `output/review_jp_20261118/p09_metrik/smoke02/config.json`. 35 verfügbare Trainingsqueries, 24 Validationsqueries, 1 Epochen, 2 Updates. Recall@1 0.208333, MRR 0.443568, Bestepoche 1. Einzelränge gespeichert. Weiter mit dem gepaarten Tabellenvergleich.
+
+- 19.11.2026 · P09 Smoke mert, Stufe 2, Seed 20260926. Frage: Welche Validationsränge erreicht dieser Kopf auf den P08-Panels? Aufruf und Vertrag: `src.ml.p09_train`, `output/review_jp_20261118/p09_metrik/smoke02/config.json`. 35 verfügbare Trainingsqueries, 24 Validationsqueries, 1 Epochen, 2 Updates. Recall@1 0.291667, MRR 0.451257, Bestepoche 1. Einzelränge gespeichert. Weiter mit dem gepaarten Tabellenvergleich.
+
+- 19.11.2026 · P09 Hauptlauf classical, Stufe 0, Seed entfällt. Frage: Welche Validationsränge erreicht dieser Kopf auf den P08-Panels? Aufruf und Vertrag: `src.ml.p09_train`, `output/review_jp_20261118/p09_metrik/run01/config.json`. 12999 verfügbare Trainingsqueries, 2830 Validationsqueries, 0 Epochen, 0 Updates. Recall@1 0.557474, MRR 0.679987, Bestepoche entfällt. Einzelränge gespeichert. Weiter mit dem gepaarten Tabellenvergleich.
+
+- 19.11.2026 · P09 Hauptlauf classical, Stufe 1, Seed 20260926. Frage: Welche Validationsränge erreicht dieser Kopf auf den P08-Panels? Aufruf und Vertrag: `src.ml.p09_train`, `output/review_jp_20261118/p09_metrik/run01/config.json`. 12999 verfügbare Trainingsqueries, 2830 Validationsqueries, 30 Epochen, 12210 Updates. Recall@1 0.613479, MRR 0.730391, Bestepoche 30. Einzelränge gespeichert. Weiter mit dem gepaarten Tabellenvergleich.
+
+- 19.11.2026 · P09 Hauptlauf classical, Stufe 1, Seed 20260927. Frage: Welche Validationsränge erreicht dieser Kopf auf den P08-Panels? Aufruf und Vertrag: `src.ml.p09_train`, `output/review_jp_20261118/p09_metrik/run01/config.json`. 12999 verfügbare Trainingsqueries, 2830 Validationsqueries, 30 Epochen, 12210 Updates. Recall@1 0.610223, MRR 0.727187, Bestepoche 27. Einzelränge gespeichert. Weiter mit dem gepaarten Tabellenvergleich.
+
+- 19.11.2026 · P09 Hauptlauf classical, Stufe 1, Seed 20260928. Frage: Welche Validationsränge erreicht dieser Kopf auf den P08-Panels? Aufruf und Vertrag: `src.ml.p09_train`, `output/review_jp_20261118/p09_metrik/run01/config.json`. 12999 verfügbare Trainingsqueries, 2830 Validationsqueries, 30 Epochen, 12210 Updates. Recall@1 0.611457, MRR 0.727642, Bestepoche 26. Einzelränge gespeichert. Weiter mit dem gepaarten Tabellenvergleich.
+
+- 19.11.2026 · P09 Hauptlauf classical, Stufe 2, Seed 20260926. Frage: Welche Validationsränge erreicht dieser Kopf auf den P08-Panels? Aufruf und Vertrag: `src.ml.p09_train`, `output/review_jp_20261118/p09_metrik/run01/config.json`. 12999 verfügbare Trainingsqueries, 2830 Validationsqueries, 30 Epochen, 12210 Updates. Recall@1 0.686593, MRR 0.793442, Bestepoche 3. Einzelränge gespeichert. Weiter mit dem gepaarten Tabellenvergleich.
+
+- 19.11.2026 · P09 Hauptlauf classical, Stufe 2, Seed 20260927. Frage: Welche Validationsränge erreicht dieser Kopf auf den P08-Panels? Aufruf und Vertrag: `src.ml.p09_train`, `output/review_jp_20261118/p09_metrik/run01/config.json`. 12999 verfügbare Trainingsqueries, 2830 Validationsqueries, 30 Epochen, 12210 Updates. Recall@1 0.684417, MRR 0.792880, Bestepoche 4. Einzelränge gespeichert. Weiter mit dem gepaarten Tabellenvergleich.
+
+- 19.11.2026 · P09 Hauptlauf classical, Stufe 2, Seed 20260928. Frage: Welche Validationsränge erreicht dieser Kopf auf den P08-Panels? Aufruf und Vertrag: `src.ml.p09_train`, `output/review_jp_20261118/p09_metrik/run01/config.json`. 12999 verfügbare Trainingsqueries, 2830 Validationsqueries, 30 Epochen, 12210 Updates. Recall@1 0.683687, MRR 0.791997, Bestepoche 5. Einzelränge gespeichert. Weiter mit dem gepaarten Tabellenvergleich.
+
+- 19.11.2026 · P09 Hauptlauf mert, Stufe 0, Seed entfällt. Frage: Welche Validationsränge erreicht dieser Kopf auf den P08-Panels? Aufruf und Vertrag: `src.ml.p09_train`, `output/review_jp_20261118/p09_metrik/run01/config.json`. 12999 verfügbare Trainingsqueries, 2830 Validationsqueries, 0 Epochen, 0 Updates. Recall@1 0.445269, MRR 0.571005, Bestepoche entfällt. Einzelränge gespeichert. Weiter mit dem gepaarten Tabellenvergleich.
+
+- 19.11.2026 · P09 Hauptlauf mert, Stufe 1, Seed 20260926. Frage: Welche Validationsränge erreicht dieser Kopf auf den P08-Panels? Aufruf und Vertrag: `src.ml.p09_train`, `output/review_jp_20261118/p09_metrik/run01/config.json`. 12999 verfügbare Trainingsqueries, 2830 Validationsqueries, 30 Epochen, 12210 Updates. Recall@1 0.625431, MRR 0.748684, Bestepoche 26. Einzelränge gespeichert. Weiter mit dem gepaarten Tabellenvergleich.
+
+- 19.11.2026 · P09 Hauptlauf mert, Stufe 1, Seed 20260927. Frage: Welche Validationsränge erreicht dieser Kopf auf den P08-Panels? Aufruf und Vertrag: `src.ml.p09_train`, `output/review_jp_20261118/p09_metrik/run01/config.json`. 12999 verfügbare Trainingsqueries, 2830 Validationsqueries, 30 Epochen, 12210 Updates. Recall@1 0.619054, MRR 0.745675, Bestepoche 29. Einzelränge gespeichert. Weiter mit dem gepaarten Tabellenvergleich.
+
+- 19.11.2026 · P09 Hauptlauf mert, Stufe 1, Seed 20260928. Frage: Welche Validationsränge erreicht dieser Kopf auf den P08-Panels? Aufruf und Vertrag: `src.ml.p09_train`, `output/review_jp_20261118/p09_metrik/run01/config.json`. 12999 verfügbare Trainingsqueries, 2830 Validationsqueries, 30 Epochen, 12210 Updates. Recall@1 0.618213, MRR 0.746106, Bestepoche 26. Einzelränge gespeichert. Weiter mit dem gepaarten Tabellenvergleich.
+
+- 19.11.2026 · P09 Hauptlauf mert, Stufe 2, Seed 20260926. Frage: Welche Validationsränge erreicht dieser Kopf auf den P08-Panels? Aufruf und Vertrag: `src.ml.p09_train`, `output/review_jp_20261118/p09_metrik/run01/config.json`. 12999 verfügbare Trainingsqueries, 2830 Validationsqueries, 30 Epochen, 12210 Updates. Recall@1 0.855883, MRR 0.915070, Bestepoche 22. Einzelränge gespeichert. Weiter mit dem gepaarten Tabellenvergleich.
+
+- 19.11.2026 · P09 Hauptlauf mert, Stufe 2, Seed 20260927. Frage: Welche Validationsränge erreicht dieser Kopf auf den P08-Panels? Aufruf und Vertrag: `src.ml.p09_train`, `output/review_jp_20261118/p09_metrik/run01/config.json`. 12999 verfügbare Trainingsqueries, 2830 Validationsqueries, 30 Epochen, 12210 Updates. Recall@1 0.858956, MRR 0.916366, Bestepoche 17. Einzelränge gespeichert. Weiter mit dem gepaarten Tabellenvergleich.
+
+- 19.11.2026 · P09 Hauptlauf mert, Stufe 2, Seed 20260928. Frage: Welche Validationsränge erreicht dieser Kopf auf den P08-Panels? Aufruf und Vertrag: `src.ml.p09_train`, `output/review_jp_20261118/p09_metrik/run01/config.json`. 12999 verfügbare Trainingsqueries, 2830 Validationsqueries, 30 Epochen, 12210 Updates. Recall@1 0.855393, MRR 0.913805, Bestepoche 18. Einzelränge gespeichert. Weiter mit dem gepaarten Tabellenvergleich.
+
+- 19.11.2026 · P10, Validation. Prüffrage war, ob die Best-Checkpoints die festgelegten Same-Track- und Intro/Drop-Kontrollen über Gruppen hinweg bestehen. `.venv\Scripts\python.exe -B -X utf8 -u -m src.evaluation.p10_validation` spielte alle 14 Bedingungen aus P09 auf den 2.830 P08-Originalpanels und 844 zusätzlichen Abschnittskontrasten mit CUDA nach. Alle 39.620 Einzelränge stimmten mit P09 überein. MERT-Stufen 1 und 2 bestanden beide Schwellen im Seedmittel und mit 20260926. Stufe 2 gewinnt nach mittlerem Recall@1, Studiencheckpoint Epoche 22. Keine Nachschärfung erforderlich. Rohwerte und Entscheidung stehen in `output/review_jp_20261118/p10_ranking/run01/validation/`. Weiter mit gepaartem Regelvergleich, Entwicklungssichtung und Batch-Render.
