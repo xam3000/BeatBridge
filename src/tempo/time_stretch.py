@@ -68,7 +68,7 @@ class TimeStretch:
             raise ValueError("audio must contain only finite samples")
 
         expected_samples = int(round(audio.shape[-1] / tempo_factor))
-        if np.isclose(tempo_factor, 1.0):
+        if abs(tempo_factor - 1.0) < 1e-12:
             self.last_backend = "not_needed"
             return audio.astype(np.float32, copy=True)
 

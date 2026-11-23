@@ -14,6 +14,7 @@ import uuid
 import zipfile
 
 import numpy as np
+from src.tempo.cue_alignment import CUE_ALIGNMENT, CueAlignmentError, check_feature_cue
 
 from src.analysis.pre_analysis import PartialPreAnalysis
 from src.dataset import DEFAULT_TRACK_EXCLUSIONS_PATH, is_track_excluded, load_track_exclusions
@@ -46,7 +47,7 @@ from src.features.variable_split import (
 )
 from src.features.vocal import DEFAULT_ROFORMER_MODEL, DEFAULT_VOCAL_BACKEND
 from src.pipeline import DEFAULT_SAMPLE_RATE
-from src.features.dataset_export import SPLIT_NAMES, SplitConfig
+from src.features.dataset_export import SPLIT_NAMES, SplitConfig, _manifest_cue_rate
 from src.tempo.coordinates import aligned_cue_sample
 
 
@@ -180,6 +181,7 @@ def export_variable_feature_dataset(
     ]
 
     prepared = []
+    tempo_rejections = []
     artifact_cache = {}
     for record in retained_records:
         candidate = record.candidate
@@ -208,13 +210,20 @@ def export_variable_feature_dataset(
             vocal_model=vocal_model,
         )
         geometry = geometry_from_candidate(candidate)
-        source_cue = _scale_cue(candidate["source_cutpoint"]["sample"], sample_rate)
-        target_cue = _scale_cue(candidate["target_cutpoint"]["sample"], sample_rate)
+        cue_rate = candidate.get("cue_sample_rate", DEFAULT_SAMPLE_RATE)
+        source_cue = round(candidate["source_cutpoint"]["sample"] * sample_rate / cue_rate)
+        target_cue = round(candidate["target_cutpoint"]["sample"] * sample_rate / cue_rate)
         target_cue = aligned_cue_sample(
             target_cue,
             original_bpm=candidate["target_bpm"],
             aligned_bpm=candidate["source_bpm"],
         )
+        try:
+            check_feature_cue(source_artifact, target_artifact, source_cue, target_cue,
+                              geometry.transition_length_beats, sample_rate)
+        except CueAlignmentError as error:
+            tempo_rejections.append(dict(example_id=record.example_id, exclusion_type=CUE_ALIGNMENT, reason=str(error)))
+            continue
         prepared.append((record, geometry, source_artifact, target_artifact, source_cue, target_cue))
 
     training_artifacts = []
@@ -228,7 +237,8 @@ def export_variable_feature_dataset(
                 seen_training_artifacts.add(key)
                 training_artifacts.append(artifact)
     if not training_artifacts:
-        raise ValueError("Variable export has no retained training artifacts for normalization")
+        raise ValueError(f"No training cues available for normalization after the tempo check "
+                         f"({len(tempo_rejections)} candidates rejected)")
     stats_id = _normalization_stats_id(training_artifacts, assignments)
     normalization = normalization_stats_from_training_artifacts(
         training_artifacts,
@@ -287,6 +297,7 @@ def export_variable_feature_dataset(
                 target_artifact,
                 source_cue,
                 target_cue,
+                analysis_root,
             )
         )
 
@@ -297,6 +308,7 @@ def export_variable_feature_dataset(
         for length in lengths
     }
     dataset_config = {
+        "waveform_alignment": CUE_ALIGNMENT,
         "format_version": DATASET_FORMAT_VERSION,
         "exporter_version": VARIABLE_DATASET_EXPORTER_VERSION,
         "feature_protocol_version": 2,
@@ -367,10 +379,11 @@ def export_variable_feature_dataset(
             "excluded_by_training_policy": len(excluded_records),
             "excluded_by_bpm_filter": len(bpm_excluded_records),
             "discarded_cross_split": len(records) - len(retained_records),
-            "exported": len(retained_records),
+            "excluded_by_tempo_grid": len(tempo_rejections),
+            "exported": len(prepared),
             "per_length": split_counts,
         },
-        "excluded_examples": excluded_records + bpm_excluded_records,
+        "excluded_examples": excluded_records + bpm_excluded_records + tempo_rejections,
         "split_counts": split_counts,
         "shards": {},
         "files": {},
@@ -458,7 +471,7 @@ def export_variable_feature_dataset(
     return VariableDatasetExportResult(
         output_directory=output_directory,
         manifest_path=output_directory / "manifest.json",
-        example_count=len(retained_records),
+        example_count=len(prepared),
         split_counts=split_counts,
         split_authority=authority,
     )
@@ -468,8 +481,9 @@ def _select_variable_candidate_records(pair_manifests, *, lengths, top_k_per_pai
     choices_by_pair_and_length = {}
     for manifest_path in pair_manifests:
         payload = _read_json(manifest_path)
+        cue_rate = _manifest_cue_rate(payload) or DEFAULT_SAMPLE_RATE
         candidates = {
-            item["candidate_id"]: item
+            item["candidate_id"]: dict(item, cue_sample_rate=cue_rate)
             for item in payload.get("candidate_generation", {}).get("candidates", [])
         }
         for score in sorted(
@@ -581,10 +595,13 @@ def _write_deterministic_npz(path, **arrays):
             archive.writestr(info, buffer.getvalue(), compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)
 
 
-def _example_metadata(record, geometry, split_name, source_artifact, target_artifact, source_cue, target_cue):
+def _example_metadata(record, geometry, split_name, source_artifact, target_artifact, source_cue, target_cue, analysis_root):
     candidate = record.candidate
     return {
         "example_id": record.example_id,
+        "waveform_alignment": CUE_ALIGNMENT,
+        "waveform_analysis_root": Path(analysis_root).as_posix(),
+        "cue_sample_rate": int(candidate.get("cue_sample_rate", DEFAULT_SAMPLE_RATE)),
         "split": split_name,
         "feature_protocol_version": 2,
         "dataset_format_version": DATASET_FORMAT_VERSION,
@@ -771,10 +788,6 @@ def _example_id(candidate, transition_length_bars):
     return "variable-example-" + hashlib.sha256(
         json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
     ).hexdigest()[:16]
-
-
-def _scale_cue(sample, sample_rate):
-    return int(round(int(sample) * int(sample_rate) / DEFAULT_SAMPLE_RATE))
 
 
 def _resolve_track_path(path):

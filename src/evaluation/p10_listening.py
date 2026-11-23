@@ -14,6 +14,7 @@ from src.features.p07_mert import file_sha256
 from src.features.p08_pairs import publish_dataset
 from src.features.p08_windows import checked, read_json
 from src.pipeline import render_transition
+from src.tempo.cue_alignment import LEGACY_ALIGNMENT
 from src.ranking.continuation import SELECTION
 
 
@@ -40,7 +41,7 @@ def prepare(out, pairs):
                                        candidate.target_cutpoint.sample, renderer="equal_power", baseline_bars=4,
                                        target_sample_rate=RATE, analysis=analysis, source_bpm=candidate.source_bpm,
                                        target_bpm=candidate.target_bpm, preview_seconds_before=5,
-                                       preview_seconds_after=14)
+                                       preview_seconds_after=14, tempo_alignment=LEGACY_ALIGNMENT)
             if render.audio.shape != (2, 19 * RATE) or not np.isfinite(render.audio).all():
                 raise ValueError(f"Incomplete development clip for {candidate.candidate_id}")
             clips.append((method, candidate, render))

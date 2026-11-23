@@ -26,6 +26,7 @@ result = render_transition(
 | `audio` | NumPy-Array in der Form `(channels, samples)` |
 | `sample_rate` | Sample-Rate des Ergebnis-Audios |
 | `renderer` | Verwendete Rendering-Baseline |
+| `tempo_alignment` | Bei lokaler Angleichung Vertrag, Perioden, Fitfenster, Faktor und maximale Abweichungen in Millisekunden |
 | `tempo_backend` | Tatsächlich verwendeter Tempo-Pfad: `ffmpeg_librubberband`, `rubberband_cli_r3`, `not_needed` oder bei einem explizit injizierten Fremd-Backend dessen Klassenname |
 | `transition_start_sample` | Beginn der tatsächlichen Transition relativ zum zurückgegebenen Audio |
 | `transition_end_sample` | Ende der tatsächlichen Transition relativ zum zurückgegebenen Audio; beim Hard Cut identisch zum Beginn |
@@ -38,6 +39,10 @@ result = render_transition(
 - Cutpoints sind Sample-Positionen auf dem normalisierten Ziel-Sample-Raster, bevor Song B für jeden Renderer tonhöhenerhaltend auf das BPM von Song A angepasst wird. Cutpoint und Beat-Raster von Song B werden dabei mit skaliert.
 - Originaldateien werden ausschließlich gelesen und nicht verändert.
 - Renderer geben standardmäßig eine Vorschau mit fünf Sekunden vor und zwölf Sekunden nach dem ausgerichteten Source-Cutpoint zurück. Damit enthalten Batch-Dateien den Übergang samt Kontext statt vollständiger Songs. Die API akzeptiert `preview_seconds_before=None` und `preview_seconds_after=None` für einen vollständigen Render.
+
+## Tempo am Cue ab 23.11.2026
+
+Die Formate 5 (fest) und 6 (variabel) beschreiben das Ergebnisformat. Der zusätzliche Parameter `tempo_alignment` bestimmt die Berechnung. Standard ist `cue_grid_regression_v3`. Die lineare Regression verwendet die beobachteten Beats um den gewählten Cue. Die lokalen Perioden bestimmen einen konstanten, tonhöhenerhaltenden Faktor für B. Die Prüfung verwirft den Cue bei mehr als 20 ms Abweichung eines Brückenbeats vom jeweiligen Fit oder vom korrespondierenden Beat des anderen Tracks. Ein vollständig aus dem BPM-Feld aufgebautes Raster liefert keine Beobachtungen und scheidet aus. Der Bericht enthält Methode, Fehlerverteilung und den Vergleich der drei Renderwege. [Tempo-Bericht](masterarbeit/REVIEW_JP_TEMPO_20261123.md)
 
 ## Tempo-Backend ab Version 5
 
@@ -83,13 +88,13 @@ Drop A | Source-Auslauf  ×  Target-Vorlauf | Drop B
 - Das Mischfenster kombiniert ausschließlich Audio **nach** dem Source-Cut mit Audio **vor** dem Target-Cut.
 - Der Suffix beginnt exakt am Target-Cutpoint mit Song B.
 - Damit liegen der High-Power-Abschnitt von A und der High-Power-Abschnitt von B außerhalb des überlappenden Fensters.
-- Bei unterschiedlichen Beatdauern bestimmt das kürzere verfügbare Übergangsfenster die Samplelänge; die musikalischen Cut-Grenzen bleiben erhalten.
+- Bei lokaler Angleichung gibt die vollständige beobachtete A-Brücke die Samplelänge vor. Das gleich lange B-Fenster endet am skalierten Target-Cue. Bei historischer Angleichung mit `global_bpm_v1` bestimmt im festen Format die kürzere der beiden beobachteten Spannen die Länge.
 
 Alle Fade-Renderer verwenden bei direktem API-Aufruf standardmäßig acht Beats. Automatische Kandidaten leiten aktuell 2 oder 4 Takte in die entsprechende Beatanzahl um. Version 1 mischte dagegen die Fenster unmittelbar vor beiden Cutpoints und ist für neue Batches nicht mehr maßgeblich.
 
-## Additiver Exaktdauerpfad für Candidate-v2
+## Historischer Exaktdauerpfad für Candidate-v2 mit global_bpm_v1
 
-Variable Candidate-v2-Exporte verwenden additiv Rendering-Format 6. Die
+Variable Candidate-v2-Exporte verwenden Rendering-Format 6, einschließlich der beiden zusätzlichen Felder für die Übergangslänge. Mit `cue_grid_regression_v3` verwenden sie denselben lokalen Fit und dieselbe A-Fensterlänge wie die festen Renderer. Für Wiederholungen alter Batchläufe gilt mit `global_bpm_v1` der folgende Exaktdauerpfad. Die
 Fade- und Equal-Power-Renderer erhalten die aus dem tatsächlichen Taktfenster
 abgeleitete `transition_length_beats`-Zahl und prüfen nach Alignment die
 Source- und Target-Bridge-Sampleanzahl. Beide Seiten müssen exakt gleich lang
@@ -101,7 +106,7 @@ Audiodateien. Nach der bestehenden strikten Sampleprüfung werden Kandidaten mit
 unterschiedlicher Source-/Target-Bridgeabdeckung verworfen; diese Fälle sind
 keine alte v1-„kürzeres Fenster“-Semantik und werden nicht still angepasst.
 
-Der bestehende Rendering-Format-5-Pfad behält seine historische
+Der historische Rendering-Format-5-Pfad mit `global_bpm_v1` behält seine
 „kürzeres verfügbares Fenster bestimmt die Samplelänge“-Semantik. Dadurch
 bleiben alte direkte Renderaufrufe, Batch-Manifeste und WAV-Artefakte
 kompatibel. Nur Candidate-v2-Batchvarianten verwenden den Exaktdauerpfad.

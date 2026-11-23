@@ -16,6 +16,8 @@ from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
+    QDialog,
+    QDialogButtonBox,
     QDoubleSpinBox,
     QFileDialog,
     QFrame,
@@ -340,6 +342,7 @@ class _CueAnalysisTask(QRunnable):
             from src.analysis.pre_analysis import PreAnalysis
             from src.candidates import BaselineCandidateGenerationConfig, TrackReference, generate_candidates
             from src.ranking import rank_candidates
+            from src.tempo.cue_alignment import filter_candidate_grids
 
             analyzer = PreAnalysis(str(self.analysis_cache) + os.sep)
             source_result = analyzer(str(self.source.path))
@@ -357,11 +360,13 @@ class _CueAnalysisTask(QRunnable):
 
             source_range_samples = tuple(round(value * TARGET_SAMPLE_RATE) for value in self.source_range)
             target_range_samples = tuple(round(value * TARGET_SAMPLE_RATE) for value in self.target_range)
+            source_grid = to_target_grid(source_frames, source_rate)
+            target_grid = to_target_grid(target_frames, target_rate)
             generated = generate_candidates(
                 TrackReference(str(self.source.path), _sha256_file(self.source.path)),
-                float(source_bpm), to_target_grid(source_frames, source_rate),
+                float(source_bpm), source_grid,
                 TrackReference(str(self.target.path), _sha256_file(self.target.path)),
-                float(target_bpm), to_target_grid(target_frames, target_rate),
+                float(target_bpm), target_grid,
                 source_grid_metadata=source_metadata,
                 target_grid_metadata=target_metadata,
                 config=BaselineCandidateGenerationConfig(
@@ -371,6 +376,7 @@ class _CueAnalysisTask(QRunnable):
                 source_cutpoint_range_samples=source_range_samples,
                 target_cutpoint_range_samples=target_range_samples,
             )
+            generated = filter_candidate_grids(generated, source_grid, target_grid, TARGET_SAMPLE_RATE)
             if not generated.candidates:
                 reasons = "; ".join(dict.fromkeys(item.message for item in generated.rejections))
                 raise ValueError(reasons or "In den ausgewählten Bereichen wurden keine Cuepoint-Kandidaten gefunden.")
@@ -405,6 +411,23 @@ class _CueAnalysisTask(QRunnable):
 
 class _RenderSignals(QObject):
     finished = Signal(object, str)
+
+
+class _MashupTask(QRunnable):
+    def __init__(self, plan, destination, cache):
+        super().__init__()
+        self.plan, self.destination, self.cache = plan, destination, cache
+        self.signals = _RenderSignals()
+
+    def run(self):
+        try:
+            from src.analysis.pre_analysis import PreAnalysis
+            from src.mashup import export_mashup
+
+            export_mashup(self.plan, self.destination, PreAnalysis(self.cache))
+            self.signals.finished.emit(str(self.destination / "mashup.wav"), "")
+        except Exception as error:
+            self.signals.finished.emit(None, str(error))
 
 
 class _TransitionRenderTask(QRunnable):
@@ -503,6 +526,7 @@ class _TransitionRenderTask(QRunnable):
                 "transition_start_sample": result.transition_start_sample,
                 "transition_end_sample": result.transition_end_sample,
                 "tempo_backend": result.tempo_backend,
+                "tempo_alignment": getattr(result, "tempo_alignment", None),
                 "evaluation_type": "rendered_transition_baseline_v1" if model_provenance is None else "rendered_transition_with_learned_controls_v1",
                 "evaluation": score,
                 "evaluation_failures": [item.to_dict() for item in ranked.failures],
@@ -555,9 +579,10 @@ class TransitionBuilderWindow(QMainWindow):
         self._source_cue_set = False
         self._target_cue_set = False
         self.sequence_tracks: list[str] = []
+        self._sections: dict[str, tuple[float, float | None]] = {}
         self._active_edge_index: int | None = None
         self._edge_cues: dict[int, tuple[float, float, bool, bool]] = {}
-        self._edge_ranges: dict[int, tuple[float, float, float, float]] = {}
+        self._edge_ranges: dict[int, tuple[tuple | None, tuple | None]] = {}
         self._edge_settings: dict[int, tuple[int, str, str | None]] = {}
         self._edge_results: dict[int, dict] = {}
 
@@ -674,9 +699,15 @@ class TransitionBuilderWindow(QMainWindow):
         self.sequence_down_button.clicked.connect(lambda: self._move_sequence_track(1))
         self.sequence_remove_button = QPushButton("Aus Sequenz entfernen")
         self.sequence_remove_button.clicked.connect(self._remove_sequence_track)
+        section_button = QPushButton("Songabschnitt …")
+        section_button.clicked.connect(self._edit_section)
+        self.export_button = QPushButton("Mashup exportieren …")
+        self.export_button.clicked.connect(self._export_mashup)
+        sequence_header.addWidget(section_button)
         sequence_header.addWidget(self.sequence_up_button)
         sequence_header.addWidget(self.sequence_down_button)
         sequence_header.addWidget(self.sequence_remove_button)
+        sequence_header.addWidget(self.export_button)
         sequence_layout.addLayout(sequence_header)
         self.sequence_list = SequenceListWidget()
         self.sequence_list.setFlow(QListWidget.Flow.LeftToRight)
@@ -781,6 +812,8 @@ class TransitionBuilderWindow(QMainWindow):
         for label, run_path in discover_control_models(REPOSITORY_ROOT / "output" / "training_runs"):
             self.model_combo.addItem(label, str(run_path))
         self.model_combo.currentIndexChanged.connect(self._on_model_changed)
+        for combo in (self.length_combo, self.renderer_combo, self.model_combo):
+            combo.activated.connect(self._invalidate_preview)
         controls_layout.addWidget(self.model_combo, 1)
         model_note = QLabel("Das ausgewählte Modell sagt die Mixing-Kontrollen für dieses Paar voraus. Modelle sind experimentell.")
         model_note.setObjectName("muted")
@@ -855,8 +888,96 @@ class TransitionBuilderWindow(QMainWindow):
         if not added:
             self.status_label.setText("Wähle zuerst einen oder mehrere neue Songs in der Bibliothek aus.")
             return
-        self.sequence_tracks.extend(added)
-        self._refresh_sequence(select_edge=max(0, len(self.sequence_tracks) - 2))
+        sequence = self.sequence_tracks + added
+        self._replace_sequence(sequence, select_edge=max(0, len(sequence) - 2))
+
+    def _edit_section(self):
+        row = self.sequence_list.currentRow()
+        if row < 0:
+            self.status_label.setText("Wähle einen Song in der Sequenz.")
+            return
+        path = self.sequence_tracks[row]
+        import librosa
+
+        try:
+            duration = librosa.get_duration(path=path)
+        except Exception as error:
+            self.status_label.setText(f"Trackdauer konnte nicht gelesen werden: {error}")
+            return
+        left, right = self._sections.get(path, (0.0, None))
+        dialog = QDialog(self)
+        dialog.setWindowTitle(f"Songabschnitt · {Path(path).stem}")
+        layout = QVBoxLayout(dialog)
+        start, end = self._cue_input(), self._cue_input()
+        for label, box, value in (("Anfang", start, left), ("Ende", end, right or duration)):
+            box.setDecimals(3)
+            box.setMaximum(duration)
+            box.setValue(value)
+            layout.addWidget(QLabel(label))
+            layout.addWidget(box)
+        controls = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        controls.accepted.connect(dialog.accept)
+        controls.rejected.connect(dialog.reject)
+        layout.addWidget(controls)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+        if start.value() >= end.value():
+            self.status_label.setText("Der Abschnitt muss vor seinem Ende beginnen.")
+            return
+        right = None if end.value() == end.maximum() else end.value()
+        self._sections[path] = start.value(), right
+        self._refresh_sequence()
+
+    def _export_plan(self):
+        self._remember_active_edge()
+        if len(self.sequence_tracks) < 2:
+            raise ValueError("Füge mindestens zwei Songs zur Sequenz hinzu.")
+        sections, edges = [], []
+        for path in self.sequence_tracks:
+            start, end = self._sections.get(path, (0.0, None))
+            sections.append(dict(path=Path(path).as_posix(), start_seconds=start, end_seconds=end))
+        for index in range(len(sections) - 1):
+            cue = self._edge_cues.get(index)
+            if not cue or not all(cue[2:]):
+                raise ValueError(f"Setze beide Cuepoints für Übergang {index + 1}.")
+            bars, renderer, model = self._edge_settings.get(index, (4, "equal_power", None))
+            if model:
+                raise ValueError(f"Wähle für Übergang {index + 1} einen Baseline-Renderer. "
+                                 "ML-Modelle sind im Paarvergleich verfügbar.")
+            edges.append(dict(source_seconds=cue[0], target_seconds=cue[1], bars=bars, renderer=renderer))
+        return dict(format_version=1, sections=sections, edges=edges)
+
+    def _export_mashup(self):
+        try:
+            plan = self._export_plan()
+        except ValueError as error:
+            self.status_label.setText(str(error))
+            return
+        parent = QFileDialog.getExistingDirectory(self, "Zielordner für WAV und Exportmanifest auswählen")
+        if not parent:
+            return
+        destination = Path(parent) / ("BeatBridge-" + uuid.uuid4().hex[:12])
+        task = _MashupTask(plan, destination, self.analysis_cache)
+        task.signals.finished.connect(self._on_mashup_exported, Qt.ConnectionType.QueuedConnection)
+        self.export_button.setEnabled(False)
+        self.status_label.setText("Die Sequenz wird mit den gewählten Abschnitten und Übergängen exportiert …")
+        self._pool.start(task)
+
+    def _on_mashup_exported(self, path, error):
+        self.export_button.setEnabled(True)
+        self.status_label.setText(f"Mashup-Export fehlgeschlagen: {error}" if error else f"Mashup gespeichert: {path}")
+
+    def _replace_sequence(self, sequence, *, select_edge):
+        self._remember_active_edge()
+        old = {pair: i for i, pair in enumerate(zip(self.sequence_tracks, self.sequence_tracks[1:]))}
+        new = list(zip(sequence, sequence[1:]))
+        for state in (self._edge_cues, self._edge_ranges, self._edge_settings, self._edge_results):
+            kept = {i: state[old[pair]] for i, pair in enumerate(new) if pair in old and old[pair] in state}
+            state.clear()
+            state.update(kept)
+        self.sequence_tracks = list(sequence)
+        self._active_edge_index = None
+        self._refresh_sequence(select_edge=select_edge)
 
     def _refresh_sequence(self, *, select_edge=None):
         if not hasattr(self, "sequence_list"):
@@ -868,7 +989,12 @@ class TransitionBuilderWindow(QMainWindow):
             track = self.tracks.get(path)
             title = track.path.stem if track else Path(path).stem
             bpm = f" · {track.bpm:.1f} BPM" if track and track.bpm else ""
-            item = QListWidgetItem(f"{chr(65 + index)}  {title}{bpm}")
+            section = self._sections.get(path)
+            span = ""
+            if section:
+                stop = "Ende" if section[1] is None else f"{section[1]:.2f} s"
+                span = f" · {section[0]:.2f} s – {stop}"
+            item = QListWidgetItem(f"{chr(65 + index)}  {title}{bpm}{span}")
             item.setData(Qt.ItemDataRole.UserRole, path)
             item.setToolTip(str(path))
             self.sequence_list.addItem(item)
@@ -887,7 +1013,7 @@ class TransitionBuilderWindow(QMainWindow):
         self.edge_combo.blockSignals(False)
         self._change_active_edge(self.edge_combo.currentIndex())
 
-    def _change_active_edge(self, index):
+    def _remember_active_edge(self):
         if self._active_edge_index is not None and hasattr(self, "source_cue"):
             self._edge_cues[self._active_edge_index] = (
                 self.source_cue.value(), self.target_cue.value(),
@@ -900,8 +1026,10 @@ class TransitionBuilderWindow(QMainWindow):
             )
             source_range = self.source_wave.selection_range_seconds
             target_range = self.target_wave.selection_range_seconds
-            if source_range is not None and target_range is not None:
-                self._edge_ranges[self._active_edge_index] = (*source_range, *target_range)
+            self._edge_ranges[self._active_edge_index] = (source_range, target_range)
+
+    def _change_active_edge(self, index):
+        self._remember_active_edge()
         if index < 0 or index + 1 >= len(self.sequence_tracks):
             self._active_edge_index = None
             self.pair_title.setText("Noch kein Übergang gewählt")
@@ -935,7 +1063,8 @@ class TransitionBuilderWindow(QMainWindow):
         source_name = self.tracks[source_path].path.stem
         target_name = self.tracks[target_path].path.stem
         self.pair_title.setText(f"{chr(65 + index)} → {chr(66 + index)} · {source_name} → {target_name}")
-        self.sequence_list.setCurrentRow(index)
+        if self.sequence_list.currentRow() not in (index, index + 1):
+            self.sequence_list.setCurrentRow(index)
         self._load_pair_waveforms()
         cues = self._edge_cues.get(index)
         self.source_cue.blockSignals(True)
@@ -948,13 +1077,12 @@ class TransitionBuilderWindow(QMainWindow):
         self._target_cue_set = cues[3] if cues else False
         self.source_wave.set_cue_seconds(cues[0] if cues and cues[2] else None)
         self.target_wave.set_cue_seconds(cues[1] if cues and cues[3] else None)
-        ranges = self._edge_ranges.get(index)
-        if ranges:
-            self.source_wave.set_selection_range(ranges[0], ranges[1])
-            self.target_wave.set_selection_range(ranges[2], ranges[3])
-        else:
-            self.source_wave.clear_selection_range(notify=False)
-            self.target_wave.clear_selection_range(notify=False)
+        ranges = self._edge_ranges.get(index, (None, None))
+        for wave, bounds in zip((self.source_wave, self.target_wave), ranges):
+            if bounds is None:
+                wave.clear_selection_range(notify=False)
+            else:
+                wave.set_selection_range(*bounds)
         saved_result = self._edge_results.get(index)
         if saved_result:
             self._show_transition_result(saved_result)
@@ -968,35 +1096,42 @@ class TransitionBuilderWindow(QMainWindow):
         if self.edge_combo.count() and row >= 0:
             self.edge_combo.setCurrentIndex(min(int(row), self.edge_combo.count() - 1))
 
+    def _invalidate_preview(self, *_):
+        if self._edge_results.pop(self._active_edge_index, None) is not None:
+            self._last_result = None
+            self.result_wave.clear("Für die geänderten Einstellungen eine neue Vorschau rendern.")
+            self.metric_label.setText("Noch keine technische Bewertung")
+            self.result_detail.setText("")
+            index = self._active_edge_index
+            self.edge_combo.setItemText(index, self.edge_combo.itemText(index).replace("✓ Vorschau", "offen"))
+
     def _move_sequence_track(self, offset):
         row = self.sequence_list.currentRow()
         target = row + int(offset)
         if row < 0 or target < 0 or target >= len(self.sequence_tracks):
             return
-        self.sequence_tracks[row], self.sequence_tracks[target] = self.sequence_tracks[target], self.sequence_tracks[row]
-        self._edge_cues.clear()
-        self._edge_settings.clear()
-        self._edge_results.clear()
-        self._refresh_sequence(select_edge=max(0, min(row, target, len(self.sequence_tracks) - 2)))
+        sequence = self.sequence_tracks.copy()
+        sequence[row], sequence[target] = sequence[target], sequence[row]
+        self._replace_sequence(sequence, select_edge=max(0, min(row, target, len(sequence) - 2)))
+        self.sequence_list.setCurrentRow(target)
 
     def _remove_sequence_track(self):
         row = self.sequence_list.currentRow()
         if row < 0:
             return
-        self.sequence_tracks.pop(row)
-        self._edge_cues.clear()
-        self._edge_settings.clear()
-        self._edge_results.clear()
-        self._active_edge_index = None
-        self._refresh_sequence(select_edge=max(0, row - 1))
+        self._replace_sequence(self.sequence_tracks[:row] + self.sequence_tracks[row + 1:],
+                               select_edge=max(0, row - 1))
 
     def _mark_cue_set(self, role):
         setattr(self, "_source_cue_set" if role == "source" else "_target_cue_set", True)
         if self._active_edge_index is not None:
-            self._edge_cues[self._active_edge_index] = (
+            cues = (
                 self.source_cue.value(), self.target_cue.value(),
                 self._source_cue_set, self._target_cue_set,
             )
+            if self._edge_cues.get(self._active_edge_index) != cues:
+                self._invalidate_preview()
+            self._edge_cues[self._active_edge_index] = cues
 
     def _on_model_changed(self, *_):
         is_ml = bool(self.model_combo.currentData())
@@ -1093,13 +1228,8 @@ class TransitionBuilderWindow(QMainWindow):
             insert_at = max(0, min(int(sequence_insert_index), len(self.sequence_tracks)))
             new_sequence_paths = [path for path in dict.fromkeys(paths_for_sequence) if path not in self.sequence_tracks]
             if new_sequence_paths:
-                if insert_at < len(self.sequence_tracks):
-                    self._edge_cues.clear()
-                    self._edge_settings.clear()
-                    self._edge_results.clear()
-                self.sequence_tracks[insert_at:insert_at] = new_sequence_paths
-                self._active_edge_index = None
-                self._refresh_sequence(select_edge=max(0, min(insert_at - 1, len(self.sequence_tracks) - 2)))
+                sequence = self.sequence_tracks[:insert_at] + new_sequence_paths + self.sequence_tracks[insert_at:]
+                self._replace_sequence(sequence, select_edge=max(0, min(insert_at - 1, len(sequence) - 2)))
         for key in added_paths:
             self._probe_track_cache(key)
         if added_paths:
@@ -1141,13 +1271,8 @@ class TransitionBuilderWindow(QMainWindow):
         ordered = [str(path) for path in paths if str(path) in self.tracks]
         if ordered == self.sequence_tracks:
             return
-        self.sequence_tracks = ordered
-        self._edge_cues.clear()
-        self._edge_settings.clear()
-        self._edge_results.clear()
-        self._active_edge_index = None
-        self._refresh_sequence(select_edge=0)
-        self.status_label.setText("Sequenz neu sortiert. Übergänge der geänderten Reihenfolge müssen neu eingestellt und gerendert werden.")
+        self._replace_sequence(ordered, select_edge=0)
+        self.status_label.setText("Sequenz neu sortiert. Stelle die Cuepoints für neu entstandene Songpaare ein.")
 
     def _remove_selected_tracks(self):
         selected = [item.data(Qt.ItemDataRole.UserRole) for item in self.track_list.selectedItems()]
@@ -1156,14 +1281,14 @@ class TransitionBuilderWindow(QMainWindow):
         for path in selected:
             if path not in self._analysis_busy:
                 self.tracks.pop(path, None)
-        self.sequence_tracks = [path for path in self.sequence_tracks if path in self.tracks]
-        self._edge_cues.clear()
-        self._edge_settings.clear()
-        self._edge_results.clear()
-        self._active_edge_index = None
+                self._sections.pop(path, None)
+        self._replace_sequence([path for path in self.sequence_tracks if path in self.tracks], select_edge=0)
         self._refresh_tracks()
 
     def _refresh_tracks(self):
+        previous_edge = self._active_edge_index
+        self._remember_active_edge()
+        self._active_edge_index = None
         selected = {item.data(Qt.ItemDataRole.UserRole) for item in self.track_list.selectedItems()}
         self.track_list.clear()
         for path, track in self.tracks.items():
@@ -1175,7 +1300,7 @@ class TransitionBuilderWindow(QMainWindow):
             if path in selected:
                 item.setSelected(True)
         self._refresh_pair_combos()
-        self._refresh_sequence()
+        self._refresh_sequence(select_edge=previous_edge)
 
     def _refresh_pair_combos(self):
         source_before = self.source_combo.currentData()
@@ -1259,8 +1384,8 @@ class TransitionBuilderWindow(QMainWindow):
             source_range = (start, end)
         else:
             target_range = (start, end)
+        self._edge_ranges[self._active_edge_index] = (source_range, target_range)
         if source_range is not None and target_range is not None:
-            self._edge_ranges[self._active_edge_index] = (*source_range, *target_range)
             self.status_label.setText(
                 f"Bereiche gewählt: A {source_range[0]:.1f}–{source_range[1]:.1f} s · "
                 f"B {target_range[0]:.1f}–{target_range[1]:.1f} s. Jetzt Cuepoints suchen."
@@ -1440,9 +1565,9 @@ class TransitionBuilderWindow(QMainWindow):
             source, target, source_seconds, target_seconds, bars, renderer,
             self.analysis_cache, self.model_combo.currentData(),
         )
-        render_edge_index = self._active_edge_index
+        requested = ((source_seconds, target_seconds, True, True), (bars, renderer, self.model_combo.currentData()))
         task.signals.finished.connect(
-            lambda result, error: self._on_render_finished(result, error, render_edge_index),
+            lambda result, error: self._on_render_finished(result, error, (source_path, target_path), requested),
             Qt.ConnectionType.QueuedConnection,
         )
         self._render_busy = True
@@ -1456,7 +1581,7 @@ class TransitionBuilderWindow(QMainWindow):
         self.metric_label.setText("Render läuft …")
         self._pool.start(task)
 
-    def _on_render_finished(self, result, error, edge_index):
+    def _on_render_finished(self, result, error, pair, requested):
         self._render_busy = False
         self.render_button.setEnabled(True)
         self.edge_combo.setEnabled(True)
@@ -1467,6 +1592,15 @@ class TransitionBuilderWindow(QMainWindow):
         if error:
             self.status_label.setText(f"Übergang fehlgeschlagen: {error}")
             self.metric_label.setText("Bewertung nicht verfügbar")
+            return
+        pairs = list(zip(self.sequence_tracks, self.sequence_tracks[1:]))
+        if pair not in pairs:
+            self.status_label.setText("Vorschau gespeichert. Das Songpaar wurde aus der Sequenz entfernt.")
+            return
+        edge_index = pairs.index(pair)
+        self._remember_active_edge()
+        if (self._edge_cues.get(edge_index), self._edge_settings.get(edge_index)) != requested:
+            self.status_label.setText("Vorschau gespeichert. Die Einstellungen des Songpaars wurden inzwischen geändert.")
             return
         self._edge_results[edge_index] = result
         self._refresh_sequence(select_edge=self._active_edge_index)

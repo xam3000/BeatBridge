@@ -26,7 +26,7 @@ from src.features.p07_mert import file_sha256
 from src.features.p07_population import FREEZE, POPULATION, PUBLIC, committed
 from src.features.p08_pairs import publish_dataset, rng_for
 from src.pipeline import generate_transition_candidates
-from src.ranking.continuation import METHOD, rank_continuations
+from src.ranking.continuation import METHOD, SELECTION, rank_continuations
 from src.ranking.feature_baseline import rank_candidates
 from src.ranking.rendered_transition import RenderedTransitionInput, rank_rendered_transitions
 
@@ -60,7 +60,9 @@ def carry_selection(stage, directory, original, pair):
     write_json(stage / "panel.json", panel)
 
 
-def prepare(directory, pair, paths, cache):
+def prepare(directory, pair, paths, cache, *, rotated=False):
+    from src.tempo.cue_alignment import CUE_ALIGNMENT, LEGACY_ALIGNMENT, CueAlignmentError, measure_cue_alignment
+    from src.evaluation.p11_session import PROTOCOL as ROTATED_PROTOCOL, REVISION as ROTATED_REVISION
     pid = pair["pair_id"]
     a, b = (paths[pair[k]["sha256"]] for k in ("source", "target"))
     for k, path in (("source", a), ("target", b)):
@@ -75,17 +77,54 @@ def prepare(directory, pair, paths, cache):
         reasons.append({"code": "source_relative_tempo_limit"})
         cues = ()
     if cues:
-        pipeline = prepare_bridge_pair(cues[0].to_dict(), analysis)
-        scale = pipeline.adjusted_sample_scale2
-        target_size = pipeline.adjusted_song2.shape[-1]
-        cues = [c for c in cues if c.source_cutpoint.sample >= 5*RATE and
-                round(c.target_cutpoint.sample * scale) + 8*RATE <= target_size]
+        pipeline = prepare_bridge_pair(cues[0].to_dict(), analysis,
+                                       tempo_alignment=CUE_ALIGNMENT if rotated else LEGACY_ALIGNMENT)
+        if rotated:
+            eligible = []
+            rejected_grid = 0
+            rejected_tempo = 0
+            rejected_context = 0
+            for cue in cues:
+                try:
+                    timing = measure_cue_alignment(pipeline.beat_frames1, pipeline.beat_frames2,
+                                                   cue.source_cutpoint.beat_index, cue.target_cutpoint.beat_index,
+                                                   16, RATE)
+                    timing.require_valid()
+                except CueAlignmentError:
+                    rejected_grid += 1
+                    continue
+                scale = 1 / timing.tempo_factor
+                if abs(scale - 1) > .15:
+                    rejected_tempo += 1
+                    continue
+                if (cue.source_cutpoint.sample >= 5 * RATE and
+                        round(cue.target_cutpoint.sample * scale) + 8 * RATE <= round(pipeline.song2.shape[-1] * scale)):
+                    eligible.append(cue)
+                else:
+                    rejected_context += 1
+            cues = eligible
+            if not cues:
+                reasons.append(dict(code="empty_pool_after_tempo_and_context_gate",
+                                    rejected_grid=rejected_grid, rejected_tempo=rejected_tempo,
+                                    rejected_context=rejected_context))
+            scale = None  # Each cue has its own regression in this protocol.
+        else:
+            scale = pipeline.adjusted_sample_scale2
+            target_size = pipeline.adjusted_song2.shape[-1]
+            cues = [c for c in cues if c.source_cutpoint.sample >= 5*RATE and
+                    round(c.target_cutpoint.sample * scale) + 8*RATE <= target_size]
         del pipeline
     if not cues:
         write_json(directory / "exclusion.json", dict(pair=pair, reasons=reasons or ["insufficient_context"],
                    time=datetime.now(timezone.utc).isoformat(), affected="all seven conditions"))
         return
-    ssl = rank_continuations(cues, analysis, RATE)
+    if rotated:
+        from src.ranking.continuation import ISOLATED_METHOD, ISOLATED_SELECTION
+        ssl = rank_continuations(cues, analysis, RATE, selection_path=ISOLATED_SELECTION)
+        method = ISOLATED_METHOD
+    else:
+        ssl = rank_continuations(cues, analysis, RATE, selection_path=SELECTION)
+        method = METHOD
     eligible = {s.candidate_id for s in ssl.scores}
     common = [c for c in cues if c.candidate_id in eligible]
     if not common:
@@ -108,9 +147,11 @@ def prepare(directory, pair, paths, cache):
                         c.source_cutpoint.beat_index, c.target_cutpoint.beat_index,
                         ssl_values[c.candidate_id], rule_values[c.candidate_id]))
     manifest = directory / "selection.json"
-    write_json(manifest, dict(ranking_method=METHOD, pair=pair, generated=len(generated.candidates),
+    write_json(manifest, dict(ranking_method=method, pair=pair, generated=len(generated.candidates),
                context_eligible=len(cues), common=len(common), tempo_scale=scale, cue_ranking=ssl.to_dict(),
                pool_sha256=file_sha256(directory / "pool.csv"), selectors=selectors,
+               **({"rejected_grid": rejected_grid, "rejected_tempo": rejected_tempo,
+                   "rejected_context": rejected_context} if rotated else {}),
                candidate_generation=dict(candidates=[c.to_dict() for c in selected])))
     features = []
     for path in (a,b):
@@ -122,7 +163,8 @@ def prepare(directory, pair, paths, cache):
                pair_manifest=(directory.parent / pid / manifest.name).as_posix(),
                pair_manifest_sha256=file_sha256(manifest), selectors=selectors,
                source_feature_directory=features[0], target_feature_directory=features[1],
-               study_protocol_sha256=file_sha256(ORIGINAL_PROTOCOL), population_commit=FREEZE))
+               study_protocol_sha256=file_sha256(ROTATED_PROTOCOL if rotated else ORIGINAL_PROTOCOL),
+               population_commit=FREEZE, **({"revision": ROTATED_REVISION} if rotated else {})))
 
 
 def frozen_inputs():
@@ -180,7 +222,18 @@ def record_grid_exclusions(root):
             print(pid, "grid exclusion", flush=True)
 
 
-def run(root, original=None):
+def run(root, original=None, *, rotated=False):
+    from src.evaluation.p11_session import FINAL_PAIRS, PROTOCOL as ROTATED_PROTOCOL, REVISION as ROTATED_REVISION
+    from src.tempo.cue_alignment import CueAlignmentError
+    if rotated:
+        from src.ranking.continuation import ISOLATED_SELECTION, ISOLATED_METHOD
+        if not ISOLATED_SELECTION.is_file():
+            raise ValueError("A selected isolated-window study head is required before rendering")
+        decision = json.loads(ISOLATED_SELECTION.read_bytes())
+        if decision.get("status") != "selected" or decision.get("ranking_method") != ISOLATED_METHOD:
+            raise ValueError("A selected isolated-window study head is required before rendering")
+        if original:
+            raise ValueError("Rotating anchors require fresh selection after the revised cue gate")
     pairs, paths = frozen_inputs()
     if original:
         history = json.loads((original / "inventory.json").read_bytes())
@@ -194,9 +247,12 @@ def run(root, original=None):
         raise FileExistsError(f"Finished run at {root}. Choose a new output path for another run.")
     panels, excluded = {}, {}
     analysis_root = (original or root) / "cache/analysis"
-    protocol = PROTOCOL if original else ORIGINAL_PROTOCOL
+    protocol = ROTATED_PROTOCOL if rotated else (PROTOCOL if original else ORIGINAL_PROTOCOL)
     for pair in pairs:
         pid = pair["pair_id"]
+        if rotated and pid not in FINAL_PAIRS:
+            excluded[pid] = dict(pair=pair, reasons=["frozen_run02_grid_exclusion"])
+            continue
         directory = root / pid
         print(pid, "prepare", flush=True)
         if not directory.exists():
@@ -204,7 +260,7 @@ def run(root, original=None):
                 if original:
                     carry_selection(stage, directory, original, pair)
                 else:
-                    prepare(stage, pair, paths, root / "cache")
+                    prepare(stage, pair, paths, root / "cache", rotated=rotated)
         if (directory / "exclusion.json").exists():
             excluded[pid] = json.loads((directory / "exclusion.json").read_bytes())
             print(pid, "excluded", excluded[pid]["reasons"], flush=True)
@@ -212,7 +268,8 @@ def run(root, original=None):
         dest = directory / "stimuli"
         panel = json.loads((directory / "panel.json").read_bytes())
         if panel["study_protocol_sha256"] != file_sha256(protocol) or (
-                original and panel.get("revision") != REVISION):
+                original and panel.get("revision") != REVISION) or (
+                rotated and panel.get("revision") != ROTATED_REVISION):
             raise ValueError(f"Existing panel at {directory} has a different study contract")
         if not dest.exists():
             print(pid, "P04 render", flush=True)
@@ -220,8 +277,8 @@ def run(root, original=None):
                 with publish_dataset(dest) as stage:
                     study(stage, SimpleNamespace(panel=directory / "panel.json", steps=80,
                              analysis_root=analysis_root, merge_algorithm=MERGE_ALGORITHM_VERSION_V2))
-            except LocalGridFailure as error:
-                if not original:
+            except (LocalGridFailure, CueAlignmentError) as error:
+                if not (rotated or original):
                     raise
                 record = dict(pair=pair, reasons=[dict(code="local_grid_gate", detail=str(error))],
                               time=datetime.now(timezone.utc).isoformat(), affected="all seven conditions")
@@ -250,10 +307,12 @@ def run(root, original=None):
         temporary = directory / "secondary.pending.json"
         write_json(temporary, metrics)
         temporary.replace(directory / "secondary.json")
-        print(pid, "seven verified WAVs", flush=True)
-    write_json(root / "inventory.json", dict(pairs=list(panels), excluded=excluded, wav_count=7*len(panels),
+        print(pid, "nine verified WAVs" if rotated else "seven verified WAVs", flush=True)
+    write_json(root / "inventory.json", dict(pairs=list(panels), excluded=excluded,
+               wav_count=(9 if rotated else 7)*len(panels),
                study_protocol_sha256=file_sha256(protocol), population_commit=FREEZE,
-               revision=REVISION if original else "original", original=str(original) if original else None))
+               revision=ROTATED_REVISION if rotated else (REVISION if original else "original"),
+               original=str(original) if original else None))
 
 
 def package_final(root):
@@ -275,10 +334,16 @@ if __name__ == "__main__":
     parser.add_argument("--package-only", action="store_true")
     parser.add_argument("--revise-from", type=Path, help="Reuse frozen selectors and correct the local render")
     parser.add_argument("--historical", action="store_true", help="Reproduce the withdrawn run01 protocol")
+    parser.add_argument("--protocol-v2", action="store_true", help="New single-factor render with three anchors per pair")
     args = parser.parse_args()
     torch.set_num_threads(4)
     with threadpool_limits(limits=4):
-        if args.package_only:
+        if args.protocol_v2:
+            if (args.historical or args.package_only or args.revise_from or args.preanalyse_after is not None
+                    or args.record_grid_exclusions or args.output.resolve() in ((BASE / "run01").resolve(), (BASE / "run02").resolve())):
+                parser.error("--protocol-v2 requires a separate output directory and a fresh selection")
+            run(args.output, rotated=True)
+        elif args.package_only:
             package_final(args.output)
         elif args.record_grid_exclusions:
             record_grid_exclusions(args.output)

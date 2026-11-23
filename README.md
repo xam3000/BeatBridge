@@ -15,7 +15,10 @@ Der aktuelle, verifizierte Projektstand und die weitere Dokumentation liegen unt
 
 ## Entwicklungsumgebung
 
+Für einen frischen Checkout unter Windows mit Python 3.14:
+
 ```powershell
+py -3.14 -m venv .venv
 .venv\Scripts\python.exe -m pip install -r requirements-cuda.txt
 .venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 .venv\Scripts\python.exe -m pytest -q
@@ -32,15 +35,4 @@ Metrik für gerenderte Varianten stehen unter [`docs/`](./docs/README.md).
 
 ## Projektstand
 
-Die technische Basis ist vorhanden: Beat-/Bar-Analyse, Audio-Normalisierung,
-drei Übergangsstrategien (harter Schnitt, linearer Fade, Equal Power), automatische bar-synchrone Kandidaten, Cutpoint- und
-Render-Ranking, Batch-Export sowie blinde Hörstudien. Das Vocal-v2-Training und
-mehrere Objective-/Control-Hörsätze sind abgeschlossen; der aktuelle
-Vocal-v2-Modellhörsatz ist jedoch noch unbewertet (0/5 Ratings, noch keine
-`study_results.json`).
-
-Der nächste Arbeitsblock ist deshalb die geblendete Bewertung dieses
-Vocal-v2-Satzes, ergänzt um die isolierte Time-Stretch-/Target-Fenster-Diagnose
-und die weitere Kuratierung des Entwicklungssets. Der verbindliche,
-priorisierte Arbeitsstand wird ausschließlich in
-[`docs/STATUS.md`](./docs/STATUS.md) gepflegt.
+BeatBridge wählt Cuepoints, rendert Übergänge und exportiert ausgewählte Songabschnitte als zusammenhängende WAV. Ein geprüftes Beispiel verbindet drei Trainingsaufnahmen mit einem Zwei- und einem Drei-Takt-Übergang. Für den geschlossenen Hörversuch sind sieben Songpaare vorgesehen. Den Stand der MERT-Auswahl, der Tempo-Prüfung und der Erhebung führt das Projekt im [Status](docs/STATUS.md). [Bedienung und Entwicklungs-Mashup](docs/masterarbeit/review_jp_20261118/p14/mashup.md)

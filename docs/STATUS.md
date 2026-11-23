@@ -1,3 +1,13 @@
+# 23.11.2026 – Konsequenzen aus JPs Rückmeldung
+
+Der bisherige MERT-Studienkopf fällt bei einzeln kodierten Vier-Takt-Fenstern auf denselben 2.830 Abfragen von 85,59 % auf 66,12 % Recall@1. Nach dem Neutraining erreicht Stufe 2 im Mittel über drei Seeds 72,24 %, die klassische Vergleichsbedingung 68,49 %. Der gewählte Studienkopf ist `mert_continuation_v2`, Seed 20260926, Epoche 6, mit 72,23 % auf der Auswahl-Validation. Die Studienpaare bleiben auf sieben begrenzt, die spätere Auswertung ist deskriptiv. Die Hörprobe zum neuen Tempoverfahren und der beaufsichtigte Teilnehmerbetrieb stehen aus. [MERT-Vergleich und Auswahl](masterarbeit/REVIEW_JP_MERT_FENSTER_20261123.md) · [Protokoll V2](EVALUATION_PROTOCOL_V2.md) · [Umsetzungsregister](REVIEW_JP_UMSETZUNG.md)
+
+GUI und CLI exportieren ausgewählte Songabschnitte in eine durchgehende WAV. Der technische Nachweis verbindet drei Trainingsaufnahmen in 65,324 Sekunden mit zwei verschiedenen Übergangslängen. [Beispiel und Bedienung](masterarbeit/review_jp_20261118/p14/mashup.md)
+
+Die lokale Temporegression prüft die beobachteten Schläge vor der Rangbildung. Von den 21 früher ausgewählten P11-Cues besteht einer die vollständige Prüfung. In jedem der sieben historischen Suchräume gibt es weitere geometrisch zulässige Cues. Auf zwei Entwicklungspaaren liegen jeweils drei pegelgleiche Clips für die noch offene Hörprobe bereit. Die Webanwendung und die deskriptive Auswertung sind mit Entwicklungsmaterial und synthetischen Bewertungen geprüft. [Tempo-Fehlertabelle und Hördateien](masterarbeit/REVIEW_JP_TEMPO_20261123.md) · [Durchführung und Analyse](EVALUATION_PROTOCOL_V2.md)
+
+Der frische Quellstand mit den geänderten Dateien und den neu installierten Abhängigkeiten bestand alle 428 Tests. Der separate GPU-Replay reproduzierte alle 2.830 Rangplätze des Studienkopfs. Auf 26 Entwicklungspaaren wählten Regel und MERT durchweg unterschiedliche Erstplatzierte. [Testlauf](../output/review_jp_20261118/frischtest_20261123/suite04.xml) · [GPU-Replay](masterarbeit/review_jp_20261118/mert_fenster/verified.json)
+
 # 19.11.2026 – P11 nach R_P11_01 mit korrigierten Stimuli
 
 Der [unabhängige Review R_P11_02](masterarbeit/review_jp_20261118/reviews/R_P11_02.md) hat den technischen Vertrag bestätigt. F-5 ist durch Nutzercommit `16c525e` abgeschlossen. Vor der Erhebung steht die Kontrolle des beaufsichtigten Hörplatzes aus. Eigenständige WAV-Analyse könnte die Gruppe mit dem Regel-Cue anhand gemeinsamer Kontexte erkennen. Danach organisiert der Autor die geschlossenen Sitzungen.

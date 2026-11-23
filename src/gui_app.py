@@ -14,6 +14,7 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
+        from PySide6.QtCore import QThreadPool
         from PySide6.QtWidgets import QApplication
     except ImportError:
         print(
@@ -38,7 +39,11 @@ def main() -> int:
         window.show()
     if args.manifest:
         window.open_manifest(Path(args.manifest))
-    return app.exec()
+    try:
+        return app.exec()
+    finally:
+        # Workers publish their results through Qt objects that must outlive them.
+        QThreadPool.globalInstance().waitForDone()
 
 
 if __name__ == "__main__":

@@ -15,6 +15,7 @@ import librosa
 import numpy as np
 import torch
 
+from src.artifact_paths import artifact_path
 from src.ml.control_initialization import read_model_config
 
 from src.analysis.pre_analysis import PreAnalysis
@@ -468,7 +469,7 @@ def _load_best_vocal_model(training_run_directory):
     ):
         raise ValueError("Unsupported vocal feature-control model")
     checkpoint_record = manifest["files"]["best_checkpoint"]
-    checkpoint_path = training_run_directory / checkpoint_record["path"]
+    checkpoint_path = artifact_path(checkpoint_record["path"], training_run_directory)
     checkpoint_sha256 = _file_sha256(checkpoint_path)
     if checkpoint_sha256 != checkpoint_record["sha256"]:
         raise ValueError("Best-checkpoint SHA-256 differs from the training manifest")

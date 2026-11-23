@@ -1,5 +1,7 @@
 # P10 · Welche Fortsetzungsmetrik geht in den Hörversuch?
 
+**Nachtrag vom 23. November 2026.** Die Auswahl unten dokumentiert die früheren P11-Pakete. Für Protokoll V2 gilt der auf einzeln kodierten Fenstern trainierte Kopf der Stufe 2 aus Epoche 6. [Aktueller Vergleich und Auswahl](REVIEW_JP_MERT_FENSTER_20261123.md)
+
 **Auswahl am 19. November 2026.** Für die SSL-Cues in P11 gilt der gerichtete MERT-Kopf der Stufe 2, Seed 20260926, Bestepoche 22. Beide trainierten MERT-Stufen bestanden die beiden vorab festgelegten Kontrollen. Stufe 2 erreicht den höheren mittleren Validation-Recall@1 (85,67 % gegenüber 62,09 %). Damit war die Entscheidung vor dem Vergleich der Regel-Cues und vor der Autorensichtung getroffen. Es gab keinen weiteren Trainingslauf. [Eingefrorene Entscheidungsregel](../EVALUATION_PROTOCOL.md#fortsetzungsmetrik-f2-g1-g5g7) · [Auswahl mit Checkpoint-SHA und beiden Stufen](review_jp_20261118/p10/selection.json)
 
 ## Validation und Abkürzungsprüfung
@@ -66,7 +68,7 @@ $replay = 'output/review_jp_20261118/p10_ranking/replay'
 & $py -B -X utf8 -m src.evaluation.p10_listening --pairs "$replay/pairs" --output "$replay/autorensichtung"
 $env:PYTHONPATH = (Resolve-Path 'output/review_jp_20261118/p07/runtime').Path
 $songs = 'musik/PRIVE Hardstyle Top 1000 of all times - by Scantraxx'
-& $py -B -X utf8 -m src.batch_render "$songs/Under Attack - Ran-D.flac" "$songs/Keep It Raw - Public Enemies.flac" --ranking-method mert_continuation_v1 --source-boundaries 12 --target-boundaries 12 --renderers equal_power --top-k 1 --preview-before-seconds 5 --preview-after-seconds 14 --output-dir "$replay/batch"
+& $py -B -X utf8 -m src.batch_render "$songs/Under Attack - Ran-D.flac" "$songs/Keep It Raw - Public Enemies.flac" --ranking-method mert_continuation_v1 --tempo-alignment global_bpm_v1 --source-boundaries 12 --target-boundaries 12 --renderers equal_power --top-k 1 --preview-before-seconds 5 --preview-after-seconds 14 --output-dir "$replay/batch"
 & $py -B -X utf8 -m src.evaluation.p10_verify --root $replay
 ```
 

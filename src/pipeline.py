@@ -26,6 +26,7 @@ from src.candidates.variable import BaselineCandidateGenerationConfig, validate_
 from src.cutting.equal_power_fade_cut import EqualPowerFadeCut
 from src.cutting.fade_cut import FadeCut
 from src.cutting.simple_cut import SimpleCut
+from src.tempo.cue_alignment import CUE_ALIGNMENT, LEGACY_ALIGNMENT, measure_cue_alignment, require_observed_grid
 from src.tempo.time_stretch import TimeStretch
 
 
@@ -61,6 +62,7 @@ class RenderResult:
     target_grid: BeatGridMetadata | None = None
     transition_length_bars: int | None = None
     transition_length_beats: int | None = None
+    tempo_alignment: dict | None = None
 
 
 class BeatBridgePipeline:
@@ -77,6 +79,7 @@ class BeatBridgePipeline:
         target_channels=DEFAULT_CHANNELS,
         bpm1=None,
         bpm2=None,
+        tempo_alignment=CUE_ALIGNMENT,
     ):
         if int(target_sample_rate) <= 0:
             raise ValueError("target_sample_rate must be greater than 0")
@@ -93,6 +96,10 @@ class BeatBridgePipeline:
         self.bpm_override1 = None if bpm1 is None else float(bpm1)
         self.bpm_override2 = None if bpm2 is None else float(bpm2)
         self.tempo_backend = "not_needed"
+        if tempo_alignment not in (CUE_ALIGNMENT, LEGACY_ALIGNMENT):
+            raise ValueError(f"Unknown tempo alignment: {tempo_alignment}")
+        self.tempo_alignment = tempo_alignment
+        self.cue_alignment = None
 
         self.load_songs()
         self.run_analysis()
@@ -216,26 +223,58 @@ class BeatBridgePipeline:
     def save__song(self, output_name, song, sr):
         self.save_song(output_name, song, sr)
 
-    def adjust_tempo(self):
-        if hasattr(self, "adjusted_song2"):
-            return self.adjusted_song1, self.adjusted_song2
-        if self.bpm1 <= 0 or self.bpm2 <= 0:
+    def adjust_at_cue(self, sample1, sample2, beats):
+        """Snap in native track time, then apply one pitch-preserving target stretch."""
+        if self.tempo_alignment == LEGACY_ALIGNMENT:
+            self.adjust_tempo()
+            return self.cutter.resolve_cut_samples(
+                self.song1, self.adjusted_song2, sample1, round(sample2 * self.adjusted_sample_scale2),
+                self.beat_frames1, self.adjusted_beat_frames2
+            )
+        require_observed_grid(self.grid_metadata1)
+        require_observed_grid(self.grid_metadata2)
+        source, target = self.cutter.resolve_cut_samples(
+            self.song1, self.song2, sample1, sample2, self.beat_frames1, self.beat_frames2
+        )
+        indices = [next(i for i, frame in enumerate(frames) if frame[0] == sample)
+                   for frames, sample in ((self.beat_frames1, source), (self.beat_frames2, target))]
+        alignment = measure_cue_alignment(
+            self.beat_frames1, self.beat_frames2, *indices, beats, self.target_sample_rate
+        )
+        alignment.require_valid()
+        if (self.beat_frames1[indices[0] + beats][0] > self.song1.shape[-1]
+                or self.beat_frames2[indices[1] - beats][0] < 0
+                or target > self.song2.shape[-1]):
+            raise ValueError("Selected beat window outside input audio")
+        self.cue_alignment = alignment
+        self.adjust_tempo(self.target_sample_rate * 60 / alignment.source_period,
+                          self.target_sample_rate * 60 / alignment.target_period)
+        return source, int(round(target * self.adjusted_sample_scale2))
+
+    def adjust_tempo(self, source_bpm=None, target_bpm=None):
+        source_bpm = self.bpm1 if source_bpm is None else source_bpm
+        target_bpm = self.bpm2 if target_bpm is None else target_bpm
+        if source_bpm <= 0 or target_bpm <= 0:
             raise ValueError("Both BPM values must be greater than 0")
 
-        tempo_factor = self.bpm1 / self.bpm2
+        tempo_factor = source_bpm / target_bpm
+        if getattr(self, "_adjusted_factor", None) == tempo_factor:
+            return self.adjusted_song1, self.adjusted_song2
         self.adjusted_song1 = self.song1
-        if np.isclose(tempo_factor, 1.0):
+        if abs(tempo_factor - 1.) < 1e-12 or (self.tempo_alignment == LEGACY_ALIGNMENT
+                                              and np.isclose(tempo_factor, 1.0)):
             self.adjusted_song2 = self.song2
             self.adjusted_sample_scale2 = 1.0
             self.adjusted_beat_frames2 = self.beat_frames2
             self.tempo_backend = "not_needed"
+            self._adjusted_factor = tempo_factor
             return self.adjusted_song1, self.adjusted_song2
 
         self.adjusted_song2 = self.tempo_adjuster.adjust_tempo_to_bpm(
             self.song2,
             self.target_sample_rate,
-            self.bpm2,
-            self.bpm1,
+            target_bpm,
+            source_bpm,
         )
         self.tempo_backend = (
             getattr(self.tempo_adjuster, "last_backend", None)
@@ -246,6 +285,7 @@ class BeatBridgePipeline:
             self.beat_frames2,
             self.adjusted_sample_scale2,
         )
+        self._adjusted_factor = tempo_factor
         return self.adjusted_song1, self.adjusted_song2
 
     def cut(self, sample1, sample2, adjust_tempo=True, *, baseline_bars=None):
@@ -254,8 +294,9 @@ class BeatBridgePipeline:
         beat_frames2 = self.beat_frames2
 
         if adjust_tempo:
-            song1, song2 = self.adjust_tempo()
-            sample2 = int(round(int(sample2) * self.adjusted_sample_scale2))
+            beats = baseline_bars * 4 if baseline_bars else getattr(self.cutter, "fade_beats_before", 0)
+            sample1, sample2 = self.adjust_at_cue(sample1, sample2, beats)
+            song1, song2 = self.adjusted_song1, self.adjusted_song2
             beat_frames2 = self.adjusted_beat_frames2
 
         if baseline_bars is not None:
@@ -265,14 +306,15 @@ class BeatBridgePipeline:
             validate_baseline_cue(self.beat_frames1, source, baseline_bars, song1.shape[-1], "source")
             validate_baseline_cue(beat_frames2, target, baseline_bars, song2.shape[-1], "target")
 
-        self.cut_song = self.cutter.cut(
-            song1,
-            song2,
-            sample1,
-            sample2,
-            self.beat_frames1,
-            beat_frames2,
-        )
+        if adjust_tempo and self.tempo_alignment == CUE_ALIGNMENT and getattr(self.cutter, "bridge_mode", False):
+            end = self.cutter._find_beat_offset_sample(
+                self.beat_frames1, sample1, self.cutter.fade_beats_before, song1.shape[-1]
+            )
+            self.cut_song = self.cutter.mix_bridge(song1, song2, sample1, sample2, end - sample1)
+        else:
+            self.cut_song = self.cutter.cut(
+                song1, song2, sample1, sample2, self.beat_frames1, beat_frames2,
+            )
         self.effective_source_cutpoint, self.effective_target_cutpoint = self.cutter.resolve_cut_samples(
             song1,
             song2,
@@ -314,13 +356,13 @@ def render_transition(
     target_bpm=None,
     preview_seconds_before=DEFAULT_PREVIEW_SECONDS_BEFORE,
     preview_seconds_after=DEFAULT_PREVIEW_SECONDS_AFTER,
+    tempo_alignment=CUE_ALIGNMENT,
 ):
     """Render one transition and return audio plus stable metadata.
 
     Cutpoints are sample positions on the normalised target sample-rate grid.
-    Song two is adjusted tonality-preservingly to song one's BPM before every
-    renderer is applied. Optional BPM arguments make batch rendering use the
-    BPM values recorded with its candidate instead of a second analysis result.
+    The target is stretched once to the local source tempo. BPM arguments
+    preserve the recorded tempo metadata and support historical renders.
     By default the result is a short preview around the aligned source cutpoint.
     Pass ``None`` for both preview values to render the complete transition.
     """
@@ -349,6 +391,7 @@ def render_transition(
         target_channels=target_channels,
         bpm1=source_bpm,
         bpm2=target_bpm,
+        tempo_alignment=tempo_alignment,
     )
     audio = pipeline.cut(
         cutpoint1,
@@ -376,6 +419,7 @@ def render_transition(
         transition_end_sample=transition_end_sample - preview_start,
         source_grid=pipeline.grid_metadata1,
         target_grid=pipeline.grid_metadata2,
+        tempo_alignment=pipeline.cue_alignment.to_dict() if pipeline.cue_alignment else None,
     )
 
 
@@ -405,43 +449,9 @@ def generate_transition_candidates(
     if config is None:
         config = CandidateGenerationConfig()
 
-    song1_path = Path(song1)
-    song2_path = Path(song2)
-    bpm1, beat_frames1, grid_metadata1 = unpack_analysis_result(
-        analysis(str(song1_path))
-    )
-    bpm2, beat_frames2, grid_metadata2 = unpack_analysis_result(
-        analysis(str(song2_path))
-    )
-    sample_rate1 = librosa.get_samplerate(str(song1_path))
-    sample_rate2 = librosa.get_samplerate(str(song2_path))
-    if sample_rate1 is None or sample_rate2 is None:
-        raise ValueError("Could not determine an input track sample rate")
-
-    info1 = sf.info(str(song1_path))
-    info2 = sf.info(str(song2_path))
-    beat_frames1, grid_metadata1 = ensure_bar_metadata_with_provenance(
-        beat_frames1,
-        bpm=bpm1,
-        sample_count=info1.frames,
-        sample_rate=sample_rate1,
-        existing_metadata=grid_metadata1,
-    )
-    beat_frames2, grid_metadata2 = ensure_bar_metadata_with_provenance(
-        beat_frames2,
-        bpm=bpm2,
-        sample_count=info2.frames,
-        sample_rate=sample_rate2,
-        existing_metadata=grid_metadata2,
-    )
-    beat_frames1 = BeatBridgePipeline._scale_beat_frames(
-        beat_frames1,
-        int(target_sample_rate) / float(sample_rate1),
-    )
-    beat_frames2 = BeatBridgePipeline._scale_beat_frames(
-        beat_frames2,
-        int(target_sample_rate) / float(sample_rate2),
-    )
+    song1_path, song2_path = Path(song1), Path(song2)
+    bpm1, beat_frames1, grid_metadata1 = candidate_grid(song1_path, analysis, target_sample_rate)
+    bpm2, beat_frames2, grid_metadata2 = candidate_grid(song2_path, analysis, target_sample_rate)
     return generate_candidates_from_grids(
         TrackReference(str(song1_path), _file_sha256(song1_path)),
         bpm1,
@@ -453,6 +463,16 @@ def generate_transition_candidates(
         target_grid_metadata=grid_metadata2,
         config=config,
     )
+
+
+def candidate_grid(path, analysis, target_sample_rate):
+    """Read observed beats in the sample coordinates used by a candidate."""
+    info = sf.info(str(path))
+    bpm, frames, metadata = unpack_analysis_result(analysis(str(path)))
+    frames, metadata = ensure_bar_metadata_with_provenance(
+        frames, bpm=bpm, sample_count=info.frames, sample_rate=info.samplerate, existing_metadata=metadata,
+    )
+    return bpm, BeatBridgePipeline._scale_beat_frames(frames, target_sample_rate / info.samplerate), metadata
 
 
 def _file_sha256(path):
@@ -498,8 +518,10 @@ def build_argument_parser():
     parser.add_argument(
         "cuttype",
         choices=sorted(CUTTERS),
-        help="Transition renderer.",
+        help="Transition renderer (tempo_fade is an alias for fade).",
     )
+    parser.add_argument("--tempo-alignment", choices=(CUE_ALIGNMENT, LEGACY_ALIGNMENT), default=CUE_ALIGNMENT,
+                        help="Tempo contract. Select global_bpm_v1 to replay historical renders.")
     parser.add_argument(
         "--fade-beats",
         type=int,
@@ -542,6 +564,7 @@ def main():
         args.cutpoint2,
         renderer=args.cuttype,
         fade_beats=args.fade_beats,
+        tempo_alignment=args.tempo_alignment,
         target_sample_rate=args.target_sample_rate,
         preview_seconds_before=args.preview_before_seconds,
         preview_seconds_after=args.preview_after_seconds,

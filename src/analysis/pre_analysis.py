@@ -25,6 +25,7 @@ ANALYSIS_CACHE_FORMAT_VERSION = 2
 ANALYSIS_CACHE_NAMESPACE = "v2"
 ANALYSIS_CACHE_FILENAME = "analysis.json"
 RECOVERED_ANALYSIS_CACHE_FILENAME = "analysis.detected.json"
+FALLBACK_ANALYSIS_CACHE_FILENAME = "analysis.fallback.json"
 ANALYSIS_ALGORITHM_VERSION = "beatbridge_pre_analysis_v2"
 BEAT_BACKEND_NAME = "librosa.beat.beat_track"
 BAR_BACKEND_NAME = "zplane_AUFTAKT_aufTAKTCl"
@@ -259,7 +260,12 @@ class PreAnalysis:
         self.missing_beats = {"librosa": [], "auftakt": []}
         self.merge_diagnostics = None
         self.load_song()
-        self.find_bpm()
+        if (cached is not None and cached.grid_metadata.analysis_id == self.analysis_id
+                and cached.grid_metadata.grid_source == "fallback_from_detected_beats"):
+            self.bpm = cached.bpm
+            self.beat_frames = [frame[0] for frame in cached.beat_frames]
+        else:
+            self.find_bpm()
 
         self.auftakt_analysis_comparison()
         self.beat_frames, self.grid_metadata = ensure_bar_metadata_with_provenance(
@@ -271,7 +277,7 @@ class PreAnalysis:
         )
         self._finalize_grid_metadata()
 
-        if self.grid_metadata.is_verified_detection:
+        if self.grid_metadata.is_verified_detection or self.grid_metadata.fallback_used is True:
             self.save_previous_analysis()
 
         return self._result()
@@ -335,6 +341,11 @@ class PreAnalysis:
         if current_path.is_file():
             self.previous_analysis_kind = "current"
             return current_path
+
+        fallback_path = self.cache_directory / FALLBACK_ANALYSIS_CACHE_FILENAME
+        if fallback_path.is_file():
+            self.previous_analysis_kind = "current"
+            return fallback_path
 
         legacy_path = self.analysis_location / self.song_path.stem / "00_pre_analysis.txt"
         if legacy_path.is_file():
@@ -424,7 +435,9 @@ class PreAnalysis:
 
     def save_previous_analysis(self):
         analysis_path = self.cache_directory / ANALYSIS_CACHE_FILENAME
-        if analysis_path.is_file():
+        if self.grid_metadata.fallback_used is True:
+            analysis_path = self.cache_directory / FALLBACK_ANALYSIS_CACHE_FILENAME
+        elif analysis_path.is_file():
             # Preserve the previous artifact at its original path.
             analysis_path = self.cache_directory / RECOVERED_ANALYSIS_CACHE_FILENAME
         diagnostics = {"missing_beats": self.missing_beats}

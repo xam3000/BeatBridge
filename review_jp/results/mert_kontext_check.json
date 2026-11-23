@@ -1,0 +1,394 @@
+{
+  "core_seconds": 20.0,
+  "context_seconds": 2.0,
+  "k": 4,
+  "length_bars": 4,
+  "queries": 2830,
+  "strata_counts": {
+    "getrennt": 330,
+    "teilweise": 2366,
+    "gemeinsam": 134
+  },
+  "mean_query_share_seeing_target": 0.629866024001301,
+  "mean_target_share_seeing_query": 0.6143368268480898,
+  "conditions": {
+    "classical_s0_deterministic": {
+      "getrennt": {
+        "queries": 330,
+        "recordings": 53,
+        "recall1_macro": 0.5370585913038743,
+        "recall1_micro": 0.5272727272727272
+      },
+      "teilweise": {
+        "queries": 2366,
+        "recordings": 54,
+        "recall1_macro": 0.5552874352537347,
+        "recall1_micro": 0.5363482671174978
+      },
+      "gemeinsam": {
+        "queries": 134,
+        "recordings": 50,
+        "recall1_macro": 0.6083333333333332,
+        "recall1_micro": 0.5671641791044776
+      },
+      "kontakt": {
+        "queries": 2500,
+        "recordings": 54,
+        "recall1_macro": 0.557961141597609,
+        "recall1_micro": 0.538
+      },
+      "drop_getrennt_vs_kontakt": 0.020902550293734667
+    },
+    "classical_s1_20260926": {
+      "getrennt": {
+        "queries": 330,
+        "recordings": 53,
+        "recall1_macro": 0.6020406218519426,
+        "recall1_micro": 0.5787878787878787
+      },
+      "teilweise": {
+        "queries": 2366,
+        "recordings": 54,
+        "recall1_macro": 0.6094656443740253,
+        "recall1_micro": 0.5912933220625528
+      },
+      "gemeinsam": {
+        "queries": 134,
+        "recordings": 50,
+        "recall1_macro": 0.6796666666666666,
+        "recall1_micro": 0.6567164179104478
+      },
+      "kontakt": {
+        "queries": 2500,
+        "recordings": 54,
+        "recall1_macro": 0.6139311589236052,
+        "recall1_micro": 0.5948
+      },
+      "drop_getrennt_vs_kontakt": 0.011890537071662544
+    },
+    "classical_s1_20260927": {
+      "getrennt": {
+        "queries": 330,
+        "recordings": 53,
+        "recall1_macro": 0.6031187889678455,
+        "recall1_micro": 0.5787878787878787
+      },
+      "teilweise": {
+        "queries": 2366,
+        "recordings": 54,
+        "recall1_macro": 0.6048018465084207,
+        "recall1_micro": 0.5891800507185122
+      },
+      "gemeinsam": {
+        "queries": 134,
+        "recordings": 50,
+        "recall1_macro": 0.6996666666666667,
+        "recall1_micro": 0.664179104477612
+      },
+      "kontakt": {
+        "queries": 2500,
+        "recordings": 54,
+        "recall1_macro": 0.6099977522161035,
+        "recall1_micro": 0.5932
+      },
+      "drop_getrennt_vs_kontakt": 0.0068789632482579854
+    },
+    "classical_s1_20260928": {
+      "getrennt": {
+        "queries": 330,
+        "recordings": 53,
+        "recall1_macro": 0.6077234610253479,
+        "recall1_micro": 0.5848484848484848
+      },
+      "teilweise": {
+        "queries": 2366,
+        "recordings": 54,
+        "recall1_macro": 0.6060679506057409,
+        "recall1_micro": 0.588334742180896
+      },
+      "gemeinsam": {
+        "queries": 134,
+        "recordings": 50,
+        "recall1_macro": 0.6796666666666666,
+        "recall1_micro": 0.6567164179104478
+      },
+      "kontakt": {
+        "queries": 2500,
+        "recordings": 54,
+        "recall1_macro": 0.6109115043051297,
+        "recall1_micro": 0.592
+      },
+      "drop_getrennt_vs_kontakt": 0.003188043279781838
+    },
+    "classical_s2_20260926": {
+      "getrennt": {
+        "queries": 330,
+        "recordings": 53,
+        "recall1_macro": 0.6858374853657871,
+        "recall1_micro": 0.6727272727272727
+      },
+      "teilweise": {
+        "queries": 2366,
+        "recordings": 54,
+        "recall1_macro": 0.6818089854803268,
+        "recall1_micro": 0.6699070160608622
+      },
+      "gemeinsam": {
+        "queries": 134,
+        "recordings": 50,
+        "recall1_macro": 0.7829999999999999,
+        "recall1_micro": 0.746268656716418
+      },
+      "kontakt": {
+        "queries": 2500,
+        "recordings": 54,
+        "recall1_macro": 0.6862269303834575,
+        "recall1_micro": 0.674
+      },
+      "drop_getrennt_vs_kontakt": 0.00038944501767035344
+    },
+    "classical_s2_20260927": {
+      "getrennt": {
+        "queries": 330,
+        "recordings": 53,
+        "recall1_macro": 0.6770031854937514,
+        "recall1_micro": 0.6696969696969697
+      },
+      "teilweise": {
+        "queries": 2366,
+        "recordings": 54,
+        "recall1_macro": 0.6804573743973971,
+        "recall1_micro": 0.6610312764158918
+      },
+      "gemeinsam": {
+        "queries": 134,
+        "recordings": 50,
+        "recall1_macro": 0.7586666666666667,
+        "recall1_micro": 0.7164179104477612
+      },
+      "kontakt": {
+        "queries": 2500,
+        "recordings": 54,
+        "recall1_macro": 0.6840578648250427,
+        "recall1_micro": 0.664
+      },
+      "drop_getrennt_vs_kontakt": 0.007054679331291336
+    },
+    "classical_s2_20260928": {
+      "getrennt": {
+        "queries": 330,
+        "recordings": 53,
+        "recall1_macro": 0.6990307386533802,
+        "recall1_micro": 0.6878787878787879
+      },
+      "teilweise": {
+        "queries": 2366,
+        "recordings": 54,
+        "recall1_macro": 0.67913215806955,
+        "recall1_micro": 0.665680473372781
+      },
+      "gemeinsam": {
+        "queries": 134,
+        "recordings": 50,
+        "recall1_macro": 0.7373333333333334,
+        "recall1_micro": 0.6940298507462687
+      },
+      "kontakt": {
+        "queries": 2500,
+        "recordings": 54,
+        "recall1_macro": 0.6807486437569668,
+        "recall1_micro": 0.6672
+      },
+      "drop_getrennt_vs_kontakt": -0.018282094896413414
+    },
+    "mert_s0_deterministic": {
+      "getrennt": {
+        "queries": 330,
+        "recordings": 53,
+        "recall1_macro": 0.48071483024313205,
+        "recall1_micro": 0.4696969696969697
+      },
+      "teilweise": {
+        "queries": 2366,
+        "recordings": 54,
+        "recall1_macro": 0.44396816440965414,
+        "recall1_micro": 0.42857142857142855
+      },
+      "gemeinsam": {
+        "queries": 134,
+        "recordings": 50,
+        "recall1_macro": 0.31166666666666665,
+        "recall1_micro": 0.291044776119403
+      },
+      "kontakt": {
+        "queries": 2500,
+        "recordings": 54,
+        "recall1_macro": 0.43859579969331636,
+        "recall1_micro": 0.4212
+      },
+      "drop_getrennt_vs_kontakt": -0.042119030549815695
+    },
+    "mert_s1_20260926": {
+      "getrennt": {
+        "queries": 330,
+        "recordings": 53,
+        "recall1_macro": 0.4425596939747884,
+        "recall1_micro": 0.43333333333333335
+      },
+      "teilweise": {
+        "queries": 2366,
+        "recordings": 54,
+        "recall1_macro": 0.6365046826149012,
+        "recall1_micro": 0.6394759087066779
+      },
+      "gemeinsam": {
+        "queries": 134,
+        "recordings": 50,
+        "recall1_macro": 0.8586666666666666,
+        "recall1_micro": 0.835820895522388
+      },
+      "kontakt": {
+        "queries": 2500,
+        "recordings": 54,
+        "recall1_macro": 0.6484622234293167,
+        "recall1_micro": 0.65
+      },
+      "drop_getrennt_vs_kontakt": 0.2059025294545283
+    },
+    "mert_s1_20260927": {
+      "getrennt": {
+        "queries": 330,
+        "recordings": 53,
+        "recall1_macro": 0.43965463257916076,
+        "recall1_micro": 0.42727272727272725
+      },
+      "teilweise": {
+        "queries": 2366,
+        "recordings": 54,
+        "recall1_macro": 0.6288091961246196,
+        "recall1_micro": 0.6331360946745562
+      },
+      "gemeinsam": {
+        "queries": 134,
+        "recordings": 50,
+        "recall1_macro": 0.8636666666666666,
+        "recall1_micro": 0.8432835820895522
+      },
+      "kontakt": {
+        "queries": 2500,
+        "recordings": 54,
+        "recall1_macro": 0.6417950491308768,
+        "recall1_micro": 0.6444
+      },
+      "drop_getrennt_vs_kontakt": 0.20214041655171605
+    },
+    "mert_s1_20260928": {
+      "getrennt": {
+        "queries": 330,
+        "recordings": 53,
+        "recall1_macro": 0.4511700563587356,
+        "recall1_micro": 0.44545454545454544
+      },
+      "teilweise": {
+        "queries": 2366,
+        "recordings": 54,
+        "recall1_macro": 0.6255264569395221,
+        "recall1_micro": 0.628486897717667
+      },
+      "gemeinsam": {
+        "queries": 134,
+        "recordings": 50,
+        "recall1_macro": 0.8836666666666666,
+        "recall1_micro": 0.8507462686567164
+      },
+      "kontakt": {
+        "queries": 2500,
+        "recordings": 54,
+        "recall1_macro": 0.6390176874386867,
+        "recall1_micro": 0.6404
+      },
+      "drop_getrennt_vs_kontakt": 0.18784763107995112
+    },
+    "mert_s2_20260926": {
+      "getrennt": {
+        "queries": 330,
+        "recordings": 53,
+        "recall1_macro": 0.7869231397533285,
+        "recall1_micro": 0.7727272727272727
+      },
+      "teilweise": {
+        "queries": 2366,
+        "recordings": 54,
+        "recall1_macro": 0.8576513907523983,
+        "recall1_micro": 0.8537616229923922
+      },
+      "gemeinsam": {
+        "queries": 134,
+        "recordings": 50,
+        "recall1_macro": 0.955,
+        "recall1_micro": 0.9552238805970149
+      },
+      "kontakt": {
+        "queries": 2500,
+        "recordings": 54,
+        "recall1_macro": 0.8644049414340814,
+        "recall1_micro": 0.8592
+      },
+      "drop_getrennt_vs_kontakt": 0.07748180168075292
+    },
+    "mert_s2_20260927": {
+      "getrennt": {
+        "queries": 330,
+        "recordings": 53,
+        "recall1_macro": 0.7898880993220617,
+        "recall1_micro": 0.7848484848484848
+      },
+      "teilweise": {
+        "queries": 2366,
+        "recordings": 54,
+        "recall1_macro": 0.8591391786642949,
+        "recall1_micro": 0.8524936601859678
+      },
+      "gemeinsam": {
+        "queries": 134,
+        "recordings": 50,
+        "recall1_macro": 0.9783333333333334,
+        "recall1_micro": 0.9701492537313433
+      },
+      "kontakt": {
+        "queries": 2500,
+        "recordings": 54,
+        "recall1_macro": 0.8664749830476787,
+        "recall1_micro": 0.8588
+      },
+      "drop_getrennt_vs_kontakt": 0.07658688372561695
+    },
+    "mert_s2_20260928": {
+      "getrennt": {
+        "queries": 330,
+        "recordings": 53,
+        "recall1_macro": 0.7887500340330529,
+        "recall1_micro": 0.7818181818181819
+      },
+      "teilweise": {
+        "queries": 2366,
+        "recordings": 54,
+        "recall1_macro": 0.8560882483124043,
+        "recall1_micro": 0.8516483516483516
+      },
+      "gemeinsam": {
+        "queries": 134,
+        "recordings": 50,
+        "recall1_macro": 0.9666666666666666,
+        "recall1_micro": 0.9626865671641791
+      },
+      "kontakt": {
+        "queries": 2500,
+        "recordings": 54,
+        "recall1_macro": 0.8631745256979223,
+        "recall1_micro": 0.8576
+      },
+      "drop_getrennt_vs_kontakt": 0.07442449166486942
+    }
+  }
+}

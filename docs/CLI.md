@@ -110,8 +110,15 @@ Die Werte müssen nicht exakt auf einem Beat liegen. BeatBridge sucht den Downbe
 
 ### Tempoangleichung
 
-Alle Renderer passen Song 2 zunächst tonhöhenerhaltend an das BPM von Song 1
-an. BeatBridge verwendet dafür zuerst FFmpegs `rubberband`-Filter mit gemeinsam
+Einzelrender, Paarbatch und Mehrfachbatch verwenden seit 23.11.2026 standardmäßig
+`--tempo-alignment cue_grid_regression_v3`. Die lokalen Beatzeiten bestimmen
+einen konstanten Faktor für B. Ein Cue mit mehr als 20 ms Rasterabweichung wird
+verworfen. Der automatische Vorschlag und der Batch prüfen die Kandidaten vor
+dem Ranking. Für die Wiederholung eines historischen BPM-Renderings steht
+`--tempo-alignment global_bpm_v1` zur Verfügung. Der neue Vertrag ist mit
+Messwerten und Entwicklungsclips dokumentiert. [Tempo-Bericht](masterarbeit/REVIEW_JP_TEMPO_20261123.md)
+
+BeatBridge verwendet für die tonhöhenerhaltende Angleichung zuerst FFmpegs `rubberband`-Filter mit gemeinsam
 verarbeitetem Stereo (`channels=together`). Falls dieser Schritt nicht
 verfügbar ist oder fehlschlägt, wird automatisch das eigenständige
 `rubberband`-CLI mit R3-Engine (`-3`) verwendet. Temporäre Backend-WAVs sind

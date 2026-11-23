@@ -15,6 +15,7 @@ import shutil
 import uuid
 
 import numpy as np
+from src.tempo.cue_alignment import CUE_ALIGNMENT, CueAlignmentError, check_feature_cue
 
 from src.dataset import (
     DEFAULT_TRACK_EXCLUSIONS_PATH,
@@ -247,6 +248,7 @@ def export_feature_dataset(
         raise ValueError("Track-disjoint filtering retained no candidates")
 
     prepared = []
+    tempo_rejections = []
     artifact_cache = {}
     for record in retained_records:
         candidate = record.candidate
@@ -274,12 +276,19 @@ def export_feature_dataset(
             vocal_backend=vocal_backend,
             vocal_model=vocal_model,
         )
-        source_cue = int(candidate["source_cutpoint"]["sample"])
+        cue_rate = candidate.get("cue_sample_rate", sample_rate)
+        source_cue = round(candidate["source_cutpoint"]["sample"] * sample_rate / cue_rate)
         target_cue = aligned_cue_sample(
-            candidate["target_cutpoint"]["sample"],
+            round(candidate["target_cutpoint"]["sample"] * sample_rate / cue_rate),
             original_bpm=candidate["target_bpm"],
             aligned_bpm=candidate["source_bpm"],
         )
+        try:
+            check_feature_cue(source_artifact, target_artifact, source_cue, target_cue,
+                              int(candidate["transition_length_bars"]) * 4, sample_rate)
+        except CueAlignmentError as error:
+            tempo_rejections.append(dict(example_id=record.example_id, exclusion_type=CUE_ALIGNMENT, reason=str(error)))
+            continue
         prepared.append((record, source_artifact, target_artifact, source_cue, target_cue))
 
     training_artifacts = []
@@ -292,6 +301,9 @@ def export_feature_dataset(
             if key not in seen_training_artifacts:
                 seen_training_artifacts.add(key)
                 training_artifacts.append(artifact)
+    if not training_artifacts:
+        raise ValueError(f"No training cues available for normalization after the tempo check "
+                         f"({len(tempo_rejections)} candidates rejected)")
     stats_id = _normalization_stats_id(training_artifacts, assignments)
     normalization = normalization_stats_from_training_artifacts(
         training_artifacts,
@@ -333,10 +345,12 @@ def export_feature_dataset(
                 target_artifact,
                 source_cue,
                 target_cue,
+                analysis_root,
             )
         )
 
     dataset_config = {
+        "waveform_alignment": CUE_ALIGNMENT,
         "format_version": DATASET_FORMAT_VERSION,
         "feature_protocol_version": FEATURE_PROTOCOL_VERSION,
         "global_pair_extractor_version": GLOBAL_PAIR_EXTRACTOR_VERSION,
@@ -385,9 +399,10 @@ def export_feature_dataset(
             "excluded_by_training_policy": len(excluded_records),
             "excluded_by_bpm_filter": len(bpm_excluded_records),
             "discarded_cross_split": len(records) - len(retained_records),
-            "exported": len(retained_records),
+            "excluded_by_tempo_grid": len(tempo_rejections),
+            "exported": len(prepared),
         },
-        "excluded_examples": excluded_records + bpm_excluded_records,
+        "excluded_examples": excluded_records + bpm_excluded_records + tempo_rejections,
         "track_assignments": [
             {
                 "sha256": track_hash,
@@ -462,13 +477,23 @@ def _discover_pair_manifests(source_manifest):
     return tuple(paths)
 
 
+def _manifest_cue_rate(payload):
+    if "cue_sample_rate" in payload:
+        return int(payload["cue_sample_rate"])
+    rates = {int(v["sample_rate"]) for v in payload.get("rendered_variants", []) if "sample_rate" in v}
+    if len(rates) > 1:
+        raise ValueError("Conflicting sample rates in historical pair manifest")
+    return next(iter(rates), None)
+
+
 def _select_candidate_records(pair_manifests, *, top_k_per_pair, transition_bars):
     records = []
     seen_examples = set()
     for manifest_path in pair_manifests:
         payload = _read_json(manifest_path)
+        cue_rate = _manifest_cue_rate(payload)
         candidates = {
-            item["candidate_id"]: item
+            item["candidate_id"]: (dict(item, cue_sample_rate=cue_rate) if cue_rate else item)
             for item in payload["candidate_generation"]["candidates"]
         }
         selected = 0
@@ -639,10 +664,14 @@ def _example_metadata(
     target_artifact,
     source_cue,
     target_cue,
+    analysis_root,
 ):
     candidate = record.candidate
     return {
         "example_id": record.example_id,
+        "waveform_alignment": CUE_ALIGNMENT,
+        "waveform_analysis_root": Path(analysis_root).as_posix(),
+        "cue_sample_rate": int(candidate.get("cue_sample_rate", source_artifact.manifest["sample_rate"])),
         "split": split_name,
         "candidate_id": candidate["candidate_id"],
         "candidate_rank": record.candidate_rank,
@@ -655,6 +684,10 @@ def _example_metadata(
         "target_cutpoint": candidate["target_cutpoint"],
         "source_grid": candidate.get("source_grid"),
         "target_grid": candidate.get("target_grid"),
+        "waveform_grid_sha256": {
+            role: (artifact.manifest.get("beat_grid_metadata") or {}).get("beat_grid_sha256")
+            for role, artifact in (("source", source_artifact), ("target", target_artifact))
+        },
         "aligned_source_cue_sample": int(source_cue),
         "aligned_target_cue_sample": int(target_cue),
         "source_bpm": float(candidate["source_bpm"]),

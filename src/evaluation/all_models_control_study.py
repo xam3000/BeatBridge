@@ -22,6 +22,7 @@ import uuid
 import numpy as np
 import torch
 
+from src.artifact_paths import artifact_path
 from src.ml.control_initialization import read_model_config
 
 from src.analysis.pre_analysis import PreAnalysis
@@ -122,7 +123,7 @@ def discover_representative_runs(training_runs_root, dataset_directory):
         checkpoint = manifest.get("files", {}).get("best_checkpoint")
         if not isinstance(checkpoint, dict):
             continue
-        checkpoint_path = manifest_path.parent / checkpoint.get("path", "")
+        checkpoint_path = artifact_path(checkpoint.get("path", ""), manifest_path.parent)
         if not checkpoint_path.is_file():
             continue
         candidates.setdefault(model_name, []).append(
@@ -418,7 +419,7 @@ def _load_best_tcn(run_directory):
     if contract.get("renderer", {}).get("name") != "differentiable_full_band_transition_v1":
         raise ValueError("TCN run does not declare the full-band renderer")
     record = manifest["files"]["best_checkpoint"]
-    checkpoint_path = run_directory / record["path"]
+    checkpoint_path = artifact_path(record["path"], run_directory)
     checkpoint_sha = _file_sha256(checkpoint_path)
     if checkpoint_sha != record["sha256"]:
         raise ValueError("Best-checkpoint SHA-256 differs from the TCN manifest")

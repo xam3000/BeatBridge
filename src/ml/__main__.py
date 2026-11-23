@@ -834,8 +834,7 @@ def main():
         output_directory = (
             Path(args.output_root).resolve() / sweep_id / sweep_run_id
         )
-        mode = (run_initialization(output_directory, True, requested)
-                if output_directory.exists() else requested or LEGACY)
+        mode = run_initialization(output_directory, output_directory.exists(), requested)
         model_config = VocalFeatureControlMLPConfig(**model_parameters, control_initialization=mode)
         result = run_vocal_feature_control_training(
             args.dataset_directory,
@@ -864,7 +863,7 @@ def main():
 
     if args.command == "sweep-tcn-bilstm":
         parameters = dict(load_sweep_parameters())
-        parameters.setdefault("control_initialization", LEGACY)
+        parameters.setdefault("control_initialization", EQUAL_POWER)
         training_fields = set(TCNBiLSTMTrainingConfig.__dataclass_fields__) - {
             "device",
             "training_sample_rate",
@@ -918,7 +917,7 @@ def main():
 
     if args.command == "sweep-variable-tcn-bilstm":
         parameters = dict(load_sweep_parameters())
-        parameters.setdefault("control_initialization", LEGACY)
+        parameters.setdefault("control_initialization", EQUAL_POWER)
         default_training_config = VariableTemporalTrainingConfig()
         training_fields = set(default_training_config.to_dict()) - {
             "device",

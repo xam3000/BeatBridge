@@ -11,7 +11,7 @@ from src.ml.p08_contrastive import batch_order, productions
 
 
 class WindowBank:
-    def __init__(self, data, rows, device):
+    def __init__(self, data, rows, device, *, window_means=None):
         self.rows = rows
         train = data.split == "train"
         keys = set()
@@ -39,11 +39,14 @@ class WindowBank:
         self.values = None
         for v, variant in enumerate(variants):
             for sha, starts in tracks.items():
-                bars = data._load(sha, variant)
-                indices = np.array(starts)[:, None] + np.arange(data.k)
-                if indices.min() < 0 or indices.max() >= len(bars):
-                    raise ValueError("Incomplete P08 window")
-                windows = bars[indices].mean(axis=1, dtype=np.float32)
+                if window_means is None:
+                    bars = data._load(sha, variant)
+                    indices = np.array(starts)[:, None] + np.arange(data.k)
+                    if indices.min() < 0 or indices.max() >= len(bars):
+                        raise ValueError("Incomplete P08 window")
+                    windows = bars[indices].mean(axis=1, dtype=np.float32)
+                else:
+                    windows = window_means(sha, variant, starts)
                 if not np.isfinite(windows).all():
                     raise ValueError(f"Nonfinite features in {sha}/{variant}")
                 if self.values is None:

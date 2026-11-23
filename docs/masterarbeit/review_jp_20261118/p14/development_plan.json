@@ -1,0 +1,27 @@
+{
+  "format_version": 1,
+  "sections": [
+    {
+      "path": "musik/PRIVE Hardstyle Top 1000 of all times - by Scantraxx/Meltdown - Devin Wild.flac",
+      "sha256": "0139761a8f8dd0f0b3ff788357218ddfb206a27c9af9b6c7b81c5070b1f28a8a",
+      "start_seconds": 44,
+      "end_seconds": 75
+    },
+    {
+      "path": "musik/Hardstyle Top 100 2025 by Q-dance/Inferno - Vertile.flac",
+      "sha256": "02fad84d1e81bb164d11fffff938afc39852efb54ce261d18c1a388302e9fcdc",
+      "start_seconds": 40,
+      "end_seconds": 60
+    },
+    {
+      "path": "musik/PRIVE Hardstyle Top 1000 of all times - by Scantraxx/Rise Of The Celestials (Qlimax Anthem 2016) - Coone.flac",
+      "sha256": "11cb713c34a995fa663ebc45ca565791838930dd6cff9452f52e47fbc9528edf",
+      "start_seconds": 62,
+      "end_seconds": 95
+    }
+  ],
+  "edges": [
+    {"source_seconds": 69.218685, "target_seconds": 45.267302, "bars": 2, "renderer": "equal_power"},
+    {"source_seconds": 49.760363, "target_seconds": 68.533696, "bars": 3, "renderer": "fade"}
+  ]
+}

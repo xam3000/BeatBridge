@@ -12,6 +12,7 @@ import uuid
 
 import librosa
 import numpy as np
+from src.tempo.cue_alignment import LEGACY_ALIGNMENT
 import soundfile as sf
 import torch
 
@@ -492,6 +493,7 @@ def _extract_aligned_bridge(candidate, analysis):
         analysis,
         sample_rate=DEFAULT_SAMPLE_RATE,
         include_context_audio=True,
+        tempo_alignment=LEGACY_ALIGNMENT,
     )
 
 

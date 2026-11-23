@@ -31,6 +31,7 @@ from src.torch_device import (
     validate_torch_device_spec,
 )
 
+from src.artifact_paths import portable_dataset_identity
 from .data import (
     DEFAULT_TRAINING_SAMPLE_RATE,
     DEFAULT_VOCAL_BRIDGE_WAVEFORM_CACHE_ROOT,
@@ -184,7 +185,7 @@ def run_vocal_feature_control_training(
         config=config,
         model_config=model_config,
         objective_config=objective_config,
-        dataset_identity=dataset_identity,
+        dataset_identity=portable_dataset_identity(dataset_identity, output_directory, resume),
         vocal_model=vocal_model,
         resume=resume,
         progress=progress,
@@ -803,7 +804,7 @@ def _file_record(path, relative_to):
     if not path.is_file():
         return None
     return {
-        "path": str(path.relative_to(relative_to)),
+        "path": path.relative_to(relative_to).as_posix(),
         "sha256": _file_sha256(path),
         "bytes": path.stat().st_size,
     }

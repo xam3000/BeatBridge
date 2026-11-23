@@ -1,5 +1,17 @@
 # Results evidence ledger (2026-10-14; thesis update 2026-11-11)
 
+## Nachträge zur Sitzung vom 23. November 2026
+
+| Frage | Kontrollierter Vergleich | Ergebnis und Reichweite |
+|---|---|---|
+| Wie stark hängt Recall@1 am Encoder-Eingang? | Derselbe P09-Kopf (MERT Stufe 2, Seed 20260926, E22) und dieselben 2.830 Neunerpanels. Gesamter P07-Eingabeblock gegenüber einem separat kodierten Vier-Takt-Ausschnitt. | 85,59 % gegenüber 66,12 %, aufnahmegewichtet auf der Auswahl-Validation. Die isolierte Eingabe ändert neben dem verfügbaren Kontext auch die Normalisierung und das Frameraster. [Tabelle und Prüfpfad](masterarbeit/REVIEW_JP_MERT_FENSTER_20261123.md) |
+| Welchen Vorsprung hat das neu trainierte MERT-Verfahren beim Fortsetzungs-Retrieval? | 12.999 Trainabfragen, dieselben 2.830 Neunerpanels der Validation, drei feste Seeds je trainierter Stufe, 30 Epochen, Bestepoche je Seed. Vergleich mit der entsprechenden klassischen P09-Stufe. | Gerichtete Türme erreichen im Mittel 72,24 % für isoliertes MERT und 68,49 % für klassische Merkmale. MERT-Studienseed mit Epoche 6 bei 72,23 %. Kopf- und Epochenwahl auf derselben Validation. Eingabedimension und Schichtmischung unterscheiden sich zwischen den Familien. [Entscheidung und Tabelle](masterarbeit/REVIEW_JP_MERT_FENSTER_20261123.md) |
+| Wählt die neue MERT-Metrik dieselben Stellen wie die Regel? | 26 disjunkte P10-Entwicklungspaare, je 144 identische Cue-Kandidaten, paarweise Rangkorrelation. | 0/26 gemeinsame Erstplatzierte, mittleres Spearman-ρ 0,1682. Im getrennten Lauf mit der aktuellen Tempo-Prüfung blieben auf dev01 neun Kandidaten übrig. [Paartabelle](masterarbeit/review_jp_20261118/mert_fenster/pairs.csv) · [Nachweis des realen Renders](masterarbeit/review_jp_20261118/mert_fenster/batch_verified.json) |
+| Verbessert sich der Controller gegenüber einer festen Kurve? | Jeweils innerhalb desselben Pfads, R4 auf vier Takten. | Das Modell liegt bei einem mittleren Proxy von 0,230, die feste Train-Kurve bei 0,260. Die Richtung gilt in allen zwölf Aufnahmekomponenten. Die Frage nach hörbarer Qualität bleibt offen. [P06 und Grenzen der Diagnose](masterarbeit/REVIEW_JP_P06_CONTROLLER_20261118.md) |
+| Lässt sich ein vollständiger Mix aus drei Abschnitten exportieren? | Drei P07-Trainingsaufnahmen, zwei Übergänge mit zwei und drei Takten. | Zwei vollständige Renderläufe ergaben dieselbe PCM24-Datei mit 2.880.776 Frames bei 44.100 Hz. [WAV, Manifest und Sequenzgrenzen](masterarbeit/review_jp_20261118/p14/mashup.md) |
+| Wie häufig tragen die gemessenen Schläge einen gemeinsamen Tempofaktor? | Dieselben 21 historischen P11-Cues, globale BPM-Felder gegenüber cue-lokaler Regression. Vollständige Prüfung an den einzelnen Beatmarken mit 20-ms-Toleranz. | Die Brückenspanne überschreitet 20 ms bei 11/21 bzw. 13/21 Cues. Einer besteht alle Prüfungen. In den historischen Suchräumen bleiben für alle sieben Paare geometrisch zulässige Alternativen. [Messungen und Grenzen](masterarbeit/REVIEW_JP_TEMPO_20261123.md) |
+| Reproduziert der siebenpaarige Auswertungscode bekannte Effekte? | Künstliche vollständige und unvollständige Bewertungen, rotierende Anker. | Wiedergewonnene Kontraste im Piloten sowie getrennte Nenner bei fehlenden Anker- und Kurvenurteilen. Echte Präferenzdaten stehen aus. [Auswertungsplan](EVALUATION_PROTOCOL_V2.md) · [Testjournal](Bemerkungen.md) |
+
 ## P08 · Datenbasis für F2 am 19.11.2026
 
 | Material und Einheit | Bedingungen | Technischer Befund | Nachweis |

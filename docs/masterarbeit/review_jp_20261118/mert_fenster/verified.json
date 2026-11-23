@@ -1,0 +1,17 @@
+{
+  "result": "passed",
+  "selection_sha256": "d44b3230dc72112cb5631f39f306044ea0acffa095d48bd83e92424e6130da24",
+  "validation_ranks_sha256": "05173a13220688d4d437195e8ccff10df44812e76a085544f9df0401c23055c0",
+  "ranks_replayed": 2830,
+  "recall1": 0.7223042609864513,
+  "mrr": 0.8225419727179639,
+  "development_pairs": 26,
+  "cues": 3744,
+  "agreements": 0,
+  "mean_rho": 0.16823097327076106,
+  "live_pair": 1,
+  "live_candidates": 144,
+  "max_live_score_error": 0.0,
+  "pair_table_sha256": "c0dfdbd202d22e515a6e821240fea8dfb601ff34360b1d492d3af68635cde0ac",
+  "unpaired_group": "recording-fcb9d86c8eeba240d8c3"
+}

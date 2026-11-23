@@ -10,6 +10,7 @@ from src.evaluation.comparison import Comparison, Evaluator, raw_result, save_co
 from src.evaluation.four_model_listening_study import DEFAULT_V2_DATASET, MODEL_RUNS
 from src.evaluation.ml_control_study import _file_sha256
 from src.evaluation.nontrivial_model_examples import _load_variable_tcn
+from src.artifact_paths import artifact_path
 from src.ml.data import FeatureControlDataset, _load_cached_vocal_bridge
 from src.ml.inference_contract import fixed_preview_renderer_options, load_fixed_inference_contract
 from src.ml.variable_data import VariableFeatureDataset
@@ -58,7 +59,7 @@ class NativeSplit:
             # R2 binds exact cache manifests, including the stem extractor. Reading
             # the trained waveforms avoids a fresh, potentially different separation.
             record = self.vocal_records[eid]
-            path = Path(record["path"])
+            path = artifact_path(record["path"])
             if _file_sha256(path) != record["sha256"]:
                 raise ValueError(f"Waveform manifest hash differs for {eid}")
             directory = path.parent
@@ -94,7 +95,7 @@ def native_setup(profile, bars, run, dataset_path, cache_root, limit):
     family = contract.get("model_name") if variable else contract["model"]["name"]
     if family != FAMILIES[profile]:
         raise ValueError(f"{profile} cannot evaluate {family}")
-    dataset_path = Path(dataset_path or (DEFAULT_V2_DATASET if variable else contract["dataset"]["path"]))
+    dataset_path = Path(dataset_path or (DEFAULT_V2_DATASET if variable else artifact_path(contract["dataset"]["path"])))
     dataset_file = dataset_path / "manifest.json"
     dataset = load_json(dataset_file)
     renderer = contract["renderer"]

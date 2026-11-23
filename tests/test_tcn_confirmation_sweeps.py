@@ -42,7 +42,7 @@ def test_confirmation_grid_runs_full_budget_and_saves_locally(candidate, monkeyp
         assert dataset == "output/datasets/feature_protocol_v1_extended_bpm145_165_top10_4bar_split_20260805"
         assert output == tmp_path / candidate / "confirmation" / f"seed{seed}"
         assert kw["config"].seed == seed
-        assert kw["model_config"].control_initialization == "legacy"
+        assert kw["model_config"].control_initialization == "equal_power_v1"
         assert kw["config"].max_epochs == 150
         assert kw["config"].patience > kw["config"].max_epochs
         assert kw["config"].min_delta == 0

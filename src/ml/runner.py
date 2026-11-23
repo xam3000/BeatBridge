@@ -31,6 +31,7 @@ from src.control import (
     DifferentiableFullBandTransitionRenderer,
 )
 
+from src.artifact_paths import portable_dataset_identity
 from .data import (
     DEFAULT_BRIDGE_WAVEFORM_CACHE_ROOT,
     DEFAULT_TRAINING_SAMPLE_RATE,
@@ -202,7 +203,7 @@ def run_feature_control_training(
         config=config,
         model_config=model_config,
         objective_config=objective_config,
-        dataset_identity=dataset_identity,
+        dataset_identity=portable_dataset_identity(dataset_identity, output_directory, resume),
         resume=resume,
         save_checkpoints=save_checkpoints,
         progress=progress,
@@ -863,7 +864,7 @@ def _file_record(path, relative_to):
     if not path.is_file():
         return None
     return {
-        "path": str(path.relative_to(relative_to)),
+        "path": path.relative_to(relative_to).as_posix(),
         "sha256": _file_sha256(path),
         "bytes": path.stat().st_size,
     }

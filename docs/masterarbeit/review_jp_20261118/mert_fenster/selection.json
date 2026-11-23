@@ -1,0 +1,73 @@
+{
+  "format_version": 2,
+  "stages": [
+    {
+      "level": 1,
+      "mean_recall1": 0.6104838050456304,
+      "mean_same": 0.7448831698488286,
+      "study_seed_same": 0.7452890574432491,
+      "mean_intro_drop": 0.792917919742723,
+      "study_seed_intro_drop": 0.7923858350068513,
+      "eligible": true
+    },
+    {
+      "level": 2,
+      "mean_recall1": 0.7223925327727962,
+      "mean_same": 0.8240724675516137,
+      "study_seed_same": 0.8198557281569753,
+      "mean_intro_drop": 0.8676940090903204,
+      "study_seed_intro_drop": 0.8501678648900375,
+      "eligible": true
+    }
+  ],
+  "ranking_method": "mert_continuation_v2",
+  "run": "output/review_jp_20261118/mert_fenster/train01",
+  "config_sha256": "ca2a7f621c1667f9d46bf0c0568ac838709f8e5218449da113f3caeb6a4e9f19",
+  "representation": {
+    "repo_id": "m-a-p/MERT-v1-95M",
+    "revision": "12af15fef9d0ac838c3f475bfbbf26d2060dd4f5",
+    "license": "CC-BY-NC-4.0",
+    "sha256": {
+      "README.md": "4bd95e900185d8b393785c0038aa662355a904e5a98ec692003b8011c802455d",
+      "config.json": "ea2627c4c7825cd66f3c944b6b966331604c35928174e0100cd4a82829424e32",
+      "configuration_MERT.py": "ae0ec2bab8f59c724ba9878a7c20b67210189536ea62d34a56775968e9decb03",
+      "modeling_MERT.py": "6c3ee73cef6f0c30ef494f88d96f891fa6925ffe663fa391b512f4b57abecc6c",
+      "preprocessor_config.json": "cc5a5e4a5d3b1a758a5ed984b2eaa15bb0522d811d44a9eed82bfca4baa0dc8f",
+      "pytorch_model.bin": "a2b8b747f72c06e0595aeae41ae5473f4364938c6b39b2c58be38c48e6bd3fcd"
+    },
+    "transformers": "4.49.0",
+    "sample_rate": 24000,
+    "frame_step": 320,
+    "receptive_field": 400,
+    "core_samples": 480000,
+    "context_samples": 48000,
+    "attention": "sdpa",
+    "precision": "cuda_bfloat16_autocast_or_cpu_float32"
+  },
+  "p08_manifest_sha256": "e3de544d9a29214d1546d18f87b5f6ac9f9717c6d6ade2e8b5b4822aab4fbedd",
+  "validation_sha256": "0d0fd5565e3d852c41686fe9524c1256d00b3ab78b2b1daaf44600bf1a31d3bd",
+  "validation_table_sha256": "c5e208fb56b38b0431329cceef1c41afe0f71bf37ae16d56f40f41c75540ce88",
+  "status": "selected",
+  "selected": {
+    "family": "mert",
+    "level": 2,
+    "seed": 20260926,
+    "parameters": 459533,
+    "epochs": 30,
+    "steps": 12210,
+    "best_epoch": 6,
+    "checkpoint": "mert_s2_20260926/best.pt",
+    "checkpoint_sha256": "54920b7d033e1e9c90138defc5d71db8d88bc12f17235e3cf86a3b3d8b90e177",
+    "recall1": 0.7223042609864513,
+    "mrr": 0.8225419727179639,
+    "same": 0.8198557281569753,
+    "same_groups": 53,
+    "intro_drop": 0.8501678648900375,
+    "intro_drop_groups": 49,
+    "intro_drop_queries": 844,
+    "same_section": 0.7694010645642216,
+    "same_section_queries": 2506,
+    "queries": 2830,
+    "recordings": 54
+  }
+}

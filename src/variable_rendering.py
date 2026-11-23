@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
@@ -17,6 +18,7 @@ from src.pipeline import (
 )
 from src.features.variable_contract import geometry_for_length
 from src.tempo.time_stretch import TimeStretch
+from src.tempo.cue_alignment import CUE_ALIGNMENT, LEGACY_ALIGNMENT
 
 
 VARIABLE_RENDER_RESULT_FORMAT_VERSION = 6
@@ -32,12 +34,12 @@ def render_variable_transition(
     tempo_adjuster=None,
     preview_seconds_before=5.0,
     preview_seconds_after=12.0,
+    tempo_alignment=CUE_ALIGNMENT,
 ):
     """Render one v2 candidate with an exact bridge duration.
 
-    The legacy renderer remains responsible for v1 candidates. This path uses
-    the candidate's beat window and rejects unequal source/target durations
-    instead of shortening the bridge to the smaller side.
+    Current candidates retain the entire source bridge and use the common
+    cue-grid gate. The historical mode requires exact sample equality.
     """
     if int(getattr(candidate, "format_version", 1)) != 2:
         raise ValueError("render_variable_transition requires a variable candidate")
@@ -52,7 +54,7 @@ def render_variable_transition(
             else Path(analysis_location)
         )
         analysis = PreAnalysis(str(cache_path) + os.sep)
-    if renderer == "simple":
+    if tempo_alignment == CUE_ALIGNMENT or renderer == "simple":
         from src.pipeline import render_transition
 
         result = render_transition(
@@ -65,25 +67,22 @@ def render_variable_transition(
             target_sample_rate=target_sample_rate,
             analysis=analysis,
             analysis_location=analysis_location,
+            tempo_adjuster=tempo_adjuster,
+            tempo_alignment=tempo_alignment,
             source_bpm=candidate.source_bpm,
             target_bpm=candidate.target_bpm,
             preview_seconds_before=preview_seconds_before,
             preview_seconds_after=preview_seconds_after,
         )
-        return RenderResult(
-            audio=result.audio,
-            sample_rate=result.sample_rate,
-            renderer=result.renderer,
-            tempo_backend=result.tempo_backend,
-            transition_start_sample=result.transition_start_sample,
-            transition_end_sample=result.transition_end_sample,
+        return replace(
+            result,
             format_version=VARIABLE_RENDER_RESULT_FORMAT_VERSION,
-            source_grid=result.source_grid,
-            target_grid=result.target_grid,
             transition_length_bars=candidate.transition_length_bars,
             transition_length_beats=candidate.transition_length_beats,
         )
 
+    if tempo_alignment != LEGACY_ALIGNMENT:
+        raise ValueError(f"Unknown tempo alignment: {tempo_alignment}")
     if renderer not in {"fade", "equal_power", "tempo_fade"}:
         raise ValueError(f"Unknown variable renderer: {renderer}")
     if int(candidate.transition_length_beats) <= 0:
@@ -103,6 +102,7 @@ def render_variable_transition(
         target_sample_rate=target_sample_rate,
         bpm1=candidate.source_bpm,
         bpm2=candidate.target_bpm,
+        tempo_alignment=tempo_alignment,
     )
     source_audio, target_audio = pipeline.adjust_tempo()
     source_cut = int(

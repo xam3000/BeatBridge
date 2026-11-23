@@ -712,7 +712,7 @@ def write_variable_run_manifest(manifest_path, *, run_id, contract, status, chec
         "contract": contract,
         "files": {
             "latest_checkpoint": {
-                "path": str(checkpoint_path.relative_to(manifest_path.parent)),
+                "path": checkpoint_path.relative_to(manifest_path.parent).as_posix(),
                 "sha256": _sha256(checkpoint_path),
                 "bytes": checkpoint_path.stat().st_size,
             }
@@ -924,7 +924,7 @@ def _file_record(path, relative_to):
     path = Path(path)
     if not path.is_file():
         return None
-    return {"path": str(path.relative_to(relative_to)), "sha256": _sha256(path), "bytes": path.stat().st_size}
+    return {"path": path.relative_to(relative_to).as_posix(), "sha256": _sha256(path), "bytes": path.stat().st_size}
 
 
 def _canonical_json(value):

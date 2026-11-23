@@ -30,6 +30,7 @@ from src.features.variable_contract import (
 )
 from src.pipeline import PROJECT_ROOT
 from src.tempo.time_stretch import TimeStretch, TimeStretchBackendError
+from src.tempo.cue_alignment import CUE_ALIGNMENT, CueAlignmentError
 
 
 VARIABLE_WAVEFORM_CACHE_FORMAT_VERSION = 2
@@ -121,12 +122,17 @@ def load_or_create_variable_waveform_cache(
         render_sample_rate=render_sample_rate,
         rounding_tolerance_samples=tolerance,
     )
+    alignment_contract = example.get("waveform_alignment", VARIABLE_WAVEFORM_ALIGNMENT_CONTRACT)
+    if alignment_contract not in (VARIABLE_WAVEFORM_ALIGNMENT_CONTRACT, CUE_ALIGNMENT):
+        raise ValueError(f"Unknown waveform alignment: {alignment_contract}")
+    cache_config["alignment_contract"] = alignment_contract
     cache_id = _cache_id(cache_config)
     cache_directory = (
         Path(cache_root) / "entries" / str(example["example_id"]) / cache_id
     )
     _ensure_root_manifest(
         Path(cache_root),
+        alignment_contract=alignment_contract,
         dataset_id=str(dataset_id),
         dataset_manifest_sha256=dataset_manifest_sha256,
         training_sample_rate=training_sample_rate,
@@ -142,7 +148,10 @@ def load_or_create_variable_waveform_cache(
     if not build_missing:
         raise FileNotFoundError(f"Variable-v2 waveform cache is missing: {cache_directory}")
 
-    if audio_loader is None or vocal_loader is None:
+    if alignment_contract == CUE_ALIGNMENT:
+        aligned = _regression_waveforms(example, render_sample_rate, training_sample_rate,
+                                        verify_audio_hashes, resampler)
+    elif audio_loader is None or vocal_loader is None:
         prepared = _load_real_window_inputs(
             example,
             geometry,
@@ -160,23 +169,16 @@ def load_or_create_variable_waveform_cache(
             vocal_loader=vocal_loader,
         )
 
-    aligned = align_variable_waveform_windows(
-        prepared["source_mix"],
-        prepared["target_mix"],
-        prepared["source_vocal"],
-        prepared["target_vocal"],
-        source_window=prepared["source_window"],
-        target_window=prepared["target_window"],
-        source_bpm=float(example["source_bpm"]),
-        target_bpm=float(example["target_bpm"]),
-        render_sample_rate=render_sample_rate,
-        training_sample_rate=training_sample_rate,
-        time_stretch=time_stretch or TimeStretch(),
-        resampler=resampler,
-        rounding_tolerance_samples=tolerance,
-        provenance=prepared["provenance"],
-        target_stretch_context=prepared.get("target_stretch_context"),
-    )
+    if alignment_contract != CUE_ALIGNMENT:
+        aligned = align_variable_waveform_windows(
+            prepared["source_mix"], prepared["target_mix"], prepared["source_vocal"], prepared["target_vocal"],
+            source_window=prepared["source_window"], target_window=prepared["target_window"],
+            source_bpm=float(example["source_bpm"]), target_bpm=float(example["target_bpm"]),
+            render_sample_rate=render_sample_rate, training_sample_rate=training_sample_rate,
+            time_stretch=time_stretch or TimeStretch(), resampler=resampler,
+            rounding_tolerance_samples=tolerance, provenance=prepared["provenance"],
+            target_stretch_context=prepared.get("target_stretch_context"),
+        )
     arrays = {
         "source_audio": aligned.source_audio,
         "target_audio": aligned.target_audio,
@@ -440,7 +442,7 @@ def materialize_variable_waveform_cache(
         raise ValueError("limit must be at least 1 when provided")
     report = {
         "format_version": VARIABLE_WAVEFORM_CACHE_FORMAT_VERSION,
-        "alignment_contract": VARIABLE_WAVEFORM_ALIGNMENT_CONTRACT,
+        "alignment_contract": dataset_manifest.get("waveform_alignment", VARIABLE_WAVEFORM_ALIGNMENT_CONTRACT),
         "dataset_directory": str(dataset_directory),
         "dataset_id": str(dataset_manifest["dataset_id"]),
         "dataset_manifest_sha256": _file_sha256(dataset_manifest_path),
@@ -691,6 +693,46 @@ def _load_real_window_inputs(example, geometry, *, feature_cache_root, render_sa
         "provenance": {"source": source["provenance"], "target": target["provenance"]},
         "target_stretch_context": target.get("stretch_context"),
     }
+
+
+def _regression_waveforms(example, render_rate, training_rate, verify_audio_hashes, resampler):
+    from types import SimpleNamespace
+    from src.analysis.pre_analysis import PartialPreAnalysis
+    from src.bridge import extract_aligned_vocal_bridge
+
+    analyser = PartialPreAnalysis(example["waveform_analysis_root"])
+    grids, stems = {}, {}
+    for role in ("source", "target"):
+        track = example[role + "_track"]
+        path = Path(track["path"])
+        if verify_audio_hashes and _file_sha256(path) != track["sha256"]:
+            raise ValueError(f"{role} original audio changed")
+        result = analyser(path)
+        if result.grid_metadata.beat_grid_sha256 != example[role + "_grid"]["beat_grid_sha256"]:
+            raise VariableWaveformAlignmentReject("grid_differs_from_dataset", {"role": role})
+        grids[path] = result
+        meta = _read_json(_resolve_path(example[role + "_feature_cache"]["directory"]) / "manifest.json")
+        feature_info = example[role + "_feature_cache"]
+        if (meta["source_sha256"] != track["sha256"] or meta["cache_id"] != feature_info["cache_id"]
+                or _canonical_json_sha256(meta) != feature_info["manifest_sha256"]):
+            raise ValueError(f"{role} feature cache identity changed")
+        vocal, stem = _read_vocal_artifact(meta, track["sha256"])
+        stems[role] = SimpleNamespace(audio=vocal[0], manifest=stem, sample_rate=stem["sample_rate"],
+                                      backend=meta["vocal_backend"], model=meta["vocal_model"])
+    if (stems["source"].backend, stems["source"].model) != (stems["target"].backend, stems["target"].model):
+        raise ValueError("Source and target stem contracts differ")
+    try:
+        a, b, va, vb, receipt = extract_aligned_vocal_bridge(
+            example, lambda path: grids[Path(path)], sample_rate=render_rate,
+            source_vocal_artifact=stems["source"], target_vocal_artifact=stems["target"],
+            tempo_alignment=CUE_ALIGNMENT, vocal_backend=stems["source"].backend, vocal_model=stems["source"].model,
+        )
+    except CueAlignmentError as exc:
+        raise VariableWaveformAlignmentReject("cue_grid_regression_gate", {"detail": str(exc)}) from exc
+    receipt["alignment_contract"] = CUE_ALIGNMENT
+    receipt["ratios"] = {"local_stretch_ratio_output_over_input": 1 / receipt["tempo_alignment"]["tempo_factor"]}
+    arrays = [_resample_array(x, render_rate, training_rate, resampler) for x in (a, b, va, vb)]
+    return VariableWaveformAlignment(*arrays, receipt)
 
 
 def _load_injected_window_inputs(example, geometry, *, audio_loader, vocal_loader):
@@ -991,11 +1033,12 @@ def _cache_identity_keys():
     return ("format_version", "extractor_version", "alignment_contract", "dataset_id", "dataset_manifest_sha256", "example_id", "candidate_id", "transition_length_bars", "transition_length_beats", "sequence_length", "source_audio_sha256", "target_audio_sha256", "training_sample_rate", "render_sample_rate", "channels", "channel_order", "rounding_tolerance_samples")
 
 
-def _ensure_root_manifest(cache_root, *, dataset_id, dataset_manifest_sha256, supported_lengths, training_sample_rate, render_sample_rate, rounding_tolerance_samples):
+def _ensure_root_manifest(cache_root, *, dataset_id, dataset_manifest_sha256, supported_lengths, training_sample_rate, render_sample_rate, rounding_tolerance_samples, alignment_contract=VARIABLE_WAVEFORM_ALIGNMENT_CONTRACT):
     cache_root = Path(cache_root)
     cache_root.mkdir(parents=True, exist_ok=True)
     path = cache_root / "manifest.json"
     expected = {"format_version": VARIABLE_WAVEFORM_CACHE_FORMAT_VERSION, "extractor_version": VARIABLE_WAVEFORM_CACHE_EXTRACTOR_VERSION, "alignment_contract": VARIABLE_WAVEFORM_ALIGNMENT_CONTRACT, "dataset_id": str(dataset_id), "dataset_manifest_sha256": str(dataset_manifest_sha256).lower(), "supported_lengths": sorted({int(value) for value in supported_lengths}), "training_sample_rate": int(training_sample_rate), "render_sample_rate": int(render_sample_rate), "channels": 2, "channel_order": list(VARIABLE_WAVEFORM_CHANNEL_ORDER), "rounding_correction_version": VARIABLE_WAVEFORM_ROUNDING_CORRECTION_VERSION, "rounding_tolerance_samples": int(rounding_tolerance_samples)}
+    expected["alignment_contract"] = alignment_contract
     if path.is_file():
         actual = _read_json(path)
         if any(actual.get(key) != value for key, value in expected.items()):

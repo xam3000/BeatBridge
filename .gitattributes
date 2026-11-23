@@ -1,0 +1,4 @@
+# These evidence files are checked against SHA-256 digests of their original bytes.
+docs/EVALUATION_PROTOCOL_V2.md text eol=lf
+docs/masterarbeit/review_jp_20261118/mert_fenster/*.json -text
+docs/masterarbeit/review_jp_20261118/mert_fenster/*.csv -text

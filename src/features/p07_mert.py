@@ -1,5 +1,6 @@
 """Frozen, locally verified MERT inference on a sample-aligned frame lattice."""
 
+from collections import defaultdict
 import hashlib
 import importlib
 import json
@@ -131,3 +132,44 @@ class FrozenMert:
                 raise ValueError("A complete bar has no MERT frames")
             result = (sums / torch.as_tensor(counts, device=self.device)[:, None, None]).cpu().numpy()
         return result, counts
+
+    def isolated_means(self, audio, bars, starts):
+        """Encode independent four-bar clips, batching only equal sample counts."""
+        torch = self.torch
+        starts = np.asarray(starts)
+        result = np.empty((len(starts), LAYER_COUNT, HIDDEN_SIZE), dtype=np.float32)
+        if not len(starts):
+            return result
+        if (starts.ndim != 1 or not np.issubdtype(starts.dtype, np.integer)
+                or starts.min() < 0 or starts.max() + 4 > len(bars)):
+            raise ValueError("Invalid four-bar start index")
+        spans = np.asarray(bars)[starts[:, None] + np.arange(4)]
+        if (np.any(spans[:, :-1, -1] != spans[:, 1:, 0]) or np.any(np.diff(spans, axis=2) <= 0)
+                or np.any(spans[:, 0, 0] < 0) or np.any(spans[:, -1, -1] > len(audio))):
+            raise ValueError("Expected four contiguous bars inside the recording")
+        groups = defaultdict(list)
+        for i, length in enumerate(spans[:, -1, -1] - spans[:, 0, 0]):
+            groups[int(length)].append(i)
+        with torch.inference_mode():
+            for length, ids in groups.items():
+                count = 1 + (length - RECEPTIVE_FIELD) // FRAME_STEP
+                centres = frame_centres_twice(0, count)
+                for offset in range(0, len(ids), 8):
+                    batch = ids[offset:offset + 8]
+                    windows = spans[batch]
+                    clips = [audio[s[0, 0]:s[-1, -1]] for s in windows]
+                    encoded = self.processor(clips, sampling_rate=SAMPLE_RATE, return_tensors="pt")
+                    with torch.autocast(self.device.type, dtype=torch.bfloat16, enabled=self.device.type == "cuda"):
+                        layers = self.model(encoded.input_values.to(self.device), output_hidden_states=True).hidden_states
+                    if len(layers) != LAYER_COUNT or layers[-1].shape != (len(batch), count, HIDDEN_SIZE):
+                        raise ValueError("Unexpected MERT layer count or isolated frame geometry")
+                    # The convolution lattice starts again at the first sample of each clip.
+                    ends = np.searchsorted(centres, 2 * (windows[:, :, -1] - windows[:, :1, 0]))
+                    counts = np.diff(ends, axis=1, prepend=0)
+                    if np.any(counts <= 0) or np.any(ends[:, -1] != count):
+                        raise ValueError("Incomplete frame coverage in isolated window")
+                    lengths = torch.as_tensor(counts.ravel(), device=self.device)
+                    frames = torch.stack(layers, dim=2).reshape(-1, LAYER_COUNT, HIDDEN_SIZE)
+                    means = torch.segment_reduce(frames.float(), "mean", lengths=lengths)
+                    result[batch] = means.reshape(len(batch), 4, LAYER_COUNT, HIDDEN_SIZE).mean(dim=1).cpu().numpy()
+        return result

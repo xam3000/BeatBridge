@@ -35,6 +35,7 @@ from src.features.vocal import (
     extract_or_load_vocal_stem_with_backend,
 )
 from src.pipeline import DEFAULT_SAMPLE_RATE, PROJECT_ROOT, RENDER_RESULT_FORMAT_VERSION
+from src.tempo.cue_alignment import LEGACY_ALIGNMENT
 
 
 BRIDGE_WAVEFORM_CACHE_FORMAT_VERSION = 1
@@ -111,12 +112,14 @@ def load_or_create_bridge_waveforms(
     if verify_audio_hashes:
         _verify_candidate_audio_hashes(candidate)
 
-    analysis = analysis or PreAnalysis(str(Path(analysis_root)) + os.sep)
+    analysis = analysis or PreAnalysis(example.get("waveform_analysis_root", analysis_root))
     source_audio, target_audio, geometry = bridge_extractor(
-        candidate,
+        _waveform_candidate(example, candidate),
         analysis,
         sample_rate=render_sample_rate,
         include_context_audio=False,
+        **({"tempo_alignment": example.get("waveform_alignment", LEGACY_ALIGNMENT)}
+           if bridge_extractor is extract_aligned_bridge else {}),
     )
     if training_sample_rate != render_sample_rate:
         source_audio = librosa.resample(
@@ -256,9 +259,9 @@ def load_or_create_vocal_bridge_waveforms(
     if not build_missing:
         raise FileNotFoundError(f"Vocal bridge waveform cache is missing: {cache_directory}")
 
-    analysis = analysis or PreAnalysis(str(Path(analysis_root)) + os.sep)
+    analysis = analysis or PreAnalysis(example.get("waveform_analysis_root", analysis_root))
     source, target, source_vocal, target_vocal, geometry = bridge_extractor(
-        candidate,
+        _waveform_candidate(example, candidate),
         analysis,
         sample_rate=render_sample_rate,
         include_context_audio=False,
@@ -267,6 +270,8 @@ def load_or_create_vocal_bridge_waveforms(
         vocal_model=vocal_model,
         source_vocal_artifact=vocal_artifacts["source"],
         target_vocal_artifact=vocal_artifacts["target"],
+        **({"tempo_alignment": example.get("waveform_alignment", LEGACY_ALIGNMENT)}
+           if bridge_extractor is extract_aligned_vocal_bridge else {}),
     )
     if training_sample_rate != render_sample_rate:
         arrays = [
@@ -558,8 +563,23 @@ def collate_feature_control_examples(examples):
     return result
 
 
+def _waveform_candidate(example, candidate):
+    if "waveform_alignment" not in example:
+        return candidate
+    result = dict(candidate, cue_sample_rate=example.get("cue_sample_rate", DEFAULT_SAMPLE_RATE))
+    for role, digest in example.get("waveform_grid_sha256", {}).items():
+        if digest:
+            result[role + "_grid"] = {"beat_grid_sha256": digest}
+    return result
+
+
 def _bridge_cache_config(example, candidate, *, training_sample_rate, render_sample_rate):
     return {
+        **({"waveform_alignment": example["waveform_alignment"],
+            "source_feature_cache_id": (example.get("source_feature_cache") or {}).get("cache_id"),
+            "target_feature_cache_id": (example.get("target_feature_cache") or {}).get("cache_id"),
+            "cue_sample_rate": example.get("cue_sample_rate", DEFAULT_SAMPLE_RATE)}
+           if "waveform_alignment" in example else {}),
         "format_version": BRIDGE_WAVEFORM_CACHE_FORMAT_VERSION,
         "extractor_version": BRIDGE_WAVEFORM_EXTRACTOR_VERSION,
         "rendering_protocol_version": RENDER_RESULT_FORMAT_VERSION,
@@ -567,8 +587,10 @@ def _bridge_cache_config(example, candidate, *, training_sample_rate, render_sam
         "candidate_id": str(candidate["candidate_id"]),
         "source_sha256": str(candidate["source_track"]["sha256"]).lower(),
         "target_sha256": str(candidate["target_track"]["sha256"]).lower(),
-        "source_cue_sample_44100": int(candidate["source_cutpoint"]["sample"]),
-        "target_cue_sample_44100": int(candidate["target_cutpoint"]["sample"]),
+        "source_cue_sample_44100": round(candidate["source_cutpoint"]["sample"] * DEFAULT_SAMPLE_RATE /
+                                         example.get("cue_sample_rate", DEFAULT_SAMPLE_RATE)),
+        "target_cue_sample_44100": round(candidate["target_cutpoint"]["sample"] * DEFAULT_SAMPLE_RATE /
+                                         example.get("cue_sample_rate", DEFAULT_SAMPLE_RATE)),
         "source_bpm": float(candidate["source_bpm"]),
         "target_bpm": float(candidate["target_bpm"]),
         "transition_length_beats": int(candidate["transition_length_beats"]),

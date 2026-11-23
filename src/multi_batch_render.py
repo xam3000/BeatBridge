@@ -14,7 +14,8 @@ import uuid
 
 from src.analysis.pre_analysis import PreAnalysis, PartialPreAnalysis
 from src.pipeline import CUTTERS
-from src.batch_render import RANKING_METHODS, _continuation_analysis, generate_and_render_batch
+from src.batch_render import MERT_METHODS, RANKING_METHODS, _continuation_analysis, generate_and_render_batch
+from src.tempo.cue_alignment import CUE_ALIGNMENT, LEGACY_ALIGNMENT
 from src.ranking import load_learned_cue_ranker
 from src.candidates import BaselineCandidateGenerationConfig, CandidateGenerationConfig, VariableCandidateGenerationConfig
 from src.dataset import (
@@ -50,6 +51,7 @@ def generate_multi_song_batch(
     cue_ranker_dataset=None,
     cue_ranker_feature_cache_root="output/feature_cache",
     cue_ranker_vocal_backend="disabled",
+    tempo_alignment=CUE_ALIGNMENT,
 ):
     """Rank targets per source, then render the best transition candidates.
 
@@ -87,7 +89,7 @@ def generate_multi_song_batch(
         if analysis_location is None
         else Path(analysis_location)
     )
-    if ranking_method == "mert_continuation_v1":
+    if ranking_method in MERT_METHODS:
         analysis = _continuation_analysis(analysis_location)
         cache_path = analysis.analysis_location
     else:
@@ -131,6 +133,7 @@ def generate_multi_song_batch(
             None if learned_ranker is None else learned_ranker.provenance
         ),
         "target_sample_rate": int(target_sample_rate),
+        "tempo_alignment": tempo_alignment,
         "approximate_grid_policy": approximate_grid_policy,
         "transition_lengths_bars": list(transition_lengths_bars),
         "candidate_request_config": candidate_request_config,
@@ -195,6 +198,7 @@ def generate_multi_song_batch(
                         candidate_config=candidate_config,
                         top_k=top_transitions,
                         ranking_method=ranking_method,
+                        tempo_alignment=tempo_alignment,
                         cue_ranker_run=cue_ranker_run,
                         cue_ranker_dataset=cue_ranker_dataset,
                         cue_ranker_feature_cache_root=cue_ranker_feature_cache_root,
@@ -268,9 +272,9 @@ def _candidate_generation_config(
     ranking_method="feature_baseline_v3",
 ):
     """Keep the historical v1 default while enabling v2 lengths additively."""
-    if ranking_method == "mert_continuation_v1":
+    if ranking_method in MERT_METHODS:
         if tuple(transition_lengths_bars) != (4,) or approximate_grid_policy != "reject":
-            raise ValueError("mert_continuation_v1 requires --transition-bars 4 and detected grids")
+            raise ValueError(f"{ranking_method} requires --transition-bars 4 and detected grids")
         return BaselineCandidateGenerationConfig(transition_lengths_bars=(4,))
     if any(n in (1, 3) for n in transition_lengths_bars):
         if ranking_method == "learned_cue_ranker_v1":
@@ -487,6 +491,7 @@ def build_argument_parser():
     )
     parser.add_argument("songs", nargs="+", help="Source and target tracks; every track is a source.")
     parser.add_argument("--output-dir", required=True)
+    parser.add_argument("--tempo-alignment", choices=(CUE_ALIGNMENT, LEGACY_ALIGNMENT), default=CUE_ALIGNMENT)
     parser.add_argument(
         "--ranking-method",
         choices=RANKING_METHODS,
@@ -569,6 +574,7 @@ def main(argv=None):
             approximate_grid_policy=args.approximate_grid_policy,
             transition_lengths_bars=tuple(args.transition_bars),
             ranking_method=args.ranking_method,
+            tempo_alignment=args.tempo_alignment,
             cue_ranker_run=args.cue_ranker_run,
             cue_ranker_dataset=args.cue_ranker_dataset,
             cue_ranker_feature_cache_root=args.cue_ranker_feature_cache_root,

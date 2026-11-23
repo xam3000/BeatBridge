@@ -18,6 +18,7 @@ from src.evaluation.ml_control_study import _file_sha256
 from src.evaluation.p11_alignment import align_target
 from src.features.extract_track import _beat_grid_hash, _load_cached_artifact
 from src.ml.inference_contract import load_fixed_inference_contract
+from src.tempo.cue_alignment import CUE_ALIGNMENT, LEGACY_ALIGNMENT
 
 
 SELECTORS = ("ssl", "rule", "random")
@@ -46,8 +47,8 @@ def measure_clip(audio):
 
 
 def normalize_panel(clips, directory):
-    if len(clips) != 7:
-        raise ValueError("Peak correction requires the complete seven-clip panel")
+    if len(clips) not in (7, 9):
+        raise ValueError("Peak correction requires the complete master panel")
     raw = [measure_clip(clip) for clip in clips]
     gains = [TARGET_LUFS - lufs for lufs, peak in raw]
     highest = max(peak + gain for (_, peak), gain in zip(raw, gains))
@@ -91,7 +92,13 @@ def study_item(candidate, pipeline, artifacts, normalization, split, alignment_d
                 or any(tuple(frame[1:3]) != (i % 4 + 1, 4) for i, frame in enumerate(window))):
             raise ValueError(f"{role} cue or complete 4/4 window differs from the declared grid")
         geometry[role + "_beats"] = [frame[0] for frame in window]
-        windows.append(torch.from_numpy(artifact.model_window(cue, role=role, normalization=normalization)))
+        # Historical P04 control features live on the global-BPM cache grid.
+        # Look up the same native downbeat in that grid, even when the audio
+        # uses a cue-specific stretch. The feature and waveform scales differ.
+        feature_cue = cue
+        if role == "target" and pipeline.tempo_alignment == CUE_ALIGNMENT:
+            feature_cue = round(declared * pipeline.bpm2 / pipeline.bpm1)
+        windows.append(torch.from_numpy(artifact.model_window(feature_cue, role=role, normalization=normalization)))
     if (geometry["source_grid_end_sample"] != geometry["source_beats"][-1] or
             geometry["target_grid_start_sample"] != geometry["target_beats"][0]):
         raise ValueError("A track ends before its declared bridge boundary")
@@ -114,7 +121,7 @@ def study_item(candidate, pipeline, artifacts, normalization, split, alignment_d
     }
 
 
-def render_panel(stage, evaluator, items, selections, steps):
+def render_panel(stage, evaluator, items, selections, steps, *, rotate_anchors=False):
     if evaluator.config != Comparison.study():
         raise ValueError("P11 requires the study render contract")
     if set(selections) != set(SELECTORS) or set(selections.values()) != set(items):
@@ -127,7 +134,8 @@ def render_panel(stage, evaluator, items, selections, steps):
             raise ValueError("Cue identity or context differs from the study protocol")
     cached = {}
     clips, pending = [], []
-    conditions = [(s, c) for s in SELECTORS for c in ("E", "D")] + [("rule", "anchor")]
+    anchors = SELECTORS if rotate_anchors else ("rule",)
+    conditions = [(s, c) for s in SELECTORS for c in ("E", "D")] + [(s, "anchor") for s in anchors]
     for selector, condition in conditions:
         cue = selections[selector]
         item = items[cue]
@@ -148,7 +156,7 @@ def render_panel(stage, evaluator, items, selections, steps):
         clips.append(clip)
         pending.append((item, rendered, {**row, "selector": selector}))
     rows = []
-    if all("local_alignment" in item.get("geometry", {}) for item in items.values()):
+    if rotate_anchors or all("local_alignment" in item.get("geometry", {}) for item in items.values()):
         shortest = min(clip.shape[-1] for clip in clips)
         clips = [clip[:, :shortest] for clip in clips]
     for (item, rendered, row), (path, pcm, gain, stats) in zip(pending, normalize_panel(clips, stage), strict=True):
@@ -162,14 +170,21 @@ def render_panel(stage, evaluator, items, selections, steps):
     return rows
 
 
-def final_ssl_provenance(manifest, ssl_cue):
+def final_ssl_provenance(manifest, ssl_cue, *, rotated=False):
     from src.ranking.continuation import METHOD, SELECTION
+    method, selection = METHOD, SELECTION
+    if rotated:
+        from src.ranking.continuation import ISOLATED_METHOD, ISOLATED_SELECTION
+        method, selection = ISOLATED_METHOD, ISOLATED_SELECTION
+        decision = json.loads(selection.read_bytes())
+        if decision.get("status") != "selected" or decision.get("ranking_method") != method:
+            raise ValueError("The isolated-window study head has not been selected")
     ranking = manifest.get("cue_ranking", {})
     provenance = ranking.get("provenance", {})
     runtime = provenance.get("encoder_runtime", {})
     scores = ranking.get("scores", [])
-    if (manifest.get("ranking_method") != METHOD or ranking.get("ranker") != METHOD
-            or provenance.get("selection_sha256") != _file_sha256(SELECTION)
+    if (manifest.get("ranking_method") != method or ranking.get("ranker") != method
+            or provenance.get("selection_sha256") != _file_sha256(selection)
             or not runtime.get("device", "").startswith("cuda:") or not runtime.get("gpu")
             or runtime.get("autocast") != "bfloat16" or not scores
             or scores[0]["rank"] != 1 or scores[0]["candidate_id"] != ssl_cue):
@@ -183,6 +198,10 @@ def study(stage, args):
         raise ValueError("Invalid P11 panel contract")
     if panel["split"] == "final" and args.steps != 80:
         raise ValueError("Final panels require the protocol's 80 updates")
+    if panel["split"] == "final" and panel.get("revision") == CUE_ALIGNMENT:
+        from src.evaluation.p11_session import PROTOCOL
+        if panel.get("study_protocol_sha256") != _file_sha256(PROTOCOL):
+            raise ValueError("The revised study panel requires the current v2 protocol")
     selections = panel["selectors"]
     if set(selections) != set(SELECTORS):
         raise ValueError("Missing or unexpected P11 selector")
@@ -190,7 +209,8 @@ def study(stage, args):
     if _file_sha256(manifest_path) != panel["pair_manifest_sha256"]:
         raise ValueError("Pair manifest hash differs")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    ssl_contract = ({"ssl_provenance": final_ssl_provenance(manifest, selections["ssl"])}
+    ssl_contract = ({"ssl_provenance": final_ssl_provenance(manifest, selections["ssl"],
+                                                            rotated=panel.get("revision") == "cue_grid_regression_v3")}
                     if panel["split"] == "final" else {})
     candidates = manifest["candidate_generation"]["candidates"]
     selected = {c["candidate_id"]: c for c in candidates if c["candidate_id"] in selections.values()}
@@ -211,10 +231,13 @@ def study(stage, args):
             raise ValueError(f"{role} audio hash differs")
     analysis = (PartialPreAnalysis(args.analysis_root) if args.merge_algorithm == MERGE_ALGORITHM_VERSION_V2
                 else PreAnalysis(args.analysis_root, merge_algorithm=args.merge_algorithm))
-    pipeline = prepare_bridge_pair(first, analysis, sample_rate=RATE)
+    alignment = CUE_ALIGNMENT if panel.get("revision") == CUE_ALIGNMENT else LEGACY_ALIGNMENT
+    pipeline = prepare_bridge_pair(first, analysis, sample_rate=RATE, tempo_alignment=alignment)
+    feature_target_grid = (pipeline._scale_beat_frames(pipeline.beat_frames2, pipeline.bpm2 / pipeline.bpm1)
+                           if alignment == CUE_ALIGNMENT else pipeline.adjusted_beat_frames2)
     artifacts, provenance = [], {}
     for role, grid, frames in zip(("source", "target"), (pipeline.grid_metadata1, pipeline.grid_metadata2),
-                                  (pipeline.beat_frames1, pipeline.adjusted_beat_frames2)):
+                                  (pipeline.beat_frames1, feature_target_grid)):
         if not grid.is_verified_detection:
             raise ValueError(f"{role} grid lacks verified detection")
         directory = Path(panel[role + "_feature_directory"])
@@ -233,19 +256,24 @@ def study(stage, args):
     alignment_dir = stage if panel.get("revision") == "local_grid_equal_duration_v2" else None
     items = {key: study_item(c, pipeline, artifacts, inputs.normalization, panel["split"], alignment_dir)
              for key, c in selected.items()}
-    rows = render_panel(stage, evaluator, items, selections, args.steps)
+    rows = render_panel(stage, evaluator, items, selections, args.steps,
+                        rotate_anchors=panel.get("revision") == "cue_grid_regression_v3")
     version = subprocess.check_output(["ffmpeg", "-version"], text=True).splitlines()[0]
-    backend_version = None
-    if pipeline.tempo_backend == "rubberband_cli_r3":
-        backend_version = subprocess.check_output(["rubberband", "--version"], stderr=subprocess.STDOUT,
-                                                  text=True).strip()
-    elif pipeline.tempo_backend == "ffmpeg_librubberband":
-        backend_version = version
+    backends = {item["geometry"]["tempo_backend"] for item in items.values()}
+    versions = {name: None for name in backends}
+    if "rubberband_cli_r3" in backends:
+        versions["rubberband_cli_r3"] = subprocess.check_output(
+            ["rubberband", "--version"], stderr=subprocess.STDOUT, text=True
+        ).strip()
+    if "ffmpeg_librubberband" in backends:
+        versions["ffmpeg_librubberband"] = version
+    backend = next(iter(backends)) if len(backends) == 1 else "per_cue"
     save_comparison(stage, {
         **evaluator.protocol(), **ssl_contract, "panel": panel, "panel_sha256": _file_sha256(args.panel),
         "r1_manifest_sha256": _file_sha256(run), "normalizer": inputs.normalization.stats_id,
         "features": provenance, "updates": args.steps, "ffmpeg": version,
-        "tempo_backend": pipeline.tempo_backend, "tempo_backend_version": backend_version,
+        "tempo_backend": backend, "tempo_backend_version": versions.get(backend),
+        **({"tempo_backend_versions": versions} if alignment == CUE_ALIGNMENT else {}),
         "meter": "FFmpeg loudnorm input_i/input_tp, dynamic measurement at 192 kHz",
         "measurement_window": "entire stereo clip including both contexts", "target_lufs": TARGET_LUFS,
         "pair_peak_ceiling_dbtp": CEILING_DBTP, "limiter": False, "output_subtype": "PCM_24",

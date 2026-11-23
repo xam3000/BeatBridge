@@ -13,6 +13,7 @@ from src.analysis.pre_analysis import (
     ANALYSIS_CACHE_FILENAME,
     ANALYSIS_CACHE_FORMAT_VERSION,
     ANALYSIS_CACHE_NAMESPACE,
+    FALLBACK_ANALYSIS_CACHE_FILENAME,
     RECOVERED_ANALYSIS_CACHE_FILENAME,
     PartialPreAnalysis,
     PreAnalysis,
@@ -218,7 +219,11 @@ def test_auftakt_failure_then_detection_retries_and_preserves_history(
     assert analysis.merge_diagnostics["error_type"] == "CalledProcessError"
     if not historical_fallback:
         assert not (analysis.cache_directory / ANALYSIS_CACHE_FILENAME).exists()
-        assert analysis.load_cached_analysis(song) is None
+        assert analysis.load_cached_analysis(song) == fallback
+    fallback_path = analysis.cache_directory / FALLBACK_ANALYSIS_CACHE_FILENAME
+    assert fallback_path.is_file()
+    fallback_bytes = fallback_path.read_bytes()
+    analysis.find_bpm = lambda: pytest.fail("Retry should reuse the cached librosa positions")
 
     detected = analysis(song)
     assert detected.grid_metadata.is_verified_detection
@@ -228,6 +233,7 @@ def test_auftakt_failure_then_detection_retries_and_preserves_history(
     assert analysis_class(cache_root).load_cached_analysis(song) == detected
     assert analysis_class(cache_root)(song) == detected
     assert len(calls) == 2
+    assert fallback_path.read_bytes() == fallback_bytes
     if historical_fallback:
         assert historical_path.read_bytes() == historical_bytes
         assert (analysis.cache_directory / RECOVERED_ANALYSIS_CACHE_FILENAME).is_file()

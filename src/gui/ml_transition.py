@@ -10,6 +10,9 @@ from pathlib import Path
 from types import SimpleNamespace
 
 
+from src.artifact_paths import artifact_path
+
+
 SUPPORTED_GUI_MODELS = {
     "time_shared_mlp_v1",
     "vocal_time_shared_mlp_v2",
@@ -33,7 +36,7 @@ def discover_control_models(run_root: Path):
                 or not isinstance(checkpoint, dict)
             ):
                 continue
-            checkpoint_path = manifest_path.parent / checkpoint["path"]
+            checkpoint_path = artifact_path(checkpoint["path"], manifest_path.parent)
             if checkpoint_path.is_file():
                 label = f"{model_name} · {manifest_path.parent.name}"
                 items.append((label, manifest_path.parent.resolve()))
@@ -124,6 +127,7 @@ def render_model_transition(
         "source_bpm": float(source_bpm),
         "target_bpm": float(target_bpm),
         "source_cutpoint": {"sample": source_cut},
+        "cue_sample_rate": sample_rate,
         "target_cutpoint": {"sample": target_cut},
         "transition_length_bars": contract.transition_bars,
         "transition_length_beats": contract.transition_bars * BEATS_PER_BAR,
@@ -247,6 +251,7 @@ def render_model_transition(
         "waveform_vocal_model": waveform_vocals.model if waveform_vocals else None,
         "training_renderer": run_contract["renderer"],
         "preview_renderer": renderer_options,
+        "tempo_alignment": geometry.get("tempo_alignment"),
         "analysis_cache": str(analysis_cache),
         "source_grid": source_grid.to_dict(),
         "target_grid": target_grid.to_dict(),
@@ -264,6 +269,7 @@ def render_model_transition(
         sample_rate=sample_rate,
         renderer=run.family,
         tempo_backend=geometry["tempo_backend"],
+        tempo_alignment=geometry.get("tempo_alignment"),
         transition_start_sample=transition_start_sample,
         transition_end_sample=transition_end_sample,
     )

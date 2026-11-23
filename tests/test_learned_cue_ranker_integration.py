@@ -58,7 +58,7 @@ def batch_inputs(tmp_path):
         song2,
         analysis=analysis,
         config=CandidateGenerationConfig(
-            transition_lengths_bars=(1,),
+            transition_lengths_bars=(2,),
             source_boundary_count=1,
             target_boundary_count=1,
         ),

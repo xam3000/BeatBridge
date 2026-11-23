@@ -128,10 +128,15 @@ class FadeCut(SimpleCut):
         transition_length = min(source_length, target_length)
         if transition_length <= 0:
             raise ValueError("Bridge transition needs audio after source and before target cutpoints")
-        self.effective_transition_samples = int(transition_length)
+        return self.mix_bridge(audio1, audio2, cut_sample1, cut_sample2, transition_length)
 
+    def mix_bridge(self, audio1, audio2, cut_sample1, cut_sample2, transition_length):
+        """End B's overlap at its cut, retaining the specified duration of A."""
         source_transition_end = cut_sample1 + transition_length
         target_transition_start = cut_sample2 - transition_length
+        if transition_length <= 0 or source_transition_end > audio1.shape[-1] or target_transition_start < 0:
+            raise ValueError("Bridge outside available audio")
+        self.effective_transition_samples = int(transition_length)
         transition_segment1 = audio1[..., cut_sample1:source_transition_end].astype(
             np.float32,
             copy=False,

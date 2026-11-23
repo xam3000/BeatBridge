@@ -15,6 +15,7 @@ from src.features import (
     feature_schema,
 )
 from src.features.vocal import DEFAULT_DEMUCS_MODEL
+from src.artifact_paths import artifact_path
 from src.pipeline import DEFAULT_SAMPLE_RATE
 
 
@@ -48,7 +49,7 @@ class FixedInferenceContract:
 def load_fixed_inference_contract(run_contract, *, transition_bars):
     """Resolve input features/normalization and renderer stems independently."""
     declared = run_contract["dataset"]
-    dataset_path = Path(declared["path"]) / "manifest.json"
+    dataset_path = artifact_path(declared["path"]) / "manifest.json"
     dataset = _read_bound_manifest(dataset_path, declared["manifest_sha256"])
     _expect("dataset.dataset_id", dataset.get("dataset_id"), declared["dataset_id"])
     _expect("dataset.format_version", dataset.get("format_version"), DATASET_FORMAT_VERSION)
@@ -154,7 +155,7 @@ def _load_waveform_vocals(run_contract):
     backends = set()
     for split in ("train", "validation"):
         for record in records.get(split, []):
-            path = Path(record["path"])
+            path = artifact_path(record["path"])
             cache = _read_bound_manifest(path, record["sha256"])
             _expect(f"{path}.vocal_model", cache.get("vocal_model"), declared_model)
             backend = cache.get("vocal_backend")

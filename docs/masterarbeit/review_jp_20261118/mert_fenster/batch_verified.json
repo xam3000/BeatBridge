@@ -1,0 +1,15 @@
+{
+  "result": "passed",
+  "compared_rule_scores": 3744,
+  "max_rule_difference": 0.0,
+  "comparison_candidates": 144,
+  "accepted_by_tempo_gate": 9,
+  "live_score_difference": 1.0058283805847168e-07,
+  "cue": "candidate-28ec86b17ab759a2",
+  "frames": 837900,
+  "sample_rate": 44100,
+  "bridge_frames": 282624,
+  "wav_sha256": "679380a4a7fc7812c19ac9a32a1cf1d81070f22567af7130a75bfe0c253b2e68",
+  "batch_manifest_sha256": "93291f1717e0c73e4b98ccb59d7172440f5ceb86a48c39c0e1ea6b6c8776cd24",
+  "selection_sha256": "d44b3230dc72112cb5631f39f306044ea0acffa095d48bd83e92424e6130da24"
+}

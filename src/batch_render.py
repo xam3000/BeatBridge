@@ -12,6 +12,7 @@ import sys
 import soundfile as sf
 
 from src.analysis.pre_analysis import PreAnalysis
+from src.tempo.cue_alignment import CUE_ALIGNMENT, LEGACY_ALIGNMENT, filter_candidate_grids
 from src.candidates import CandidateGenerationConfig, CandidateGenerationResult, TransitionCandidate
 from src.candidates.variable import BASELINE_LENGTHS, BaselineCandidateGenerationConfig, VariableCandidateGenerationConfig
 from src.pipeline import (
@@ -20,6 +21,7 @@ from src.pipeline import (
     RENDER_RESULT_FORMAT_VERSION,
     DEFAULT_PREVIEW_SECONDS_AFTER,
     DEFAULT_PREVIEW_SECONDS_BEFORE,
+    candidate_grid,
     generate_transition_candidates,
     render_transition,
 )
@@ -39,7 +41,8 @@ from src.variable_rendering import render_variable_transition
 
 BATCH_MANIFEST_FORMAT_VERSION = 1
 DEFAULT_RENDERERS = ("simple", "fade", "equal_power")
-RANKING_METHODS = ("feature_baseline_v3", "learned_cue_ranker_v1", "mert_continuation_v1")
+MERT_METHODS = ("mert_continuation_v1", "mert_continuation_v2")
+RANKING_METHODS = ("feature_baseline_v3", "learned_cue_ranker_v1", *MERT_METHODS)
 
 
 @dataclass(frozen=True)
@@ -61,6 +64,7 @@ class RenderedVariant:
     selection_rank: int | None = None
     selection_score: float | None = None
     selection_method: str = "feature_baseline_v3"
+    tempo_alignment: dict | None = None
 
     def to_dict(self):
         payload = {
@@ -81,6 +85,8 @@ class RenderedVariant:
             "selection_method": self.selection_method,
             "status": "rendered",
         }
+        if self.tempo_alignment is not None:
+            payload["tempo_alignment"] = self.tempo_alignment
         if self.transition_length_bars is not None:
             payload["transition_length_bars"] = int(self.transition_length_bars)
             payload["transition_length_beats"] = int(self.transition_length_beats)
@@ -119,6 +125,8 @@ class BatchRenderResult:
     ranking_method: str = "feature_baseline_v3"
     cue_ranking: object | None = None
     candidate_request_config: dict | None = None
+    tempo_alignment: str = CUE_ALIGNMENT
+    cue_sample_rate: int = DEFAULT_SAMPLE_RATE
 
 
 def render_candidate_batch(
@@ -144,6 +152,7 @@ def render_candidate_batch(
     cue_ranker_vocal_model=None,
     cue_ranker=None,
     candidate_request_config=None,
+    tempo_alignment=CUE_ALIGNMENT,
 ) -> BatchRenderResult:
     """Rank candidates and render all or the requested top K with each baseline.
 
@@ -153,12 +162,12 @@ def render_candidate_batch(
     """
     renderers = _validate_renderers(renderers)
     ranking_method = _validate_ranking_method(ranking_method)
-    if ranking_method == "mert_continuation_v1" and (
+    if ranking_method in MERT_METHODS and (
         candidate_generation.approximate_grid_policy != "reject" or
         any((c.transition_length_bars, c.transition_length_beats) != (4, 16)
             for c in candidate_generation.candidates)
     ):
-        raise ValueError("mert_continuation_v1 requires detected grids and four 4/4 bars")
+        raise ValueError(f"{ranking_method} requires detected grids and four 4/4 bars")
     if ranking_method == "learned_cue_ranker_v1":
         if int(candidate_generation.format_version) != 2:
             raise ValueError("learned_cue_ranker_v1 requires Candidate-v2 generation")
@@ -180,12 +189,27 @@ def render_candidate_batch(
         )
 
     cue_ranking = None
+    if tempo_alignment == CUE_ALIGNMENT and candidate_generation.candidates:
+        if analysis is None:
+            analysis = (_continuation_analysis(analysis_location) if ranking_method in MERT_METHODS
+                        else PreAnalysis(analysis_location or Path("output/pre_analysis")))
+        first = candidate_generation.candidates[0]
+        if any((c.source_track, c.target_track) != (first.source_track, first.target_track)
+               for c in candidate_generation.candidates):
+            raise ValueError("A candidate batch must use a single source and target pair")
+        _, source_grid, source_metadata = candidate_grid(first.source_track.path, analysis, target_sample_rate)
+        _, target_grid, target_metadata = candidate_grid(first.target_track.path, analysis, target_sample_rate)
+        candidate_generation = filter_candidate_grids(candidate_generation, source_grid, target_grid, target_sample_rate,
+                                                     source_metadata=source_metadata, target_metadata=target_metadata)
     common_candidates = candidate_generation.candidates
-    if ranking_method == "mert_continuation_v1":
-        from src.ranking.continuation import rank_continuations
+    if ranking_method in MERT_METHODS:
+        from src.ranking.continuation import ISOLATED_METHOD, ISOLATED_SELECTION, SELECTION, rank_continuations
         if analysis is None:
             analysis = _continuation_analysis(analysis_location)
-        cue_ranking = rank_continuations(common_candidates, analysis, target_sample_rate)
+        selection = ISOLATED_SELECTION if ranking_method == ISOLATED_METHOD else SELECTION
+        cue_ranking = rank_continuations(common_candidates, analysis, target_sample_rate, selection_path=selection)
+        if cue_ranking.method != ranking_method:
+            raise ValueError("Loaded selection declares a different ranking method")
         eligible_ids = {score.candidate_id for score in cue_ranking.scores}
         common_candidates = [c for c in common_candidates if c.candidate_id in eligible_ids]
     candidate_ranking = rank_candidates(
@@ -270,6 +294,7 @@ def render_candidate_batch(
                         analysis_location=analysis_location,
                         preview_seconds_before=preview_seconds_before,
                         preview_seconds_after=preview_seconds_after,
+                        tempo_alignment=tempo_alignment,
                     )
                 else:
                     result = render_transition(
@@ -285,6 +310,7 @@ def render_candidate_batch(
                         analysis_location=analysis_location,
                         source_bpm=candidate.source_bpm,
                         target_bpm=candidate.target_bpm,
+                        tempo_alignment=tempo_alignment,
                         preview_seconds_before=preview_seconds_before,
                         preview_seconds_after=preview_seconds_after,
                     )
@@ -299,6 +325,7 @@ def render_candidate_batch(
                         transition_start_sample=result.transition_start_sample,
                         transition_end_sample=result.transition_end_sample,
                         tempo_backend=result.tempo_backend,
+                        tempo_alignment=getattr(result, "tempo_alignment", None),
                         candidate_rank=(
                             None if candidate_score is None else candidate_score.rank
                         ),
@@ -432,6 +459,8 @@ def render_candidate_batch(
             )
         ),
         candidate_request_config=candidate_request_config,
+        tempo_alignment=tempo_alignment,
+        cue_sample_rate=int(target_sample_rate),
     )
     _write_json_atomic(manifest_path, _manifest_payload(batch_result, renderers))
     return batch_result
@@ -460,13 +489,14 @@ def generate_and_render_batch(
     cue_ranker_analysis_root="output/pre_analysis",
     cue_ranker_vocal_backend="disabled",
     cue_ranker_vocal_model=None,
+    tempo_alignment=CUE_ALIGNMENT,
 ) -> BatchRenderResult:
     """Generate, rank, and render accepted candidate variants."""
     ranking_method = _validate_ranking_method(ranking_method)
     if candidate_config is None:
         if ranking_method == "learned_cue_ranker_v1":
             candidate_config = VariableCandidateGenerationConfig(transition_lengths_bars=(2, 4))
-        elif ranking_method == "mert_continuation_v1":
+        elif ranking_method in MERT_METHODS:
             candidate_config = BaselineCandidateGenerationConfig(transition_lengths_bars=(4,))
         else:
             candidate_config = CandidateGenerationConfig()
@@ -475,9 +505,9 @@ def generate_and_render_batch(
             "learned_cue_ranker_v1 requires Candidate-v2 generation; use "
             "VariableCandidateGenerationConfig with transition lengths 2/4/6/8"
         )
-    if ranking_method == "mert_continuation_v1":
+    if ranking_method in MERT_METHODS:
         if candidate_config.transition_lengths_bars != (4,) or candidate_config.approximate_grid_policy != "reject":
-            raise ValueError("mert_continuation_v1 requires detected grids and four 4/4 bars")
+            raise ValueError(f"{ranking_method} requires detected grids and four 4/4 bars")
         if analysis is None:
             analysis = _continuation_analysis(analysis_location)
     if analysis is None:
@@ -510,6 +540,7 @@ def generate_and_render_batch(
         cue_ranker_analysis_root=cue_ranker_analysis_root,
         cue_ranker_vocal_backend=cue_ranker_vocal_backend,
         cue_ranker_vocal_model=cue_ranker_vocal_model,
+        tempo_alignment=tempo_alignment,
         candidate_request_config=_candidate_request_config(candidate_config),
     )
 
@@ -602,6 +633,8 @@ def _manifest_payload(batch_result, renderers):
         "render_protocol_version": 6 if variable_contract else RENDER_RESULT_FORMAT_VERSION,
         "renderers": list(renderers),
         "ranking_method": batch_result.ranking_method,
+        "tempo_alignment": batch_result.tempo_alignment,
+        "cue_sample_rate": batch_result.cue_sample_rate,
         "candidate_generation": batch_result.candidate_generation.to_dict(),
         "candidate_ranking": batch_result.candidate_ranking.to_dict(),
         "rendered_transition_ranking": batch_result.rendered_transition_ranking.to_dict(),
@@ -748,6 +781,8 @@ def build_argument_parser():
         action="store_true",
         help="Allow replacing same-named exported files in --output-dir.",
     )
+    parser.add_argument("--tempo-alignment", choices=(CUE_ALIGNMENT, LEGACY_ALIGNMENT), default=CUE_ALIGNMENT,
+                        help="Tempo contract. Select global_bpm_v1 to replay historical batches.")
     parser.add_argument(
         "--preview-before-seconds",
         type=float,
@@ -766,9 +801,9 @@ def build_argument_parser():
 def main():
     args = build_argument_parser().parse_args()
     if args.transition_bars is None:
-        args.transition_bars = (4,) if args.ranking_method == "mert_continuation_v1" else (2, 4)
+        args.transition_bars = (4,) if args.ranking_method in MERT_METHODS else (2, 4)
     config_type = (BaselineCandidateGenerationConfig if args.baseline_bars is not None
-                   or args.ranking_method == "mert_continuation_v1"
+                   or args.ranking_method in MERT_METHODS
                    or any(n in (1, 3) for n in args.transition_bars) else VariableCandidateGenerationConfig)
     candidate_config = config_type(
         transition_lengths_bars=tuple(args.baseline_bars or args.transition_bars),
@@ -796,6 +831,7 @@ def main():
             cue_ranker_vocal_backend=args.cue_ranker_vocal_backend,
             preview_seconds_before=args.preview_before_seconds,
             preview_seconds_after=args.preview_after_seconds,
+            tempo_alignment=args.tempo_alignment,
         )
     except (FileNotFoundError, ValueError) as error:
         if args.ranking_method != "learned_cue_ranker_v1":

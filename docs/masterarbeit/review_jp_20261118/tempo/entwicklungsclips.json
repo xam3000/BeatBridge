@@ -1,0 +1,68 @@
+[
+  {
+    "pair": "dev01",
+    "candidate": "candidate-04e3d52e02f23fa9",
+    "method": "global_bpm_v1",
+    "before_ms": 21.109049680477533,
+    "samples": 854993,
+    "lufs": -23.01,
+    "dbtp": -12.55,
+    "file": "dev01-global_bpm_v1.wav",
+    "sha256": "efe3737ae6636a8a61799dc5789664c311d3ea680bd0836ef62d174ce92c8d41"
+  },
+  {
+    "pair": "dev01",
+    "candidate": "candidate-04e3d52e02f23fa9",
+    "method": "beatwise_run02",
+    "before_ms": 21.109049680477533,
+    "samples": 854993,
+    "lufs": -23,
+    "dbtp": -12.51,
+    "file": "dev01-beatwise_run02.wav",
+    "sha256": "837e8a5656e9b55c3fa12f9c985be7410d7ec825ff18efdb682266a7bb84c5d5"
+  },
+  {
+    "pair": "dev01",
+    "candidate": "candidate-04e3d52e02f23fa9",
+    "method": "cue_grid_regression_v3",
+    "before_ms": 21.109049680477533,
+    "samples": 854993,
+    "lufs": -23,
+    "dbtp": -13.16,
+    "file": "dev01-cue_grid_regression_v3.wav",
+    "sha256": "1b2ea1f94da15f0cdc72cf541592714eb16f6404232a5dad165cc46c798039fc"
+  },
+  {
+    "pair": "dev05",
+    "candidate": "candidate-09b36b39350934e9",
+    "method": "global_bpm_v1",
+    "before_ms": 33.07084449941621,
+    "samples": 854466,
+    "lufs": -23,
+    "dbtp": -13.27,
+    "file": "dev05-global_bpm_v1.wav",
+    "sha256": "fc663c787a198f3f21910fc327c92e98e5706775063505c13f889e5376d2ded9"
+  },
+  {
+    "pair": "dev05",
+    "candidate": "candidate-09b36b39350934e9",
+    "method": "beatwise_run02",
+    "before_ms": 33.07084449941621,
+    "samples": 854466,
+    "lufs": -23,
+    "dbtp": -13.13,
+    "file": "dev05-beatwise_run02.wav",
+    "sha256": "c28716b5b4caf1eaa953eccf7fd5435efacc72ad73913c285d0afa3da63f52de"
+  },
+  {
+    "pair": "dev05",
+    "candidate": "candidate-09b36b39350934e9",
+    "method": "cue_grid_regression_v3",
+    "before_ms": 33.07084449941621,
+    "samples": 854466,
+    "lufs": -23,
+    "dbtp": -12.18,
+    "file": "dev05-cue_grid_regression_v3.wav",
+    "sha256": "e9d5c307d11d18b35f001f63e2226a6990cfa047701b893305923d8456f3c9d8"
+  }
+]

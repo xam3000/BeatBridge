@@ -154,14 +154,14 @@ def test_batch_cli_accepts_all_variable_transition_lengths():
     assert tuple(args.transition_bars) == (2, 4, 6, 8)
 
 
-def test_mert_batch_contract_and_filtered_selection(batch_inputs, monkeypatch):
+@pytest.mark.parametrize("method", ["mert_continuation_v1", "mert_continuation_v2"])
+def test_mert_batch_contract_and_filtered_selection(batch_inputs, monkeypatch, method):
     from src import batch_render
     from src.candidates import BaselineCandidateGenerationConfig
     from src.ranking import continuation
     from src.ranking.feature_baseline import RankingFailure
 
     original, analysis, out = batch_inputs
-    method = continuation.METHOD
     with pytest.raises(ValueError, match="four 4/4"):
         render_candidate_batch(original, out, ranking_method=method)
     first = original.candidates[0]
@@ -173,12 +173,15 @@ def test_mert_batch_contract_and_filtered_selection(batch_inputs, monkeypatch):
         return generate(*args, config=config, **kwargs)
 
     monkeypatch.setattr(batch_render, "generate_transition_candidates", capture)
-    def stub(candidates, analysis, rate):
+    def stub(candidates, analysis, rate, *, selection_path):
+        assert selection_path == (continuation.SELECTION if method == continuation.METHOD
+                                  else continuation.ISOLATED_SELECTION)
         assert len(candidates) > 1
         return continuation.ContinuationRanking(
             (continuation.ContinuationScore(candidates[-1].candidate_id, 1, .75),),
             {"fixture": "stub"},
-            tuple(RankingFailure(c.candidate_id, "incomplete_bar_window", "fixture") for c in candidates[:-1]))
+            tuple(RankingFailure(c.candidate_id, "incomplete_bar_window", "fixture") for c in candidates[:-1]),
+            method=method)
 
     monkeypatch.setattr(continuation, "rank_continuations", stub)
     batch = batch_render.generate_and_render_batch(first.source_track.path, first.target_track.path, out,

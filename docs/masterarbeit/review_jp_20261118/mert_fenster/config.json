@@ -1,0 +1,55 @@
+{
+  "epochs": 30,
+  "batch_size": 32,
+  "model_seeds": [
+    20260926,
+    20260927,
+    20260928
+  ],
+  "temperature": 0.2,
+  "tau_plus": 0.05,
+  "k": 4,
+  "length_bars": 4,
+  "scaler_id": "772e846f83d5daac108667d5e08edbe8e61982e0a5966ca3aa23f5c7ab321d38",
+  "p07_manifest_sha256": "746bd2c1c9b3d2d4c0bad08a627ef56b8f5adff460918ce32e293e6913ec1f23",
+  "freeze_commit": "2a70dc185bbcf62806d5d426783e03f347c01dd6",
+  "format_version": 2,
+  "smoke": false,
+  "dataset_sha256": "e3de544d9a29214d1546d18f87b5f6ac9f9717c6d6ade2e8b5b4822aab4fbedd",
+  "split_sha256": {
+    "train": "8f3655423faac712894445962b66f01b65cdc35ed0419215e4734821d24d25f0",
+    "validation": "0d0fd5565e3d852c41686fe9524c1256d00b3ab78b2b1daaf44600bf1a31d3bd"
+  },
+  "lr": 0.001,
+  "weight_decay": 0.0001,
+  "optimizer": "AdamW",
+  "rank": 64,
+  "hidden": 256,
+  "selection": "highest source-recording macro Recall@1; earliest epoch on ties",
+  "device": "cuda:0",
+  "torch_version": "2.13.0+cu130",
+  "gpu": "NVIDIA GeForce RTX 5070 Ti",
+  "input_encoding": "mert_continuation_v2",
+  "representation": {
+    "repo_id": "m-a-p/MERT-v1-95M",
+    "revision": "12af15fef9d0ac838c3f475bfbbf26d2060dd4f5",
+    "license": "CC-BY-NC-4.0",
+    "sha256": {
+      "README.md": "4bd95e900185d8b393785c0038aa662355a904e5a98ec692003b8011c802455d",
+      "config.json": "ea2627c4c7825cd66f3c944b6b966331604c35928174e0100cd4a82829424e32",
+      "configuration_MERT.py": "ae0ec2bab8f59c724ba9878a7c20b67210189536ea62d34a56775968e9decb03",
+      "modeling_MERT.py": "6c3ee73cef6f0c30ef494f88d96f891fa6925ffe663fa391b512f4b57abecc6c",
+      "preprocessor_config.json": "cc5a5e4a5d3b1a758a5ed984b2eaa15bb0522d811d44a9eed82bfca4baa0dc8f",
+      "pytorch_model.bin": "a2b8b747f72c06e0595aeae41ae5473f4364938c6b39b2c58be38c48e6bd3fcd"
+    },
+    "transformers": "4.49.0",
+    "sample_rate": 24000,
+    "frame_step": 320,
+    "receptive_field": 400,
+    "core_samples": 480000,
+    "context_samples": 48000,
+    "attention": "sdpa",
+    "precision": "cuda_bfloat16_autocast_or_cpu_float32"
+  },
+  "cache_sha256": "56d585fa1402b5a4f3230717a1f3c532cbb9ffa116381561bf9fa8c5968d8a99"
+}

@@ -16,6 +16,7 @@ from pathlib import Path
 import random
 
 import numpy as np
+from src.tempo.cue_alignment import LEGACY_ALIGNMENT
 import torch
 
 from src.analysis.pre_analysis import PreAnalysis
@@ -196,6 +197,7 @@ def export_four_model_listening_study(
                 feature_cache_root=feature_cache_root,
                 source_vocal_artifact=_vocal_artifact(candidate["source_track"], vocal_cache_root),
                 target_vocal_artifact=_vocal_artifact(candidate["target_track"], vocal_cache_root),
+                tempo_alignment=LEGACY_ALIGNMENT,
             )
             source, target = _validate_bridge(source, target)
             feature_inputs = (

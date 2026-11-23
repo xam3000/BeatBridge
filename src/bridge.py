@@ -15,6 +15,7 @@ from src.features.vocal import (
 )
 from src.pipeline import BeatBridgePipeline, DEFAULT_SAMPLE_RATE, PROJECT_ROOT
 from src.tempo.time_stretch import TimeStretch
+from src.tempo.cue_alignment import CUE_ALIGNMENT, LEGACY_ALIGNMENT
 
 
 DEFAULT_FEATURE_CACHE_ROOT = Path("output") / "feature_cache"
@@ -26,16 +27,17 @@ def extract_aligned_bridge(
     *,
     sample_rate=DEFAULT_SAMPLE_RATE,
     include_context_audio=False,
+    tempo_alignment=CUE_ALIGNMENT,
 ):
     """Return the aligned source-postroll and target-preroll for one candidate."""
-    pipeline = prepare_bridge_pair(candidate, analysis, sample_rate=sample_rate)
+    pipeline = prepare_bridge_pair(candidate, analysis, sample_rate=sample_rate, tempo_alignment=tempo_alignment)
     return extract_prepared_bridge(
         candidate, pipeline, include_context_audio=include_context_audio,
     )
 
 
-def prepare_bridge_pair(candidate, analysis, *, sample_rate=DEFAULT_SAMPLE_RATE):
-    """Load and tempo-align both tracks once for all selected cues of this pair."""
+def prepare_bridge_pair(candidate, analysis, *, sample_rate=DEFAULT_SAMPLE_RATE, tempo_alignment=CUE_ALIGNMENT):
+    """Load both tracks once. Fit the local tempo when the specific cue is known."""
     transition_beats = int(candidate["transition_length_beats"])
     cutter = EqualPowerFadeCut(fade_beats=transition_beats)
     pipeline = BeatBridgePipeline(
@@ -47,8 +49,10 @@ def prepare_bridge_pair(candidate, analysis, *, sample_rate=DEFAULT_SAMPLE_RATE)
         target_sample_rate=int(sample_rate),
         bpm1=candidate["source_bpm"],
         bpm2=candidate["target_bpm"],
+        tempo_alignment=tempo_alignment,
     )
-    pipeline.adjust_tempo()
+    if tempo_alignment == LEGACY_ALIGNMENT:
+        pipeline.adjust_tempo()
     return pipeline
 
 
@@ -61,34 +65,32 @@ def extract_prepared_bridge(candidate, pipeline, *, include_context_audio=False)
         if str(candidate[role + "_track"]["path"]) != track or (
                 declared_bpm is not None and float(declared_bpm) != bpm):
             raise ValueError(f"Candidate {role} track or tempo differs from the prepared pair")
+        expected_grid = (candidate.get(role + "_grid") or {}).get("beat_grid_sha256")
+        metadata = pipeline.grid_metadata1 if role == "source" else pipeline.grid_metadata2
+        if (pipeline.tempo_alignment == CUE_ALIGNMENT and expected_grid is not None
+                and metadata.beat_grid_sha256 != expected_grid):
+            raise ValueError(f"Candidate {role} beat grid differs from the analysis")
     if transition_beats != pipeline.cutter.fade_beats_before:
         raise ValueError("Candidate window differs from the prepared fade length")
     cutter = pipeline.cutter
-    source_audio, target_audio = pipeline.adjusted_song1, pipeline.adjusted_song2
     sample_rate = pipeline.target_sample_rate
-    source_cut = int(
-        round(
-            int(candidate["source_cutpoint"]["sample"])
-            * int(sample_rate)
-            / DEFAULT_SAMPLE_RATE
-        )
+    coordinate_rate = int(candidate.get("cue_sample_rate", DEFAULT_SAMPLE_RATE))
+    if coordinate_rate <= 0:
+        raise ValueError("Invalid candidate sample rate")
+    if pipeline.tempo_alignment == CUE_ALIGNMENT:
+        for role, frames in (("source", pipeline.beat_frames1), ("target", pipeline.beat_frames2)):
+            cue = candidate[role + "_cutpoint"]
+            if "beat_index" in cue:
+                index = int(cue["beat_index"])
+                expected = round(cue["sample"] * sample_rate / coordinate_rate)
+                if not 0 <= index < len(frames) or abs(frames[index][0] - expected) > 1:
+                    raise ValueError(f"Candidate {role} cue does not match the observed beat index")
+    source_cut, target_cut = pipeline.adjust_at_cue(
+        round(candidate["source_cutpoint"]["sample"] * sample_rate / coordinate_rate),
+        round(candidate["target_cutpoint"]["sample"] * sample_rate / coordinate_rate),
+        transition_beats,
     )
-    target_cut = int(
-        round(
-            int(candidate["target_cutpoint"]["sample"])
-            * int(sample_rate)
-            / DEFAULT_SAMPLE_RATE
-            * pipeline.adjusted_sample_scale2
-        )
-    )
-    source_cut, target_cut = cutter.resolve_cut_samples(
-        source_audio,
-        target_audio,
-        source_cut,
-        target_cut,
-        pipeline.beat_frames1,
-        pipeline.adjusted_beat_frames2,
-    )
+    source_audio, target_audio = pipeline.adjusted_song1, pipeline.adjusted_song2
     source_end = cutter._find_beat_offset_sample(
         pipeline.beat_frames1,
         source_cut,
@@ -101,8 +103,10 @@ def extract_prepared_bridge(candidate, pipeline, *, include_context_audio=False)
         -transition_beats,
         target_audio.shape[-1],
     )
-    transition_samples = min(source_end - source_cut, target_cut - target_start)
-    if transition_samples <= 0:
+    transition_samples = source_end - source_cut
+    if pipeline.tempo_alignment == LEGACY_ALIGNMENT:
+        transition_samples = min(transition_samples, target_cut - target_start)
+    if transition_samples <= 0 or target_cut < transition_samples:
         raise ValueError("Candidate has no complete aligned transition window")
     source = np.asarray(
         source_audio[..., source_cut : source_cut + transition_samples],
@@ -120,6 +124,8 @@ def extract_prepared_bridge(candidate, pipeline, *, include_context_audio=False)
         "tempo_backend": pipeline.tempo_backend,
         "sample_rate": int(sample_rate),
     }
+    if pipeline.cue_alignment:
+        geometry["tempo_alignment"] = pipeline.cue_alignment.to_dict()
     if include_context_audio:
         geometry["target_sample_scale"] = pipeline.adjusted_sample_scale2
         geometry["source_grid_end_sample"] = int(source_end)
@@ -141,6 +147,7 @@ def extract_aligned_vocal_bridge(
     source_vocal_artifact=None,
     target_vocal_artifact=None,
     tempo_adjuster=None,
+    tempo_alignment=CUE_ALIGNMENT,
 ):
     """Return sample-aligned mix and RoFormer-vocal bridge waveforms."""
     source, target, geometry = extract_aligned_bridge(
@@ -148,6 +155,7 @@ def extract_aligned_vocal_bridge(
         analysis,
         sample_rate=sample_rate,
         include_context_audio=True,
+        tempo_alignment=tempo_alignment,
     )
     source_path = _resolve_track_path(candidate["source_track"]["path"])
     target_path = _resolve_track_path(candidate["target_track"]["path"])
@@ -170,13 +178,16 @@ def extract_aligned_vocal_bridge(
     source_vocal = np.repeat(source_vocal[np.newaxis, :], 2, axis=0)
     target_vocal = np.repeat(target_vocal[np.newaxis, :], 2, axis=0)
     vocal_tempo_backend = "not_needed"
-    if not np.isclose(candidate["source_bpm"], candidate["target_bpm"]):
+    scale = geometry["target_sample_scale"]
+    if scale != 1.0:
         tempo_adjuster = tempo_adjuster or TimeStretch()
+        alignment = geometry.get("tempo_alignment")
+        original_bpm = (60 * sample_rate / alignment["target_period"] if alignment
+                        else float(candidate["target_bpm"]))
+        desired_bpm = (60 * sample_rate / alignment["source_period"] if alignment
+                       else float(candidate["source_bpm"]))
         target_vocal = tempo_adjuster.adjust_tempo_to_bpm(
-            target_vocal,
-            int(sample_rate),
-            candidate["target_bpm"],
-            candidate["source_bpm"],
+            target_vocal, int(sample_rate), original_bpm, desired_bpm,
         )
         vocal_tempo_backend = tempo_adjuster.last_backend or type(tempo_adjuster).__name__
     source_vocal = _match_length(source_vocal, geometry["source_audio"].shape[-1])

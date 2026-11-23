@@ -1,0 +1,285 @@
+{
+  "D1_train": {
+    "total": 45,
+    "measured": 45,
+    "missing": {},
+    "passed": 4,
+    "bpm_field": {
+      "over20": 44,
+      "median_ms": 92.87981859410431,
+      "p95_ms": 243.08390022675735,
+      "max_ms": 323.9909297052154
+    },
+    "regression_all": {
+      "over20": 31,
+      "median_ms": 40.558691215829434,
+      "p95_ms": 157.57053385283098,
+      "max_ms": 232.13967857523434
+    },
+    "regression_accepted": {
+      "over20": 0,
+      "median_ms": 11.41518980287498,
+      "p95_ms": 18.7984888498132,
+      "max_ms": 19.423473061004582
+    }
+  },
+  "D1_validation": {
+    "total": 9,
+    "measured": 9,
+    "missing": {},
+    "passed": 0,
+    "bpm_field": {
+      "over20": 7,
+      "median_ms": 46.439909297052154,
+      "p95_ms": 116.09977324263039,
+      "max_ms": 116.09977324263039
+    },
+    "regression_all": {
+      "over20": 7,
+      "median_ms": 71.27134608992986,
+      "p95_ms": 124.92837442579344,
+      "max_ms": 126.50677292722952
+    }
+  },
+  "D2_train": {
+    "total": 370,
+    "measured": 370,
+    "missing": {},
+    "passed": 12,
+    "bpm_field": {
+      "over20": 240,
+      "median_ms": 46.439909297052154,
+      "p95_ms": 192.14512471655343,
+      "max_ms": 290.24943310657596
+    },
+    "regression_all": {
+      "over20": 254,
+      "median_ms": 42.994729961543015,
+      "p95_ms": 161.14993842786936,
+      "max_ms": 210.94410126347225
+    },
+    "regression_accepted": {
+      "over20": 0,
+      "median_ms": 0.9553290947712376,
+      "p95_ms": 9.419398092379678,
+      "max_ms": 10.186834806348555
+    }
+  },
+  "D2_validation": {
+    "total": 50,
+    "measured": 50,
+    "missing": {},
+    "passed": 1,
+    "bpm_field": {
+      "over20": 42,
+      "median_ms": 81.26984126984127,
+      "p95_ms": 168.92517006802717,
+      "max_ms": 197.36961451247166
+    },
+    "regression_all": {
+      "over20": 33,
+      "median_ms": 27.596837773658688,
+      "p95_ms": 114.92959026703785,
+      "max_ms": 140.993999582223
+    },
+    "regression_accepted": {
+      "over20": 0,
+      "median_ms": 3.8808817439567393,
+      "p95_ms": 3.8808817439567393,
+      "max_ms": 3.8808817439567393
+    }
+  },
+  "november_listening": {
+    "total": 20,
+    "measured": 20,
+    "missing": {},
+    "passed": 0,
+    "bpm_field": {
+      "over20": 19,
+      "median_ms": 81.26984126984127,
+      "p95_ms": 186.34013605442178,
+      "max_ms": 197.36961451247166
+    },
+    "regression_all": {
+      "over20": 11,
+      "median_ms": 22.28162718573333,
+      "p95_ms": 112.78084096473691,
+      "max_ms": 140.993999582223
+    }
+  },
+  "D3_train": {
+    "total": 420,
+    "measured": 420,
+    "missing": {},
+    "passed": 19,
+    "bpm_field": {
+      "over20": 259,
+      "median_ms": 46.439909297052154,
+      "p95_ms": 197.36961451247166,
+      "max_ms": 348.29931972789115
+    },
+    "regression_all": {
+      "over20": 283,
+      "median_ms": 48.02417403156843,
+      "p95_ms": 176.0907179871891,
+      "max_ms": 294.71196696446793
+    },
+    "regression_accepted": {
+      "over20": 0,
+      "median_ms": 6.533242691727461,
+      "p95_ms": 14.329966138428576,
+      "max_ms": 14.94347609743231
+    }
+  },
+  "D3_validation": {
+    "total": 48,
+    "measured": 48,
+    "missing": {},
+    "passed": 1,
+    "bpm_field": {
+      "over20": 25,
+      "median_ms": 23.219954648526077,
+      "p95_ms": 172.98866213151916,
+      "max_ms": 208.9795918367347
+    },
+    "regression_all": {
+      "over20": 26,
+      "median_ms": 27.674232021446286,
+      "p95_ms": 132.27784691585842,
+      "max_ms": 137.32698623317478
+    },
+    "regression_accepted": {
+      "over20": 0,
+      "median_ms": 18.62347155009542,
+      "p95_ms": 18.62347155009542,
+      "max_ms": 18.62347155009542
+    }
+  },
+  "D4_train": {
+    "total": 2649,
+    "measured": 2649,
+    "missing": {},
+    "passed": 217,
+    "bpm_field": {
+      "over20": 1572,
+      "median_ms": 23.219954648526077,
+      "p95_ms": 215.94557823129148,
+      "max_ms": 1265.487528344671
+    },
+    "regression_all": {
+      "over20": 1491,
+      "median_ms": 25.049171807691074,
+      "p95_ms": 167.175069107664,
+      "max_ms": 645.1195859349472
+    },
+    "regression_accepted": {
+      "over20": 0,
+      "median_ms": 3.9779916082645075,
+      "p95_ms": 14.277435383929442,
+      "max_ms": 19.590427457183903
+    }
+  },
+  "D4_validation": {
+    "total": 636,
+    "measured": 636,
+    "missing": {},
+    "passed": 70,
+    "bpm_field": {
+      "over20": 334,
+      "median_ms": 23.219954648526077,
+      "p95_ms": 246.71201814058955,
+      "max_ms": 638.5487528344671
+    },
+    "regression_all": {
+      "over20": 349,
+      "median_ms": 24.103566568978778,
+      "p95_ms": 165.46417984341642,
+      "max_ms": 534.0404535988567
+    },
+    "regression_accepted": {
+      "over20": 0,
+      "median_ms": 6.751215477191443,
+      "p95_ms": 13.937836593351442,
+      "max_ms": 18.62347155009542
+    }
+  },
+  "P04_development": {
+    "total": 3,
+    "measured": 3,
+    "missing": {},
+    "passed": 0,
+    "bpm_field": {
+      "over20": 0,
+      "median_ms": 0,
+      "p95_ms": 10.448979591836734,
+      "max_ms": 11.609977324263038
+    },
+    "regression_all": {
+      "over20": 3,
+      "median_ms": 46.20521246051852,
+      "p95_ms": 52.642104722687876,
+      "max_ms": 53.35731497404003
+    }
+  },
+  "P11_run01": {
+    "total": 21,
+    "measured": 21,
+    "missing": {},
+    "passed": 1,
+    "bpm_field": {
+      "over20": 11,
+      "median_ms": 20.72562358276644,
+      "p95_ms": 181.33786848072563,
+      "max_ms": 185.91836734693877
+    },
+    "regression_all": {
+      "over20": 13,
+      "median_ms": 35.192013340616754,
+      "p95_ms": 97.45845067493254,
+      "max_ms": 148.31727296894954
+    },
+    "regression_accepted": {
+      "over20": 0,
+      "median_ms": 12.550174864333718,
+      "p95_ms": 12.550174864333718,
+      "max_ms": 12.550174864333718
+    },
+    "pool_geometry": [
+      {
+        "pair": "P01",
+        "historical_candidates": 4136,
+        "gate_passed": 151
+      },
+      {
+        "pair": "P02",
+        "historical_candidates": 4686,
+        "gate_passed": 46
+      },
+      {
+        "pair": "P03",
+        "historical_candidates": 4104,
+        "gate_passed": 1078
+      },
+      {
+        "pair": "P06",
+        "historical_candidates": 1444,
+        "gate_passed": 13
+      },
+      {
+        "pair": "P07",
+        "historical_candidates": 6148,
+        "gate_passed": 343
+      },
+      {
+        "pair": "P09",
+        "historical_candidates": 4928,
+        "gate_passed": 1012
+      },
+      {
+        "pair": "P10",
+        "historical_candidates": 13110,
+        "gate_passed": 1127
+      }
+    ]
+  }
+}

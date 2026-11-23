@@ -13,6 +13,7 @@ from src.batch_render import render_candidate_batch
 from src.candidates import BaselineCandidateGenerationConfig, TrackReference, generate_candidates
 from src.evaluation.comparison import new_output, write_json
 from src.pipeline import BeatBridgePipeline, DEFAULT_SAMPLE_RATE, _file_sha256
+from src.tempo.cue_alignment import LEGACY_ALIGNMENT
 
 
 def main():
@@ -54,6 +55,7 @@ def main():
         raise ValueError(f"Incomplete development candidate set: {generated.rejections}")
     with new_output(args.output) as out:
         batch = render_candidate_batch(generated, out, renderers=("equal_power",), analysis=analysis,
+                                       tempo_alignment=LEGACY_ALIGNMENT,
                                        top_k=None, preview_seconds_before=2, preview_seconds_after=10)
         if batch.failures or len(batch.rendered_variants) != 4:
             raise ValueError(f"Incomplete render set: {batch.failures}")
