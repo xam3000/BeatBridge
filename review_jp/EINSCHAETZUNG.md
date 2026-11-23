@@ -1,5 +1,7 @@
 # Einschätzung: Novelty, Gehalt und nächste Schritte
 
+> **Status: Momentaufnahme vom 18.11.2026 (Commit `56b982a`), wird nicht fortgeschrieben.** Abschnitt 4 (nächste Schritte) ist durch den [Aktionsplan](./ZUSAMMENFASSUNG_UND_AKTIONSPLAN.md) abgelöst. Die Einschätzung zu Novelty und Gehalt beschreibt den Stand vor der Umsetzung; die selbstüberwachte Metrik existiert inzwischen, siehe [Rückmeldung vom 22.11.](./RUECKMELDUNG_20261122.md). Einstieg in alle Review-Dokumente: [README](./README.md).
+
 Stand: 18. November 2026, Commit `56b982a`. Grundlage sind [`CODE_REVIEW.md`](./CODE_REVIEW.md), die dort beschriebenen Messungen, die Kapitel 1 und 2 der Thesis unter `overleaf/chapters/` und drei eigene Literaturrecherchen. Diese Übersicht ersetzt die Reihenfolge in Abschnitt 7 des Reviews.
 
 ## 1. Kurzantwort

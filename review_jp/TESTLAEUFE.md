@@ -1,4 +1,8 @@
-# Testläufe des Code-Reviews vom 13. November 2026
+# Testläufe des Reviews
+
+Laufendes Protokoll aller Läufe, die im Rahmen des Reviews ausgeführt wurden. Neue Läufe kommen unten dazu. Einstieg in alle Review-Dokumente: [README](./README.md).
+
+## Läufe vom 13. November 2026 (Commits `7918338` und `56b982a`)
 
 `AGENTS.md` verlangt, jeden Testlauf in `docs/Bemerkungen.md` einzutragen. Das Review durfte keine vorhandenen Dateien ändern. Die Läufe stehen deshalb hier, im selben Raster (Fragestellung, Setup, Befehl, Ergebnis, Schlussfolgerung).
 
@@ -24,4 +28,16 @@ Abgebrochene oder fehlerhafte Anläufe:
 
 Laufzeiten: Nr. 4 rund 50 s, Nr. 5 rund 70 s, Nr. 7 rund 100 s, Nr. 6 rund 8 min (2500 Renderings für den Vertauschungstest).
 
-Aufräumen: `review_jp/.venv` belegt rund 1 GB und kann gelöscht werden. `.gitignore` des Repos schließt `.venv/` und `__pycache__/` bereits aus; `review_jp/` selbst ist nicht ignoriert und nicht committet.
+Aufräumen: `review_jp/.venv` belegt rund 1 GB und kann gelöscht werden. `.gitignore` des Repos schließt `.venv/` und `__pycache__/` bereits aus. `review_jp/` selbst ist seit Commit `bc17715` versioniert.
+
+## Läufe vom 22. November 2026 (Commit `4651e51`)
+
+Umgebung wie oben. Die Artefakte unter `output/review_jp_20261118/` liegen nur beim Autor; Läufe, die sie brauchen, konnten hier nicht ausgeführt werden.
+
+| Nr. | Fragestellung | Befehl | Ergebnis | Schlussfolgerung |
+|---|---|---|---|---|
+| 11 | Läuft die Testsuite auf dem neuen Stand? | wie Nr. 1, mit `--basetemp` im Scratch-Ordner | Abbruch beim Einsammeln: `ModuleNotFoundError: psutil` in `src/features/p07_extract.py:13`. | `psutil` fehlt in den Requirements. Ein frischer Checkout kann die Tests nicht ausführen. |
+| 12 | Dasselbe, nachdem `psutil` in `review_jp/.venv` nachinstalliert wurde | wie Nr. 11 | 399 bestanden, 5 übersprungen (CUDA), 1 Fehlschlag: `tests/test_baseline_lengths.py::test_gui_fixed_model_locks_length` braucht PySide6. 36 s. `git status` vorher und nachher identisch. Protokoll: `logs/pytest_q_4651e51.log` | Bis auf die GUI-Abhängigkeit laufen die Tests plattformneutral. |
+| 13 | Läuft das neue Prüfskript für den MERT-Kontext? | `python review_jp/scripts/mert_kontext_check.py --selftest` | Selbsttest bestanden. Der echte Lauf bricht hier erwartungsgemäß ab, weil `output/review_jp_20261118/p07/full/manifest.json` fehlt. | Skript ist für den Autor bereit, mit echten Daten ungetestet. |
+
+Nicht ausgeführt: alles, was MERT-Gewichte, P07- bis P11-Artefakte, CUDA oder Originalaudio der neuen Tracks braucht.

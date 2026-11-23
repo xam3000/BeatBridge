@@ -1,5 +1,7 @@
 # BeatBridge: unabhängiges Code-Review
 
+> **Status: Momentaufnahme vom 13.11.2026 (Commit `56b982a`), wird nicht fortgeschrieben.** Mehrere Befunde sind inzwischen behoben, und die Aussagen zu den Controllern sind durch neue Messungen ergänzt. Den Stand jedes Befunds zeigt die [Rückmeldung vom 22.11.](./RUECKMELDUNG_20261122.md), Abschnitte 4.1 und 7. Einstieg in alle Review-Dokumente: [README](./README.md).
+
 Stand: 13. November 2026, Commit `56b982a` (während des Reviews per Pull von `7918338` aktualisiert; der gesamte ML-Kern ist zwischen beiden Commits unverändert, geändert wurden nur `src/candidates/`, `src/gui/`, zwei Dateien in `src/evaluation/` und ein Test). Rechner: macOS, Python 3.14, CPU.
 
 **Herkunft jeder Aussage** steht als Marke dahinter:

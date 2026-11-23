@@ -1,5 +1,7 @@
 # BeatBridge: Kritikpunkte und Aktionsplan
 
+> **Status: Der Plan gilt weiter (Stand 18.11.2026, Commit `56b982a`).** Die Kritikpunkte in Abschnitt 2 und die Tabellen in Abschnitt 3 beschreiben den Stand vor der Umsetzung. Was davon erledigt ist und was sich an der Reihenfolge ändert, steht in der [Rückmeldung vom 22.11.](./RUECKMELDUNG_20261122.md). Den Umsetzungsstand führt der Autor in [`docs/REVIEW_JP_UMSETZUNG.md`](../docs/REVIEW_JP_UMSETZUNG.md). Einstieg in alle Review-Dokumente: [README](./README.md).
+
 Stand: 18. November 2026, Commit `56b982a`.
 
 Dieses Dokument fasst [`CODE_REVIEW.md`](./CODE_REVIEW.md), [`EINSCHAETZUNG.md`](./EINSCHAETZUNG.md) und die anschließende Besprechung zusammen. Wo es von den beiden früheren Dokumenten abweicht, gilt dieses. Belege mit Fundstellen und Messwerten stehen im Code-Review; hier stehen nur die tragenden Zahlen.

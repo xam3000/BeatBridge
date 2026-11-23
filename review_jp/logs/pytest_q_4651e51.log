@@ -1,0 +1,46 @@
+..............F......................................................... [ 17%]
+........................................................................ [ 35%]
+....................................s................................... [ 53%]
+..................................................ssss.................. [ 71%]
+........................................................................ [ 88%]
+.............................................                            [100%]
+=================================== FAILURES ===================================
+______________________ test_gui_fixed_model_locks_length _______________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1165ac640>
+
+    def test_gui_fixed_model_locks_length(monkeypatch):
+        monkeypatch.setenv("QT_QPA_PLATFORM", "offscreen")
+>       from PySide6.QtWidgets import QApplication
+E       ModuleNotFoundError: No module named 'PySide6'
+
+tests/test_baseline_lengths.py:47: ModuleNotFoundError
+=============================== warnings summary ===============================
+tests/test_batch_render.py::test_batch_render_exports_wavs_and_a_traceable_manifest
+  /Users/jp/dev/Eberhardt/Master Thesis/BeatBridge/review_jp/.venv/lib/python3.14/site-packages/audioread/rawread.py:16: DeprecationWarning: aifc was removed in Python 3.13. Please be aware that you are currently NOT using standard 'aifc', but instead a separately installed 'standard-aifc'.
+    import aifc
+
+tests/test_batch_render.py::test_batch_render_exports_wavs_and_a_traceable_manifest
+  /Users/jp/dev/Eberhardt/Master Thesis/BeatBridge/review_jp/.venv/lib/python3.14/site-packages/audioread/rawread.py:19: DeprecationWarning: sunau was removed in Python 3.13. Please be aware that you are currently NOT using standard 'sunau', but instead a separately installed 'standard-sunau'.
+    import sunau
+
+tests/test_cue_ranker_teacher.py::test_synthetic_candidate_runs_fixed_teacher_and_production_guard
+  /Users/jp/dev/Eberhardt/Master Thesis/BeatBridge/review_jp/.venv/lib/python3.14/site-packages/librosa/core/spectrum.py:266: UserWarning: n_fft=2048 is too large for input signal of length=256
+    warnings.warn(
+
+tests/test_cue_ranker_teacher.py::test_synthetic_candidate_runs_fixed_teacher_and_production_guard
+  /Users/jp/dev/Eberhardt/Master Thesis/BeatBridge/review_jp/.venv/lib/python3.14/site-packages/librosa/core/pitch.py:103: UserWarning: Trying to estimate tuning from empty frequency set.
+    return pitch_tuning(
+
+tests/test_cue_ranker_teacher.py::test_synthetic_candidate_runs_fixed_teacher_and_production_guard
+  /Users/jp/dev/Eberhardt/Master Thesis/BeatBridge/review_jp/.venv/lib/python3.14/site-packages/librosa/core/spectrum.py:266: UserWarning: n_fft=2048 is too large for input signal of length=128
+    warnings.warn(
+
+tests/test_cue_ranker_teacher.py::test_synthetic_candidate_runs_fixed_teacher_and_production_guard
+  /Users/jp/dev/Eberhardt/Master Thesis/BeatBridge/review_jp/.venv/lib/python3.14/site-packages/librosa/core/spectrum.py:266: UserWarning: n_fft=2048 is too large for input signal of length=768
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_baseline_lengths.py::test_gui_fixed_model_locks_length - Mo...
+1 failed, 399 passed, 5 skipped, 6 warnings in 36.20s
