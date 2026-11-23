@@ -1,5 +1,7 @@
 # Machine Re-Mix / BeatBridge – Projekt-Gesamtübersicht
 
+Für den geschlossenen Hörversuch steht eine Webfassung mit gemeinsamem Einstiegslink, zufälligen Sitzungscodes und zentraler Speicherung der Antworten bereit. Nach zwei Übungsclips hören alle dieselben 49 neu gerenderten Ausschnitte. Jedes der sieben Songpaare umfasst sechs Vergleichsbedingungen und den harten Schnitt am aktuellen Regel-Cue. Die Reihenfolge variiert pro Sitzung. [Durchführung am Institut](../hoertest/README.md)
+
 > **Auftrag vom 18.–23. November 2026.** F1 untersucht die Übergangsstelle und Mixing-Kurve, F2 die gelernte Fortsetzungsmetrik und F3 die eingabeabhängigen Controller. Die Betreuung hat den geschlossenen Hörversuch auf sieben Paare begrenzt. Die Auswertung ist deskriptiv. Abschnittsauswahl, vollständiger Mashup-Export und Baseline-Übergänge von einem bis vier Takten gehören zum Softwareumfang. Die formale Entscheidung zur übrigen Aufgabenabdeckung steht aus. Die folgenden älteren Scope-Angaben dokumentieren den damaligen Auftrag. [Umsetzungsregister](REVIEW_JP_UMSETZUNG.md) · [Betreuungsrückmeldung](../review_jp/RUECKMELDUNG_20261122.md)
 
 _Quelle: frühere Ausarbeitung (ChatGPT-Diskussion), ins Projekt übernommen am 2026-07-17. Dies ist der maßgebliche Kontext für Ziel, Scope und Zeitplanung der Masterarbeit._

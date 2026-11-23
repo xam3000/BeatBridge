@@ -1,0 +1,13 @@
+# Only the application and its public operator documentation belong in Git.
+*
+!.gitignore
+!__init__.py
+!__main__.py
+!app.py
+!session.py
+!player.html
+!start.html
+!README.md
+!PROTOKOLL.md
+!PROTOKOLL_RUN02.md
+!PROTOKOLL_FESTE_ANKER.md

@@ -8,12 +8,13 @@ import re
 import secrets
 import shutil
 
-from src.evaluation.p11_session import Session, prepare, seal
+from src.evaluation.p11_session import VERSION, Session, prepare, prepare_run02, read, seal
+import hoertest
 
 
 def server_for(session, port):
     prefix = "/" + secrets.token_urlsafe(24)
-    html = Path(__file__).with_name("p11_web.html").read_bytes()
+    html = Path(hoertest.__file__).with_name("player.html").read_bytes()
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *_):
@@ -96,6 +97,13 @@ def main():
     init.add_argument("--panels", nargs="+", type=Path, required=True)
     init.add_argument("--practice", type=Path, required=True)
     init.add_argument("--split", choices=["development", "final"], required=True)
+    init.add_argument("--institute", action="store_true", help="Prepare a portable private directory for the institute site")
+    init.add_argument("--fixed-rule-anchors", action="store_true",
+                      help="Present the same 49 recordings to everyone, with a hard cut at each rule cue")
+    run02 = commands.add_parser("prepare-run02", help="Package the 49 verified Run02 recordings for the institute")
+    run02.add_argument("root", type=Path)
+    run02.add_argument("--source", type=Path, required=True)
+    run02.add_argument("--practice", type=Path, required=True)
     serve = commands.add_parser("serve")
     serve.add_argument("root", type=Path)
     serve.add_argument("person", help="Pseudonym, e.g. VP01")
@@ -105,10 +113,15 @@ def main():
     export.add_argument("output", type=Path)
     args = parser.parse_args()
     if args.command == "prepare":
-        prepare(args.root, args.panels, args.practice, args.split)
+        prepare(args.root, args.panels, args.practice, args.split, institute=args.institute,
+                fixed_rule_anchors=args.fixed_rule_anchors)
+    elif args.command == "prepare-run02":
+        prepare_run02(args.root, args.source, args.practice)
     elif args.command == "seal":
         seal(args.root, args.output)
     else:
+        if read(args.root / "study_key.json")["version"] != VERSION:
+            parser.error("Für ein Institutspaket bitte python -m hoertest DATENORDNER verwenden.")
         if not re.fullmatch(r"[A-Za-z0-9_-]{1,32}", args.person):
             parser.error("Use a short pseudonymous ID")
         server, url = server_for(Session(args.root, args.person), args.port)

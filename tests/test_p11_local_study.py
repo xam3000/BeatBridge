@@ -1,11 +1,18 @@
 import json
+from http.cookiejar import CookieJar
+from pathlib import Path
+import re
+import sqlite3
 from threading import Thread
 from urllib.error import HTTPError
-from urllib.request import Request, urlopen
+from urllib.parse import urlencode, urlsplit
+from urllib.request import HTTPCookieProcessor, Request, build_opener, urlopen
+from wsgiref.simple_server import make_server
 
 import numpy as np
 import pytest
 import soundfile as sf
+from hoertest.app import StudyApp
 
 from src.evaluation.p11_session import (
     CELLS, REVISION, SELECTORS, Session, digest, layout, neutral_check, prepare, read, seal,
@@ -222,3 +229,135 @@ def test_loopback_serves_only_neutral_current_page(study):
         server.shutdown()
         server.server_close()
         thread.join()
+
+
+@pytest.fixture
+def institute(study, tmp_path):
+    root = tmp_path / "transport"
+    prepare(root, sorted(tmp_path.glob("dev*")), tmp_path / "practice", "development", institute=True)
+    deployed = tmp_path / "server-copy"
+    root.rename(deployed)
+    return deployed
+
+
+def test_institute_assignment_and_sealed_results(institute, tmp_path):
+    key = read(institute / "study_key.json")
+    orders, anchors = [], {pair: [] for pair in key["panels"]}
+    for seat in range(21):
+        mapping = layout(key, seat, f"saved-session-{seat}")
+        assert mapping == layout(key, seat, f"saved-session-{seat}")
+        order = []
+        for page in range(1, 8):
+            assigned = [a for code, a in mapping.items() if code.startswith(f"{page:02}-")]
+            anchor, = [a for a in assigned if a["condition"] == "anchor"]
+            order.append(anchor["pair"])
+            anchors[anchor["pair"]].append(anchor["selector"])
+        orders.append(order)
+    for first in range(0, 21, 7):
+        assert all(set(position) == key["panels"].keys() for position in zip(*orders[first:first + 7]))
+    for selectors in anchors.values():
+        assert all(set(selectors[first:first + 3]) == set(SELECTORS) for first in range(0, 21, 3))
+    assert layout(key, 0, "other-session") != layout(key, 0, "saved-session-0")
+    assert len(list((institute / "media").glob("*.wav"))) == 9  # Identical fixture clips are copied once.
+    assert all(Path(a["path"]).parent == Path("media") for a in mapping.values())
+
+    Session(institute, "unterbrochen")
+    unfinished = tmp_path / "nur-unterbrochen"
+    seal(institute, unfinished)
+    counts = analyse(unfinished, institute / "study_key.json", "development")
+    assert counts["started_sessions"] == 1 and counts["completed_sessions"] == 0
+    assert counts["pair_weighted_effects"] is None
+    completed = Session(institute, "test-session")
+    completed.event(dict(kind="begin", page=-1, profile=dict(music="mittel", dj="wenig", dance="viel",
+                         hearing="keine Angabe", setting="anderer Hörplatz")))
+    while not completed.state()["done"]:
+        complete_page(completed, 0)
+    originals = tmp_path / "originale-institut"
+    seal(institute, originals)
+    report = analyse(originals, institute / "study_key.json", "development")
+    assert report["started_sessions"] == 2 and report["completed_sessions"] == 1
+    assert len(report["incomplete_sessions"]) == 1 and report["valid_panels"] == 7
+    assert all(sum(pos) == 1 for pos in report["completed_pair_positions"].values())
+    assert report["pair_weighted_effects"]["ssl_minus_rule"] == 8
+    assert report["pair_weighted_effects"]["direct_minus_equal"] == 3
+    assert report["profiles"]["test-session"]["setting"] == "anderer Hörplatz"
+
+
+@pytest.mark.parametrize("material", ["run02", "cue_grid_regression_v3_fixed_rule"])
+def test_institute_fixed_anchors_keep_all_49_clips_on_every_seat(institute, material):
+    key = read(institute / "study_key.json")
+    key["material"] = material
+    for pair, assets in key["panels"].items():
+        key["panels"][pair] = [a for a in assets if a["condition"] != "anchor" or a["selector"] == "rule"]
+    expected = {(pair, a["selector"], a["condition"], a["sha256"])
+                for pair, assets in key["panels"].items() for a in assets}
+    orders = set()
+    for seat in range(21):
+        mapping = layout(key, seat, f"saved-{seat}")
+        clips = [asset for code, asset in mapping.items() if not code.startswith("00-")]
+        identity = [(a["pair"], a["selector"], a["condition"], a["sha256"]) for a in clips]
+        assert len(identity) == 49 and set(identity) == expected
+        orders.add(tuple(identity))
+    assert len(orders) == 21
+
+
+def test_institute_common_link_shuffles_and_resumes(institute):
+    with make_server("127.0.0.1", 0, None) as server:
+        origin = f"http://127.0.0.1:{server.server_port}"
+        url = origin + "/institut/hoertest/"
+        server.set_app(StudyApp(institute, url))
+        thread = Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+
+        def seats():
+            with sqlite3.connect(institute / "responses.sqlite") as db:
+                return db.execute("SELECT count(*) FROM sessions").fetchone()[0]
+
+        def visit(browser):
+            with browser.open(url) as response:
+                html = response.read().decode()
+                return html, re.search(r'name="form" value="([^"]+)"', html)[1]
+
+        def start(browser, nonce):
+            form = urlencode(dict(form=nonce, participate="yes")).encode()
+            with browser.open(Request(url + "start", data=form, headers={"Origin": origin})) as response:
+                assert response.status == 200
+                return response.geturl()
+
+        def state(browser, location):
+            with browser.open(location + "state") as response:
+                return json.load(response)
+
+        try:
+            first = build_opener(HTTPCookieProcessor(CookieJar()))
+            second = build_opener(HTTPCookieProcessor(CookieJar()))
+            html, nonce = visit(first)
+            assert "7 Entwicklungspaare" in html and "Begonnene Sitzung fortsetzen" not in html and seats() == 0
+            saved = start(first, nonce)
+            assert start(first, nonce) == saved and seats() == 1
+            other = start(second, visit(second)[1])
+            assert other != saved and seats() == 2
+            assert "Begonnene Sitzung fortsetzen" in visit(first)[0]
+            assert state(first, saved)["session_code"] == urlsplit(saved).path.split("/")[-2]
+            with pytest.raises(HTTPError, match="403"):
+                state(second, saved)
+            with pytest.raises(HTTPError, match="404"):
+                first.open(url + "study_key.json")
+            event = dict(kind="begin", page=-1, profile=dict(music="viel", dj="wenig", dance="mittel",
+                         hearing="keine Angabe", setting="Institut"))
+            with first.open(Request(saved + "event", data=json.dumps(event).encode(),
+                            headers={"Origin": origin, "Content-Type": "application/json"})) as response:
+                assert json.load(response)["codes"] == ["00-A", "00-B"]
+            with first.open(Request(saved + "audio/00-A", headers={"Range": "bytes=0-3"})) as response:
+                assert response.status == 206 and response.read() == b"RIFF"
+            with first.open(Request(saved + "audio/00-A", method="HEAD")) as response:
+                assert int(response.headers["Content-Length"]) > 4 and response.read() == b""
+            with pytest.raises(HTTPError, match="404"):
+                first.open(saved + "audio/01-A")
+            assert state(second, other)["page"] == -1
+            assert state(first, saved)["page"] == 0
+            fresh = start(first, visit(first)[1])
+            assert fresh not in (saved, other) and state(first, fresh)["page"] == -1 and seats() == 3
+        finally:
+            server.shutdown()
+            thread.join()

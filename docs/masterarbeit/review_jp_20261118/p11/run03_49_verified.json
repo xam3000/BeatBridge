@@ -1,0 +1,64 @@
+{
+  "material": "cue_grid_regression_v3_fixed_rule",
+  "render": "run03",
+  "source_pairs": [
+    {
+      "pair": "P01",
+      "eligible": 151,
+      "changed_cues": 3
+    },
+    {
+      "pair": "P02",
+      "eligible": 46,
+      "changed_cues": 3
+    },
+    {
+      "pair": "P03",
+      "eligible": 1078,
+      "changed_cues": 3
+    },
+    {
+      "pair": "P06",
+      "eligible": 13,
+      "changed_cues": 3
+    },
+    {
+      "pair": "P07",
+      "eligible": 343,
+      "changed_cues": 3
+    },
+    {
+      "pair": "P09",
+      "eligible": 1012,
+      "changed_cues": 3
+    },
+    {
+      "pair": "P10",
+      "eligible": 1128,
+      "changed_cues": 3
+    }
+  ],
+  "masters": 63,
+  "rated_clips": 49,
+  "practice_clips": 2,
+  "different_orders_checked": 21,
+  "changed_audio_from_run02": 49,
+  "changed_cues_from_run02": 21,
+  "playback_set_sha256": "eaeb2eaed374f4fde8c2a36651846d043086dc42dba434bd6c3a23ec44d0136c",
+  "max_absolute_loudness_deviation_lu": 0.02,
+  "highest_dbtp": -10.52,
+  "max_timing_error_ms": {
+    "source_residual_ms": 17.465,
+    "target_residual_ms": 18.641,
+    "beat_offset_ms": 18.509,
+    "span_error_ms": 16.341
+  },
+  "technical_session": {
+    "complete": true,
+    "scored_panels": 7,
+    "fixed_rule_anchors": 7,
+    "ssl_minus_rule": 8,
+    "direct_minus_equal": 3,
+    "human_ratings": 0
+  }
+}

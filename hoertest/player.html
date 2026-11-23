@@ -21,9 +21,10 @@ nav{display:flex;justify-content:space-between;margin-top:1rem;gap:1rem}.scale{d
 let state, player, queue = Promise.resolve();
 const content=document.getElementById("content"), title=document.getElementById("title"), error=document.getElementById("error");
 function node(tag,text,parent){const e=document.createElement(tag);e.textContent=text;parent.append(e);return e}
-function submit(event){
+function submit(event,beforeSend){
   const data={page:state.page,...event};
   const request=queue.then(async()=>{
+    if(beforeSend)await beforeSend();
     const response=await fetch("event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});
     const next=await response.json();
     if(!response.ok)throw Error(next.error);
@@ -38,21 +39,28 @@ function navigate(kind,extra={}){stop();submit({kind,...extra}).then(draw).catch
 function button(parent,label,fn){const b=node("button",label,parent);b.type="button";b.onclick=fn;return b}
 function draw(){
   content.replaceChildren();
-  if(state.done){title.textContent="Bewertungen abgegeben";node("p","Vielen Dank. Bitte wenden Sie sich an die Versuchsleitung.",content);return}
+  if(state.done){title.textContent="Bewertungen abgegeben";node("p",state.session_code?
+    "Vielen Dank. Ihre Bewertungen wurden gespeichert. Sie können diese Seite schließen.":
+    "Vielen Dank. Bitte wenden Sie sich an die Versuchsleitung.",content);
+    if(state.session_code)node("p","Ihr Sitzungscode: "+state.session_code,content);return}
   if(state.page===-1){
     title.textContent="Musikalische Übergänge bewerten";
     node("p","Wie viel Erfahrung haben Sie in den folgenden Bereichen?",content);
     const form=node("form","",content), inputs={};
-    for(const [key,name] of Object.entries({music:"Musik",dj:"DJing",dance:"Tanz",hearing:"Bekannte Hörprobleme"})){
+    const questions={music:"Musik",dj:"DJing",dance:"Tanz",hearing:"Bekannte Hörprobleme"};
+    if(state.session_code)questions.setting="Wo hören Sie?";
+    for(const [key,name] of Object.entries(questions)){
       const label=node("label",name,form);label.className="profile";
       const s=node("select","",label); s.required=true;
       node("option","Bitte wählen",s).value="";
-      for(const value of key==="hearing"?["nein","ja","keine Angabe"]:["wenig","mittel","viel"]){node("option",value,s).value=value}
+      const choices=key==="setting"?["Institut","anderer Hörplatz"]:key==="hearing"?["nein","ja","keine Angabe"]:["wenig","mittel","viel"];
+      for(const value of choices){node("option",value,s).value=value}
+      if(state.session_code && key==="hearing")s.value="keine Angabe";
       inputs[key]=s;
     }
     const go=node("button","Zur Übung",form);go.className="primary";
     form.onsubmit=e=>{e.preventDefault();navigate("begin",{profile:Object.fromEntries(Object.entries(inputs).map(([k,s])=>[k,s.value]))})};
-    return;
+    if(state.session_code)node("p","Ihr Sitzungscode: "+state.session_code,content);return;
   }
   title.textContent=state.page===0?"Übung und Lautstärke":"Songpaar "+state.page+" von "+state.total;
   node("p",state.page===0?"Stellen Sie am Hörplatz eine angenehme Lautstärke ein und behalten Sie sie anschließend bei. Probieren Sie die Wiedergabe und die Bewertung aus. Diese Seite dient der Übung.":"Bewerten Sie die musikalische Gesamtqualität jedes Übergangs. Sie dürfen die Ausschnitte beliebig oft vergleichen und denselben Wert mehrfach vergeben.",content);
@@ -64,20 +72,39 @@ function draw(){
     const play=button(row,state.heard.includes(code)?"Erneut hören":"Anhören",async()=>{
       stop();document.querySelectorAll(".row button").forEach(b=>{b.textContent=state.heard.includes(b.dataset.code)?"Erneut hören":"Anhören"});
       const next=new Audio("audio/"+code);player=next;
-      next.onended=()=>{if(next!==player)return;submit({kind:"ended",code}).then(()=>{play.textContent="Erneut hören";sync()}).catch(()=>{})};
-      next.onerror=()=>{error.textContent="Die Audiodatei konnte nicht abgespielt werden."};
-      try{await submit({kind:"play",code});if(player===next){await next.play();play.textContent="Neu starten"}}catch(e){error.textContent=e.message}
+      const registered=submit({kind:"play",code}).then(()=>performance.now());
+      next.onended=()=>{
+        if(next!==player)return;
+        play.textContent="Wird gespeichert …";
+        // Playback starts within the user gesture. A delayed play acknowledgement can arrive after it starts.
+        // Queue the natural end now so later clicks cannot overtake it on the server.
+        submit({kind:"ended",code},async()=>{
+          const remaining=(await registered)+next.duration*1000-performance.now();
+          if(remaining>0)await new Promise(resolve=>setTimeout(resolve,remaining));
+        }).then(()=>{
+          if(player===next || player?.src!==next.src)play.textContent="Erneut hören";
+          sync();
+        }).catch(()=>{play.textContent="Erneut versuchen"});
+      };
+      next.onerror=()=>{if(player===next){play.textContent="Erneut versuchen";error.textContent="Der Ausschnitt konnte nicht geladen werden. Prüfen Sie die Verbindung und versuchen Sie es erneut."}};
+      play.textContent="Lädt …";
+      try{
+        const playback=next.play();
+        await Promise.all([registered,playback]);
+        if(player===next && !next.ended)play.textContent="Neu starten";
+      }catch(e){if(player===next){stop();play.textContent="Erneut versuchen";error.textContent=e.message}}
     });
     play.dataset.code=code;
     const label=document.createElement("label");row.append(label);
     const range=document.createElement("input");range.type="range";range.min=0;range.max=100;range.step=1;range.setAttribute("aria-label","Bewertung für Clip "+letter);label.append(range);
     const out=node("output","",row), current=state.ratings[code];
     if(current===null){row.classList.add("pending");range.value=50;out.textContent="–";range.setAttribute("aria-valuetext","noch offen")}else{range.value=current;out.textContent=current}
-    function rate(){const value=Number(range.value);row.classList.remove("pending");out.textContent=value;range.setAttribute("aria-valuetext",String(value));submit({kind:"rating",code,value}).then(sync).catch(()=>{})}
+    function rate(){const value=Number(range.value);row.classList.remove("pending");out.textContent=value;range.setAttribute("aria-valuetext",String(value));submit({kind:"rating",code,value}).then(sync).catch(()=>{draw();error.textContent="Bewertung nicht bestätigt. Bitte neu laden und den gespeicherten Stand prüfen."})}
     // Pointer release also accepts a deliberate selection of the midpoint.
     range.oninput=()=>{row.classList.remove("pending");out.textContent=range.value};
     range.onpointerup=rate;range.onkeyup=e=>{if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Home","End","PageUp","PageDown","Enter"," "].includes(e.key))rate()};
   }
+  node("p","Hören Sie jeden Clip einmal bis zum Ende und wählen Sie für jeden einen Wert. Danach können Sie weitergehen.",content);
   const nav=node("nav","",content);
   if(state.page>1)button(nav,"Zurück",()=>navigate("back"));else node("span","",nav);
   const next=button(nav,state.page===state.total?"Verbindlich abgeben":"Weiter",()=>navigate("next"));next.id="next";next.className="primary";sync();

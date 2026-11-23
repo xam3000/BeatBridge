@@ -1,0 +1,7 @@
+# Institutshörtest mit dem aktuellen Renderverfahren und festen Ankern
+
+Der Autor hat am 23. November 2026 vor der Erhebung festgelegt, dass alle Teilnehmenden dieselben 49 neu gerenderten Ausschnitte hören. Übergangsstellen, Tempoanpassung, Pegel und die sechs Vergleichsbedingungen je Songpaar folgen dem [aktuellen Renderprotokoll](../docs/EVALUATION_PROTOCOL_V2.md). Die sieben Paare stammen aus dem eingefrorenen P01-Bestand.
+
+Die aktuelle Pipeline rendert je Paar neun Master und prüft Dauer, Lautheit und Ausrichtung. Das Institutspaket übernimmt daraus die sechs regulären Übergänge und den harten Schnitt am aktuellen Regel-Cue. Der Regel-Cue ist für jeden Durchgang fest. Vergleiche mit harten Schnitten beziehen sich ausschließlich auf diese Stelle. Die anderen beiden Schnittvarianten gehören zum internen Renderbestand.
+
+Zwei separate Entwicklungsclips dienen der Übung. Es folgen sieben Paarseiten mit je sieben bewerteten Ausschnitten. Paarpositionen werden über sieben begonnene Sitzungen ausgeglichen, die Clippositionen je Sitzung neu gemischt. Eine bewusste Einzelwertung von 0 bis 100 und mindestens eine vollständige Wiedergabe je Clip sind für die Abgabe erforderlich. Die Teilnahmehinweise, Hörplatzangaben und deskriptiven Kontraste entsprechen der [Webdurchführung](PROTOKOLL.md). Die Auswertung weist die Materialfassung, die Zahl der abgegebenen Sitzungen und die festen Schnittanker gesondert aus.

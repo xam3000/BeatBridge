@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="de">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hörtest · Musikalische Übergänge</title>
+<style>
+:root{font:17px/1.55 "Segoe UI",sans-serif;color:#192b34;background:#f4f6f5}
+*{box-sizing:border-box}main{max-width:44rem;margin:5vh auto;padding:clamp(1.2rem,5vw,3rem);background:white}
+h1{font-size:clamp(1.7rem,5vw,2.4rem);line-height:1.15}h2{font-size:1.15rem;margin:1.5rem 0 .25rem}
+p{margin:.6rem 0}label{display:block;margin:1.25rem 0}button{font:inherit;color:white;background:#20585a;
+border:0;border-radius:.3rem;padding:.65rem 1rem;cursor:pointer}a{color:#20585a}
+:focus-visible{outline:3px solid #3583a6;outline-offset:3px}
+</style>
+<main>
+<h1>Musikalische Übergänge bewerten</h1>
+<p>Wie gut klingt der Übergang von einem Song in den nächsten? $scope Für jedes Paar vergleichen Sie sieben Ausschnitte und vergeben jeweils 0 bis 100 Punkte. Gleiche Bewertungen sind möglich.</p>
+<h2>Ihr Hörplatz</h2>
+<p>${duration}Verwenden Sie Stereo-Kopfhörer an einem ruhigen Ort und stellen Sie in der Übung eine angenehme Lautstärke ein. Behalten Sie Gerät und Pegel danach bei. Sie können zwischen den Paaren pausieren.</p>
+<h2>Ihre Teilnahme</h2>
+<p>Die Teilnahme ist freiwillig. Nehmen Sie bitte einmal und alleine teil. Bewahren Sie den Link im eingeladenen Kreis auf. Ihre Bewertungen, Wiedergaben, Zeitpunkte und Angaben zur Hörerfahrung und zum Hörplatz werden unter einem zufälligen Sitzungscode gespeichert. Bei der Frage zum Hören können Sie „keine Angabe“ wählen.</p>
+<p>Sie können jederzeit aufhören. Gespeicherte Eingaben bleiben erhalten. Für sieben Tage können Sie eine begonnene Sitzung über diesen Link im selben Browser mit aktivierten Cookies fortsetzen. Mit der Abgabe schließen Sie Ihre Bewertungen ab.</p>
+$contact
+$resume
+<form method="post" action="start">
+<input type="hidden" name="form" value="$nonce">
+<label><input type="checkbox" name="participate" value="yes" required> Ich habe die Hinweise gelesen und möchte teilnehmen.</label>
+<button type="submit">Neue Sitzung starten</button>
+</form>
+</main></html>

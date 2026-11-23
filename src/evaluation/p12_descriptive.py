@@ -9,6 +9,7 @@ import numpy as np
 from scipy.stats import rankdata
 
 from src.evaluation.p11_session import FINAL_PAIRS, SELECTORS, VERSION, digest, layout, neutral_check, public_layout, read
+from hoertest.session import WEB_VERSION, web_protocol
 from src.features.p07_mert import file_sha256
 
 
@@ -36,7 +37,7 @@ def read_neutral(originals):
         if path.name != name or file_sha256(path) != claimed:
             raise ValueError("Sealed original checksum differs")
         record = read(path)
-        if record["version"] != VERSION or name != record["sid"] + ".json" or not record["state"]["finished"]:
+        if record["version"] not in (VERSION, WEB_VERSION) or name != record["sid"] + ".json" or not record["state"]["finished"]:
             raise ValueError("Invalid or unfinished original")
         records.append(record)
     audit = originals / "neutral_check.json"
@@ -54,7 +55,9 @@ def decode(records, key):
         if people[person] != 1 or ordinals[r["ordinal"]] != 1:
             excluded.append(dict(person=person, reason="duplicate participant or seat"))
             continue
-        mapping = layout(key, r["ordinal"])
+        mapping = layout(key, r["ordinal"], r["sid"])
+        if r["version"] != key["version"] or state.get("procedure_sha256") != key.get("procedure_sha256"):
+            raise ValueError("Listening procedure differs from the saved session")
         if (state["split"] != key["split"] or state["protocol_sha256"] != key["protocol_sha256"]
                 or r["key_hash"] != digest(mapping) or public_layout(mapping) != r["pages"]):
             raise ValueError("Wrong assignment, protocol, split or clip SHA for sealed session")
@@ -113,8 +116,13 @@ def anchor_report(pairs, anchors):
 def analyse(originals, key_path, expected_split):
     records, incomplete = read_neutral(originals)
     key = read(key_path)
-    if key["split"] != expected_split or key["version"] != VERSION:
+    if key["split"] != expected_split or key["version"] not in (VERSION, WEB_VERSION):
         raise ValueError("Study split or application version differs")
+    if key["version"] == WEB_VERSION and key.get("procedure_sha256") != file_sha256(web_protocol(key)):
+        raise ValueError("Institute study protocol differs")
+    sealed_key = read(originals / "receipt.json").get("study_key_sha256")
+    if (sealed_key or key["version"] == WEB_VERSION) and sealed_key != file_sha256(key_path):
+        raise ValueError("Institute study key differs from the sealed originals")
     if expected_split == "final":
         groups = key["groups"]
         if (set(key["panels"]) != FINAL_PAIRS or groups.keys() != FINAL_PAIRS
@@ -124,11 +132,19 @@ def analyse(originals, key_path, expected_split):
     data, anchors, excluded = decode(records, key)
     counts = Counter(r["person"] for r in records)
     profiles = {r["person"]:r["state"]["profile"] for r in records if counts[r["person"]]==1}
-    base = dict(version=VERSION, split=expected_split, analysis="descriptive", profiles=profiles,
+    base = dict(version=key["version"], split=expected_split, analysis="descriptive", profiles=profiles,
                 completed_sessions=len(records), incomplete_sessions=incomplete,
                 available_panels=sum(len(r["pages"])-1 for r in records), valid_panels=len(data),
                 exclusions=excluded, anchors=anchor_report(key["panels"], anchors),
                 raw_receipt_sha256=file_sha256(originals / "receipt.json"))
+    if key["version"] == WEB_VERSION:
+        positions = {pair: [0] * len(key["panels"]) for pair in key["panels"]}
+        for record in records:
+            mapping = layout(key, record["ordinal"], record["sid"])
+            for position, page in enumerate(record["pages"][1:]):
+                positions[mapping[page[0]["code"]]["pair"]][position] += 1
+        base.update(material=key.get("material", "v2"), started_sessions=len(records) + len(incomplete), completed_pair_positions=positions,
+                    procedure_sha256=key["procedure_sha256"])
     if not data:
         return dict(**base, independent_pairs=0, people=0, pair_weighted_effects=None, pairs=[])
     pairs, means = pair_means(data)

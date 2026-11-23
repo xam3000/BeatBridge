@@ -7,6 +7,7 @@ Der aktuelle, verifizierte Projektstand und die weitere Dokumentation liegen unt
 - [Status und nächste Schritte](./docs/STATUS.md)
 - [Projekt-Gesamtübersicht und Forschungsrahmen](./docs/Projekt-Gesamtuebersicht.md)
 - [CLI verwenden](./docs/CLI.md)
+- [Hörtest für die Institutswebseite einrichten und ausprobieren](./hoertest/README.md)
 - [Kandidatenvertrag](./docs/CANDIDATE_PROTOCOL.md)
 - [Batch-Rendering](./docs/BATCH_RENDERING_PROTOCOL.md)
 - [Metrik für gerenderte Übergänge](./docs/RENDERED_TRANSITION_METRIC_PROTOCOL.md)
