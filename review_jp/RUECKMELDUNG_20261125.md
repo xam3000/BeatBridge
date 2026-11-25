@@ -1,6 +1,8 @@
-# Rückmeldung zur Umsetzung vom 23. November
+# Rückmeldung vom 25. November zur Umsetzung vom 23. November
 
-Stand: 23. November 2026, Commit `69a5c59` (deine Commits `e61ae2d` und `69a5c59`). Bezug: [Rückmeldung vom 22.11.](./RUECKMELDUNG_20261122.md) und dein [Umsetzungsdokument](../docs/REVIEW_JP_UMSETZUNG.md). Einstieg in alle Review-Dokumente: [README](./README.md).
+Rückmeldung vom 25. November 2026. Geprüfter Stand: Commit `69a5c59` vom 23. November (deine Commits `e61ae2d` und `69a5c59`). Bezug: [Rückmeldung vom 22.11.](./RUECKMELDUNG_20261122.md) und dein [Umsetzungsdokument](../docs/REVIEW_JP_UMSETZUNG.md). Einstieg in alle Review-Dokumente: [README](./README.md).
+
+Verlauf: erste Fassung am 23.11. geschrieben, am 25.11. übergeben. Am 25.11. kam die ausführliche Fassung von Abschnitt 9 dazu: die Schritte vor dem Hörtest und was außerdem vor der ersten Einladung feststehen muss. An den Befunden hat sich dabei nichts geändert. Die Datei hieß bis zum 25.11. `RUECKMELDUNG_20261123.md`.
 
 ## 1. Kurzfassung
 
@@ -195,7 +197,7 @@ Dazu ein Punkt in der Doku: `docs/GESAMTAUDIT_20261123.md` steht auf dem alten C
 
 ## 9. Reihenfolge
 
-Vor der ersten Einladung:
+### Vor der ersten Einladung
 
 | Nr. | Schritt | Fertig, wenn |
 |---|---|---|
@@ -203,7 +205,55 @@ Vor der ersten Einladung:
 | 2 | Tempo-Hörprobe | Protokoll mit Urteil je Clip in `docs/Bemerkungen.md` |
 | 3 | Probelauf mit einer außenstehenden Person über den echten Zugang | Dauer, Ladezeit und Verständnisprobleme notiert |
 
-Für die Thesis, unabhängig vom Hörtest:
+### Schritt 1 im Einzelnen: Rotation des harten Schnitts
+
+- **Was.** Pro Songpaar gibt es drei harte Schnitte, je einen an der Stelle der gelernten Metrik, der Regel und des Zufalls. Jede Person hört pro Paar genau einen davon. Welche Stelle es ist, wechselt reihum über die Personen. Bisher hören alle den harten Schnitt nur an der Regel-Stelle.
+- **Warum.** Mit festem Anker ist die Regel-Stelle dreimal zu hören und die anderen zweimal, eine Fassung davon ist absichtlich roh. Das kann die Bewertung der Regel-Stelle verschieben und trifft den Hauptvergleich gelernte Metrik gegen Regel. Mit Rotation trifft derselbe Effekt alle drei Stellen gleich.
+- **Wie.** Das Paket in einem neuen Zielordner vorbereiten, mit dem Befehl aus `hoertest/README.md:20`, aber ohne den Schalter `--fixed-rule-anchors`. Neu gerendert wird nichts; die 63 Masterdateien liegen vor und müssen alle auf dem Server liegen. Für die Sitzungen gilt dann `hoertest/PROTOKOLL.md` statt `hoertest/PROTOKOLL_FESTE_ANKER.md` (`hoertest/session.py:21-24`).
+- **Danach.** Denselben technischen Nachweis wie `run03_49_verified.json` für das neue Paket erzeugen: mindestens sechs Probesitzungen nachspielen, prüfen, dass jeder harte Schnitt je Paar einmal pro Dreierblock vorkommt, und die Prüfsumme des Wiedergabesatzes festhalten.
+- **Doku.** Statusdokument, Umsetzungsdokument und die README des Hörtests nennen das neue Paket. Das Protokoll der festen Anker wird als nicht verwendet gekennzeichnet.
+
+### Schritt 2 im Einzelnen: Tempo-Hörprobe
+
+- **Was.** Sechs Entwicklungsclips liegen bereit: zwei Songpaare, je derselbe Übergang in drei Fassungen. Das sind die alte Angleichung über die globale BPM, die neue Angleichung mit einem Faktor aus der Regression und die Streckung pro Schlag aus dem früheren Studienrender (`docs/masterarbeit/REVIEW_JP_TEMPO_20261123.md`).
+- **Warum.** Alle Clips des Hörtests nutzen die neue Angleichung. Dass sie besser klingt als die alte, zeigt bisher keine Messung, weil die Fehlertabelle an verrauschten Marken misst (Abschnitt 5). Die Hörprobe ist der einzige Beleg. Ein Problem würde den ganzen Stimulussatz treffen und ließe sich nach dem Start nicht mehr beheben.
+- **Wie.** Die drei Fassungen je Paar über Kopfhörer und mehrfach hören, ohne die Zuordnung zu kennen. Dazu die Dateien von jemand anderem umbenennen lassen oder per Skript mischen. Je Clip notieren:
+  - doppelte Kick-Anschläge und an welcher Stelle,
+  - hörbare Nahtstellen oder Artefakte der Streckung,
+  - die Rangfolge der drei Fassungen.
+
+  Erst danach die Zuordnung auflösen. Besser hören zwei Personen; die Betreuung kann mithören, weil es Entwicklungsmaterial ist.
+- **Entscheidungsregel, vorab.** Die neue Angleichung muss in beiden Paaren mindestens so gut sein wie die alte. Ist sie es nicht, wird Run03 nicht verwendet, und die Ursache wird vor einem Neurender geklärt.
+
+### Schritt 3 im Einzelnen: Probelauf
+
+- **Was.** Eine Person, die Projekt und Design nicht kennt, durchläuft den Test einmal vollständig über den echten Zugang (Institutsserver, HTTPS, Gruppenschutz) an ihrem eigenen Gerät. Sie hört Entwicklungsmaterial, ihre Bewertungen zählen nicht.
+- **Warum.** Der Probelauf prüft, was kein automatischer Test prüft: ob die Aufgabe verstanden wird, wie lange es wirklich dauert und wie lange das Laden braucht. Ein Durchgang lädt nach deinem Methodenreview rund 246 MB unkomprimiertes Audio **[B]**.
+- **Wie.** Das Paket `pilot01` reicht für die Bedienung. Für die Dauer ist ein Pilot mit mehreren Entwicklungspaaren besser, sonst wird von einem Paar auf sieben hochgerechnet. Zu notieren sind:
+  - Zeit je Paarseite und Ladezeit je Clip,
+  - was an Anleitung, Regler oder Wiedergabe unklar war,
+  - ob Unterbrechen und Fortsetzen im selben Browser klappt,
+  - ob die Abgabe als abgeschlossen erkannt wird.
+
+  Zusätzlich von außerhalb der eingeladenen Gruppe prüfen, dass weder die Startseite noch eine Audio-Adresse ohne Anmeldung erreichbar ist.
+- **Danach.** Nötige Änderungen an Anleitung und Einladung einarbeiten. Die Pilotperson nimmt an der Erhebung nicht teil.
+
+### Was außerdem vor der ersten Einladung feststehen muss
+
+Die drei Schritte reichen nicht ganz. Diese Punkte kosten wenig, lassen sich nach dem Start aber nicht nachholen:
+
+| | Punkt | Fertig, wenn |
+|---|---|---|
+| A | **Entscheidung der Betreuung zum Hören von zu Hause** (Abschnitt 10). Protokoll Version 2 nennt noch den betreuten Hörplatz mit demselben Kopfhörer. | Entscheidung in Abschnitt 10 eingetragen; ein datierter Satz in Version 2 sagt, welche Erhebungsart gilt |
+| B | **Technische Hörkontrolle der Studienclips.** Pegel, Länge und Zeitfehler sind automatisch geprüft, angehört hat die Clips niemand. Die Versuchsleitung hört alle 63 Masterdateien einmal durch, nur auf Fehler: Knackser, Aussetzer, falscher Einsatz, abgeschnittenes Ende. Sie bewertet ohnehin nicht mit. | Notiz mit Datum; ein fehlerhaftes Paar wird nach Protokoll zurückgestellt |
+| C | **Ende der Erhebung vorab festlegen:** ein Datum oder eine Zahl abgeschlossener Sitzungen (Ziel 6 bis 9, möglichst ein Vielfaches von 3). Bis dahin keine Zwischenauswertung. Das verhindert, dass nach einem Blick auf die Zahlen weiter gesammelt oder aufgehört wird. | Satz im Protokoll |
+| D | **Einladungstext:** einmal teilnehmen, allein, mit Kopfhörer, in ruhiger Umgebung, Lautstärke nach der Übung nicht mehr ändern, nicht mit anderen über die Clips sprechen, 30 bis 40 Minuten. Kein Hinweis auf die Verfahren. Autor und Betreuung nehmen nicht teil. | Text liegt im Repository |
+| E | **Betrieb:** Datenordner außerhalb des Webverzeichnisses, getrennte Ordner für Probe und Erhebung, Sicherung der Antwortdatenbank, Aufbewahrung der Daten mit dem Institut geklärt. So steht es in deiner README; es muss beim Aufsetzen bestätigt werden. | kurze Notiz nach dem Aufsetzen |
+| F | **Stand einfrieren.** Paket, Nachweis, Protokolle und Einladung sind committet, bevor die erste Einladung hinausgeht. Danach ändert sich an Anwendung, Paket und Auswertung nichts mehr. | Commit vor der ersten Sitzung |
+
+Nicht vor dem Hörtest nötig sind die Schritte 4 bis 12 unten. Sie ändern nichts an den Clips.
+
+### Für die Thesis, unabhängig vom Hörtest
 
 | Nr. | Schritt | Fertig, wenn |
 |---|---|---|

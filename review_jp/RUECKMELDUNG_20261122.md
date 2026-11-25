@@ -1,6 +1,6 @@
 # Rückmeldung zum Umsetzungsstand
 
-> Momentaufnahme vom 22. und 23. November. Den Stand der drei Befunde nach deiner Umsetzung führt die [Rückmeldung vom 23.11.](./RUECKMELDUNG_20261123.md). Weiter gelten hier Abschnitt 8 (Einordnung Pflicht oder Benennen), Abschnitt 11 (zwei Beat-Tracker) und Abschnitt 12 (Design des Hörversuchs).
+> Momentaufnahme vom 22. und 23. November. Den Stand der drei Befunde nach deiner Umsetzung führt die [Rückmeldung vom 25.11.](./RUECKMELDUNG_20261125.md). Weiter gelten hier Abschnitt 8 (Einordnung Pflicht oder Benennen), Abschnitt 11 (zwei Beat-Tracker) und Abschnitt 12 (Design des Hörversuchs).
 
 Stand: 22. November 2026, Commit `4651e51`. Bezug: [Aktionsplan vom 18.11.](./ZUSAMMENFASSUNG_UND_AKTIONSPLAN.md) und dein [Umsetzungsdokument](../docs/REVIEW_JP_UMSETZUNG.md). Einstieg in alle Review-Dokumente: [README](./README.md).
 

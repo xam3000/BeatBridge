@@ -2,13 +2,13 @@
 
 Dieser Ordner enthält die Unterlagen des Betreuer-Reviews: Befunde, Plan, Rückmeldungen, Prüfskripte und deren Ergebnisse. Diese Seite ist der Einstieg und wird bei jeder neuen Rückmeldung aktualisiert.
 
-Letzte Aktualisierung: 23. November 2026, Commit `69a5c59`.
+Letzte Aktualisierung: 25. November 2026, geprüfter Commit `69a5c59`.
 
 ## Was jetzt gilt
 
 | Frage | Dokument |
 |---|---|
-| Wo stehen wir, und was ist als Nächstes zu tun? | [RUECKMELDUNG_20261123.md](./RUECKMELDUNG_20261123.md) |
+| Wo stehen wir, und was ist als Nächstes zu tun? | [RUECKMELDUNG_20261125.md](./RUECKMELDUNG_20261125.md) |
 | Was muss umgesetzt werden, was reicht zu benennen? Wie soll der Hörversuch aufgebaut sein? | [RUECKMELDUNG_20261122.md](./RUECKMELDUNG_20261122.md), Abschnitte 8 und 12 |
 | Was ist der Plan, und warum? | [ZUSAMMENFASSUNG_UND_AKTIONSPLAN.md](./ZUSAMMENFASSUNG_UND_AKTIONSPLAN.md) |
 | Wie weit ist die Umsetzung im Einzelnen? | [`docs/REVIEW_JP_UMSETZUNG.md`](../docs/REVIEW_JP_UMSETZUNG.md), geführt vom Autor |
@@ -23,7 +23,7 @@ Wer neu einsteigt, liest zuerst die neueste Rückmeldung, dann den Aktionsplan. 
 | 18.11.2026 | [EINSCHAETZUNG.md](./EINSCHAETZUNG.md) | `56b982a` | Novelty, Gehalt, Angriffspunkte | Momentaufnahme. Abschnitt 4 durch den Aktionsplan abgelöst. |
 | 18.11.2026 | [ZUSAMMENFASSUNG_UND_AKTIONSPLAN.md](./ZUSAMMENFASSUNG_UND_AKTIONSPLAN.md) | `56b982a` | Kritikpunkte, zehn Grundsätze, Plan in Phasen | Gilt. Reihenfolge durch die Rückmeldung angepasst. |
 | 22.11.2026 | [RUECKMELDUNG_20261122.md](./RUECKMELDUNG_20261122.md) | `4651e51` | Umsetzungsstand, drei Befunde vor dem Hörversuch, nächste Schritte | Momentaufnahme. Am 23.11. ergänzt: Erklärungen, Entscheidung zur Paarzahl, Abschnitt 11 zu den Beat-Trackern, Abschnitt 12 zum Design des Hörversuchs, Einordnung Pflicht oder Benennen in Abschnitt 8. Die Abschnitte 8, 11 und 12 gelten weiter. |
-| 23.11.2026 | [RUECKMELDUNG_20261123.md](./RUECKMELDUNG_20261123.md) | `69a5c59` | Prüfung der Umsetzung: MERT, Tempo, Hörtest-Anwendung, Mashup-Export; was vor der Erhebung offen ist | Aktuell. |
+| 25.11.2026 | [RUECKMELDUNG_20261125.md](./RUECKMELDUNG_20261125.md) | `69a5c59` | Prüfung der Umsetzung: MERT, Tempo, Hörtest-Anwendung, Mashup-Export; was vor der Erhebung offen ist, mit Checkliste in Abschnitt 9 | Aktuell. Erste Fassung vom 23.11., hieß bis zum 25.11. `RUECKMELDUNG_20261123.md`. |
 | laufend | [TESTLAEUFE.md](./TESTLAEUFE.md) | je Lauf | Protokoll aller im Review ausgeführten Läufe | Wird fortgeschrieben. |
 
 ## Ordner
@@ -55,5 +55,5 @@ Alle Skripte starten aus dem Repo-Root und schreiben nur nach `review_jp/`.
 
 1. Datierte Dokumente sind Momentaufnahmen und werden inhaltlich nicht umgeschrieben. Jedes trägt oben eine Statuszeile, die sagt, was noch gilt und wo der aktuelle Stand steht.
 2. Eine neue Rückmeldung bekommt eine eigene Datei `RUECKMELDUNG_<Datum>.md`. Dabei werden diese Seite und die Statuszeile der vorigen Rückmeldung angepasst.
-3. Dateien werden nicht verschoben oder umbenannt. Ledger, Umsetzungsdokument und Prompts des Autors unter `docs/` verweisen auf diese Pfade.
+3. Dateien werden nicht verschoben oder umbenannt. Ledger, Umsetzungsdokument und Prompts des Autors unter `docs/` verweisen auf diese Pfade. Einzige Ausnahme: `RUECKMELDUNG_20261125.md` wurde am Tag der Übergabe umbenannt, bevor ein Dokument des Autors darauf verwies.
 4. Der Umsetzungsstand wird nicht hier geführt, sondern vom Autor in `docs/REVIEW_JP_UMSETZUNG.md`. Entscheidungen der Betreuung werden in der jeweils aktuellen Rückmeldung nachgetragen.
