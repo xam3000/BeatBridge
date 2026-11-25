@@ -1,0 +1,6 @@
+=============================== warnings summary ===============================
+tests/test_mashup.py::test_three_tracks_match_every_expected_pcm_sample[1]
+tests/test_mashup.py::test_three_tracks_match_every_expected_pcm_sample[1]
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+15 passed, 2 warnings in 15.49s
+pytest exit 0

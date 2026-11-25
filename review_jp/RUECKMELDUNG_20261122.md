@@ -1,5 +1,7 @@
 # Rückmeldung zum Umsetzungsstand
 
+> Momentaufnahme vom 22. und 23. November. Den Stand der drei Befunde nach deiner Umsetzung führt die [Rückmeldung vom 23.11.](./RUECKMELDUNG_20261123.md). Weiter gelten hier Abschnitt 8 (Einordnung Pflicht oder Benennen), Abschnitt 11 (zwei Beat-Tracker) und Abschnitt 12 (Design des Hörversuchs).
+
 Stand: 22. November 2026, Commit `4651e51`. Bezug: [Aktionsplan vom 18.11.](./ZUSAMMENFASSUNG_UND_AKTIONSPLAN.md) und dein [Umsetzungsdokument](../docs/REVIEW_JP_UMSETZUNG.md). Einstieg in alle Review-Dokumente: [README](./README.md).
 
 Ergänzt am 23. November 2026: einführende Erklärungen in 4.1, 4.2 und Befund 1. Korrigiert am selben Tag: In Befund 3 sind die Punkte Download und Seed zurückgenommen, weil deine Durchführungsanleitung sie abdeckt. Alle anderen Befunde und Zahlen sind unverändert. Ebenfalls am 23.11. eingetragen: die Entscheidung der Betreuung zur Paarzahl (Befund 3, Abschnitt 9) und Abschnitt 11. Dazu Abschnitt 12 mit dem Design des Hörversuchs als lokale Web-Anwendung. Außerdem in 4.1 und Abschnitt 8 die Einordnung, was umgesetzt werden muss und was zu benennen reicht.

@@ -1,0 +1,30 @@
+E       ModuleNotFoundError: No module named 'PySide6'
+
+tests/test_mashup.py:95: ModuleNotFoundError
+_______________ test_gui_exports_current_snapshot_through_worker _______________
+
+tmp_path = PosixPath('/private/tmp/claude-501/-Users-jp-dev-Eberhardt-Master-Thesis-BeatBridge/baefeb3f-9e27-4b70-b0cb-08d7d67cb9ce/scratchpad/pytest_tmp/test_gui_exports_current_snaps0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1236e59a0>
+
+    def test_gui_exports_current_snapshot_through_worker(tmp_path, monkeypatch):
+        monkeypatch.setenv("QT_QPA_PLATFORM", "offscreen")
+>       from PySide6.QtWidgets import QApplication
+E       ModuleNotFoundError: No module named 'PySide6'
+
+tests/test_mashup.py:132: ModuleNotFoundError
+=============================== warnings summary ===============================
+tests/test_batch_render.py::test_batch_render_exports_wavs_and_a_traceable_manifest
+
+tests/test_batch_render.py::test_batch_render_exports_wavs_and_a_traceable_manifest
+
+
+
+
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_baseline_lengths.py::test_gui_fixed_model_locks_length - Mo...
+FAILED tests/test_mashup.py::test_gui_reorders_cues_ranges_settings_and_sections_by_track_identity
+FAILED tests/test_mashup.py::test_gui_exports_current_snapshot_through_worker
+3 failed, 423 passed, 6 skipped, 6 warnings in 42.24s
+exit 1

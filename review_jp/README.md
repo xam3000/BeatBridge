@@ -2,17 +2,18 @@
 
 Dieser Ordner enthält die Unterlagen des Betreuer-Reviews: Befunde, Plan, Rückmeldungen, Prüfskripte und deren Ergebnisse. Diese Seite ist der Einstieg und wird bei jeder neuen Rückmeldung aktualisiert.
 
-Letzte Aktualisierung: 22. November 2026, Commit `4651e51`.
+Letzte Aktualisierung: 23. November 2026, Commit `69a5c59`.
 
 ## Was jetzt gilt
 
 | Frage | Dokument |
 |---|---|
-| Wo stehen wir, und was ist als Nächstes zu tun? | [RUECKMELDUNG_20261122.md](./RUECKMELDUNG_20261122.md) |
+| Wo stehen wir, und was ist als Nächstes zu tun? | [RUECKMELDUNG_20261123.md](./RUECKMELDUNG_20261123.md) |
+| Was muss umgesetzt werden, was reicht zu benennen? Wie soll der Hörversuch aufgebaut sein? | [RUECKMELDUNG_20261122.md](./RUECKMELDUNG_20261122.md), Abschnitte 8 und 12 |
 | Was ist der Plan, und warum? | [ZUSAMMENFASSUNG_UND_AKTIONSPLAN.md](./ZUSAMMENFASSUNG_UND_AKTIONSPLAN.md) |
 | Wie weit ist die Umsetzung im Einzelnen? | [`docs/REVIEW_JP_UMSETZUNG.md`](../docs/REVIEW_JP_UMSETZUNG.md), geführt vom Autor |
 
-Wer neu einsteigt, liest zuerst die Rückmeldung, dann den Aktionsplan. Die beiden älteren Dokumente braucht man nur für Belege und Herleitung.
+Wer neu einsteigt, liest zuerst die neueste Rückmeldung, dann den Aktionsplan. Die beiden älteren Dokumente braucht man nur für Belege und Herleitung.
 
 ## Alle Dokumente
 
@@ -21,7 +22,8 @@ Wer neu einsteigt, liest zuerst die Rückmeldung, dann den Aktionsplan. Die beid
 | 13.11.2026 | [CODE_REVIEW.md](./CODE_REVIEW.md) | `56b982a` | Code-Review mit Datenfluss, Messungen, Fehlerliste | Momentaufnahme. Stand jedes Befunds in der Rückmeldung, Abschnitt 7. |
 | 18.11.2026 | [EINSCHAETZUNG.md](./EINSCHAETZUNG.md) | `56b982a` | Novelty, Gehalt, Angriffspunkte | Momentaufnahme. Abschnitt 4 durch den Aktionsplan abgelöst. |
 | 18.11.2026 | [ZUSAMMENFASSUNG_UND_AKTIONSPLAN.md](./ZUSAMMENFASSUNG_UND_AKTIONSPLAN.md) | `56b982a` | Kritikpunkte, zehn Grundsätze, Plan in Phasen | Gilt. Reihenfolge durch die Rückmeldung angepasst. |
-| 22.11.2026 | [RUECKMELDUNG_20261122.md](./RUECKMELDUNG_20261122.md) | `4651e51` | Umsetzungsstand, drei Befunde vor dem Hörversuch, nächste Schritte | Aktuell. Am 23.11. ergänzt: Erklärungen, Entscheidung zur Paarzahl, Abschnitt 11 zu den Beat-Trackern, Abschnitt 12 zum Design des Hörversuchs, Einordnung Pflicht oder Benennen in Abschnitt 8. |
+| 22.11.2026 | [RUECKMELDUNG_20261122.md](./RUECKMELDUNG_20261122.md) | `4651e51` | Umsetzungsstand, drei Befunde vor dem Hörversuch, nächste Schritte | Momentaufnahme. Am 23.11. ergänzt: Erklärungen, Entscheidung zur Paarzahl, Abschnitt 11 zu den Beat-Trackern, Abschnitt 12 zum Design des Hörversuchs, Einordnung Pflicht oder Benennen in Abschnitt 8. Die Abschnitte 8, 11 und 12 gelten weiter. |
+| 23.11.2026 | [RUECKMELDUNG_20261123.md](./RUECKMELDUNG_20261123.md) | `69a5c59` | Prüfung der Umsetzung: MERT, Tempo, Hörtest-Anwendung, Mashup-Export; was vor der Erhebung offen ist | Aktuell. |
 | laufend | [TESTLAEUFE.md](./TESTLAEUFE.md) | je Lauf | Protokoll aller im Review ausgeführten Läufe | Wird fortgeschrieben. |
 
 ## Ordner
@@ -32,7 +34,7 @@ Alle Skripte starten aus dem Repo-Root und schreiben nur nach `review_jp/`.
 
 | Skript | Wozu | Braucht | Status |
 |---|---|---|---|
-| `mert_kontext_check.py` | Schichtet die Validation-Ergebnisse der Metrik nach geteiltem MERT-Kontext (Rückmeldung, Befund 1) | P07-, P08- und P09-Artefakte unter `output/review_jp_20261118/` | Neu am 22.11. Selbsttest bestanden, mit echten Daten ungetestet. |
+| `mert_kontext_check.py` | Schichtet die Validation-Ergebnisse der Metrik nach geteiltem MERT-Kontext (Rückmeldung, Befund 1) | P07-, P08- und P09-Artefakte unter `output/review_jp_20261118/` | Vom Autor am 23.11. mit echten Daten ausgeführt; Ergebnis in `results/mert_kontext_check.json`. |
 | `common.py` | Gemeinsame Helfer und Pfade der geprüften Läufe (`RUNS`) | – | Vom Autor am 19.11. an den neuen Modellvertrag angepasst. |
 | `b1_b2_model_response_and_loss.py` | Kurven, Verlust-Zerlegung, Vertauschungstest für feste Controller | Checkpoints, Datensatz, Waveform-Cache | Stand 13.11. Für die September-Läufe durch `src/evaluation/controller_*.py` des Autors ergänzt. |
 | `b2b_audio_difference.py` | Audio-Unterschied Modell gegen Equal Power | wie oben | Stand 13.11. |
