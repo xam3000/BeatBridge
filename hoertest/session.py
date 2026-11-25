@@ -11,6 +11,8 @@ import sqlite3
 import string
 import time
 
+from .procedure import (PROTOCOL as WINDOW_PROTOCOL, PROFILE_VERSION, WINDOW_FILE, assigned_windows,
+                        load_windows, merge_ranges, questions, valid_profile, window_complete)
 
 VERSION = "p11-local-v2.1"
 WEB_VERSION = "p11-institut-v1"
@@ -21,6 +23,23 @@ SELECTORS = ("ssl", "rule", "random")
 LISTENING_SETTINGS = ("Institut", "anderer Hörplatz")
 RATING_SCALE = (1, 7)
 RATING_PROTOCOL = Path(__file__).with_name("BEWERTUNG_20261125.md")
+PLAYBACK_PROTOCOL = Path(__file__).with_name("BEDIENUNG_20261125.md")
+COMMENT_LIMIT = 2000
+
+
+def playback_mode(state):
+    mode = state.get("playback_mode", "complete")
+    protocol = {"seek": PLAYBACK_PROTOCOL, "window": WINDOW_PROTOCOL}.get(mode)
+    if mode not in ("complete", "seek", "window") or (protocol and
+            state.get("playback_protocol_sha256") != file_sha256(protocol)):
+        raise ValueError("Playback procedure differs from the saved session")
+    return mode
+
+
+def playback_complete(state, code):
+    mode = playback_mode(state)
+    return state["plays"].get(code, 0) > 0 and (window_complete(state, code) if mode == "window"
+                                              else mode == "seek" or code in state["heard"])
 
 
 def rating_scale(state):
@@ -144,8 +163,13 @@ class Session:
                     if file_sha256(self.root / asset["path"]) != asset["sha256"]:
                         raise ValueError("Assigned audio changed")
             if row is None:
+                windows = load_windows(self.root, self.key, digest(self.key))
                 state = dict(page=-1, split=self.key["split"], protocol_sha256=self.key["protocol_sha256"],
                              rating_scale=RATING_SCALE, rating_protocol_sha256=file_sha256(RATING_PROTOCOL),
+                             playback_mode="window", playback_protocol_sha256=file_sha256(WINDOW_PROTOCOL), comments={},
+                             profile_version=PROFILE_VERSION, profile_protocol_sha256=file_sha256(WINDOW_PROTOCOL),
+                             window_manifest_sha256=file_sha256(self.root / WINDOW_FILE),
+                             listening_windows=assigned_windows(windows, self.mapping), listened={},
                              ratings={}, plays={}, heard=[], profile=None, finished=None,
                              entered=utc(), started=utc(), page_seconds={}, active=None)
                 if self.online:
@@ -164,6 +188,13 @@ class Session:
         return dict(page=page, total=len(self.pages)-1, done=bool(state["finished"]), codes=codes,
                     **({"session_code": self.person} if self.online else {}),
                     rating_scale=rating_scale(state), ratings={c:state["ratings"].get(c) for c in codes},
+                    playback_mode=playback_mode(state), ready=[c for c in codes if playback_complete(state, c)],
+                    profile_version=state.get("profile_version", 1),
+                    profile_questions=questions(state.get("profile_version", 1), self.online) if page == -1 else [],
+                    windows={c:[v / 44100 for v in state["listening_windows"][c]] for c in codes}
+                            if playback_mode(state) == "window" else {},
+                    durations={c:self.mapping[c]["frames"] / 44100 for c in codes},
+                    comment=state.get("comments", {}).get(str(page), ""), comment_limit=COMMENT_LIMIT,
                     heard=[c for c in codes if c in state["heard"]])
 
     def event(self, event):
@@ -180,17 +211,45 @@ class Session:
             code = event.get("code")
             codes = [c["code"] for c in self.pages[page]] if page >= 0 else []
             log = dict(page=page, kind=kind)
-            if kind in ("play", "ended", "rating"):
+            if kind in ("arm", "play", "progress", "ended", "rating"):
                 if code not in codes:
                     raise ValueError("Unbekannter Ausschnitt auf dieser Seite.")
                 log["code"] = code
-                if kind == "play":
-                    state["plays"][code] = state["plays"].get(code, 0) + 1
+                if kind == "arm":
+                    if playback_mode(state) != "window":
+                        raise ValueError("Unbekannte Wiedergabevorbereitung.")
                     state["active"] = [code, time.time()]
+                    state["active_coverage"] = 0.
+                    state["awaiting_play"] = code
+                elif kind == "play":
+                    if playback_mode(state) == "window":
+                        if state.get("awaiting_play") != code or not state["active"] or state["active"][0] != code:
+                            raise ValueError("Bitte die Wiedergabe erneut starten.")
+                        state["awaiting_play"] = None
+                    else:
+                        state["active"] = [code, time.time()]
+                    state["plays"][code] = state["plays"].get(code, 0) + 1
+                elif kind == "progress":
+                    active = state["active"]
+                    if (playback_mode(state) != "window" or not active or active[0] != code
+                            or state.get("awaiting_play") is not None):
+                        raise ValueError("Keine aktive Wiedergabe für diesen Ausschnitt.")
+                    seconds = self.mapping[code]["frames"] / 44100
+                    intervals = merge_ranges(event.get("ranges"), seconds)
+                    previous = state["listened"].get(code, [])
+                    combined = merge_ranges(previous + intervals, seconds)
+                    added = sum(b-a for a, b in combined) - sum(b-a for a, b in previous)
+                    covered = state.get("active_coverage", 0.) + added
+                    if covered > max(0., time.time() - active[1]) + .25:
+                        raise ValueError("Die gemeldete Hörzeit übersteigt die Wiedergabedauer.")
+                    state["active_coverage"] = covered
+                    state["listened"][code] = combined
+                    log["ranges"] = intervals
                 elif kind == "ended":
                     active = state["active"]
                     seconds = self.mapping[code]["frames"] / 44100
-                    if not active or active[0] != code or time.time() - active[1] + .25 < seconds:
+                    if not active or active[0] != code or (playback_mode(state) == "complete" and
+                            time.time() - active[1] + .25 < seconds):
                         raise ValueError("Bitte spielen Sie den Ausschnitt vollständig ab.")
                     if code not in state["heard"]:
                         state["heard"].append(code)
@@ -202,29 +261,30 @@ class Session:
                         raise ValueError(f"Bitte eine ganze Zahl von {bounds[0]} bis {bounds[1]} wählen.")
                     log["previous"] = state["ratings"].get(code)
                     log["value"] = state["ratings"][code] = value
+            elif kind == "comment":
+                value = event.get("value")
+                if page < 1 or not isinstance(value, str) or len(value) > COMMENT_LIMIT:
+                    raise ValueError(f"Bitte höchstens {COMMENT_LIMIT} Zeichen zum Songpaar eingeben.")
+                comments = state.setdefault("comments", {})
+                log["previous"] = comments.get(str(page), "")
+                log["value"] = comments[str(page)] = value
             elif kind in ("begin", "next", "back"):
                 if kind == "begin":
                     profile = event.get("profile")
-                    fields = {"music", "dj", "dance", "hearing"}
-                    if self.online:
-                        fields.add("setting")
-                    if (page != -1 or not isinstance(profile, dict)
-                            or set(profile) != fields
-                            or any(profile[k] not in ("wenig", "mittel", "viel") for k in ("music", "dj", "dance"))
-                            or (self.online and profile["setting"] not in LISTENING_SETTINGS)
-                            or profile["hearing"] not in ("ja", "nein", "keine Angabe")):
+                    if page != -1 or not valid_profile(profile, state.get("profile_version", 1), self.online):
                         raise ValueError("Bitte prüfen Sie die Angaben zum Einstieg.")
                     log["profile"] = state["profile"] = profile
                 elif kind == "back":
                     if page <= 1:
                         raise ValueError("Die erste Bewertungsseite ist erreicht.")
-                elif page < 0 or any(c not in state["heard"] or c not in state["ratings"] for c in codes):
-                    raise ValueError("Bitte jeden Ausschnitt vollständig anhören und bewerten.")
+                elif page < 0 or any(not playback_complete(state, c) or c not in state["ratings"] for c in codes):
+                    raise ValueError("Bitte jeden Ausschnitt anhören und bewerten.")
                 elapsed = (datetime.fromisoformat(stamp) - datetime.fromisoformat(state["entered"])).total_seconds()
                 log["seconds"] = max(0., elapsed)
                 state["page_seconds"][str(page)] = state["page_seconds"].get(str(page), 0.) + log["seconds"]
                 state["entered"] = stamp
                 state["active"] = None
+                state["awaiting_play"] = None
                 if kind == "next" and page == len(self.pages)-1:
                     state["finished"] = stamp
                 else:

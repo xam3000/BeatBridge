@@ -1,10 +1,28 @@
 # Hörtest auf der Institutswebseite
 
-In neuen Sitzungen stehen neben jedem Clip sieben Zahlen zur Auswahl. 1 bedeutet „schlecht“, 7 „ausgezeichnet“. „Pause“ hält den Ausschnitt an, „Fortsetzen“ spielt ihn an derselben Stelle weiter. Die Übung verwendet dieselben Bedienelemente wie die Wertung. Auch die Auswertung verwendet die gewählten Zahlen von 1 bis 7. [Nachtrag zur Bewertung](BEWERTUNG_20261125.md)
+[Kurzanleitung: auf einem Server starten](SERVERSTART.md)
+
+Neben jedem Clip stehen sieben Zahlen zur Auswahl. 1 bedeutet „schlecht“, 7 „ausgezeichnet“. Der Einstieg fragt getrennt nach eigener Musikpraxis, Erfahrung mit dem Mischen von Übergängen und Hörhäufigkeit elektronischer Tanzmusik. Die Angaben beschreiben die Stichprobe. Mit der Timeline lässt sich frei spulen. Die Timeline und die normale Wiedergabe beginnen bei 0:00, ebenso „Neu starten“ und „Erneut hören“. Eine bewusst vor dem Start gewählte Spulposition wird beibehalten; Fortsetzen setzt an der Pausenposition an. Neue Sitzungen können weitergehen, sobald jedes Übergangsfenster tatsächlich abgespielt und jeder Clip bewertet wurde. Der restliche Clip muss dafür nicht zu Ende laufen. Übersprungene Lücken zählen nicht, gehörte Teilstücke bleiben bei Wiederaufnahme erhalten. Die zwei kurzen Übungsclips werden vollständig gehört. Bereits begonnene Sitzungen behalten ihre gespeicherten Fragen und Hörregeln. Unter jedem Songpaar steht weiterhin ein automatisch gespeichertes optionales Kommentarfeld. [Durchführung](DURCHFUEHRUNG_20261125.md) · [Bewertung](BEWERTUNG_20261125.md)
+
+**Bedienpräzisierung vom 25.11.2026:** Auf erneuten Autorenwunsch ersetzt der Start bei 0:00 die frühere automatische Positionierung am Fensteranfang. Diese Präzisierung gilt für die aktuelle Oberfläche auch beim Wiederöffnen einer Sitzung. Der per Prüfsumme gebundene Durchführungsnachtrag bleibt als damalige Fassung unverändert; Fenstergrenzen, erforderliche Hörabdeckung, gespeicherte Antworten und Berechnung der Auswertung ändern sich nicht.
 
 Alle Eingeladenen öffnen denselben Link. Mit „Neue Sitzung starten“ erzeugt die Anwendung einen zufälligen Sitzungscode und teilt die Ausschnitte zu. Die Reihenfolge gilt für die gesamte Sitzung. Nach einer Unterbrechung führt „Begonnene Sitzung fortsetzen“ im selben Browser zum gespeicherten Stand. Ein neuer Start mischt erneut. Die beiden technisch notwendigen Cookies gelten sieben Tage ab dem Start. An einem gemeinsam genutzten Rechner erhält jede Person ein eigenes Browserprofil. Für einen Durchgang am Stück genügt auch ein privates Fenster. Vor dem nächsten Durchgang alle privaten Fenster der vorigen Person schließen.
 
 ## Run03 mit rotierendem harten Schnitt
+
+**Aktuelles Transportarchiv:** `output/beatbridge_hoertest_daten_20261125.zip` ergänzt den Git-Code. Es enthält das vollständige `output/run03_rotation/`, die 14 Run03-Render-Metadaten sowie Prüfbelege. Die Datenbankkopie wurde mit SQLite-Backup erstellt und enthält sechs Sitzungen/192 Ereignisse. Das Archiv hat 309.358.961 Byte und SHA-256 `105028d0c8e36e9d681c1d89a5331e219ec8e91b7e9ebdc710c8d55a755f0d2b`. Alle Nutzdateien sind im beiliegenden Manifest mit Prüfsummen aufgeführt. In einen freien Ordner entpacken, dann die `output/`-Struktur in den passenden Git-Checkout übernehmen; eine vorhandene Antwortdatenbank nicht überschreiben. Die weitere Startanleitung liegt im Archiv. Für dieses bereits ergänzte Paket ist kein `prepare-windows` nötig. Das ältere `run03_rotation.zip` enthält den Fensterindex noch nicht.
+
+**Vorhandenes Paket einmal ergänzen.** Für neue Sitzungen benötigt es `listening_windows.json`. Auf dem Rechner mit den ursprünglichen Renderdaten den folgenden Befehl ausführen. Er ergänzt nur den neutralen Fensterindex und verändert weder Audiodateien noch Studienschlüssel oder Antworten. Anschließend den Index zusammen mit dem aktualisierten Anwendungsordner auf den Server übertragen und nach einer Codeänderung den Dienst neu starten. Wird nur der fehlende Index ergänzt, liest der bereits aktualisierte Player ihn beim nächsten Sitzungsstart ohne Neustart. Fehlen die Renderdaten, lässt sich kein verlässlicher Index aus dem Medienpaket allein ableiten. Für die einmalige Ergänzung genügen je `results.json` und `protocol.json` aus den sieben unten genannten `stimuli`-Ordnern. Render-WAVs müssen dafür nicht erneut übertragen werden; im laufenden Betrieb werden die Renderordner nicht benötigt.
+
+**Lokaler Stand vom 25.11.2026:** Das Paket `output/run03_rotation/` auf Port 8767 ist bereits ergänzt. Die 14 nachgereichten JSON-Dateien liegen unter `output/run03_paar_json/output/review_jp_20261118/p11_hoerversuch/run03/`. Alle 65 Indexeinträge und der Sitzungsstart auf einer Datenbankkopie sind geprüft. Für einen erneuten Transfer den gesamten ergänzten Paketordner einschließlich `listening_windows.json` verwenden; das ältere `output/run03_rotation.zip` enthält den Index noch nicht.
+
+```powershell
+$render = 'output/review_jp_20261118/p11_hoerversuch/run03'
+$panels = 'P01','P02','P03','P06','P07','P09','P10' | ForEach-Object { Join-Path $render "$_/stimuli" }
+.venv\Scripts\python.exe -m src.evaluation.p11_web prepare-windows output/institut_hoertest/run03_rotation --panels $panels
+```
+
+Für eine bestehende Selbsttestkopie denselben Befehl mit deren Datenordner ausführen. Neue `prepare`-Aufrufe erzeugen den Index automatisch. Begonnene ältere Sitzungen bleiben auch ohne neuen Index fortsetzbar; der Start einer neuen Sitzung meldet einen fehlenden Index ausdrücklich. Der Index gehört bei Sicherung, Übertragung und Versiegelung zum Datenpaket.
 
 Der Server enthält alle 63 Run03-Master und zwei separate Übungsclips. Je Sitzung hören die Teilnehmenden 49 Wertungsclips. Pro Songpaar sind das sechs reguläre Übergänge und einer der drei harten Schnitte. In jedem vollständigen Dreierblock gestarteter Sitzungen kommt jeder harte Schnitt je Paar einmal vor.
 

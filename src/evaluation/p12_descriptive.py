@@ -10,7 +10,9 @@ from scipy.stats import rankdata
 
 from src.evaluation.p11_session import FINAL_PAIRS, SELECTORS, VERSION, aware_time, digest, layout, neutral_check, public_layout, read
 from hoertest.session import (LISTENING_SETTINGS, RATING_PROTOCOL, RATING_SCALE, WEB_VERSION,
-                             rating_scale, valid_rating, web_protocol)
+                             playback_complete, playback_mode, rating_scale, valid_rating, web_protocol)
+from hoertest.procedure import (PROTOCOL as WINDOW_PROTOCOL, WINDOW_FILE, PROFILE_VERSION,
+                               questions, valid_profile, validate_windows, verify_record_windows)
 from src.features.p07_mert import file_sha256
 
 
@@ -46,6 +48,12 @@ def read_neutral(originals):
     audit = originals / "neutral_check.json"
     if file_sha256(audit) != receipt["neutral_check_sha256"] or read(audit) != neutral_check(records):
         raise ValueError("Blind validation report differs from the sealed originals")
+    if any(r["state"].get("playback_mode") == "window" for r in records):
+        path = originals / WINDOW_FILE
+        expected = receipt.get("window_manifest_sha256")
+        if not path.is_file() or file_sha256(path) != expected:
+            raise ValueError("Sealed listening-window index differs")
+        verify_record_windows(records, read(path), expected)
     return records, receipt["incomplete"]
 
 
@@ -57,6 +65,11 @@ def decode(records, key):
     for r in records:
         person, state = r["person"], r["state"]
         bounds = rating_scale(state)
+        playback_mode(state)
+        if state.get("profile_version", 1) == PROFILE_VERSION and (
+                state.get("profile_protocol_sha256") != file_sha256(WINDOW_PROTOCOL)
+                or not valid_profile(state.get("profile"), PROFILE_VERSION, r["version"] == WEB_VERSION)):
+            raise ValueError("Experience questionnaire differs from the saved session")
         if bounds == RATING_SCALE and state.get("rating_protocol_sha256") not in rating_protocols:
             raise ValueError("Rating procedure differs from the saved session")
         if people[person] != 1 or ordinals[r["ordinal"]] != 1:
@@ -75,8 +88,7 @@ def decode(records, key):
                 code = clip["code"]
                 a = mapping[code]
                 value = state["ratings"].get(code)
-                if (not valid_rating(value, bounds) or code not in state["heard"]
-                        or state["plays"].get(code, 0) < 1):
+                if not valid_rating(value, bounds) or not playback_complete(state, code):
                     continue
                 if bounds == (0, 100):
                     value = 1 + 6 * value / 100
@@ -120,6 +132,18 @@ def by_listening_setting(records, data):
     return result
 
 
+def profile_summary(records):
+    result = {}
+    for record in records:
+        version = record["state"].get("profile_version", 1)
+        group = result.setdefault(str(version), dict(participants=0, questions=questions(version, record["version"] == WEB_VERSION), counts={}))
+        group["participants"] += 1
+        for field, value in record["state"]["profile"].items():
+            counts = group["counts"].setdefault(field, {})
+            counts[value] = counts.get(value, 0) + 1
+    return result
+
+
 def correlation(left, right):
     a, b = np.asarray(left), np.asarray(right)
     if np.ptp(a) == 0 or np.ptp(b) == 0:
@@ -157,6 +181,8 @@ def analyse(originals, key_path, expected_split):
                 late.append(dict(sid=record["sid"], finished=finished, reason="after submission deadline"))
         records = on_time
     key = read(key_path)
+    if receipt.get("window_manifest_sha256"):
+        validate_windows(read(originals / WINDOW_FILE), key, digest(key))
     if key["split"] != expected_split or key["version"] not in (VERSION, WEB_VERSION):
         raise ValueError("Study split or application version differs")
     if key["version"] == WEB_VERSION and key.get("procedure_sha256") != file_sha256(web_protocol(key)):
@@ -174,7 +200,15 @@ def analyse(originals, key_path, expected_split):
     counts = Counter(r["person"] for r in records)
     profiles = {r["person"]:r["state"]["profile"] for r in records if counts[r["person"]]==1}
     input_scales = Counter("-".join(map(str, rating_scale(r["state"]))) for r in records)
+    procedures = Counter((playback_mode(r["state"]), r["state"].get("profile_version", 1),
+                          tuple(rating_scale(r["state"])), r["state"].get("rating_protocol_sha256")) for r in records)
     base = dict(version=key["version"], split=expected_split, analysis="descriptive", profiles=profiles,
+                profile_summary=profile_summary(records),
+                sessions_by_procedure=[dict(playback_mode=mode, profile_version=profile,
+                                           rating_scale=list(scale), rating_protocol_sha256=protocol, sessions=n)
+                                       for (mode, profile, scale, protocol), n in procedures.items()],
+                procedure_warning="Unterschiedliche Versuchsfassungen: gemeinsame Kontraste nicht als einheitliche Erhebung interpretieren."
+                                  if len(procedures) > 1 else None,
                 sessions_by_rating_scale=dict(input_scales), analysis_scale=list(RATING_SCALE),
                 completed_sessions=len(records), incomplete_sessions=incomplete,
                 available_panels=sum(len(r["pages"])-1 for r in records), valid_panels=len(data),

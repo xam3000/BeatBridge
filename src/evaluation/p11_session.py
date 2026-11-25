@@ -16,7 +16,8 @@ import string
 import soundfile as sf
 
 from hoertest.session import (CURRENT_FIXED, CURRENT_ROTATING, RUN02, SELECTORS, VERSION, WEB_VERSION, Session,
-                             digest, file_sha256, layout, public_layout, rating_scale, read, utc, valid_rating, web_protocol)
+                             digest, file_sha256, layout, playback_complete, public_layout, rating_scale, read, utc, valid_rating, web_protocol)
+from hoertest.procedure import WINDOW_FILE, load_windows, verify_record_windows
 from src.features.p07_population import POPULATION, committed
 from src.features.p08_pairs import publish_dataset, rng_for
 
@@ -161,7 +162,7 @@ def prepare(root, directories, practice, split, *, institute=False, fixed_rule_a
         material = CURRENT_FIXED
         panels = {pair: [asset for asset in assets if asset["condition"] != "anchor" or asset["selector"] == "rule"]
                   for pair, assets in panels.items()}
-    publish_study(root, panels, practice, split, institute, material=material)
+    publish_study(root, panels, practice, split, institute, material=material, directories=directories)
 
 
 def prepare_run02(root, source, practice):
@@ -174,10 +175,12 @@ def prepare_run02(root, source, practice):
     panels = dict(master_panel(source / pid / "stimuli", "final", run02_cells=approved) for pid in sorted(FINAL_PAIRS))
     if len(approved) != 49 or panels.keys() != FINAL_PAIRS:
         raise ValueError("Expected all seven verified Run02 pairs")
-    publish_study(root, panels, practice, "final", True, material=RUN02)
+    publish_study(root, panels, practice, "final", True, material=RUN02,
+                  directories=[source / pid / "stimuli" for pid in sorted(FINAL_PAIRS)])
 
 
-def publish_study(root, panels, practice, split, institute, *, material=None):
+def publish_study(root, panels, practice, split, institute, *, material=None, directories=()):
+    from src.evaluation.p11_windows import build_windows
     if institute and Path(root).resolve().is_relative_to(WEB_PROTOCOL.parent):
         raise ValueError("Private Studiendaten außerhalb des Anwendungsordners vorbereiten.")
     protocol = RUN02_DOCS / "studienprotokoll.md" if material == RUN02 else PROTOCOL
@@ -208,6 +211,7 @@ def publish_study(root, panels, practice, split, institute, *, material=None):
                             raise ValueError("Copied clip differs from the checked master")
                     asset["path"] = relative.as_posix()
         (stage / "study_key.json").write_text(json.dumps(key, indent=2), encoding="utf-8")
+        (stage / WINDOW_FILE).write_text(json.dumps(build_windows(key, directories), indent=2), encoding="utf-8")
         with closing(sqlite3.connect(stage / "responses.sqlite")) as db, db:
             db.executescript("""
                 CREATE TABLE sessions (
@@ -238,12 +242,12 @@ def neutral_check(records):
             bad_hash = [c["code"] for c in page if not re.fullmatch("[0-9a-f]{64}", str(c.get("sha256", "")))]
             scores = state["ratings"]
             invalid = [c for c in expected if not valid_rating(scores.get(c), bounds)]
-            unheard = [c for c in expected if c not in state["heard"] or state["plays"].get(c, 0) < 1]
+            unheard = [c for c in expected if not playback_complete(state, c)]
             if expected != actual or bad_hash or invalid or unheard:
                 panels.append(dict(sid=r["sid"], page=i, invalid_layout=actual != expected,
                                    invalid_hash=bad_hash, missing_or_invalid_rating=invalid,
                                    incomplete_playback=unheard))
-        extra = (set(state["ratings"]) | set(state["heard"]) | set(state["plays"])) - assigned
+        extra = (set(state["ratings"]) | set(state["heard"]) | set(state["plays"]) | set(state.get("listened", {}))) - assigned
         if extra:
             panels.append(dict(sid=r["sid"], unexpected_codes=sorted(extra)))
     return dict(completed_sessions=len(records), duplicate_ids=duplicates, anomalies=panels)
@@ -285,6 +289,13 @@ def seal(root, destination, *, deadline=None):
         receipt = dict(created=utc(), files=files, incomplete=incomplete, neutral_check_sha256=file_sha256(audit_path))
         if version == WEB_VERSION:
             receipt["study_key_sha256"] = file_sha256(root / "study_key.json")
+        if any(r["state"].get("playback_mode") == "window" for r in records):
+            key = read(root / "study_key.json")
+            windows = load_windows(root, key, digest(key))
+            window_sha = file_sha256(root / WINDOW_FILE)
+            verify_record_windows(records, windows, window_sha)
+            shutil.copyfile(root / WINDOW_FILE, out / WINDOW_FILE)
+            receipt["window_manifest_sha256"] = window_sha
         if cutoff is not None:
             receipt["deadline"] = cutoff.isoformat()
         (out / "receipt.json").write_text(json.dumps(receipt, indent=2), encoding="utf-8")

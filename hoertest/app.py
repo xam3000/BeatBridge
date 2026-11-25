@@ -178,7 +178,10 @@ class StudyApp:
                     raise ValueError
             except (ValueError, KeyError, UnicodeError):
                 return reply(400, "Bitte die Startseite neu öffnen und die Teilnahme bestätigen.")
-            Session(self.root, code, verified_key=self.key)
+            try:
+                Session(self.root, code, verified_key=self.key)
+            except ValueError as exc:
+                return reply(503, str(exc))
             location = self.prefix + "s/" + code + "/"
             return reply(303, headers=[("Location", location), cookie("bb_access", self.sign("access", code), location),
                                        cookie("bb_last", code + "." + self.sign("last", code), self.prefix)])
@@ -218,7 +221,7 @@ class StudyApp:
 
 def read_body(environ):
     size = int(environ.get("CONTENT_LENGTH") or 0)
-    if not 0 < size <= 2048:
+    if not 0 < size <= 32768:
         raise ValueError("Ungültige Anfragegröße.")
     return environ["wsgi.input"].read(size)
 

@@ -51,6 +51,8 @@ def study(tmp_path):
             sf.write(wav, np.ones((200, 2)) * (len(rows) / 20), 44100, subtype="PCM_24")
             rows.append(dict(selector=s, condition=c, candidate_id=s, wav=wav.name, wav_sha256=file_sha256(wav),
                              split="development", pair=[f"a{index}", f"b{index}"],
+                             prefix_frames=20, bridge_samples=50, suffix_frames=130,
+                             geometry=dict(transition_samples=50),
                              protocol_sha256=file_sha256(panel / "protocol.json")))
         write(panel / "results.json", rows)
         panels.append(panel)
@@ -126,8 +128,28 @@ def test_final_gate_replays_assignments_and_rejects_bad_timing(tmp_path, monkeyp
         check_final_panel(masters, contract, [row], pair)
 
 
+def profile(online=False):
+    return dict(music_practice="gt5", dj_practice="none_or_rare", edm_listening="weekly", hearing="nein",
+                **({"setting": "Institut"} if online else {}))
+
+
 def begin(s):
-    s.event(dict(kind="begin", page=-1, profile=dict(music="viel", dj="wenig", dance="mittel", hearing="nein")))
+    values = profile(s.online) if s.state()["profile_version"] == 2 else dict(music="viel", dj="wenig", dance="mittel", hearing="nein")
+    s.event(dict(kind="begin", page=-1, profile=values))
+
+
+def old_procedure(s, mode):
+    from hoertest.session import PLAYBACK_PROTOCOL
+    with sqlite3.connect(s.root / "responses.sqlite") as db:
+        state = json.loads(db.execute("SELECT state FROM sessions WHERE sid=?", (s.sid,)).fetchone()[0])
+        for field in ("profile_version", "profile_protocol_sha256", "listening_windows", "window_manifest_sha256", "listened"):
+            state.pop(field)
+        state["playback_mode"] = mode
+        if mode == "seek":
+            state["playback_protocol_sha256"] = file_sha256(PLAYBACK_PROTOCOL)
+        else:
+            state.pop("playback_protocol_sha256")
+        db.execute("UPDATE sessions SET state=? WHERE sid=?", (json.dumps(state), s.sid))
 
 
 def test_rating_scale_and_existing_session(study):
@@ -160,6 +182,76 @@ def test_rating_scale_and_existing_session(study):
     assert old.state()["ratings"]["00-A"] == 100
 
 
+def test_seeking_comments_resume_and_legacy_gate(study, tmp_path, monkeypatch):
+    from hoertest.session import PLAYBACK_PROTOCOL
+
+    session = Session(study, "seeking")
+    old_procedure(session, "seek")
+    begin(session)
+    assert session.state()["playback_mode"] == "seek"
+    # A long clip can be rated and left without waiting for its natural end.
+    for asset in session.mapping.values():
+        asset["frames"] = 44100 * 60
+    with pytest.raises(ValueError):
+        session.event(dict(kind="comment", page=0, value="Practice is not a song pair"))
+    while not session.state()["done"]:
+        state = session.state()
+        page = state["page"]
+        for code in state["codes"]:
+            session.event(dict(kind="rating", page=page, code=code, value=4))
+        with pytest.raises(ValueError, match="anhören"):
+            session.event(dict(kind="next", page=page))
+        for code in state["codes"]:
+            session.event(dict(kind="play", page=page, code=code))
+        assert not session.state()["heard"]
+        assert session.state()["ready"] == state["codes"]
+        if page:
+            for value in (None, 3, "x" * 2001):
+                with pytest.raises(ValueError, match="2000"):
+                    session.event(dict(kind="comment", page=page, value=value))
+            session.event(dict(kind="comment", page=page, value=f"Paar {page}: Übergang schön. <b>Text</b>\n🎵"))
+            assert Session(study, "seeking").state()["comment"].startswith(f"Paar {page}:")
+        if page == 2:
+            session.event(dict(kind="back", page=2))
+            assert session.state()["comment"].startswith("Paar 1:")
+            session.event(dict(kind="comment", page=1, value=""))
+            assert session.state()["comment"] == ""
+            session.event(dict(kind="next", page=1))
+            assert session.state()["comment"].startswith("Paar 2:")
+        session.event(dict(kind="next", page=page))
+    with pytest.raises(ValueError, match="abgeschlossen"):
+        session.event(dict(kind="comment", page=7, value="Too late"))
+    originals = tmp_path / "seeking-originals"
+    seal(study, originals)
+    records, _ = read_neutral(originals)
+    assert not neutral_check(records)["anomalies"]
+    assert records[0]["state"]["comments"]["1"] == ""
+    assert records[0]["state"]["comments"]["7"].endswith("\n🎵")
+    assert records[0]["state"]["playback_protocol_sha256"] == file_sha256(PLAYBACK_PROTOCOL)
+    assert analyse(originals, study / "study_key.json", "development")["valid_panels"] == 7
+    records[0]["state"]["playback_protocol_sha256"] = "incorrect"
+    with pytest.raises(ValueError, match="Playback procedure"):
+        decode(records, read(study / "study_key.json"))
+
+    old = Session(study, "old-playback")
+    old_procedure(old, "complete")
+    begin(old)
+    with sqlite3.connect(study / "responses.sqlite") as db:
+        state = json.loads(db.execute("SELECT state FROM sessions WHERE sid=?", (old.sid,)).fetchone()[0])
+        del state["playback_mode"], state["comments"]
+        db.execute("UPDATE sessions SET state=? WHERE sid=?", (json.dumps(state), old.sid))
+    assert old.state()["playback_mode"] == "complete" and old.state()["comment"] == ""
+    monkeypatch.setattr("hoertest.session.time.time", lambda: 1000.)
+    for code in old.state()["codes"]:
+        old.mapping[code]["frames"] = 44100 * 60
+        old.event(dict(kind="play", page=0, code=code))
+        old.event(dict(kind="rating", page=0, code=code, value=4))
+        with pytest.raises(ValueError, match="vollständig"):
+            old.event(dict(kind="ended", page=0, code=code))
+    with pytest.raises(ValueError, match="anhören"):
+        old.event(dict(kind="next", page=0))
+
+
 def complete_page(s, person_offset, *, ssl_offset=0):
     state = s.state()
     p = state["page"]
@@ -170,7 +262,13 @@ def complete_page(s, person_offset, *, ssl_offset=0):
             value += {"ssl":2 + ssl_offset, "rule":1, "random":0}[a["selector"]]
             value += int(a["condition"] == "D")
             value += person_offset
-        for kind in ("play", "ended", "rating"):
+        for kind in ("arm", "play", "progress", "ended", "rating"):
+            if kind == "arm" and state["playback_mode"] != "window":
+                continue
+            if kind == "progress":
+                if state["playback_mode"] == "window":
+                    s.event(dict(kind=kind, page=p, code=code, ranges=[[0, a["frames"] / 44100]]))
+                continue
             s.event(dict(kind=kind, page=p, code=code, value=value))
     s.event(dict(kind="next", page=p))
 
@@ -272,13 +370,25 @@ def test_loopback_serves_only_neutral_current_page(study):
             urlopen(url + "study_key.json")
         with pytest.raises(HTTPError, match="404"):
             urlopen(url + "audio/01-A")
-        payload = dict(kind="begin", page=-1, profile=dict(music="viel", dj="wenig", dance="mittel", hearing="nein"))
+        payload = dict(kind="begin", page=-1, profile=profile())
         headers = {"Origin":f"http://127.0.0.1:{server.server_port}", "Content-Type":"application/json"}
         with urlopen(Request(url+"event", data=json.dumps(payload).encode(), headers=headers)) as response:
             state = json.load(response)
         assert state["codes"] == ["00-A", "00-B"] and all(v is None for v in state["ratings"].values())
         with urlopen(url + "audio/00-A") as response:
             assert response.read(4) == b"RIFF"
+        with urlopen(Request(url + "audio/00-A", headers={"Range": "bytes=0-3"})) as response:
+            assert response.status == 206 and response.read() == b"RIFF"
+            assert response.headers["Content-Range"].startswith("bytes 0-3/")
+        with urlopen(Request(url + "audio/00-A", method="HEAD")) as response:
+            assert int(response.headers["Content-Length"]) > 4 and response.read() == b""
+        with pytest.raises(HTTPError, match="416"):
+            urlopen(Request(url + "audio/00-A", headers={"Range": "bytes=999999999-"}))
+        complete_page(session, 0)
+        comment = "Ü🎵" * 1000
+        with urlopen(Request(url + "event", data=json.dumps(dict(kind="comment", page=1, value=comment)).encode(),
+                             headers=headers)) as response:
+            assert json.load(response)["comment"] == comment
     finally:
         server.shutdown()
         server.server_close()
@@ -325,13 +435,11 @@ def test_institute_assignment_and_sealed_results(institute, tmp_path):
     assert all(group["pair_weighted_effects"] is None and group["completed_sessions"] == 0
                for group in counts["by_listening_setting"].values())
     completed = Session(institute, "test-session")
-    completed.event(dict(kind="begin", page=-1, profile=dict(music="mittel", dj="wenig", dance="viel",
-                         hearing="keine Angabe", setting="anderer Hörplatz")))
+    completed.event(dict(kind="begin", page=-1, profile=dict(profile(True), setting="anderer Hörplatz")))
     while not completed.state()["done"]:
         complete_page(completed, 0)
     on_site = Session(institute, "test-on-site")
-    on_site.event(dict(kind="begin", page=-1, profile=dict(music="mittel", dj="wenig", dance="viel",
-                       hearing="keine Angabe", setting="Institut")))
+    on_site.event(dict(kind="begin", page=-1, profile=profile(True)))
     while not on_site.state()["done"]:
         complete_page(on_site, 0, ssl_offset=-1)
     originals = tmp_path / "originale-institut"
@@ -423,8 +531,7 @@ def test_institute_common_link_shuffles_and_resumes(institute):
                 state(second, saved)
             with pytest.raises(HTTPError, match="404"):
                 first.open(url + "study_key.json")
-            event = dict(kind="begin", page=-1, profile=dict(music="viel", dj="wenig", dance="mittel",
-                         hearing="keine Angabe", setting="Institut"))
+            event = dict(kind="begin", page=-1, profile=profile(True))
             with first.open(Request(saved + "event", data=json.dumps(event).encode(),
                             headers={"Origin": origin, "Content-Type": "application/json"})) as response:
                 assert json.load(response)["codes"] == ["00-A", "00-B"]
@@ -436,8 +543,190 @@ def test_institute_common_link_shuffles_and_resumes(institute):
                 first.open(saved + "audio/01-A")
             assert state(second, other)["page"] == -1
             assert state(first, saved)["page"] == 0
+            completed_practice = Session(institute, state(first, saved)["session_code"])
+            complete_page(completed_practice, 0)
+            comment = "Ü🎵" * 1000
+            with first.open(Request(saved + "event", data=json.dumps(dict(kind="comment", page=1, value=comment)).encode(),
+                                    headers={"Origin": origin, "Content-Type": "application/json"})) as response:
+                assert json.load(response)["comment"] == comment
             fresh = start(first, visit(first)[1])
             assert fresh not in (saved, other) and state(first, fresh)["page"] == -1 and seats() == 3
         finally:
             server.shutdown()
             thread.join()
+
+
+def test_profile_questions_are_versioned_and_described(study):
+    session = Session(study, "profile-v2")
+    questions = session.state()["profile_questions"]
+    assert [q["key"] for q in questions] == ["music_practice", "dj_practice", "edm_listening", "hearing"]
+    assert all("wenig" not in str(q["choices"]) for q in questions)
+    for invalid in (dict(music="viel", dj="wenig", dance="mittel", hearing="nein"),
+                    dict(profile(), music_practice="expert"), dict(profile(), extra="unexpected")):
+        with pytest.raises(ValueError, match="Einstieg"):
+            session.event(dict(kind="begin", page=-1, profile=invalid))
+    declined = {q["key"]: q["choices"][-1][0] for q in questions}
+    session.event(dict(kind="begin", page=-1, profile=declined))
+    assert Session(study, "profile-v2").state()["page"] == 0
+    old = Session(study, "profile-v1")
+    old_procedure(old, "seek")
+    assert [q["key"] for q in old.state()["profile_questions"]] == ["music", "dj", "dance", "hearing"]
+    begin(old)
+
+
+def test_window_index_uses_longest_transition_and_preserves_package(study, tmp_path):
+    from hoertest.procedure import WINDOW_FILE, load_windows
+    from src.evaluation.p11_windows import prepare_windows, build_windows
+
+    key = read(study / "study_key.json")
+    original_key = (study / "study_key.json").read_bytes()
+    original_db = (study / "responses.sqlite").read_bytes()
+    # Upgrading an old prepared package changes neither the key nor responses.
+    (study / WINDOW_FILE).unlink()
+    with pytest.raises(ValueError, match="prepare-windows"):
+        Session(study, "missing-index")
+    prepare_windows(study, sorted(tmp_path.glob("dev*")))
+    prepare_windows(study, sorted(tmp_path.glob("dev*")))
+    assert (study / "study_key.json").read_bytes() == original_key
+    assert (study / "responses.sqlite").read_bytes() == original_db
+    manifest = load_windows(study, key, digest(key))
+    assert manifest["clips"]
+    for change in (dict(sample_rate=48000), dict(context_seconds=0), dict(practice="skip")):
+        write(study / WINDOW_FILE, dict(manifest, **change))
+        with pytest.raises(ValueError, match="Fensterindex"):
+            load_windows(study, key, digest(key))
+    write(study / WINDOW_FILE, manifest)
+
+    rows = []
+    key["panels"] = {"pair": key["panels"]["dev0"]}
+    for index, asset in enumerate(key["panels"]["pair"]):
+        asset.update(frames=25*44100, sha256=f"{index+100:064x}")
+        bridge = (index+2)*44100  # Longest row is a hard cut: maximum, not minimum.
+        asset["condition"] = "anchor" if index == 8 else asset["condition"]
+        rows.append(dict(wav_sha256=asset["sha256"], selector=asset["selector"], condition=asset["condition"],
+                         bridge_samples=bridge, suffix_frames=asset["frames"]-5*44100-bridge))
+    source = tmp_path / "geometry"
+    source.mkdir()
+    write_window_source(source, "pair", rows)
+    windows = build_windows(key, [source])
+    assert {tuple(windows["clips"][a["sha256"]]["window_frames"]) for a in key["panels"]["pair"]} == {(3*44100, 17*44100)}
+    rows[-1]["suffix_frames"] += 1
+    write(source / "results.json", rows)
+    with pytest.raises(ValueError, match="geometrie"):
+        build_windows(key, [source])
+    rows[-1]["suffix_frames"] -= 2
+    rows[-1]["bridge_samples"] += 1  # Total fits, but the independently stored bridge geometry does not.
+    write(source / "results.json", rows)
+    with pytest.raises(ValueError, match="geometrie"):
+        build_windows(key, [source])
+    rows[-1]["protocol_sha256"] = "stale"
+    write(source / "results.json", rows)
+    with pytest.raises(ValueError, match="Protokoll"):
+        build_windows(key, [source])
+
+
+def test_window_coverage_cannot_be_replaced_by_seeking_or_replaying(study, tmp_path, monkeypatch):
+    from hoertest.procedure import WINDOW_FILE
+    from src.evaluation.p11_windows import build_windows
+
+    # A genuine 12-second synthetic clip; only seconds 3–8 are required.
+    wav = tmp_path / "long.wav"
+    sf.write(wav, np.full((12*44100, 2), .1), 44100, subtype="PCM_24")
+    key = read(study / "study_key.json")
+    key["panels"] = {"long": key["panels"]["dev0"]}
+    rows = []
+    for assets in key["panels"].values():
+        for asset in assets:
+            asset.update(path=str(wav), sha256=file_sha256(wav), frames=12*44100)
+            row = dict(wav_sha256=asset["sha256"], selector=asset["selector"], condition=asset["condition"],
+                       bridge_samples=44100, suffix_frames=6*44100)
+            if row not in rows:
+                rows.append(row)
+    source = tmp_path / "long-geometry"
+    source.mkdir()
+    write_window_source(source, "long", rows)
+    write(study / "study_key.json", key)
+    write(study / WINDOW_FILE, build_windows(key, [source]))
+    now = [1000.]
+    monkeypatch.setattr("hoertest.session.time.time", lambda: now[0])
+    session = Session(study, "coverage")
+    begin(session)
+    complete_page(session, 0)
+    code = session.state()["codes"][0]
+    assert session.state()["windows"][code] == [3., 8.]
+
+    def send(kind, **values):
+        if kind == "play":
+            session.event(dict(kind="arm", page=1, code=code))
+        session.event(dict(kind=kind, page=1, code=code, **values))
+
+    send("rating", value=4)
+    send("play")
+    with pytest.raises(ValueError, match="Hörzeit"):
+        send("progress", ranges=[[3, 8]])
+    now[0] += 2
+    send("progress", ranges=[[3, 4], [7, 8]])
+    send("progress", ranges=[[3, 4], [7, 8]])  # Repetition cannot fill the missing middle.
+    send("ended")  # Jumping to the end still cannot fulfil the window.
+    assert code not in session.state()["ready"] and code in session.state()["heard"]
+    with pytest.raises(ValueError, match="anhören"):
+        session.event(dict(kind="next", page=1))
+    session = Session(study, "coverage")
+    send("play")
+    for ranges in ([[3, float("nan")]], [[True, 4]], [[-1, 4]], [[3, 13]], [[4, 3]], [[12.01, 12.02]]):
+        with pytest.raises(ValueError):
+            send("progress", ranges=ranges)
+    now[0] += 4
+    send("progress", ranges=[[4, 7]])
+    assert code in Session(study, "coverage").state()["ready"]
+    # Finish using only windows; no full-clip ended events are needed.
+    while not session.state()["done"]:
+        state = session.state()
+        for current in state["codes"]:
+            session.event(dict(kind="arm", page=state["page"], code=current))
+            session.event(dict(kind="play", page=state["page"], code=current))
+            now[0] += 6
+            session.event(dict(kind="progress", page=state["page"], code=current, ranges=[[3, 8]]))
+            session.event(dict(kind="rating", page=state["page"], code=current, value=4))
+        session.event(dict(kind="next", page=state["page"]))
+    sealed = tmp_path / "window-originals"
+    seal(study, sealed)
+    records, _ = read_neutral(sealed)
+    assert not neutral_check(records)["anomalies"]
+    report = analyse(sealed, study / "study_key.json", "development")
+    assert report["valid_panels"] == 1 and report["procedure_warning"] is None
+    assert report["profile_summary"]["2"]["counts"]["edm_listening"] == {"weekly": 1}
+    assert report["sessions_by_procedure"][0]["playback_mode"] == "window"
+    (sealed / WINDOW_FILE).write_bytes((sealed / WINDOW_FILE).read_bytes() + b" ")
+    with pytest.raises(ValueError, match="index differs"):
+        read_neutral(sealed)
+
+
+def write_window_source(directory, pair, rows):
+    write(directory / "protocol.json", dict(panel=dict(pair_id=pair, split="development", revision=REVISION,
+                                                       selectors={s: s for s in SELECTORS})))
+    for row in rows:
+        row.update(split="development", candidate_id=row["selector"],
+                   protocol_sha256=file_sha256(directory / "protocol.json"),
+                   geometry=dict(transition_samples=row["bridge_samples"]))
+    write(directory / "results.json", rows)
+
+
+def test_rotation_replay_uses_window_contract(institute, tmp_path, monkeypatch):
+    from src.evaluation import p11_rotation_check
+
+    key = read(institute / "study_key.json")
+    # Exercise the six-session diagnostic using development-only material.
+    monkeypatch.setattr(p11_rotation_check, "FINAL_PAIRS", set(key["panels"]))
+    monkeypatch.setattr(p11_rotation_check, "analyse", lambda originals, path, split: analyse(originals, path, "development"))
+    connect = Session.connect
+    def fixture_db(session):
+        db = connect(session)
+        db.execute("PRAGMA synchronous=OFF")
+        return db
+    monkeypatch.setattr(Session, "connect", fixture_db)
+    scratch = tmp_path / "rotation-replay"
+    scratch.mkdir()
+    result = p11_rotation_check.replay(institute, key, scratch)
+    assert result["scored_panels"] == 42 and result["human_ratings"] == 0
+    assert result["ssl_minus_rule"] == 1.5 and result["direct_minus_equal"] == 3

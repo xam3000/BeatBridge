@@ -6,10 +6,10 @@ import json
 from pathlib import Path
 import re
 import secrets
-import shutil
 
 from src.evaluation.p11_session import VERSION, Session, prepare, prepare_run02, read, seal
 import hoertest
+from hoertest.app import audio_response
 
 
 def server_for(session, port):
@@ -28,7 +28,8 @@ def server_for(session, port):
             self.send_header("Referrer-Policy", "no-referrer")
             self.send_header("X-Content-Type-Options", "nosniff")
             self.end_headers()
-            self.wfile.write(data)
+            if self.command != "HEAD":
+                self.wfile.write(data)
 
         def json(self, status, obj):
             self.reply(status, json.dumps(obj).encode(), "application/json")
@@ -53,18 +54,27 @@ def server_for(session, port):
                     self.send_error(404)
                     return
                 path = Path(session.mapping[code]["path"])
-                with path.open("rb") as stream:
-                    self.send_response(200)
-                    self.send_header("Content-Type", "audio/wav")
-                    self.send_header("Content-Length", str(path.stat().st_size))
+                def send_audio(status, body=b"", mime="text/plain; charset=utf-8", headers=(), length=None):
+                    self.send_response(status)
+                    self.send_header("Content-Type", mime)
+                    self.send_header("Content-Length", str(len(body) if length is None else length))
                     self.send_header("Cache-Control", "no-store")
+                    for name, value in headers:
+                        self.send_header(name, value)
                     self.end_headers()
+                    if self.command == "HEAD":
+                        return
                     try:
-                        shutil.copyfileobj(stream, self.wfile)
+                        for chunk in ([body] if isinstance(body, bytes) else body):
+                            self.wfile.write(chunk)
                     except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
                         pass  # A listener started a different clip.
+                audio_response(path, {"HTTP_RANGE": self.headers.get("Range", "")}, send_audio)
             else:
                 self.send_error(404)
+
+        def do_HEAD(self):
+            self.do_GET()
 
         def do_POST(self):
             origin = f"http://127.0.0.1:{self.server.server_port}"
@@ -74,7 +84,7 @@ def server_for(session, port):
                 return
             try:
                 size = int(self.headers.get("Content-Length", "0"))
-                if not 0 < size <= 2048:
+                if not 0 < size <= 32768:
                     raise ValueError("Ungültige Anfragegröße.")
                 event = json.loads(self.rfile.read(size))
                 if not isinstance(event, dict):
@@ -104,6 +114,9 @@ def main():
     run02.add_argument("root", type=Path)
     run02.add_argument("--source", type=Path, required=True)
     run02.add_argument("--practice", type=Path, required=True)
+    windows = commands.add_parser("prepare-windows", help="Add neutral transition windows to an existing package without changing audio, key or sessions")
+    windows.add_argument("root", type=Path)
+    windows.add_argument("--panels", nargs="+", type=Path, required=True)
     serve = commands.add_parser("serve")
     serve.add_argument("root", type=Path)
     serve.add_argument("person", help="Pseudonym, e.g. VP01")
@@ -118,6 +131,9 @@ def main():
                 fixed_rule_anchors=args.fixed_rule_anchors)
     elif args.command == "prepare-run02":
         prepare_run02(args.root, args.source, args.practice)
+    elif args.command == "prepare-windows":
+        from src.evaluation.p11_windows import prepare_windows
+        print(prepare_windows(args.root, args.panels))
     elif args.command == "seal":
         seal(args.root, args.output, deadline=args.deadline)
     else:

@@ -5,23 +5,31 @@
 :root{font:16px/1.5 "Segoe UI",sans-serif;color:#192b34;background:#f4f6f5}
 *{box-sizing:border-box}body{margin:0}main{max-width:62rem;margin:3vh auto;padding:1.5rem clamp(1rem,4vw,3rem);background:white}
 h1{font-size:clamp(1.5rem,4vw,2.2rem);line-height:1.15;margin:0 0 .6rem}h2{font-size:1.15rem;margin:1rem 0 .3rem}
-button,select,input{font:inherit}button{cursor:pointer;border:1px solid #305e60;border-radius:.3rem;background:white;color:#204c4e;padding:.42rem .85rem}
-button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #3583a6;outline-offset:3px}
+button,select,input,textarea{font:inherit}button{cursor:pointer;border:1px solid #305e60;border-radius:.3rem;background:white;color:#204c4e;padding:.42rem .85rem}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #3583a6;outline-offset:3px}
 button.primary{background:#20585a;color:white}button:disabled{opacity:.5;cursor:default}
-.row{display:grid;align-items:center;grid-template-columns:4rem auto 1fr;gap:1rem;border-top:1px solid #d4dedc;padding:.75rem 0}
-.playback{display:flex;gap:.4rem}.choices{display:grid;grid-template-columns:repeat(7,1fr);gap:.25rem}
+.row{display:grid;align-items:center;grid-template-columns:4rem minmax(0,1fr) minmax(14rem,1fr);gap:1rem;border-top:1px solid #d4dedc;padding:.75rem 0}
+.playback{min-width:0}.transport{display:flex;flex-wrap:wrap;gap:.4rem}.timeline{display:flex;align-items:center;gap:.5rem;margin-top:.5rem}
+.timeline input{min-width:0;width:100%;accent-color:#20585a}.timeline output{white-space:nowrap;font-size:.85rem;font-variant-numeric:tabular-nums}
+.comment{display:block;margin-top:1.25rem}.comment textarea{display:block;width:100%;min-height:6rem;margin-top:.4rem;padding:.6rem;border:1px solid #819694;border-radius:.3rem;resize:vertical}
+.save-status{display:block;min-height:1.5em;color:#486260;font-size:.85rem}
+.choices{display:grid;grid-template-columns:repeat(7,1fr);gap:.25rem}
 .choices label{position:relative;cursor:pointer}.choices input{position:absolute;opacity:0}
 .choices span{display:block;text-align:center;padding:.45rem 0;border:1px solid #819694;border-radius:.3rem}
 .choices input:checked+span{background:#20585a;color:white;font-weight:bold}
 .choices input:focus-visible+span{outline:3px solid #3583a6;outline-offset:2px}
 nav{display:flex;justify-content:space-between;margin-top:1rem;gap:1rem}
-#error{color:#9a2630}.profile{display:block;margin:1rem 0}.profile select{margin-left:1rem}
+#error{color:#9a2630}.profile{min-width:0;margin:1.3rem 0;padding:0;border:0}.profile legend{padding:0;font-weight:600}
+.profile .choices{grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr));gap:.5rem;margin-top:.6rem}
+.profile .choices span{display:flex;align-items:center;justify-content:center;min-height:3rem;height:100%;padding:.6rem .75rem}
+.profile .choices input{width:1px;height:1px;margin:0;top:.5rem;left:.5rem}
+.profile small{display:block;color:#486260;margin-top:.2rem}.listen-status{display:block;font-size:.85rem;color:#486260;margin-top:.3rem}
 @media(max-width:700px){.row{grid-template-columns:auto 1fr;gap:.5rem}.choices{grid-column:1/-1}}
 </style>
 <main><h1 id="title"></h1><section id="content"></section><p role="alert" id="error"></p></main>
 <script>
 "use strict";
-let state, player, queue = Promise.resolve();
+let state, player, queue = Promise.resolve(), saveComment=()=>Promise.resolve(), commentDirty=()=>false;
 const content=document.getElementById("content"), title=document.getElementById("title"), error=document.getElementById("error");
 function node(tag,text,parent){const e=document.createElement(tag);e.textContent=text;parent.append(e);return e}
 function submit(event,beforeSend){
@@ -39,30 +47,63 @@ function submit(event,beforeSend){
 }
 function stop(){
   if(!player)return;
-  const {audio,reset}=player;
-  player=null;
-  audio.onended=audio.onerror=audio.onplay=audio.onpause=null;
+  const {audio,reset,flush}=player;
   audio.pause();
+  flush();
+  player=null;
   reset();
 }
 function navigate(kind,extra={}){
   if(content.inert)return;
   content.inert=true;
   stop();
-  submit({kind,...extra}).then(draw).catch(()=>{}).finally(()=>{content.inert=false});
+  saveComment().then(()=>submit({kind,...extra})).then(draw).catch(()=>{}).finally(()=>{content.inert=false});
 }
 function button(parent,label,fn){const b=node("button",label,parent);b.type="button";b.onclick=fn;return b}
 function playbackControls(row,code){
   const controls=node("div","",row);controls.className="playback";
-  const play=button(controls,"",start);
-  const pause=button(controls,"Pause",()=>{
+  const transport=node("div","",controls);transport.className="transport";
+  const audio=new Audio("audio/"+code);audio.preload="metadata";
+  let registered, seekRequested=false, lastReport=0, lastRanges="", reporting=false;
+  const window=state.windows[code], windowMode=state.playback_mode==="window";
+  const play=button(transport,"",start);
+  const pause=button(transport,"Pause",()=>{
     if(player?.code!==code)return;
     const audio=player.audio;
     if(audio.paused)listen(audio);else audio.pause();
   });
+  const timeline=node("div","",controls);timeline.className="timeline";
+  const seek=node("input","",timeline);seek.type="range";seek.min=0;seek.max=state.durations[code];seek.step=.001;seek.value=0;
+  seek.setAttribute("aria-label","Abspielposition für Clip "+code.split("-")[1]);
+  const time=node("output","",timeline);
+  function clock(seconds){const n=Math.max(0,Math.floor(seconds));return Math.floor(n/60)+":"+String(n%60).padStart(2,"0")}
+  function showTime(){time.textContent=clock(Number(seek.value))+" / "+clock(Number(seek.max));seek.setAttribute("aria-valuetext",time.textContent)}
+  seek.oninput=()=>{report(true);seekRequested=player?.audio!==audio;if(audio.readyState>0)audio.currentTime=Number(seek.value);showTime()};
+  audio.onloadedmetadata=()=>{seek.max=audio.duration;audio.currentTime=Number(seek.value);showTime()};
+  audio.ontimeupdate=()=>{seek.value=audio.currentTime;showTime();report()};
+  audio.onseeking=()=>report(true);
+  if(windowMode){
+    const status=node("span","",controls);status.className="listen-status";status.dataset.code=code;
+    status.dataset.window="Hörfenster "+clock(window[0])+"–"+clock(window[1]);
+    status.setAttribute("role","status");
+    const left=100*window[0]/Number(seek.max),right=100*window[1]/Number(seek.max);
+    seek.style.background=`linear-gradient(to right, transparent ${left}%, #c5e1d6 ${left}%, #c5e1d6 ${right}%, transparent ${right}%)`;
+  }
+  showTime();
+  function report(force=false){
+    if(!windowMode || !registered || player?.audio!==audio || state.ready.includes(code))return;
+    if(!force && (reporting || performance.now()-lastReport<1000))return;
+    const ranges=Array.from({length:audio.played.length},(_,i)=>[audio.played.start(i),audio.played.end(i)]).filter(([a,b])=>b>a);
+    const signature=JSON.stringify(ranges);
+    if(!ranges.length || signature===lastRanges)return;
+    lastReport=performance.now();reporting=true;
+    submit({kind:"progress",code,ranges}).then(()=>{lastRanges=signature;sync()}).catch(()=>{}).finally(()=>{reporting=false});
+  }
   function reset(){
-    play.textContent=state.heard.includes(code)?"Erneut hören":"Anhören";
+    play.textContent=state.ready.includes(code)?"Erneut hören":windowMode?"Übergang hören":"Anhören";
     pause.textContent="Pause";pause.disabled=true;
+    seek.disabled=state.playback_mode==="complete" && !state.heard.includes(code);
+    seek.title=seek.disabled?"Nach dem ersten vollständigen Abspielen können Sie spulen.":"";
   }
   function failed(audio,message){
     if(player?.audio!==audio)return;
@@ -74,13 +115,20 @@ function playbackControls(row,code){
     });
   }
   function start(){
+    const restart=!seekRequested;seekRequested=false;
     stop();
-    const audio=new Audio("audio/"+code);
-    player={audio,code,reset};
-    const registered=submit({kind:"play",code}).then(()=>performance.now());
-    registered.catch(e=>failed(audio,e.message));
+    if(restart){seek.value=0;if(audio.readyState>0)audio.currentTime=Number(seek.value);showTime()}
+    const current={audio,code,reset,flush:()=>report(true)};
+    player=current;
+    registered=null;
+    audio.onplaying=()=>{
+      if(player!==current || registered)return;
+      registered=submit({kind:"play",code}).then(()=>{sync();return performance.now()});
+      registered.catch(e=>failed(audio,e.message));
+    };
     audio.onplay=audio.onpause=()=>{
       if(player?.audio!==audio || audio.ended)return;
+      if(audio.paused)report(true);
       play.textContent="Neu starten";
       pause.disabled=false;pause.textContent=audio.paused?"Fortsetzen":"Pause";
     };
@@ -90,7 +138,8 @@ function playbackControls(row,code){
       stop();play.textContent="Wird gespeichert …";
       // Queue the natural end before another play. Its acknowledgement can lag behind the audio.
       submit({kind:"ended",code},async()=>{
-        const remaining=(await registered)+audio.duration*1000-performance.now();
+        const started=await registered;
+        const remaining=state.playback_mode==="complete"?started+audio.duration*1000-performance.now():0;
         if(remaining>0)await new Promise(resolve=>setTimeout(resolve,remaining));
       }).then(()=>{
         if(player?.code!==code)reset();
@@ -98,14 +147,20 @@ function playbackControls(row,code){
       }).catch(()=>{if(player?.code!==code)play.textContent="Erneut versuchen"});
     };
     play.textContent="Lädt …";
-    listen(audio);
+    if(windowMode){
+      submit({kind:"arm",code}).then(()=>{if(player===current)listen(audio)}).catch(e=>failed(audio,e.message));
+    }else listen(audio);
   }
   reset();
 }
 function ratingChoices(row,code,letter){
   const current=state.ratings[code], name="Bewertung für Clip "+letter;
   function rate(value){
-    submit({kind:"rating",code,value}).then(sync).catch(()=>{draw();error.textContent="Bewertung nicht bestätigt. Bitte neu laden und den gespeicherten Stand prüfen."});
+    submit({kind:"rating",code,value}).then(sync).catch(()=>{
+      for(const input of row.querySelectorAll('input[type="radio"]'))input.checked=Number(input.value)===state.ratings[code];
+      const select=row.querySelector("select");if(select)select.value=state.ratings[code]??"";
+      error.textContent="Bewertung nicht bestätigt. Bitte versuchen Sie es erneut.";
+    });
   }
   if(state.rating_scale[1]===100){
     const select=node("select","",row);select.setAttribute("aria-label",name);
@@ -123,36 +178,62 @@ function ratingChoices(row,code,letter){
     node("span",value,label);choice.onchange=()=>rate(value);
   }
 }
+function commentField(){
+  const label=node("label","Kommentar zu diesem Songpaar (optional)",content);label.className="comment";
+  const input=node("textarea","",label);input.value=state.comment;input.maxLength=state.comment_limit;
+  input.placeholder="Was ist Ihnen bei den Übergängen aufgefallen?";
+  const status=node("span","",content);status.className="save-status";status.setAttribute("role","status");
+  let saved=input.value, timer, saving=false, pending=Promise.resolve();
+  commentDirty=()=>saving || input.value!==saved;
+  saveComment=()=>{
+    clearTimeout(timer);
+    pending=pending.catch(()=>{}).then(async()=>{
+      if(input.value===saved)return;
+      const value=input.value;saving=true;
+      status.textContent="Kommentar wird gespeichert …";
+      try{
+        await submit({kind:"comment",value});saved=value;
+        status.textContent=input.value===saved?"Kommentar gespeichert":"Kommentar noch nicht gespeichert";
+      }catch(e){status.textContent="Kommentar nicht gespeichert. Bitte erneut versuchen.";throw e}
+      finally{saving=false}
+    });
+    return pending;
+  };
+  input.oninput=()=>{status.textContent="Kommentar noch nicht gespeichert";clearTimeout(timer);timer=setTimeout(()=>saveComment().catch(()=>{}),500)};
+  input.onblur=()=>saveComment().catch(()=>{});
+}
+window.addEventListener("beforeunload",event=>{if(commentDirty()){event.preventDefault();event.returnValue=""}});
 function draw(){
   stop();
+  saveComment=()=>Promise.resolve();commentDirty=()=>false;
   content.replaceChildren();
   if(state.done){title.textContent="Bewertungen abgegeben";node("p",state.session_code?
     "Vielen Dank. Ihre Bewertungen wurden gespeichert. Sie können diese Seite schließen.":
     "Vielen Dank. Bitte wenden Sie sich an die Versuchsleitung.",content);
     if(state.session_code)node("p","Ihr Sitzungscode: "+state.session_code,content);return}
   if(state.page===-1){
-    title.textContent="Musikalische Übergänge bewerten";
-    node("p","Wie viel Erfahrung haben Sie in den folgenden Bereichen?",content);
-    const form=node("form","",content), inputs={};
-    const questions={music:"Musik",dj:"DJing",dance:"Tanz",hearing:"Bekannte Hörprobleme"};
-    if(state.session_code)questions.setting="Wo hören Sie?";
-    for(const [key,name] of Object.entries(questions)){
-      const label=node("label",name,form);label.className="profile";
-      const s=node("select","",label); s.required=true;
-      node("option","Bitte wählen",s).value="";
-      const choices=key==="setting"?["Institut","anderer Hörplatz"]:key==="hearing"?["nein","ja","keine Angabe"]:["wenig","mittel","viel"];
-      for(const value of choices){node("option",value,s).value=value}
-      if(state.session_code && key==="hearing")s.value="keine Angabe";
-      inputs[key]=s;
+    title.textContent=state.profile_version===2?"Hörerfahrung und Hörsituation":"Musikalische Übergänge bewerten";
+    node("p",state.profile_version===2?"Diese Angaben helfen uns, die Gruppe der Teilnehmenden zu beschreiben. Musikalische Vorkenntnisse sind nicht erforderlich.":"Wie viel Erfahrung haben Sie in den folgenden Bereichen?",content);
+    const form=node("form","",content);
+    for(const {key,title,help,choices} of state.profile_questions){
+      const field=node("fieldset","",form);field.className="profile";
+      node("legend",title,field);
+      if(help){const hint=node("small",help,field);hint.id="help-"+key;field.setAttribute("aria-describedby",hint.id)}
+      const group=node("div","",field);group.className="choices";
+      for(const [value,text] of choices){
+        const label=node("label","",group), choice=node("input","",label);
+        choice.type="radio";choice.name=key;choice.value=value;choice.required=true;
+        choice.checked=state.profile_version===1 && state.session_code && key==="hearing" && value==="keine Angabe";
+        node("span",text,label);
+      }
     }
-    const go=node("button","Zur Übung",form);go.className="primary";
-    form.onsubmit=e=>{e.preventDefault();navigate("begin",{profile:Object.fromEntries(Object.entries(inputs).map(([k,s])=>[k,s.value]))})};
+    const go=node("button","Zur Übung",form);go.type="submit";go.className="primary";
+    form.onsubmit=e=>{e.preventDefault();navigate("begin",{profile:Object.fromEntries(new FormData(form))})};
     if(state.session_code)node("p","Ihr Sitzungscode: "+state.session_code,content);return;
   }
   title.textContent=state.page===0?"Übung und Lautstärke":"Songpaar "+state.page+" von "+state.total;
   node("p",state.page===0?"Stellen Sie am Hörplatz eine angenehme Lautstärke ein und behalten Sie sie anschließend bei. Probieren Sie die Wiedergabe und die Bewertung aus. Diese Seite dient der Übung.":"Bewerten Sie die musikalische Gesamtqualität jedes Übergangs. Sie dürfen die Ausschnitte beliebig oft vergleichen und denselben Wert mehrfach vergeben.",content);
-  node("p",state.rating_scale[1]===7?"Wählen Sie pro Clip eine Zahl von 1 (schlecht) bis 7 (ausgezeichnet).":
-    "Wählen Sie pro Clip einen Wert von 0 (schlecht) bis 100 (ausgezeichnet).",content);
+  node("strong",state.rating_scale[1]===7?"1 = schlecht · 7 = ausgezeichnet":"0 = schlecht · 100 = ausgezeichnet",node("p","",content));
   for(const code of state.codes){
     const letter=code.split("-")[1], row=node("div","",content);row.className="row";
     const heading=node("strong","Clip "+letter,row);heading.id="clip-"+code;
@@ -160,11 +241,19 @@ function draw(){
     playbackControls(row,code);
     ratingChoices(row,code,letter);
   }
-  node("p","Hören Sie jeden Clip einmal bis zum Ende und wählen Sie für jeden einen Wert. Danach können Sie weitergehen.",content);
+  node("p",state.playback_mode==="window"?(state.page===0?
+    "Hören Sie die beiden kurzen Übungsclips vollständig und bewerten Sie sie. Die Timeline bleibt frei bedienbar.":
+    "Hören Sie bei jedem Clip das angegebene Übergangsfenster vollständig und wählen Sie einen Wert. Sie können pausieren und frei spulen; übersprungene Stellen zählen nicht als gehört."):
+    state.playback_mode==="seek"?"Mit der Timeline können Sie vor- und zurückspulen. Hören und bewerten Sie jeden Übergang, um weiterzugehen.":
+    "Hören Sie jeden Clip einmal bis zum Ende und wählen Sie für jeden einen Wert. Danach können Sie in diesem Clip spulen und nach allen Bewertungen weitergehen.",content);
+  if(state.page>0)commentField();
   const nav=node("nav","",content);
   if(state.page>1)button(nav,"Zurück",()=>navigate("back"));else node("span","",nav);
   const next=button(nav,state.page===state.total?"Verbindlich abgeben":"Weiter",()=>navigate("next"));next.id="next";next.className="primary";sync();
 }
-function sync(){const next=document.getElementById("next");if(next)next.disabled=state.codes.some(c=>state.ratings[c]===null||!state.heard.includes(c))}
+function sync(){
+  const next=document.getElementById("next");if(next)next.disabled=state.codes.some(c=>state.ratings[c]===null||!state.ready.includes(c));
+  for(const status of document.querySelectorAll(".listen-status"))status.textContent=status.dataset.window+" · "+(state.ready.includes(status.dataset.code)?"gehört":"noch nicht vollständig gehört");
+}
 fetch("state").then(r=>r.json()).then(s=>{state=s;draw()}).catch(()=>{error.textContent="Die Sitzung ist nicht erreichbar."});
 </script></html>

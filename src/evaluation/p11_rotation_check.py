@@ -94,7 +94,11 @@ def empty_database(root):
 
 
 def replay(root, key, scratch):
+    from unittest.mock import patch
+    from hoertest.procedure import WINDOW_FILE
+
     shutil.copyfile(root / "study_key.json", scratch / "study_key.json")
+    shutil.copyfile(root / WINDOW_FILE, scratch / WINDOW_FILE)
     with closing(sqlite3.connect((root / "responses.sqlite").as_uri() + "?mode=ro", uri=True)) as source:
         with closing(sqlite3.connect(scratch / "responses.sqlite")) as target:
             source.backup(target)
@@ -102,7 +106,7 @@ def replay(root, key, scratch):
     for seat in range(6):
         setting = ("Institut", "anderer Hörplatz")[seat % 2]
         s = Session(scratch, f"Technikprobe{seat+1}", verified_key=key)
-        s.event(dict(kind="begin", page=-1, profile=dict(music="mittel", dj="wenig", dance="mittel",
+        s.event(dict(kind="begin", page=-1, profile=dict(music_practice="1to5", dj_practice="none_or_rare", edm_listening="weekly",
                                                         hearing="keine Angabe", setting=setting)))
         for page in range(8):
             for code in s.state()["codes"]:
@@ -112,8 +116,13 @@ def replay(root, key, scratch):
                     if setting == "Institut" and asset["selector"] == "ssl":
                         value += 3
                     value += 3 * (asset["condition"] == "D")
-                for event in ("play", "ended", "rating"):
-                    s.event(dict(kind=event, page=page, code=code, value=value))
+                with patch("hoertest.session.time.time", return_value=1000.):
+                    s.event(dict(kind="arm", page=page, code=code))
+                    s.event(dict(kind="play", page=page, code=code))
+                with patch("hoertest.session.time.time", return_value=1000. + asset["frames"] / 44100):
+                    s.event(dict(kind="progress", page=page, code=code, ranges=[[0, asset["frames"] / 44100]]))
+                    s.event(dict(kind="ended", page=page, code=code))
+                s.event(dict(kind="rating", page=page, code=code, value=value))
             s.event(dict(kind="next", page=page))
         check(s.state()["done"], "Technical session did not finish")
         mappings.append(s.mapping)
