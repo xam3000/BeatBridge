@@ -2,6 +2,8 @@
 
 **Stand:** 23. November 2026 · **Hauptrepository:** `4651e51` · **Overleaf:** `75a8664`
 
+**Archivstand vor der Umsetzung.** Die folgenden Befunde beschreiben den oben genannten Checkout. Inzwischen sind der GUI-Zustand beim Umsortieren korrigiert, PySide6 in der Entwicklungsinstallation berücksichtigt und der Sequenzexport an einem Drei-Song-Beispiel belegt. Der frühere Proxy-Lehrer ist eingestellt. Die Entscheidungen und Nachweise einschließlich des Originalschutzes und der plattformabhängigen Prüfsummen führt das [Umsetzungsregister](REVIEW_JP_UMSETZUNG.md).
+
 Die höchste technische Priorität haben der Schutz der Originalaufnahmen beim Einzelrender, die korrekte Cue-Position bei anderen Sampleraten als 44,1 kHz und der funktionsfähige Einstieg ins Teacher-Labeling. Für den Projektabschluss stehen die menschlichen Hörurteile, der Nachweis eines vollständigen Mashup-Exports und die Überarbeitung der Thesis aus.
 
 ## Prüfumfang und Aussagekraft

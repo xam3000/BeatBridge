@@ -1,4 +1,4 @@
-"""Frozen offline Teacher labels for Cue-Ranker Dataset Format 3.
+"""Unmaintained proxy-teacher labels for the historical Cue-Ranker Dataset Format 3.
 
 The scorer is deliberately separate from the ranker and accepts only the
 already sampled train/validation universe.  It never offers a test split.

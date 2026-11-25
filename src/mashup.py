@@ -16,7 +16,7 @@ from src.analysis.models import unpack_analysis_result
 from src.analysis.pre_analysis import PartialPreAnalysis, PreAnalysis, ensure_bar_metadata_with_provenance
 from src.candidates.variable import validate_baseline_cue
 from src.pipeline import BeatBridgePipeline, DEFAULT_SAMPLE_RATE, build_cutter
-from src.tempo.cue_alignment import measure_cue_alignment
+from src.tempo.cue_alignment import measure_cue_alignment, require_observed_grid
 from src.tempo.time_stretch import TimeStretch
 
 
@@ -52,6 +52,7 @@ class _Track:
         bpm, frames, grid = unpack_analysis_result(analysis(str(path)))
         frames, grid = ensure_bar_metadata_with_provenance(
             frames, bpm=bpm, sample_count=audio.shape[-1], sample_rate=native_rate, existing_metadata=grid)
+        require_observed_grid(grid)
         if native_rate != rate:
             audio = librosa.resample(audio, orig_sr=native_rate, target_sr=rate, axis=-1)
         audio = BeatBridgePipeline._normalise_channels(audio, 2)

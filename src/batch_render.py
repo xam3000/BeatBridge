@@ -701,7 +701,7 @@ def build_argument_parser():
         "--ranking-method",
         choices=RANKING_METHODS,
         default="feature_baseline_v3",
-        help="Candidate selection method (default: feature_baseline_v3).",
+        help="Candidate selection method. learned_cue_ranker_v1 is the retired proxy-teacher path.",
     )
     parser.add_argument(
         "--cue-ranker-run",

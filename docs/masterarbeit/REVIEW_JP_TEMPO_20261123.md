@@ -43,6 +43,10 @@ Je Paar liegen drei Equal-Power-Überblendungen desselben Cues mit gleichem Vorl
 
 Die persönliche Hörprobe steht aus. Für beide Cues werden hörbare Doppelanschläge, Nahtstellen der Streckung, ein eventueller Vorzug und die jeweilige Stelle im Clip protokolliert. Die sechs WAVs liegen lokal unter `output/`. Ein frisches Ziel erlaubt ihre Wiederherstellung.
 
+Für die Hörprobe liegt ein [neutral beschrifteter Hörbogen mit sechs WAVs](../../output/review_jp_20261118/cue_tempo/blind_20261125/hoeren/Hoerbogen.md) bereit. Je Paar die drei Fassungen mehrfach über Kopfhörer hören, Rangfolge und Fehler mit Zeitangabe im Bogen speichern und erst dann den getrennten Schlüssel im übergeordneten Verzeichnis öffnen. Run03 ist für die Erhebung nur freigabefähig, wenn die lokale Regression auf **beiden** Paaren mindestens den Rang der globalen Angleichung erreicht. Andernfalls wird Run03 zurückgestellt. Die Versuchsleitung überträgt Datum, Einzelurteile und Entscheidung in das [Prüfjournal](../Bemerkungen.md).
+
+Für die endgültige Run03-Auswahl blieben bei P01/P02/P03/P06/P07/P09/P10 jeweils 151/46/1.078/13/343/1.012/1.128 zulässige Stellen. Die konservative 20-ms-Prüfung hängt auch von der Streuung der Tracker-Marken ab. Durch die Vorfilterung können sich die drei Selektoren im Hörvergleich ähnlicher werden. Auf P06 vergleicht die Studie ihre Auswahl aus nur 13 Stellen. Die ursprünglichen Controllerbefunde gelten für ihre historischen Raster. [Finale Pools](review_jp_20261118/p11/run03_49_verified.json)
+
 ```powershell
 .venv\Scripts\python.exe -m src.evaluation.cue_tempo_audit output/tempo_audit_neu.json
 .venv\Scripts\python.exe -m src.evaluation.cue_tempo_listening output/tempo_hoerprobe_neu

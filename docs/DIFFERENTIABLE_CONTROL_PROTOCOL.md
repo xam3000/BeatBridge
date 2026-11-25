@@ -135,9 +135,12 @@ müssen ihre Rangfolgen gegen menschliche Hörurteile geprüft werden.
 
 Version 3 ersetzt den skalenabhängigen v1/v2-Glättungsterm durch die beiden auf
 das uniforme Inkrement normierten Terme. Ihre Standardgewichte sind `0.02`
-für `control_smoothness` und `0.05` für `control_curvature`. Equal Power hat in
-beiden Termen den Wert null; nichtlineare Kurven bleiben möglich, müssen ihren
-zusätzlichen Verlauf aber durch eine bessere Audio-Zielfunktion rechtfertigen.
+für `control_smoothness` und `0.05` für `control_curvature`. Bei linearer
+Übergabeposition haben beide Terme für Equal Power den Wert null. Der
+Full-Band-Pfad übergibt den Sinus-Gain als Position. Für den Mix-Anteil der
+Equal-Power-Referenz mit 32 Stützstellen entstehen dadurch rund 0,233 für
+Glättung und 0,003 für Krümmung, gewichtet zusammen rund 0,005 Loss-Einheiten.
+[Nachrechnung vom 25. November](../review_jp/RUECKMELDUNG_20261125.md#133-glättungsterm-im-full-band-pfad-jetzt-mit-größe)
 
 Objective Version 4 erweitert Version 3 additiv um die drei
 feature-konditionierten Terme. Sie lesen ausschließlich die bereits

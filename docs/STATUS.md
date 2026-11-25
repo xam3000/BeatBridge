@@ -1,3 +1,23 @@
+# 25.11.2026 – Siebenstufige Bewertung im Hörtest
+
+Im lokalen Player und auf der Institutsseite wählen Hörende in neuen Sitzungen für jeden Clip eine Zahl von 1 bis 7. „Pause“ und „Fortsetzen“ unterbrechen die Wiedergabe an der aktuellen Stelle und setzen sie dort fort. Der Originalexport enthält die gewählten Zahlen. P12 verwendet die Siebenerwertungen direkt. Mittelwerte und Kontraste stehen in Punkten derselben Skala. Der H3-Bezugswert beträgt −0,3 Punkte. Die bestehenden Medienpakete können weiter verwendet werden. [Nachtrag zur Durchführung](../hoertest/BEWERTUNG_20261125.md) · [Testjournal](Bemerkungen.md)
+
+# 25.11.2026 – Run03 mit rotierendem Schnittanker
+
+Der geschützte Hörtest ist für 49 Wertungen pro Sitzung vorbereitet. Aus den 63 Mastern spielt das Paket je Paar sechs reguläre Übergänge und einen der drei harten Schnitte. Der technische Test prüfte die Zuteilung über 21 Starts und sechs vollständig durchgespielte Sitzungen auf einer Datenbankkopie. In beiden vollständigen Dreierblöcken war jeder Anker je Paar einmal vertreten. Die Datenbank für die Erhebung ist leer. [Paket und Betrieb](../hoertest/README.md) · [Prüfnachweis](masterarbeit/review_jp_20261118/p11/run03_rotation_verified.json)
+
+Die Heimteilnahme ist laut Mitteilung des Autors vom 25. November freigegeben. Vor der ersten Einladung fehlen der konkrete Endtermin, der blinde Tempo-Hörvergleich, die technische Durchhörkontrolle, der externe Pilot am geschützten Institutszugang und der Nutzercommit. Für die Auswertung gilt die tatsächlich bis zum Endtermin erreichte Anzahl. [Blinder Hörbogen](../output/review_jp_20261118/cue_tempo/blind_20261125/hoeren/Hoerbogen.md) · [Kontrollbogen für alle 63 Master](../output/review_jp_20261125/master_hoerprotokoll.md) · [Einladung](../hoertest/EINLADUNG.md)
+
+Der Vergleich auf 2.830 Validierungsabfragen ergibt für den Studienseed +3,57 Prozentpunkte Recall@1 (95-%-Intervall +1,04 bis +6,07), über drei Seeds +3,75 (+1,65 bis +5,84). Die Intervalle resampeln 53 Quellgruppen. Der tatsächliche MERT-Vorverarbeiter normiert jedes Fenster einzeln. Kapitel 5 berichtet außerdem die 13 bis 1.128 zulässigen Cues je Paar und die Grenzen der 20-ms-Prüfung. Die Hörbewertungen zum Vergleich der Stellen und Kurven stehen aus. [MERT-Bericht](masterarbeit/REVIEW_JP_MERT_FENSTER_20261123.md) · [Thesis, Run06](../output/review_jp_20261118/p15_thesis/run06/CGThesis.pdf)
+
+Der Einzelrenderer schützt beide Originale auch bei Pfadaliasen. Der Mashup-Audiotest prüft echte Tempodehnung, und ein erneuter Export des Drei-Song-Beispiels reproduzierte die WAV bytegenau. Zwei frische, auf die drei Belege beschränkte Linux-Checkouts bestätigten die P09-/P10-Prüfsummen. [Umsetzung und offene Punkte](REVIEW_JP_UMSETZUNG.md) · [Testjournal](Bemerkungen.md)
+
+# 24.11.2026 – Thesis-Zwischenstand vor P12
+
+Die fünf Textkorrekturen aus dem [unabhängigen P15-Review](masterarbeit/review_jp_20261118/reviews/R_P15_01.md) sind in Kapitel 3 und 5 umgesetzt. Die neu gebaute Fassung enthält die präzisierten Run03-Kontraste, Referenzkurven und Controllerbefunde. Alle 44 Tabellenwerte sind bestätigt, die elf vom neuen Umbruch betroffenen PDF-Seiten visuell geprüft. [Thesis, run05](../output/review_jp_20261118/p15_thesis/run05/CGThesis.pdf)
+
+Die Kapitel 3–5 beschreiben den aktuellen Run03-Hörversuch, das Fortsetzungs-Retrieval auf einzeln kodierten Fenstern, die gepaarte Controllerdiagnose und den technischen Sequenzexport. P15 bleibt bis zur Auswertung echter Teilnehmerbewertungen und zum Gesamttextabgleich offen. Die Einfügestellen für Durchführung und H1–H3 stehen im [Umsetzungsregister](REVIEW_JP_UMSETZUNG.md). Der [Ledger](RESULTS_EVIDENCE_LEDGER.md) ordnet jeder Frage die geltenden Versuche und ihre Aussagegrenzen zu.
+
 # 23.11.2026 – Hörtest für die Institutswebseite
 
 Run03 ist fertig. Alle 21 Übergangsstellen wurden neu ausgewählt. Der Institutsplayer verwendet 49 der 63 neu gerenderten Master, dazu zwei separate Übungsclips. Der Abgleich mit den Dateien im privaten [Serverpaket](../output/institut_hoertest/run03_49/) und die Zuteilung in 21 verschiedenen Reihenfolgen wurden geprüft. Alle sieben festen Anker stammen vom Regel-Cue. [Technischer Prüfnachweis](masterarbeit/review_jp_20261118/p11/run03_49_verified.json)

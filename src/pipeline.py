@@ -4,6 +4,7 @@ import hashlib
 import os
 from pathlib import Path
 import sys
+import tempfile
 
 import librosa
 import numpy as np
@@ -211,12 +212,10 @@ class BeatBridgePipeline:
         return self.combined_song
 
     def save_song(self, output_name, song, sample_rate=None):
-        output_path = Path(output_name)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        sf.write(
-            str(output_path),
-            np.asarray(song).T,
+        _write_render_output(
+            output_name, song,
             self.target_sample_rate if sample_rate is None else int(sample_rate),
+            self.song1_name, self.song2_name,
         )
 
     # Backwards-compatible alias for the original misspelled method.
@@ -555,8 +554,31 @@ def build_argument_parser():
     return parser
 
 
+def _check_render_output(output, *inputs):
+    destination = Path(output).resolve()
+    for source in map(Path, inputs):
+        if destination == source.resolve() or (
+            destination.exists() and destination.samefile(source)
+        ):
+            raise ValueError(f"Output would overwrite an input file: {source}")
+    return destination
+
+
+def _write_render_output(output, audio, sample_rate, *inputs):
+    destination = _check_render_output(output, *inputs)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(dir=destination.parent, suffix=destination.suffix, delete=False) as stream:
+        temporary = Path(stream.name)
+    try:
+        sf.write(str(temporary), np.asarray(audio).T, sample_rate)
+        temporary.replace(destination)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
 def main():
     args = build_argument_parser().parse_args()
+    _check_render_output(args.output, args.song1, args.song2)
     result = render_transition(
         args.song1,
         args.song2,
@@ -570,10 +592,8 @@ def main():
         preview_seconds_after=args.preview_after_seconds,
     )
 
-    output_path = Path(args.output)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    sf.write(str(output_path), result.audio.T, result.sample_rate)
-    print(f"Saved {result.renderer} transition to {output_path}")
+    _write_render_output(args.output, result.audio, result.sample_rate, args.song1, args.song2)
+    print(f"Saved {result.renderer} transition to {args.output}")
 
 
 if __name__ == "__main__":

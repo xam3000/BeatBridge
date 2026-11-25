@@ -260,9 +260,13 @@ Der Output enthält `(B,T,10)` Diagnose-/Renderercontrols sowie explizite
 monotone Mix-, Low-End- und Vocal-Kurven, getrenntes Source-/Target-Ducking
 und die daraus abgeleiteten Vocal-Gains. Der neue temporal Runner akzeptiert
 nur übergebene Train-/Validation-Batches, nie einen Testsplit. Er speichert
-gleiche Gewichte je vorhandener Länge, Gesamt- und Per-L-Metriken, atomare
+gleiche Längengewichte für die berichtete Kennzahl, Gesamt- und Per-L-Metriken, atomare
 `latest.pt`/`best.pt`-Checkpoints und SHA-gebundene Manifeste. W&B bleibt
 über dieselben `disabled`/`offline`/`online`-Modi optional.
+Der Optimierer aktualisiert die Gewichte einmal je längenhomogenem Batch.
+Die Anzahl der Updates je Länge folgt damit der Zahl ihrer Batches. Beim
+Wiederaufnehmen des variablen Runners werden die Zufallsgeneratoren erneut
+gesetzt. [R4-Verlauf und Auswirkung](TCN_BILSTM_CONTROL_MODEL_PROTOCOL.md)
 Ein vollständiger realer CUDA-Lauf ist derzeit noch kein CLI-Befehl: Der Runner
 akzeptiert API-seitig bereits gebaute Train-/Validation-Batches, während der
 versionierte v2-Waveform-Cache und ein eigener CLI-Subcommand noch fehlen.

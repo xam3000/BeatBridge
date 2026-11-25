@@ -273,7 +273,6 @@ Der Versatz im Audio (Abschnitt 5, Punkt 4) ist ein Vorschlag und keine Pflicht.
 
 Offen:
 
-- Die Erhebung über die Institutswebseite mit Hören von zu Hause bestätigen.
 - Die Frage zur Aufgabenstellung aus der Rückmeldung vom 22.11., Abschnitt 9.
 
 Die Antworten werden hier nachgetragen.
@@ -281,6 +280,7 @@ Die Antworten werden hier nachgetragen.
 Entschieden:
 
 - 23.11.2026: Der harte Schnitt rotiert über die drei Stellen, wie in Protokoll Version 2. Die festen Anker sind nicht genehmigt.
+- Nachtrag des Autors vom 25.11.2026: Die Betreuung hat die Erhebung über die geschützte Institutswebseite einschließlich Teilnahme von zu Hause freigegeben. Das ursprüngliche Entscheidungsdatum konnte der Autor nicht angeben. Die Erhebung soll zu einem festen Termin enden. Der genaue Termin steht noch aus.
 
 ## 11. Was nicht geprüft werden konnte
 

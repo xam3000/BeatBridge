@@ -8,13 +8,16 @@ from pathlib import Path
 import numpy as np
 from scipy.stats import rankdata
 
-from src.evaluation.p11_session import FINAL_PAIRS, SELECTORS, VERSION, digest, layout, neutral_check, public_layout, read
-from hoertest.session import WEB_VERSION, web_protocol
+from src.evaluation.p11_session import FINAL_PAIRS, SELECTORS, VERSION, aware_time, digest, layout, neutral_check, public_layout, read
+from hoertest.session import (LISTENING_SETTINGS, RATING_PROTOCOL, RATING_SCALE, WEB_VERSION,
+                             rating_scale, valid_rating, web_protocol)
 from src.features.p07_mert import file_sha256
 
 
 CELLS = tuple((s, c) for s in SELECTORS for c in ("E", "D"))
 NAMES = ("ssl_minus_rule", "top_minus_random", "direct_minus_equal", "absolute_where_minus_how")
+# The original −5-point H3 margin spans 5% of the scale, or 0.3 of the six steps from 1 to 7.
+H3_REFERENCE_POINTS = -0.3
 
 
 def effects(values):
@@ -48,10 +51,14 @@ def read_neutral(originals):
 
 def decode(records, key):
     data, anchors, excluded = {}, [], []
+    rating_protocols = {file_sha256(RATING_PROTOCOL), file_sha256(RATING_PROTOCOL.with_name("BEWERTUNG_20261125_V1.md"))}
     people = Counter(r["person"] for r in records)
     ordinals = Counter(r["ordinal"] for r in records)
     for r in records:
         person, state = r["person"], r["state"]
+        bounds = rating_scale(state)
+        if bounds == RATING_SCALE and state.get("rating_protocol_sha256") not in rating_protocols:
+            raise ValueError("Rating procedure differs from the saved session")
         if people[person] != 1 or ordinals[r["ordinal"]] != 1:
             excluded.append(dict(person=person, reason="duplicate participant or seat"))
             continue
@@ -68,9 +75,11 @@ def decode(records, key):
                 code = clip["code"]
                 a = mapping[code]
                 value = state["ratings"].get(code)
-                if (type(value) is not int or not 0 <= value <= 100 or code not in state["heard"]
+                if (not valid_rating(value, bounds) or code not in state["heard"]
                         or state["plays"].get(code, 0) < 1):
                     continue
+                if bounds == (0, 100):
+                    value = 1 + 6 * value / 100
                 if a["condition"] == "anchor":
                     anchor = dict(person=person, pair=pair, selector=a["selector"], score=value)
                 else:
@@ -90,6 +99,25 @@ def pair_means(data):
     pairs = sorted({pair for _,pair in data})
     return pairs, np.asarray([np.mean([row for (_,p),row in data.items() if p == pair], axis=0)
                               for pair in pairs])
+
+
+def by_listening_setting(records, data):
+    result = {}
+    for setting in LISTENING_SETTINGS:
+        participants = [r["person"] for r in records if r["state"]["profile"]["setting"] == setting]
+        members = set(participants)
+        panels = {(p, pair): scores for (p, pair), scores in data.items() if p in members}
+        pairs, means = pair_means(panels)
+        result[setting] = dict(
+            completed_sessions=len(participants),
+            sessions_with_valid_panels=len({p for p, _ in panels}),
+            valid_panels=len(panels),
+            independent_pairs=len(pairs),
+            pairs=[dict(pair=pair, sessions=sum(k == pair for _, k in panels), effects=numbers(effects(row)))
+                   for pair, row in zip(pairs, means, strict=True)],
+            pair_weighted_effects=numbers(effects(means.mean(0))) if pairs else None,
+        )
+    return result
 
 
 def correlation(left, right):
@@ -115,12 +143,25 @@ def anchor_report(pairs, anchors):
 
 def analyse(originals, key_path, expected_split):
     records, incomplete = read_neutral(originals)
+    receipt = read(originals / "receipt.json")
+    completed_total = len(records)
+    late = []
+    if "deadline" in receipt:
+        cutoff = aware_time(receipt["deadline"])
+        on_time = []
+        for record in records:
+            finished = record["state"]["finished"]
+            if aware_time(finished) <= cutoff:
+                on_time.append(record)
+            else:
+                late.append(dict(sid=record["sid"], finished=finished, reason="after submission deadline"))
+        records = on_time
     key = read(key_path)
     if key["split"] != expected_split or key["version"] not in (VERSION, WEB_VERSION):
         raise ValueError("Study split or application version differs")
     if key["version"] == WEB_VERSION and key.get("procedure_sha256") != file_sha256(web_protocol(key)):
         raise ValueError("Institute study protocol differs")
-    sealed_key = read(originals / "receipt.json").get("study_key_sha256")
+    sealed_key = receipt.get("study_key_sha256")
     if (sealed_key or key["version"] == WEB_VERSION) and sealed_key != file_sha256(key_path):
         raise ValueError("Institute study key differs from the sealed originals")
     if expected_split == "final":
@@ -132,19 +173,23 @@ def analyse(originals, key_path, expected_split):
     data, anchors, excluded = decode(records, key)
     counts = Counter(r["person"] for r in records)
     profiles = {r["person"]:r["state"]["profile"] for r in records if counts[r["person"]]==1}
+    input_scales = Counter("-".join(map(str, rating_scale(r["state"]))) for r in records)
     base = dict(version=key["version"], split=expected_split, analysis="descriptive", profiles=profiles,
+                sessions_by_rating_scale=dict(input_scales), analysis_scale=list(RATING_SCALE),
                 completed_sessions=len(records), incomplete_sessions=incomplete,
                 available_panels=sum(len(r["pages"])-1 for r in records), valid_panels=len(data),
                 exclusions=excluded, anchors=anchor_report(key["panels"], anchors),
                 raw_receipt_sha256=file_sha256(originals / "receipt.json"))
+    if "deadline" in receipt:
+        base.update(deadline=receipt["deadline"], late_submissions=late, all_submitted_sessions=completed_total)
     if key["version"] == WEB_VERSION:
         positions = {pair: [0] * len(key["panels"]) for pair in key["panels"]}
         for record in records:
             mapping = layout(key, record["ordinal"], record["sid"])
             for position, page in enumerate(record["pages"][1:]):
                 positions[mapping[page[0]["code"]]["pair"]][position] += 1
-        base.update(material=key.get("material", "v2"), started_sessions=len(records) + len(incomplete), completed_pair_positions=positions,
-                    procedure_sha256=key["procedure_sha256"])
+        base.update(material=key.get("material", "v2"), started_sessions=completed_total + len(incomplete), completed_pair_positions=positions,
+                    procedure_sha256=key["procedure_sha256"], by_listening_setting=by_listening_setting(records, data))
     if not data:
         return dict(**base, independent_pairs=0, people=0, pair_weighted_effects=None, pairs=[])
     pairs, means = pair_means(data)
@@ -186,7 +231,7 @@ def analyse(originals, key_path, expected_split):
                 person_panels=[dict(person=p,pair=k,cells=row,effects=numbers(effects(np.array(row))))
                                for (p,k),row in sorted(data.items())],
                 pair_weighted_effects=numbers(contrasts), descriptive_95=intervals,
-                h3_reference_points=-5., h3_distance_points=float(contrasts[2]+5),
+                h3_reference_points=H3_REFERENCE_POINTS, h3_distance_points=float(contrasts[2] - H3_REFERENCE_POINTS),
                 pair_effect_range=dict(zip(NAMES,np.stack((effects(means).min(0),effects(means).max(0)),axis=1).tolist())),
                 leave_one_person_out=omitted, secondary_spearman=rho)
 

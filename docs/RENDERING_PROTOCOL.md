@@ -6,6 +6,17 @@ Dieses Dokument beschreibt die stabile Grenze der programmatisch aufrufbaren Ren
 
 ## Einstiegspunkt
 
+**Einordnung der Tempo-Geometrien am 25. November 2026.** Beim Export der
+Controllermerkmale skaliert das globale BPM-Verhältnis das Raster von B.
+Die aktuelle Audiobrücke verwendet die lokal geschätzten Schlagdauern am
+Cue. Eine Differenz von 3 % verschiebt bei 160 BPM über 16 Schläge das
+Fensterende um rund 180 ms. Vor einem neuen Controllertraining müssen
+Featurefenster und Audio dieselbe Geometrie verwenden. Der sekundäre
+Render-Score im Batch bemisst seine Analysefenster weiterhin nach dem
+globalen Tempo von A. Das schränkt seine Interpretation bei lokal
+abweichendem Tempo ein. [Featureexport](../src/features/dataset_export.py) ·
+[Batch-Score](../src/batch_render.py)
+
 ```python
 from src.pipeline import render_transition
 

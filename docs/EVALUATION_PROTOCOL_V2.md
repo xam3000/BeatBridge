@@ -4,17 +4,21 @@
 
 ## Material und Zuteilung
 
+**Festlegung vor der ersten Einladung, 25. November 2026.** Für Run03 gilt die Rotation des harten Schnitts. Der Autor hat am 25. November mitgeteilt, dass die Betreuung die Teilnahme über den geschützten Institutszugang auch von zu Hause freigegeben hat. Das Datum der ursprünglichen Freigabe ist unbekannt. Für diese Erhebung gilt die [Webdurchführung mit Erfassung des Hörorts](../hoertest/PROTOKOLL.md). [Entscheidungsstand](../review_jp/RUECKMELDUNG_20261125.md#10-entscheidungen-der-betreuung)
+
+Die Erhebung endet zu einem festen Termin. Datum und Uhrzeit (Europe/Berlin) legt die Versuchsleitung vor der ersten Einladung schriftlich fest. Der Termin ist am 25. November noch offen. Die Teilnehmerzahl ergibt sich aus den bis zum Stichtag vollständig abgegebenen Sitzungen. Bis dahin sichtet die Versuchsleitung keine Wertungen oder Kontraste. Übung und Pilot zählen separat. Abbrüche, tatsächlich besetzte Anker und die Zahl vollständiger Sitzungen je angegebenem Hörort werden im Bericht ausgewiesen.
+
 P01, P02, P03, P06, P07, P09 und P10 bilden sieben disjunkte Trackpaare mit vierzehn Recording-Gruppen. Die vier bisherigen Rasterausschlüsse gelten weiter. Bei einem neu auftretenden technischen Ausfall wird das ganze betroffene Paar mit Grund und Zeitpunkt zurückgestellt. Ein identischer technischer Wiederholungsversuch ist zulässig. Für die geplante Erhebung müssen alle sieben Paarseiten vollständig vorliegen. Eine Änderung des Paarbestands benötigt eine datierte Entscheidung vor der ersten Sitzung.
 
 Der SSL-Kopf muss für einzeln kodierte Fenster ausgewählt sein. Alle drei Selektoren erhalten denselben zulässigen Pool. Für die Brücke gilt der gemeinsame Tempovertrag `cue_grid_regression_v3`. Der Regressionstest lässt höchstens 20 ms Restfehler je Raster und höchstens 20 ms zwischen den ausgerichteten Schlägen zu. Die bisherige Tempogrenze von 15 % relativ zu A gilt auch für die lokal geschätzten Perioden. Unter den Cues mit gültigem Raster, ausreichendem Kontext und bestandener lokaler Tempoprüfung wählen SSL und Regel jeweils Rang eins. Die uniforme Zufallswahl verwendet weiterhin pro Paar eine Ziehung mit dem eingefrorenen Seed 20261119. Diese Wahl bleibt über Personen fest. Der Renderer verwendet den gleichen tempoangepassten Kontext auch beim harten Schnitt.
 
 Pro Cue entstehen Equal Power (E), die direkt optimierte Kurve (D, 80 Updates) und ein harter Schnitt nach der allein von A gespielten Brücke. Neun Master pro Paar. Sie erhalten die gemeinsame kürzeste Cliplänge durch Kürzen des B-Nachlaufs. Pegelziel −23 LUFS, gemeinsamer True-Peak-Abschlag bei Bedarf, Ausgabe Stereo-PCM24 bei 44.100 Hz. Die Nachmessung lässt 0,2 LU Abweichung vom Paarziel und maximal −0,99 dBTP zu. Die Versuchsleitung erhält also 63 Masterdateien. Pro Person werden alle sechs E/D-Zellen und genau einer der drei harten Schnitte gezeigt, insgesamt 49 Clips.
 
-Eine lokal erzeugte geheime Zufallsfolge legt die erste Paarreihenfolge fest. Die weiteren sechs Zeilen entstehen durch zyklische Verschiebung. Bei der ersten Einrichtung erhält jede Person die nächste Zeile, beim Wiederöffnen dieselbe Sitzungskennung und Zeile. Nach sieben Personen beginnt das Quadrat von vorn. Über je drei aufeinanderfolgende Personen kommt jeder harte Schnitt an jedem Paar einmal vor. Innerhalb einer Sitzung verteilen sich die sieben Anker auf die drei Stellen im Verhältnis 3:2:2. Die sieben Clippositionen jeder Seite werden für jede Person und jedes Paar separat gemischt.
+Im Institutspaket zählt der bestätigte Start einer Sitzung. In jedem Siebenerblock werden Paarbelegung, Zeilen und Spalten eines lateinischen Quadrats neu gemischt. Bei sieben Starts je Block erscheint jedes Paar einmal an jeder Position. In den getrennt zugeteilten Dreierblöcken (Starts 1–3, 4–6 usw.) wird jeder harte Schnitt je Paar einmal zugeteilt. Innerhalb einer Sitzung verteilen sich die sieben Anker im Verhältnis 3:2:2. Die Anwendung mischt die sieben Clippositionen je Sitzung und Paar. Beim Fortsetzen erhält dieselbe Sitzung ihre ursprüngliche Zuteilung.
 
 ## Durchführung
 
-Mindestens drei Personen, möglichst sechs bis neun, jeweils ohne Kenntnis des Designs oder Repositorys. Autor und Betreuung sind vom Bewerten ausgeschlossen. Ein Vielfaches von drei gleicht die Ankerzuteilung je Paar aus. Jede Person hört einzeln am selben geschlossenen Hörplatz mit demselben Kopfhörer. Die Versuchsleitung prüft und protokolliert vor Ort Zugriffsschutz, herunterladbare Dateien, Browserwerkzeuge und Audioverbesserungen. Sie betreut den Hörplatz mit derselben schriftlichen Anleitung ohne Hinweise auf Verfahren oder Erwartungen.
+Eingeladen werden Personen ohne Kenntnis des Designs oder Repositorys. Autor, Betreuung und Pilotperson sind vom Bewerten ausgeschlossen. Jede Person hört einzeln über Kopfhörer. Die Versuchsleitung prüft den Gruppenschutz der Startseite und einer Audioadresse am tatsächlichen Institutszugang. Für alle Hörorte gilt dieselbe schriftliche Anleitung ohne Hinweise auf Verfahren oder Erwartungen. Die tatsächlichen Kopfhörer, die Lautstärke und die Umgebung lassen sich an privaten Geräten nur eingeschränkt kontrollieren.
 
 Erfahrung mit Musik, DJing und Tanz wird in drei Stufen erfasst, bekannte Hörprobleme einschließlich der Antwortmöglichkeit „keine Angabe“. Die Angaben dienen der Beschreibung. Vor dem ersten gewerteten Paar gibt es eine Übungsseite mit zwei Entwicklungsclips zum Einstellen der Lautstärke und Kennenlernen der Skala. Ein separater Probelauf am tatsächlichen Hörplatz wird ebenfalls mit Entwicklungsmaterial durchgeführt und zeitlich protokolliert.
 
@@ -30,7 +34,9 @@ Die Auswertung mittelt zunächst die sechs Zellen je Paar über dessen Personen 
 
 Die harten Schnitte werden mit ihrer jeweiligen Stelle getrennt beschrieben. Für die sekundären Spearman-Korrelationen gehen je Paar nur die sechs E/D-Zellmittel und die zugehörigen Werte für −Proxy, Regel, Render-Score und SSL ein. Konstante Vektoren haben keinen definierten Korrelationswert. Mittelwerte und deskriptive Intervalle berichten den gültigen Nenner. Die Wahl des Cues ändert zugleich den musikalischen Inhalt. Der harte Schnitt kann bei Tanzmusik gut klingen. Unterschiede zwischen E und D enthalten sowohl den Kurveneffekt als auch die Schwankung der Urteile.
 
-## Bedienweg der Versuchsleitung
+## Lokaler Bedienweg für technische Vergleichsläufe
+
+Die folgenden Befehle dokumentieren den lokalen Player. Für Pilot und Erhebung über den geschützten Institutszugang gelten die [Einrichtung des Webpakets](../hoertest/README.md) und die dort beschriebenen Schritte bis zur Versiegelung.
 
 Alle Befehle laufen aus dem Projektstamm. Die Zielordner sind neu. Das Beispiel für den Neurender setzt den datierten Studienkopfentscheid, den geprüften Tempovertrag und die Renderfreigabe voraus.
 

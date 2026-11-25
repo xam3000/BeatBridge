@@ -120,6 +120,16 @@ und erreichte einen Validation-Proxy-Loss von `0,3206756`, gegenüber
 
 ## Additiver Variable-v2-Smoke (verifiziert 2026-08-21)
 
+**Geltender Trainingsvertrag des variablen Runners.** Für die berichtete
+Kennzahl mittelt der Runner die Verluste innerhalb jeder Taktlänge und gibt
+den vier Längen anschließend gleiches Gewicht. Beim Training macht der
+Optimierer einen Schritt pro längenhomogenem Batch. Eine Länge mit mehr Batches
+liefert entsprechend mehr Updates. Die Batchreihenfolge wiederholt sich in
+jeder Epoche. Beim historischen R4-Lauf wurde das Training nach Epoche 30
+fortgesetzt. Gewichte und Optimiererzustand wurden geladen, der Zufallszustand
+für Dropout wurde neu initialisiert. Die Checkpointwahl in Epoche 34 gehört
+zu diesem Verlauf. [Runner](../src/ml/variable_runner.py) · [Laufjournal](Bemerkungen.md)
+
 Die additive Modellvariante `variable_tcn_bilstm_transition_control_v1`
 verwendet Dataset-/Feature-Protocol 2 mit `T=16/32/48/64` und den separaten
 Längenkanal `length_condition=L/8`. Sie ist an den Vertrag

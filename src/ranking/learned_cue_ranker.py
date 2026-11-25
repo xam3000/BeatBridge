@@ -1,4 +1,4 @@
-"""Inference adapter for the verified ``learned_cue_ranker_v1`` model.
+"""Historical inference adapter for the retired proxy-teacher ranker.
 
 The adapter deliberately sits after candidate generation.  It never creates
 or edits a candidate and it never replaces the historical feature ranking;

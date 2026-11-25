@@ -263,7 +263,8 @@ def build_argument_parser():
 
     teacher_seal_parser = subparsers.add_parser(
         "seal-cue-ranker-teacher",
-        help="Seal the explicitly supplied completed Variable-TCN run for offline Cue-Ranker labels",
+        help="Archive a teacher release for the retired proxy cue ranker.",
+        description="Historical, unmaintained proxy-teacher path. The study uses mert_continuation_v2.",
     )
     teacher_seal_parser.add_argument("teacher_run_directory")
     teacher_seal_parser.add_argument("release_path")
@@ -274,7 +275,8 @@ def build_argument_parser():
 
     teacher_label_parser = subparsers.add_parser(
         "label-cue-ranker-teacher",
-        help="Resolve and label only sealed train/validation Candidate-v2 rows",
+        help="Label Candidate-v2 rows for the retired proxy cue ranker.",
+        description="Historical, unmaintained proxy-teacher path. The study uses mert_continuation_v2.",
     )
     teacher_label_parser.add_argument("universe_directory")
     teacher_label_parser.add_argument("teacher_release")
@@ -293,7 +295,8 @@ def build_argument_parser():
 
     cue_ranker_train_parser = subparsers.add_parser(
         "train-cue-ranker",
-        help="Train learned_cue_ranker_v1 from sealed Format-3 train/validation shards only.",
+        help="Train the retired learned_cue_ranker_v1 on historical Format-3 shards.",
+        description="Historical, unmaintained proxy-teacher path. The study uses mert_continuation_v2.",
     )
     cue_ranker_train_parser.add_argument("dataset_directory")
     cue_ranker_train_parser.add_argument("output_directory")

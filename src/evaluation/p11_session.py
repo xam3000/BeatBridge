@@ -2,6 +2,7 @@
 
 from collections import Counter
 from contextlib import closing
+from datetime import datetime
 import csv
 import json
 import math
@@ -14,15 +15,17 @@ import string
 
 import soundfile as sf
 
-from hoertest.session import (CURRENT_FIXED, RUN02, SELECTORS, VERSION, WEB_VERSION, Session, digest, file_sha256,
-                             layout, public_layout, read, utc, web_protocol)
+from hoertest.session import (CURRENT_FIXED, CURRENT_ROTATING, RUN02, SELECTORS, VERSION, WEB_VERSION, Session,
+                             digest, file_sha256, layout, public_layout, rating_scale, read, utc, valid_rating, web_protocol)
 from src.features.p07_population import POPULATION, committed
 from src.features.p08_pairs import publish_dataset, rng_for
 
 
 REVISION = "cue_grid_regression_v3"
 CELLS = {(s, c) for s in SELECTORS for c in ("E", "D", "anchor")}
-PROTOCOL = Path("docs/EVALUATION_PROTOCOL_V2.md")
+# The Run03 masters are bound to the protocol bytes in force at rendering.
+PROTOCOL = Path("docs/EVALUATION_PROTOCOL_V2_20261123.md")
+CURRENT_PROTOCOL = Path("docs/EVALUATION_PROTOCOL_V2.md")
 WEB_PROTOCOL = Path(__file__).resolve().parents[2] / "hoertest" / "PROTOKOLL.md"
 RUN02_DOCS = WEB_PROTOCOL.parents[1] / "docs/masterarbeit/review_jp_20261118/p11"
 FINAL_PAIRS = {"P01", "P02", "P03", "P06", "P07", "P09", "P10"}
@@ -153,7 +156,7 @@ def prepare(root, directories, practice, split, *, institute=False, fixed_rule_a
     panels = dict(master_panel(d, split) for d in directories)
     if not panels or len(panels) != len(directories) or (split == "final" and panels.keys() != FINAL_PAIRS):
         raise ValueError("Missing, duplicate or unexpected study pairs")
-    material = None
+    material = CURRENT_ROTATING if institute else None
     if fixed_rule_anchors:
         material = CURRENT_FIXED
         panels = {pair: [asset for asset in assets if asset["condition"] != "anchor" or asset["selector"] == "rule"]
@@ -182,6 +185,8 @@ def publish_study(root, panels, practice, split, institute, *, material=None):
                version=VERSION, protocol_sha256=file_sha256(protocol))
     if material is not None:
         key["material"] = material
+    if material == CURRENT_ROTATING:
+        key.update(render_protocol_sha256=key["protocol_sha256"], protocol_sha256=file_sha256(CURRENT_PROTOCOL))
     if split == "final":
         groups = {p["pair_id"]:[p[s]["recording_group_id"] for s in ("source","target")]
                   for p in json.loads(committed(POPULATION))["pairs"] if p["pair_id"] in panels}
@@ -224,6 +229,7 @@ def neutral_check(records):
     panels = []
     for r in records:
         state = r["state"]
+        bounds = rating_scale(state)
         assigned = set()
         for i, page in enumerate(r["pages"]):
             expected = [f"{i:02}-{letter}" for letter in string.ascii_uppercase[:2 if i == 0 else 7]]
@@ -231,7 +237,7 @@ def neutral_check(records):
             assigned.update(actual)
             bad_hash = [c["code"] for c in page if not re.fullmatch("[0-9a-f]{64}", str(c.get("sha256", "")))]
             scores = state["ratings"]
-            invalid = [c for c in expected if type(scores.get(c)) is not int or not 0 <= scores[c] <= 100]
+            invalid = [c for c in expected if not valid_rating(scores.get(c), bounds)]
             unheard = [c for c in expected if c not in state["heard"] or state["plays"].get(c, 0) < 1]
             if expected != actual or bad_hash or invalid or unheard:
                 panels.append(dict(sid=r["sid"], page=i, invalid_layout=actual != expected,
@@ -243,12 +249,20 @@ def neutral_check(records):
     return dict(completed_sessions=len(records), duplicate_ids=duplicates, anomalies=panels)
 
 
-def seal(root, destination):
+def aware_time(value):
+    stamp = datetime.fromisoformat(value)
+    if stamp.utcoffset() is None:
+        raise ValueError("Specify a date and time with a UTC offset")
+    return stamp
+
+
+def seal(root, destination, *, deadline=None):
     """Copy completed neutral originals in one consistent read transaction before opening the key."""
+    cutoff = aware_time(deadline) if deadline is not None else None
     version = read(root / "study_key.json")["version"]
     if version not in (VERSION, WEB_VERSION):
         raise ValueError("Unknown study version")
-    with sqlite3.connect(root / "responses.sqlite") as db, publish_dataset(destination) as out:
+    with closing(sqlite3.connect(root / "responses.sqlite")) as db, db, publish_dataset(destination) as out:
         db.execute("BEGIN")
         files, incomplete, records = {}, [], []
         for ordinal, person, sid, raw, pages, key_hash in db.execute("SELECT * FROM sessions ORDER BY ordinal"):
@@ -271,4 +285,6 @@ def seal(root, destination):
         receipt = dict(created=utc(), files=files, incomplete=incomplete, neutral_check_sha256=file_sha256(audit_path))
         if version == WEB_VERSION:
             receipt["study_key_sha256"] = file_sha256(root / "study_key.json")
+        if cutoff is not None:
+            receipt["deadline"] = cutoff.isoformat()
         (out / "receipt.json").write_text(json.dumps(receipt, indent=2), encoding="utf-8")

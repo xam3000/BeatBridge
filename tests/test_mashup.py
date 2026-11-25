@@ -75,6 +75,64 @@ def test_middle_track_is_stretched_once_from_original_at_mixed_rates(tmp_path):
     assert one["sha256"] == two["sha256"]
 
 
+def test_rubberband_preserves_pitch_and_places_target_bars_in_bridge_and_solo(tmp_path):
+    output_rate = 24_000
+    native_rate = 2 * output_rate
+    plan, analysis, _ = sequence(tmp_path, [output_rate, native_rate], [.125, .15])
+    plan["edges"] = [dict(source_seconds=4, target_seconds=4.8, renderer="fade", bars=2)]
+    # Each four-beat bar in B carries its own pitch, making a misplaced or
+    # unstretched passage detectable directly in the published PCM.
+    bar_samples = 4 * round(.15 * native_rate)
+    t = np.arange(bar_samples) / native_rate
+    target = np.concatenate([.2 * np.sin(2 * np.pi * (240 + 40 * bar) * t) for bar in range(20)])
+    sf.write(plan["sections"][1]["path"], target, native_rate, subtype="FLOAT")
+
+    destination = tmp_path / "stretched"
+    manifest = export_mashup(plan, destination, analysis.__getitem__, sample_rate=output_rate)
+    audio, rate = sf.read(destination / "mashup.wav")
+    assert rate == output_rate and audio.shape == (11 * rate, 2)
+    assert manifest["tracks"][1]["tempo_factor"] == pytest.approx(1.2)
+    assert manifest["tracks"][1]["backend"] in {"ffmpeg_librubberband", "rubberband_cli_r3"}
+    assert manifest["edges"][0]["bridge_output"] == [4 * rate, 5 * rate]
+    # B bars 6 and 7 fill the fade, then bars 8–19 occupy six seconds.
+    for seconds, bar in [(4.75, 7), (5.25, 8), (7.25, 12), (10.75, 19)]:
+        middle = round(seconds * rate)
+        window = audio[middle - rate // 10:middle + rate // 10, 0]
+        assert np.sqrt(np.mean(window ** 2)) > .04
+        spectrum = np.abs(np.fft.rfft(window * np.hanning(len(window))))
+        frequencies = np.fft.rfftfreq(len(window), d=1/rate)
+        # Rubber Band can spread a pure tone over adjacent FFT bins.
+        # Bar codes are 40 Hz apart, so the 30 Hz passbands remain disjoint.
+        expected_band = np.abs(frequencies - (240 + 40 * bar)) <= 15
+        assert np.sum(spectrum[expected_band] ** 2) > .65 * np.sum(spectrum ** 2)
+
+
+@pytest.mark.parametrize("track", [0, 1, 2])
+def test_bpm_only_grid_is_rejected_for_each_track(tmp_path, track):
+    plan, analysis, _ = sequence(tmp_path, [RATE] * 3, [.125] * 3)
+    plan["edges"] = [dict(source_seconds=6, target_seconds=3, renderer="simple", bars=1)] * 2
+    path = str(Path(plan["sections"][track]["path"]))
+    bpm, _ = analysis[path]
+    analysis[path] = bpm, []
+    with pytest.raises(ValueError, match="BPM-only grid"):
+        export_mashup(plan, tmp_path / "mix", analysis.__getitem__, sample_rate=RATE)
+    assert sorted(p.name for p in tmp_path.iterdir()) == [f"original-{i}.wav" for i in range(3)]
+
+
+def test_one_peak_gain_preserves_the_difference_between_solo_levels(tmp_path):
+    plan, analysis, signals = sequence(tmp_path, [RATE, RATE], [.125, .125])
+    for section, signal, level in zip(plan["sections"], signals, [1., .5], strict=True):
+        sf.write(section["path"], np.full_like(signal, level), RATE, subtype="FLOAT")
+    plan["edges"] = [dict(source_seconds=4, target_seconds=3, bars=2, renderer="equal_power")]
+    destination = tmp_path / "gain"
+    result = export_mashup(plan, destination, analysis.__getitem__, sample_rate=RATE)
+    audio, _ = sf.read(destination / "mashup.wav")
+    # For these two constant signals the equal-power overlap peaks at sqrt(1² + .5²).
+    assert result["peak_before_gain"] == pytest.approx(np.hypot(1., .5))
+    assert result["gain"] == pytest.approx((1 - 2**-23) / result["peak_before_gain"])
+    np.testing.assert_allclose(audio[[RATE, 6 * RATE], 0], result["gain"] * np.array([1., .5]), atol=2**-23)
+
+
 def test_invalid_section_keeps_both_originals_and_publishes_nothing(tmp_path):
     plan, analysis, _ = sequence(tmp_path, [RATE, RATE], [.125]*2)
     plan["sections"][1]["start_seconds"] = 3.5

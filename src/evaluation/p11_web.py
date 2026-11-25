@@ -111,6 +111,7 @@ def main():
     export = commands.add_parser("seal")
     export.add_argument("root", type=Path)
     export.add_argument("output", type=Path)
+    export.add_argument("--deadline", help="Prespecified submission deadline in ISO 8601 with UTC offset.")
     args = parser.parse_args()
     if args.command == "prepare":
         prepare(args.root, args.panels, args.practice, args.split, institute=args.institute,
@@ -118,7 +119,7 @@ def main():
     elif args.command == "prepare-run02":
         prepare_run02(args.root, args.source, args.practice)
     elif args.command == "seal":
-        seal(args.root, args.output)
+        seal(args.root, args.output, deadline=args.deadline)
     else:
         if read(args.root / "study_key.json")["version"] != VERSION:
             parser.error("Für ein Institutspaket bitte python -m hoertest DATENORDNER verwenden.")

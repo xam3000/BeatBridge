@@ -130,15 +130,45 @@ def begin(s):
     s.event(dict(kind="begin", page=-1, profile=dict(music="viel", dj="wenig", dance="mittel", hearing="nein")))
 
 
-def complete_page(s, person_offset):
+def test_rating_scale_and_existing_session(study):
+    session = Session(study, "current")
+    begin(session)
+    rating = dict(kind="rating", page=0, code="00-A")
+    for value in range(1, 8):
+        session.event(dict(rating, value=value))
+    for value in (0, 8, 100, 1.5, True, "4", None):
+        with pytest.raises(ValueError, match="1 bis 7"):
+            session.event(dict(rating, value=value))
+    resumed = Session(study, "current").state()
+    assert resumed["ratings"] == {"00-A": 7, "00-B": None}
+    assert not resumed["heard"]
+
+    # Recreate an in-progress session as stored by the original player.
+    old = Session(study, "legacy")
+    begin(old)
+    with sqlite3.connect(study / "responses.sqlite") as db:
+        raw, = db.execute("SELECT state FROM sessions WHERE sid=?", (old.sid,)).fetchone()
+        state = json.loads(raw)
+        del state["rating_scale"]
+        del state["rating_protocol_sha256"]
+        state["ratings"]["00-A"] = 53
+        db.execute("UPDATE sessions SET state=? WHERE sid=?", (json.dumps(state), old.sid))
+    old = Session(study, "legacy")
+    assert old.state()["rating_scale"] == (0, 100)
+    assert old.state()["ratings"]["00-A"] == 53
+    old.event(dict(rating, value=100))
+    assert old.state()["ratings"]["00-A"] == 100
+
+
+def complete_page(s, person_offset, *, ssl_offset=0):
     state = s.state()
     p = state["page"]
     for code in state["codes"]:
         a = s.mapping[code]
-        value = 50
+        value = 1
         if p and a["condition"] != "anchor":
-            value += {"ssl":12, "rule":4, "random":0}[a["selector"]]
-            value += 3 if a["condition"] == "D" else 0
+            value += {"ssl":2 + ssl_offset, "rule":1, "random":0}[a["selector"]]
+            value += int(a["condition"] == "D")
             value += person_offset
         for kind in ("play", "ended", "rating"):
             s.event(dict(kind=kind, page=p, code=code, value=value))
@@ -178,19 +208,43 @@ def test_known_effects_on_sealed_originals(study, tmp_path, monkeypatch):
     assert result["available_panels"] == result["valid_panels"] == 21
     assert result["independent_pairs"] == 7
     assert result["incomplete_sessions"][0]["person"] == "unterbrochen"
-    expected = dict(ssl_minus_rule=8., top_minus_random=8., direct_minus_equal=3., absolute_where_minus_how=5.)
-    assert result["pair_weighted_effects"] == expected
-    assert result["h3_distance_points"] == 8
-    assert all(effects == expected for effects in result["leave_one_person_out"].values())
-    assert result["descriptive_95"] == {k:[v,v] for k,v in expected.items()}
+    assert result["analysis_scale"] == [1, 7]
+    assert all(row["mean"] == 1 for row in result["anchors"].values())
+    assert all(pair["cells"]["ssl_D"] == 5 for pair in result["pairs"])
+    expected = dict(ssl_minus_rule=1, top_minus_random=1.5,
+                    direct_minus_equal=1, absolute_where_minus_how=.5)
+    assert result["sessions_by_rating_scale"] == {"1-7": 3}
+    assert result["pair_weighted_effects"] == pytest.approx(expected)
+    assert result["h3_reference_points"] == -.3
+    assert result["h3_distance_points"] == pytest.approx(1.3)
+    assert all(effects == pytest.approx(expected) for effects in result["leave_one_person_out"].values())
+    for name, value in expected.items():
+        assert result["descriptive_95"][name] == pytest.approx([value, value])
     records, _ = read_neutral(out)
     assert neutral_check(records)["anomalies"] == []
     key = read(study / "study_key.json")
     mapping = layout(key, records[0]["ordinal"])
+    old = json.loads(json.dumps(records[0]))
+    old_state = old["state"]
+    # Recorded by the first seven-point player, before the change in reporting units.
+    old_state["rating_protocol_sha256"] = "e71c79e5f7dd37bc74c16ffcd8ef1006b0d8b329e8a253c04c45c1dc6cf82402"
+    old_state["ratings"] = dict.fromkeys(old_state["ratings"], 7)
+    old_cells, old_anchors, excluded = decode([old], key)
+    assert not excluded and all(row == [7] * 6 for row in old_cells.values())
+    assert all(anchor["score"] == 7 for anchor in old_anchors)
+    old_state["rating_protocol_sha256"] = "incorrect"
+    with pytest.raises(ValueError, match="Rating procedure"):
+        decode([old], key)
+    del old_state["rating_scale"], old_state["rating_protocol_sha256"]
+    old_state["ratings"] = dict.fromkeys(old_state["ratings"], 53)
+    assert not neutral_check([old])["anomalies"]
+    legacy_cells, legacy_anchors, excluded = decode([old], key)
+    assert not excluded and all(row == pytest.approx([4.18] * 6) for row in legacy_cells.values())
+    assert all(anchor["score"] == pytest.approx(4.18) for anchor in legacy_anchors)
     anchor = next(k for k,v in mapping.items() if k.startswith("01-") and v["condition"]=="anchor")
     cell = next(k for k,v in mapping.items() if k.startswith("02-") and v["condition"]!="anchor")
     del records[0]["state"]["ratings"][anchor]
-    records[0]["state"]["ratings"][cell] = 101
+    records[0]["state"]["ratings"][cell] = 8
     anomalies = neutral_check(records)["anomalies"]
     assert [a["missing_or_invalid_rating"] for a in anomalies] == [[anchor], [cell]]
     assert not any("selector" in a or "condition" in a for a in anomalies)
@@ -266,21 +320,47 @@ def test_institute_assignment_and_sealed_results(institute, tmp_path):
     seal(institute, unfinished)
     counts = analyse(unfinished, institute / "study_key.json", "development")
     assert counts["started_sessions"] == 1 and counts["completed_sessions"] == 0
+    assert counts["analysis_scale"] == [1, 7]
     assert counts["pair_weighted_effects"] is None
+    assert all(group["pair_weighted_effects"] is None and group["completed_sessions"] == 0
+               for group in counts["by_listening_setting"].values())
     completed = Session(institute, "test-session")
     completed.event(dict(kind="begin", page=-1, profile=dict(music="mittel", dj="wenig", dance="viel",
                          hearing="keine Angabe", setting="anderer Hörplatz")))
     while not completed.state()["done"]:
         complete_page(completed, 0)
+    on_site = Session(institute, "test-on-site")
+    on_site.event(dict(kind="begin", page=-1, profile=dict(music="mittel", dj="wenig", dance="viel",
+                       hearing="keine Angabe", setting="Institut")))
+    while not on_site.state()["done"]:
+        complete_page(on_site, 0, ssl_offset=-1)
     originals = tmp_path / "originale-institut"
     seal(institute, originals)
     report = analyse(originals, institute / "study_key.json", "development")
-    assert report["started_sessions"] == 2 and report["completed_sessions"] == 1
-    assert len(report["incomplete_sessions"]) == 1 and report["valid_panels"] == 7
-    assert all(sum(pos) == 1 for pos in report["completed_pair_positions"].values())
-    assert report["pair_weighted_effects"]["ssl_minus_rule"] == 8
-    assert report["pair_weighted_effects"]["direct_minus_equal"] == 3
+    assert report["started_sessions"] == 3 and report["completed_sessions"] == 2
+    assert len(report["incomplete_sessions"]) == 1 and report["valid_panels"] == 14
+    assert all(sum(pos) == 2 for pos in report["completed_pair_positions"].values())
+    assert report["pair_weighted_effects"]["ssl_minus_rule"] == .5
+    assert report["pair_weighted_effects"]["direct_minus_equal"] == 1
     assert report["profiles"]["test-session"]["setting"] == "anderer Hörplatz"
+    for setting, expected in (("Institut", 0), ("anderer Hörplatz", 1)):
+        group = report["by_listening_setting"][setting]
+        assert group["completed_sessions"] == group["sessions_with_valid_panels"] == 1
+        assert group["valid_panels"] == group["independent_pairs"] == 7
+        assert group["pair_weighted_effects"]["ssl_minus_rule"] == pytest.approx(expected)
+        assert all(pair["effects"]["ssl_minus_rule"] == pytest.approx(expected) for pair in group["pairs"])
+
+    records, _ = read_neutral(originals)
+    deadline = min(row["state"]["finished"] for row in records)
+    on_time = tmp_path / "sealed-with-deadline"
+    seal(institute, on_time, deadline=deadline)
+    report = analyse(on_time, institute / "study_key.json", "development")
+    assert len(read_neutral(on_time)[0]) == 2
+    assert report["started_sessions"] == 3 and report["all_submitted_sessions"] == 2
+    assert report["completed_sessions"] == 1 and len(report["late_submissions"]) == 1
+    assert report["valid_panels"] == 7 and report["pair_weighted_effects"]["ssl_minus_rule"] == 1
+    with pytest.raises(ValueError, match="UTC offset"):
+        seal(institute, tmp_path / "ambiguous-deadline", deadline="2026-11-25T12:00:00")
 
 
 @pytest.mark.parametrize("material", ["run02", "cue_grid_regression_v3_fixed_rule"])

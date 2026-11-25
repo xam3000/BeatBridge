@@ -41,6 +41,24 @@ Beim gewählten Kopf beträgt der mittlere reziproke Rang (MRR) 0,8225. Gegen di
 
 Der neue Lauf bündelt gleich lange Ausschnitte ohne Padding. Jedes Beispiel hat nur die eigenen vier Takte im Encoder-Eingang. Für die 135 Fenster einer Entwicklungsaufnahme ergab die erneute Berechnung bitgleiche Werte zum Trainingscache. Der einzelne bfloat16-Forward der ersten Gegenprobe und diese gebündelte Berechnung unterscheiden sich numerisch geringfügig. Die Kosinusreferenz beträgt im ersten Versuch 63,51 % und im gebündelten Lauf 63,59 %. [Prüfjournal](../Bemerkungen.md)
 
+## Wie stark hängt der Vorsprung von den Quellgruppen ab? · 25. November 2026
+
+Auf der Auswahl-Validation liegt MERT im Mittel der drei Trainingsseeds um **3,75 Prozentpunkte** vor den klassischen Merkmalen. Das gepaarte 95-%-Bootstrapintervall reicht von **1,65 bis 5,84 Punkten**. Beim Studienseed sind es 3,57 Punkte mit einem Intervall von 1,04 bis 6,07. Beide Differenzen verwenden dieselbe Gewichtung wie die Ergebnistabelle oben. Zunächst zählt jede Abfrage innerhalb ihrer Aufnahme gleich, anschließend jede der 54 Aufnahmen.
+
+| Gewichtung des Recall@1 auf der Auswahl-Validation | Studienseed 20260926, Differenz [95-%-Intervall] in Punkten | Mittel der drei Seeds, Differenz [95-%-Intervall] in Punkten |
+|---|---:|---:|
+| Je Aufnahme gleich (54 Aufnahmen, Hauptkennzahl) | +3,57 [1,04 bis 6,07] | +3,75 [1,65 bis 5,84] |
+| Je Quellgruppe gleich (53 Gruppen) | +3,63 [1,05 bis 6,21] | +3,81 [1,66 bis 5,95] |
+| Je Abfrage gleich (2.830 Abfragen) | +4,03 [1,52 bis 6,51] | +4,48 [2,37 bis 6,61] |
+
+Für jeden der Seeds 20260926, 20260927 und 20260928 wurden die Rang-1-Treffer beider Verfahren anhand derselben P08-Abfrage-ID gepaart. Jede der 10.000 Bootstrapstichproben enthält 53 mit Zurücklegen gezogene Quellgruppen samt allen zugehörigen Aufnahmen und Abfragen. Beide Verfahren und alle Seeds erhalten dieselben Ziehungen (NumPy PCG64, Seed 20261125). Die zweite Tabellenzeile mittelt die Trefferquoten der Gruppen, wobei innerhalb jeder Gruppe alle Abfragen gleich zählen. Die Intervallgrenzen sind die 2,5- und 97,5-Perzentile der gepaarten Differenz. Beim Seedmittel werden die drei gepaarten Unterschiede in jeder Ziehung gemittelt. Die Intervalle beschreiben die Streuung über die Quellgruppen bei festen Köpfen. Die Auswahl der Epoche und die Messung erfolgten auf derselben Validation. [Rangdatei-Prüfsummen, aggregierte Trefferzahlen und Intervalle](review_jp_20261118/mert_fenster/group_bootstrap.json)
+
+## Welchen Pegel erhält MERT? · 25. November 2026
+
+Der eingefrorene Vorverarbeiter setzt `do_normalize=true`. In Training und Anwendung zentriert er jedes Vier-Takt-Fenster separat und teilt seine Samples durch die Quadratwurzel aus Fenstervarianz plus 10⁻⁷. Damit geht der absolute Fensterpegel für MERT bei üblichen Signalpegeln praktisch verloren. Der Lautstärkeverlauf innerhalb des Fensters bleibt erhalten. Die klassischen Merkmale enthalten unter anderem den absoluten, zwischen −60 und 0 dBFS skalierten RMS-Pegel. Damit unterscheiden sich die Eingaben beider Verfahren auch in der verfügbaren Pegelinformation. [MERT-Eingabepfad](../../src/features/p07_mert.py) · [Klassische Taktmerkmale](../../src/features/p07_audio.py)
+
+Die Kontrolle am geladenen Modell verwendete dasselbe 6,40 Sekunden lange Signal in zwei Pegeln. Nach Halbierung der Amplitude (−6,02 dB) unterschieden sich die an den Encoder übergebenen Samples um höchstens 2,03 × 10⁻⁶. Beide Eingaben entsprachen der Normierungsformel im Float32-Vergleich exakt. [Messwerte und Prüfsumme der lokalen Modellkonfiguration](review_jp_20261118/mert_fenster/group_bootstrap.json)
+
 ## Nachrechnung und Entwicklungsrender
 
 Die Nachrechnung aus dem gewählten Checkpoint reproduzierte die Auswahlregel, alle 2.830 einzelnen Validierungsränge, Recall@1 und MRR. Im historischen P10-Suchraum der 26 disjunkten Entwicklungspaare wählten Regel und neuer Kopf in **0 von 26 Paaren** denselben Cue. Das mittlere Spearman-ρ der Rangfolgen beträgt **0,1682**. Alle 3.744 Cue-IDs und Regelscores entsprachen dem ursprünglichen P10-Vergleich. Das beschreibt unterschiedliche Entscheidungen bei der Stellenwahl. [Prüfnachweis](review_jp_20261118/mert_fenster/verified.json) · [Sieger und Rangkorrelation je Paar](review_jp_20261118/mert_fenster/pairs.csv)
@@ -48,6 +66,16 @@ Die Nachrechnung aus dem gewählten Checkpoint reproduzierte die Auswahlregel, a
 Für „Under Attack“ → „Keep It Raw“ reproduzierte der Ranker aus den beiden Originaldateien alle 144 zwischengespeicherten Scores exakt. Beim normalen CLI-Lauf ließ die aktuelle Tempo-Prüfung neun dieser Cues zu. Der Sieger `candidate-28ec86b17ab759a2` ergab einen 19-s-Stereoexport bei 44.100 Hz mit 282.624 Frames Überblendung. Die neun Scores im Batch wichen höchstens um 1,01 × 10⁻⁷ von der Offlineberechnung ab. Der Lauf verwendete ausschließlich Entwicklungsmaterial. [Batchnachweis](review_jp_20261118/mert_fenster/batch_verified.json) · [Entwicklungs-WAV](../../output/review_jp_20261118/mert_fenster/batch01/rendered/0001__candidate-28ec86b17ab759a2__equal_power.wav)
 
 ## Reproduktion aus dem Projektstamm
+
+Der Gruppenbootstrap lässt sich aus den veröffentlichten Trefferzahlen je Aufnahme nachrechnen. Mit den privaten Rangdateien und dem lokalen Modell prüft der zweite Aufruf zusätzlich alle Abfrage-IDs und den Eingang des Encoders. Dafür wird ein neuer Zielpfad benötigt.
+
+```powershell
+$py = '.venv/Scripts/python.exe'
+& $py -B -X utf8 -m src.evaluation.mert_group_bootstrap --replay docs/masterarbeit/review_jp_20261118/mert_fenster/group_bootstrap.json
+$env:HF_HUB_OFFLINE = '1'
+$env:PYTHONPATH = (Resolve-Path 'output/review_jp_20261118/p07/runtime').Path
+& $py -B -X utf8 -m src.evaluation.mert_group_bootstrap --output output/mert_bootstrap_wiederholung.json
+```
 
 Die Befehle verwenden den eingefrorenen lokalen P07-Modellordner, die Originalaufnahmen und die P08-Splits. `cache01` enthält die separat berechneten Vier-Takt-Fenster. Beim erneuten Training prüft der Lader die Identität der Produktionsfassung, den Modellvertrag und die SHA-256 der zwischengespeicherten Daten. Die Zielordner für Vergleich, Training und Prüfung müssen jeweils neu sein. Bei einer frischen Installation über die Projekt-Requirements ist Transformers 4.49.0 bereits vorhanden. Die Umgebungsvariable `PYTHONPATH` unten bindet die separate Laufzeit des ursprünglichen P07-Rechners ein.
 

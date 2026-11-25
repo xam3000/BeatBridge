@@ -1,0 +1,83 @@
+{
+  "material": "cue_grid_regression_v3_rotating",
+  "render": "run03",
+  "study_key_sha256": "cbf81658f8463e03983c3773c2038427880ff5de1da84d0310d4cd574a8dfd68",
+  "render_protocol_sha256": "4565d2b501e10e8adede2932b48b272d608ea4c509f801fffa75620bb0bdd05a",
+  "protocol_sha256": "46e03a3761fd43bcb61fd4390cb10547e0fe7b8734128566ffeeebb1ee913bcb",
+  "procedure_sha256": "8870b22b334942623554e21311d6c865473d490e2fa263ab62a33d9740f5b609",
+  "source_pairs": [
+    {
+      "pair": "P01",
+      "eligible": 151
+    },
+    {
+      "pair": "P02",
+      "eligible": 46
+    },
+    {
+      "pair": "P03",
+      "eligible": 1078
+    },
+    {
+      "pair": "P06",
+      "eligible": 13
+    },
+    {
+      "pair": "P07",
+      "eligible": 343
+    },
+    {
+      "pair": "P09",
+      "eligible": 1012
+    },
+    {
+      "pair": "P10",
+      "eligible": 1128
+    }
+  ],
+  "masters": 63,
+  "practice_clips": 2,
+  "playback_set_sha256": "3da8a97fd755c784d631a1b64e9451cae8b01deead03cb96ed5bfed80d9b1925",
+  "all_media_sha256": "e6fb54901fb620460a815eaeb2d4c848c81ef6b0ffdb7a6e619f515c53783469",
+  "max_absolute_loudness_deviation_lu": 0.02,
+  "highest_dbtp": -10.52,
+  "max_timing_error_ms": {
+    "source_residual_ms": 17.465,
+    "target_residual_ms": 18.641,
+    "beat_offset_ms": 18.509,
+    "span_error_ms": 16.341
+  },
+  "rated_clips_per_session": 49,
+  "audio_bytes_per_session_including_practice": 256585932,
+  "layout_check": {
+    "sessions": 21,
+    "anchor_blocks_per_pair": 7,
+    "latin_blocks": 3
+  },
+  "technical_replay": {
+    "sessions": 6,
+    "anchor_blocks_per_pair": 2,
+    "latin_blocks": 0,
+    "scored_panels": 42,
+    "each_anchor_per_pair": 2,
+    "ssl_minus_rule": 4,
+    "direct_minus_equal": 3,
+    "by_listening_setting": {
+      "Institut": {
+        "completed_sessions": 3,
+        "scored_panels": 21,
+        "ssl_minus_rule": 8
+      },
+      "anderer Hörplatz": {
+        "completed_sessions": 3,
+        "scored_panels": 21,
+        "ssl_minus_rule": 0
+      }
+    },
+    "human_ratings": 0
+  },
+  "unused_delivery_database": {
+    "sessions": 0,
+    "events": 0
+  }
+}

@@ -1,5 +1,7 @@
 # Institutshörtest mit dem aktuellen Renderverfahren und festen Ankern
 
+**Historischer Entwurf vom 23. November.** Die Betreuung hat die Rotation des harten Schnitts entschieden. Das Paket mit festem Regel-Anker ist für die Erhebung zurückgezogen. Für Run03 gelten die [Webdurchführung mit Rotation](PROTOKOLL.md) und [Protokoll V2](../docs/EVALUATION_PROTOCOL_V2.md). [Rückmeldung vom 25. November](../review_jp/RUECKMELDUNG_20261125.md#6-befund-3-hörtest)
+
 Der Autor hat am 23. November 2026 vor der Erhebung festgelegt, dass alle Teilnehmenden dieselben 49 neu gerenderten Ausschnitte hören. Übergangsstellen, Tempoanpassung, Pegel und die sechs Vergleichsbedingungen je Songpaar folgen dem [aktuellen Renderprotokoll](../docs/EVALUATION_PROTOCOL_V2.md). Die sieben Paare stammen aus dem eingefrorenen P01-Bestand.
 
 Die aktuelle Pipeline rendert je Paar neun Master und prüft Dauer, Lautheit und Ausrichtung. Das Institutspaket übernimmt daraus die sechs regulären Übergänge und den harten Schnitt am aktuellen Regel-Cue. Der Regel-Cue ist für jeden Durchgang fest. Vergleiche mit harten Schnitten beziehen sich ausschließlich auf diese Stelle. Die anderen beiden Schnittvarianten gehören zum internen Renderbestand.

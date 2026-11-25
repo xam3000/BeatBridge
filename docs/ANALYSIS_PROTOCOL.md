@@ -9,6 +9,12 @@ additiv.
 
 ## Ergebnisformat
 
+Bei älteren Caches konnte der nächste aufTAKT-Beat mehreren
+librosa-Detektionen zugeordnet werden. Auch ein als geprüft gespeichertes
+Raster dieser Generation garantiert deshalb keine eindeutige Paarung. Run03
+verwendet die neuere Zuordnung und prüft zusätzlich die lokalen
+Schlagabweichungen an jeder gewählten Stelle. [Tempo-Bericht](masterarbeit/REVIEW_JP_TEMPO_20261123.md)
+
 `PreAnalysis` liefert ein `AnalysisResult` mit:
 
 - `bpm`,

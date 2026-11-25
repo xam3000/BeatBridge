@@ -1,4 +1,6 @@
 from pathlib import Path
+import subprocess
+import sys
 
 import numpy as np
 import pytest
@@ -10,6 +12,7 @@ from src.cutting.simple_cut import SimpleCut
 from src.pipeline import (
     BeatBridgePipeline,
     RENDER_RESULT_FORMAT_VERSION,
+    main,
     render_transition,
 )
 from src.candidates import CutPoint, TrackReference, TransitionCandidate
@@ -36,8 +39,10 @@ class StubAnalysis:
 
 @pytest.fixture
 def synthetic_tracks(tmp_path):
-    song1 = tmp_path / "song1.wav"
-    song2 = tmp_path / "song2.wav"
+    inputs = tmp_path / "originals"
+    inputs.mkdir()
+    song1 = inputs / "song1.wav"
+    song2 = inputs / "song2.wav"
     duration_seconds = 4
     sr1 = 44_100
     sr2 = 48_000
@@ -60,6 +65,51 @@ def synthetic_tracks(tmp_path):
         "cutpoint1": int(2.0 * 44_100),
         "cutpoint2": int(2.4 * 44_100),
     }
+
+
+@pytest.mark.parametrize("source", ["song1", "song2"])
+@pytest.mark.parametrize("alias", ["direct", "relative", "hardlink", "symlink"])
+def test_cli_rejects_original_output_before_rendering(synthetic_tracks, tmp_path, monkeypatch, source, alias):
+    tracks = [synthetic_tracks[name] for name in ("song1", "song2")]
+    before = [path.read_bytes() for path in tracks]
+    original = synthetic_tracks[source]
+    monkeypatch.chdir(tmp_path)
+    output = original
+    if alias == "relative":
+        output = original.relative_to(tmp_path)
+    elif alias == "hardlink":
+        output = tmp_path / "link.wav"
+        output.hardlink_to(original)
+    elif alias == "symlink":
+        output = tmp_path / "link.wav"
+        try:
+            output.symlink_to(original)
+        except OSError as error:
+            if getattr(error, "winerror", None) != 1314:
+                raise
+            # Windows without link privilege still supports directory junctions.
+            junction = tmp_path / "linked-directory"
+            subprocess.run(["cmd", "/c", "mklink", "/J", str(junction), str(original.parent)], check=True)
+            output = junction / original.name
+    monkeypatch.setattr(sys, "argv", ["pipeline", *map(str, tracks), "0", "0", "simple", "-o", str(output)])
+    monkeypatch.setattr("src.pipeline.render_transition", lambda *a, **kw: pytest.fail("render started"))
+    with pytest.raises(ValueError, match="overwrite an input"):
+        main()
+    assert [path.read_bytes() for path in tracks] == before
+
+
+def test_pipeline_writer_protects_inputs_and_saves_a_separate_preview(synthetic_tracks, tmp_path):
+    source, target = (synthetic_tracks[key] for key in ("song1", "song2"))
+    pipeline = BeatBridgePipeline(source, target, synthetic_tracks["analysis"], TimeStretch(), SimpleCut())
+    output = tmp_path / "preview.wav"
+    output.hardlink_to(target)
+    before = target.read_bytes()
+    with pytest.raises(ValueError, match="overwrite an input"):
+        pipeline.save_song(output, pipeline.song1)
+    assert target.read_bytes() == before
+    output.unlink()
+    pipeline.save_song(output, pipeline.song1[:, :1024])
+    assert sf.info(output).frames == 1024
 
 
 def test_pipeline_normalises_sample_rate_channels_and_beat_grid(synthetic_tracks):

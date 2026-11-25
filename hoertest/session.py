@@ -1,5 +1,6 @@
 """Session assignment and responses shared by the local and institute players."""
 
+from contextlib import closing
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -15,12 +16,28 @@ VERSION = "p11-local-v2.1"
 WEB_VERSION = "p11-institut-v1"
 RUN02 = "run02"
 CURRENT_FIXED = "cue_grid_regression_v3_fixed_rule"
+CURRENT_ROTATING = "cue_grid_regression_v3_rotating"
 SELECTORS = ("ssl", "rule", "random")
+LISTENING_SETTINGS = ("Institut", "anderer Hörplatz")
+RATING_SCALE = (1, 7)
+RATING_PROTOCOL = Path(__file__).with_name("BEWERTUNG_20261125.md")
+
+
+def rating_scale(state):
+    # Sessions created before the seven-point scale have no scale field.
+    bounds = tuple(state.get("rating_scale", (0, 100)))
+    if bounds not in (RATING_SCALE, (0, 100)):
+        raise ValueError("Unbekannte Bewertungsskala.")
+    return bounds
+
+
+def valid_rating(value, bounds):
+    return type(value) is int and bounds[0] <= value <= bounds[1]
 
 
 def web_protocol(key):
-    name = {RUN02: "PROTOKOLL_RUN02.md", CURRENT_FIXED: "PROTOKOLL_FESTE_ANKER.md",
-            "v2": "PROTOKOLL.md"}[key.get("material", "v2")]
+    name = {RUN02: "PROTOKOLL_RUN02.md", CURRENT_FIXED: "PROTOKOLL_FESTE_ANKER_20261123.md",
+            "v2": "PROTOKOLL_20261123.md", CURRENT_ROTATING: "PROTOKOLL.md"}[key.get("material", "v2")]
     return Path(__file__).with_name(name)
 
 
@@ -106,7 +123,7 @@ class Session:
         self.online = self.key["version"] == WEB_VERSION
         if self.key["version"] not in (VERSION, WEB_VERSION):
             raise ValueError("Incompatible study version")
-        with self.connect() as db:
+        with closing(self.connect()) as db, db:
             db.execute("BEGIN IMMEDIATE")
             row = db.execute("SELECT ordinal,sid,key_hash FROM sessions WHERE person=?", (person,)).fetchone()
             if row is None:
@@ -128,6 +145,7 @@ class Session:
                         raise ValueError("Assigned audio changed")
             if row is None:
                 state = dict(page=-1, split=self.key["split"], protocol_sha256=self.key["protocol_sha256"],
+                             rating_scale=RATING_SCALE, rating_protocol_sha256=file_sha256(RATING_PROTOCOL),
                              ratings={}, plays={}, heard=[], profile=None, finished=None,
                              entered=utc(), started=utc(), page_seconds={}, active=None)
                 if self.online:
@@ -139,17 +157,17 @@ class Session:
         return sqlite3.connect(self.root / "responses.sqlite", timeout=10)
 
     def state(self):
-        with self.connect() as db:
+        with closing(self.connect()) as db:
             state = read_state(db, self.sid)
         page = state["page"]
         codes = [c["code"] for c in self.pages[page]] if page >= 0 else []
         return dict(page=page, total=len(self.pages)-1, done=bool(state["finished"]), codes=codes,
                     **({"session_code": self.person} if self.online else {}),
-                    ratings={c:state["ratings"].get(c) for c in codes},
+                    rating_scale=rating_scale(state), ratings={c:state["ratings"].get(c) for c in codes},
                     heard=[c for c in codes if c in state["heard"]])
 
     def event(self, event):
-        with self.connect() as db:
+        with closing(self.connect()) as db, db:
             db.execute("BEGIN IMMEDIATE")
             state = read_state(db, self.sid)
             if state["finished"]:
@@ -179,8 +197,9 @@ class Session:
                     state["active"] = None
                 else:
                     value = event.get("value")
-                    if type(value) is not int or not 0 <= value <= 100:
-                        raise ValueError("Bitte eine ganze Zahl von 0 bis 100 eingeben.")
+                    bounds = rating_scale(state)
+                    if not valid_rating(value, bounds):
+                        raise ValueError(f"Bitte eine ganze Zahl von {bounds[0]} bis {bounds[1]} wählen.")
                     log["previous"] = state["ratings"].get(code)
                     log["value"] = state["ratings"][code] = value
             elif kind in ("begin", "next", "back"):
@@ -192,7 +211,7 @@ class Session:
                     if (page != -1 or not isinstance(profile, dict)
                             or set(profile) != fields
                             or any(profile[k] not in ("wenig", "mittel", "viel") for k in ("music", "dj", "dance"))
-                            or (self.online and profile["setting"] not in ("Institut", "anderer Hörplatz"))
+                            or (self.online and profile["setting"] not in LISTENING_SETTINGS)
                             or profile["hearing"] not in ("ja", "nein", "keine Angabe")):
                         raise ValueError("Bitte prüfen Sie die Angaben zum Einstieg.")
                     log["profile"] = state["profile"] = profile

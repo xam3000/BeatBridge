@@ -84,7 +84,7 @@ def build_argument_parser():
     variable_parser.add_argument("--track-exclusions", default="config/track_exclusions.json")
     cue_universe_parser = subparsers.add_parser(
         "build-cue-ranker-universe",
-        help="Build a sealed train/validation Candidate-v2 universe from a pair index.",
+        help="Build a sealed Candidate-v2 universe for the retired proxy cue ranker.",
     )
     cue_universe_parser.add_argument("pair_index")
     cue_universe_parser.add_argument("output_directory")
@@ -92,7 +92,7 @@ def build_argument_parser():
     cue_universe_parser.add_argument("--sampling-seed", type=int, default=20260825)
     cue_pair_index_parser = subparsers.add_parser(
         "build-cue-ranker-pair-index",
-        help="Build a sealed train/validation pair index from a producer manifest.",
+        help="Build a sealed pair index for the retired proxy cue ranker.",
     )
     cue_pair_index_parser.add_argument(
         "source_manifest",
@@ -109,7 +109,7 @@ def build_argument_parser():
     )
     cue_dataset_parser = subparsers.add_parser(
         "export-cue-ranker-dataset",
-        help="Publish a sealed Cue-Ranker Dataset-3 from universe and frozen labels.",
+        help="Publish a historical Dataset-3 for the retired proxy cue ranker.",
     )
     cue_dataset_parser.add_argument("universe_directory")
     cue_dataset_parser.add_argument("label_directory")
