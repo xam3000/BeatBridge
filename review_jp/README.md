@@ -2,13 +2,14 @@
 
 Dieser Ordner enthält die Unterlagen des Betreuer-Reviews: Befunde, Plan, Rückmeldungen, Prüfskripte und deren Ergebnisse. Diese Seite ist der Einstieg und wird bei jeder neuen Rückmeldung aktualisiert.
 
-Letzte Aktualisierung: 25. November 2026, geprüfter Commit `69a5c59`.
+Letzte Aktualisierung: 26. November 2026 mit der Notiz zum Probelauf, Stand `598d46a`. Letzte vollständige Rückmeldung: 25. November 2026, geprüfter Commit `69a5c59`.
 
 ## Was jetzt gilt
 
 | Frage | Dokument |
 |---|---|
 | Wo stehen wir, und was ist als Nächstes zu tun? | [RUECKMELDUNG_20261125.md](./RUECKMELDUNG_20261125.md) |
+| Was hat der Probelauf auf dem Institutsserver ergeben, und was wird dazu gebraucht? | [PROBELAUF_20261126.md](./PROBELAUF_20261126.md) |
 | Was muss umgesetzt werden, was reicht zu benennen? Wie soll der Hörversuch aufgebaut sein? | [RUECKMELDUNG_20261122.md](./RUECKMELDUNG_20261122.md), Abschnitte 8 und 12 |
 | Was ist der Plan, und warum? | [ZUSAMMENFASSUNG_UND_AKTIONSPLAN.md](./ZUSAMMENFASSUNG_UND_AKTIONSPLAN.md) |
 | Wie weit ist die Umsetzung im Einzelnen? | [`docs/REVIEW_JP_UMSETZUNG.md`](../docs/REVIEW_JP_UMSETZUNG.md), geführt vom Autor |
@@ -24,6 +25,7 @@ Wer neu einsteigt, liest zuerst die neueste Rückmeldung, dann den Aktionsplan. 
 | 18.11.2026 | [ZUSAMMENFASSUNG_UND_AKTIONSPLAN.md](./ZUSAMMENFASSUNG_UND_AKTIONSPLAN.md) | `56b982a` | Kritikpunkte, zehn Grundsätze, Plan in Phasen | Gilt. Reihenfolge durch die Rückmeldung angepasst. |
 | 22.11.2026 | [RUECKMELDUNG_20261122.md](./RUECKMELDUNG_20261122.md) | `4651e51` | Umsetzungsstand, drei Befunde vor dem Hörversuch, nächste Schritte | Momentaufnahme. Am 23.11. ergänzt: Erklärungen, Entscheidung zur Paarzahl, Abschnitt 11 zu den Beat-Trackern, Abschnitt 12 zum Design des Hörversuchs, Einordnung Pflicht oder Benennen in Abschnitt 8. Die Abschnitte 8, 11 und 12 gelten weiter. |
 | 25.11.2026 | [RUECKMELDUNG_20261125.md](./RUECKMELDUNG_20261125.md) | `69a5c59` | Prüfung der Umsetzung: MERT, Tempo, Hörtest-Anwendung, Mashup-Export; was vor der Erhebung offen ist, mit Checkliste in Abschnitt 9 | Aktuell. Erste Fassung vom 23.11., hieß bis zum 25.11. `RUECKMELDUNG_20261123.md`. |
+| 26.11.2026 | [PROBELAUF_20261126.md](./PROBELAUF_20261126.md) | `598d46a` | Notiz zum Probelauf auf dem Institutsserver: was funktioniert, Zählraster, Übereinstimmung zweier Personen, Beobachtungen an der Anwendung, offene Fragen an den Autor | Aktuell. Ergänzt die Rückmeldung vom 25.11., ersetzt sie nicht. Enthält keine einzelnen Wertungen. |
 | laufend | [TESTLAEUFE.md](./TESTLAEUFE.md) | je Lauf | Protokoll aller im Review ausgeführten Läufe | Wird fortgeschrieben. |
 
 ## Ordner
